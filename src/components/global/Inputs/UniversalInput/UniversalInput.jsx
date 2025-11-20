@@ -1,8 +1,12 @@
 import { Form } from 'react-bootstrap';
+import Select from 'react-select';
+import Signal from '@fyclabs/tools-fyc-react/signals/Signal';
 import { $form } from '@src/signals';
 import InputBoxGroup from '@src/components/global/Inputs/UniversalInput/components/InputBoxGroup';
 import CheckBoxInput from '@src/components/global/Inputs/UniversalInput/components/CheckBoxInput';
 import { formatDate, formatPhone, formatTime, isEmailValid } from './_helpers/universalinput.events';
+
+const $select = Signal({});
 
 const UniversalInput = ({
   type,
@@ -18,11 +22,14 @@ const UniversalInput = ({
   isValid,
   isInvalid,
   inputBoxGroupOptions = {},
+  selectOptions, // For select type: array of {value, label}
+  notClearable, // For select type
+  isMulti = false, // For select type
   disabled,
   ...props
 }) => {
-  if ((!signal || !name) && !customOnChange) {
-    return new Error(`Universal Input has no signal or name (Name: ${name})`);
+  if ((!signal || !name) && !customOnChange && type !== 'select') {
+    throw new Error(`Universal Input has no signal or name (Name: ${name})`);
   }
 
   if (type === 'inputBoxGroup') {
@@ -48,6 +55,107 @@ const UniversalInput = ({
         className={className}
         {...props}
       />
+    );
+  }
+
+  if (type === 'select') {
+    const { [name]: isHovered } = $select.value;
+    const selectValue = value !== undefined ? value : (signal?.value?.[name]);
+
+    return (
+      <div
+        onMouseEnter={() => $select.update({ [name]: true })}
+        onMouseLeave={() => $select.update({ [name]: false })}
+      >
+        <Select
+          id={name}
+          className={`${variant || ''} ${className || ''} ps-0 py-8`}
+          value={selectValue}
+          options={selectOptions || []}
+          onChange={customOnChange || ((e) => signal.update({ [name]: e }))}
+          disabled={disabled}
+          isMulti={isMulti}
+          isClearable={!notClearable}
+          placeholder={placeholder}
+          styles={{
+            control: (base) => ({
+              ...base,
+              boxShadow: 'none',
+              border: 'none',
+              minHeight: '21px',
+            }),
+            placeholder: (base) => ({
+              ...base,
+              color: isHovered ? '#373636' : '#777676',
+            }),
+            valueContainer: (base) => ({
+              ...base,
+              paddingLeft: '0',
+              paddingTop: '0',
+              paddingBottom: '0',
+              marginLeft: '1rem',
+            }),
+            singleValue: (base) => ({
+              ...base,
+              color: 'dark',
+            }),
+            multiValue: (base) => ({
+              ...base,
+              backgroundColor: '#EDEDED',
+              borderRadius: '10px',
+              margin: '0',
+              marginRight: '4px',
+              height: '21px',
+            }),
+            multiValueLabel: (base) => ({
+              ...base,
+              color: 'dark',
+              paddingLeft: '10px',
+            }),
+            multiValueRemove: (base) => ({
+              ...base,
+              color: 'dark',
+              borderRadius: '10px',
+              ':hover': {
+                backgroundColor: '#EDEDED',
+                color: 'dark',
+              },
+            }),
+            input: (base) => ({
+              ...base,
+              paddingTop: '0',
+              paddingBottom: '0',
+              marginTop: '0',
+              marginBottom: '0',
+            }),
+            clearIndicator: (base) => ({
+              ...base,
+              paddingTop: '0',
+              paddingBottom: '0',
+              paddingRight: '0',
+              color: 'dark',
+              ':hover': { color: 'dark' },
+            }),
+            dropdownIndicator: (base) => ({
+              ...base,
+              paddingTop: '0',
+              paddingBottom: '0',
+              paddingRight: '0',
+              color: 'dark',
+              ':hover': { color: 'dark' },
+            }),
+            indicatorSeparator: (base) => ({
+              ...base,
+              display: 'none',
+            }),
+            option: (base, state) => ({
+              ...base,
+              backgroundColor: state.isSelected ? '#01738F' : '',
+              ':hover': { backgroundColor: state.isSelected ? '' : '#B8E7F2' },
+            }),
+          }}
+        />
+      </div>
     );
   }
 

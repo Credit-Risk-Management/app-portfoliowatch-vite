@@ -1,29 +1,21 @@
 import { Form, Row, Col } from 'react-bootstrap';
 import UniversalModal from '@src/components/global/UniversalModal';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
-import SelectInput from '@src/components/global/Inputs/SelectInput';
-import { $clientsView, $clientsForm } from '@src/signals';
+import { $clientsView, $clientsForm, $relationshipManagers } from '@src/signals';
 import { handleAddClient } from '../_helpers/clients.events';
-import {
-  clientTypeOptions,
-  kycStatusOptions,
-  riskRatingOptions,
-  industryTypeOptions,
-} from '@src/api/mocks/clients.mocks';
-import { relationshipManagersMock } from '@src/api/mocks/relationshipManagers.mocks';
+import * as consts from '../_helpers/clients.consts';
+import * as helpers from '../_helpers/clients.helpers';
 
 const AddClientModal = () => {
-  const managerOptions = relationshipManagersMock.map((m) => ({
-    value: m.id,
-    label: m.name,
-  }));
+  const managers = $relationshipManagers.value?.list || [];
+  const managerOptions = helpers.getManagerOptions(managers);
 
   const modalBody = (
     <Form>
       <Row>
         <Col md={6} className="mb-16">
           <UniversalInput
-            label="Client ID"
+            label="Borrower ID"
             type="text"
             placeholder="CLT-2024-XXX"
             value={$clientsForm.value.client_id}
@@ -31,11 +23,14 @@ const AddClientModal = () => {
           />
         </Col>
         <Col md={6} className="mb-16">
-          <Form.Label>Client Type</Form.Label>
-          <SelectInput
-            options={clientTypeOptions}
-            value={$clientsForm.value.client_type}
-            onChange={(option) => $clientsForm.update({ client_type: option?.value })}
+          <Form.Label>Borrower Type</Form.Label>
+          <UniversalInput
+            type="select"
+            name="client_type"
+            signal={$clientsForm}
+            selectOptions={consts.CLIENT_TYPE_OPTIONS}
+            value={consts.CLIENT_TYPE_OPTIONS.find((opt) => opt.value === $clientsForm.value.client_type)}
+            customOnChange={(option) => $clientsForm.update({ client_type: option?.value })}
           />
         </Col>
       </Row>
@@ -45,7 +40,7 @@ const AddClientModal = () => {
           <UniversalInput
             label="Name"
             type="text"
-            placeholder="Enter client name"
+            placeholder="Enter borrower name"
             value={$clientsForm.value.name}
             onChange={(e) => $clientsForm.update({ name: e.target.value })}
           />
@@ -118,18 +113,24 @@ const AddClientModal = () => {
       <Row>
         <Col md={6} className="mb-16">
           <Form.Label>KYC Status</Form.Label>
-          <SelectInput
-            options={kycStatusOptions}
-            value={$clientsForm.value.kyc_status}
-            onChange={(option) => $clientsForm.update({ kyc_status: option?.value })}
+          <UniversalInput
+            type="select"
+            name="kyc_status"
+            signal={$clientsForm}
+            selectOptions={consts.KYC_STATUS_OPTIONS}
+            value={consts.KYC_STATUS_OPTIONS.find((opt) => opt.value === $clientsForm.value.kyc_status)}
+            customOnChange={(option) => $clientsForm.update({ kyc_status: option?.value })}
           />
         </Col>
         <Col md={6} className="mb-16">
           <Form.Label>Risk Rating</Form.Label>
-          <SelectInput
-            options={riskRatingOptions}
-            value={$clientsForm.value.client_risk_rating}
-            onChange={(option) => $clientsForm.update({ client_risk_rating: option?.value })}
+          <UniversalInput
+            type="select"
+            name="client_risk_rating"
+            signal={$clientsForm}
+            selectOptions={consts.RISK_RATING_OPTIONS}
+            value={consts.RISK_RATING_OPTIONS.find((opt) => opt.value === $clientsForm.value.client_risk_rating)}
+            customOnChange={(option) => $clientsForm.update({ client_risk_rating: option?.value })}
           />
         </Col>
       </Row>
@@ -137,10 +138,13 @@ const AddClientModal = () => {
       <Row>
         <Col md={12} className="mb-16">
           <Form.Label>Relationship Manager</Form.Label>
-          <SelectInput
-            options={managerOptions}
-            value={$clientsForm.value.relationship_manager_id}
-            onChange={(option) => $clientsForm.update({ relationship_manager_id: option?.value })}
+          <UniversalInput
+            type="select"
+            name="relationship_manager_id"
+            signal={$clientsForm}
+            selectOptions={managerOptions}
+            value={managerOptions.find((opt) => opt.value === $clientsForm.value.relationship_manager_id)}
+            customOnChange={(option) => $clientsForm.update({ relationship_manager_id: option?.value })}
           />
         </Col>
       </Row>
@@ -154,10 +158,10 @@ const AddClientModal = () => {
         $clientsView.update({ showAddModal: false });
         $clientsForm.reset();
       }}
-      headerText="Add New Client"
+      headerText="Add New Borrower"
       body={modalBody}
       leftBtnText="Cancel"
-      rightBtnText="Add Client"
+      rightBtnText="Add Borrower"
       rightBtnOnClick={handleAddClient}
     />
   );

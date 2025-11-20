@@ -5,7 +5,7 @@ const PageHeader = ({
   breadcrumbs = [],
   actionButton,
   actionButtonText,
-  onActionClick = () => {},
+  onActionClick = () => { },
 }) => (
   <div className="pb-24">
     {breadcrumbs.length > 0 && (
@@ -22,7 +22,7 @@ const PageHeader = ({
       </Breadcrumb>
     )}
     <div className="d-flex justify-content-between align-items-center">
-      <h2 className="mb-0">{title}</h2>
+      <h4 className="mb-0 text-light">{title}</h4>
       {actionButton && (
         <Button variant="primary" onClick={onActionClick}>
           {actionButtonText}

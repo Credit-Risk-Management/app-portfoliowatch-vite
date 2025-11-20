@@ -2,15 +2,10 @@ import { useEffect } from 'react';
 import { Form, Row, Col } from 'react-bootstrap';
 import UniversalModal from '@src/components/global/UniversalModal';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
-import SelectInput from '@src/components/global/Inputs/SelectInput';
-import { $clientsView, $clientsForm, $clients } from '@src/signals';
+import { $clientsView, $clientsForm, $clients, $relationshipManagers } from '@src/signals';
 import { handleEditClient } from '../_helpers/clients.events';
-import {
-  clientTypeOptions,
-  kycStatusOptions,
-  riskRatingOptions,
-} from '@src/api/mocks/clients.mocks';
-import { relationshipManagersMock } from '@src/api/mocks/relationshipManagers.mocks';
+import * as consts from '../_helpers/clients.consts';
+import * as helpers from '../_helpers/clients.helpers';
 
 const EditClientModal = () => {
   useEffect(() => {
@@ -19,10 +14,8 @@ const EditClientModal = () => {
     }
   }, [$clientsView.value.showEditModal]);
 
-  const managerOptions = relationshipManagersMock.map((m) => ({
-    value: m.id,
-    label: m.name,
-  }));
+  const managers = $relationshipManagers.value?.list || [];
+  const managerOptions = helpers.getManagerOptions(managers);
 
   const modalBody = (
     <Form>
@@ -57,18 +50,24 @@ const EditClientModal = () => {
       <Row>
         <Col md={6} className="mb-16">
           <Form.Label>KYC Status</Form.Label>
-          <SelectInput
-            options={kycStatusOptions}
-            value={$clientsForm.value.kyc_status}
-            onChange={(option) => $clientsForm.update({ kyc_status: option?.value })}
+          <UniversalInput
+            type="select"
+            name="kyc_status"
+            signal={$clientsForm}
+            selectOptions={consts.KYC_STATUS_OPTIONS}
+            value={consts.KYC_STATUS_OPTIONS.find((opt) => opt.value === $clientsForm.value.kyc_status)}
+            customOnChange={(option) => $clientsForm.update({ kyc_status: option?.value })}
           />
         </Col>
         <Col md={6} className="mb-16">
           <Form.Label>Risk Rating</Form.Label>
-          <SelectInput
-            options={riskRatingOptions}
-            value={$clientsForm.value.client_risk_rating}
-            onChange={(option) => $clientsForm.update({ client_risk_rating: option?.value })}
+          <UniversalInput
+            type="select"
+            name="client_risk_rating"
+            signal={$clientsForm}
+            selectOptions={consts.RISK_RATING_OPTIONS}
+            value={consts.RISK_RATING_OPTIONS.find((opt) => opt.value === $clientsForm.value.client_risk_rating)}
+            customOnChange={(option) => $clientsForm.update({ client_risk_rating: option?.value })}
           />
         </Col>
       </Row>
@@ -82,7 +81,7 @@ const EditClientModal = () => {
         $clientsView.update({ showEditModal: false });
         $clientsForm.reset();
       }}
-      headerText="Edit Client"
+      headerText="Edit Borrower"
       body={modalBody}
       leftBtnText="Cancel"
       rightBtnText="Save Changes"

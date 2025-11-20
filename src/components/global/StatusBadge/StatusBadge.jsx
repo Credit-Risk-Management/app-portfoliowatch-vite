@@ -18,6 +18,23 @@ const StatusBadge = ({ status, type = 'default' }) => {
     }
 
     if (type === 'risk') {
+      // Handle numeric risk ratings (1-5)
+      if (typeof status === 'number') {
+        switch (status) {
+          case 1:
+          case 2:
+            return 'success';
+          case 3:
+            return 'warning';
+          case 4:
+            return 'danger';
+          case 5:
+            return 'dark';
+          default:
+            return 'secondary';
+        }
+      }
+      // Handle text-based risk ratings
       switch (status) {
         case 'Low':
           return 'success';

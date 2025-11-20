@@ -1,4 +1,3 @@
-/* eslint-disable implicit-arrow-linebreak */
 import { Outlet, Navigate } from 'react-router-dom';
 import { $global } from '@src/signals';
 import ContentWrapper from '../ContentWrapper';
@@ -8,7 +7,7 @@ const PrivateRoutes = () =>
 //   return <Navigate to={`/?redirect=${window.location.pathname}`} />;
 // }
 (
-  <ContentWrapper fluid>
+  <ContentWrapper fluid className="min-vh-100 bg-info-900">
     <Outlet />
   </ContentWrapper>
 );

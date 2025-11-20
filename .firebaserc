@@ -1,15 +1,15 @@
 {
   "projects": {
-    "default": "{PROJECTID}"
+    "default": "portfolio-watch-app"
   },
   "targets": {
-    "{PROJECTID}": {
+    "portfolio-watch-app": {
       "hosting": {
         "prod": [
-          "{PROJECTID}"
+          "portfolio-watch-app"
         ],
         "qa": [
-          "qa-{PROJECTID}"
+          "qa-portfolio-watch-app"
         ]
       }
     }

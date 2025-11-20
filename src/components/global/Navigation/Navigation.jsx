@@ -6,7 +6,6 @@ import {
   faUsers,
   faMoneyBillWave,
   faFileAlt,
-  faExchangeAlt,
   faChartLine,
   faUserTie,
   faUser,
@@ -20,100 +19,94 @@ const Navigation = () => {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <Navbar bg="primary" variant="dark" expand="lg" className="mb-0">
+    <Navbar variant="light" expand="lg" className="bg-gradient-secondary-primary-50 mb-0 position-sticky top-0 py-8 px-16 z-index-9999">
       <Container fluid>
-        <Navbar.Brand as={Link} to="/dashboard" className="fw-700">
-          Portfolio Watch
+        <Navbar.Brand as={Link} to="/dashboard" className="me-64">
+          <img
+            src="/logo_dark.svg"
+            alt="Logo"
+            height="30"
+            className="d-inline-block align-top"
+          />
         </Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
-          <Nav className="me-auto">
+          <Nav className="ms-auto">
             <Nav.Link
               as={Link}
               to="/dashboard"
               active={isActive('/dashboard')}
-              className="px-16"
+              className="px-24 text-dark"
             >
-              <FontAwesomeIcon icon={faHome} className="me-8" />
+              <FontAwesomeIcon icon={faHome} className="me-16 d-none" />
               Dashboard
             </Nav.Link>
             <Nav.Link
               as={Link}
-              to="/clients"
-              active={isActive('/clients')}
-              className="px-16"
+              to="/borrowers"
+              active={isActive('/borrowers')}
+              className="px-24 text-dark"
             >
-              <FontAwesomeIcon icon={faUsers} className="me-8" />
+              <FontAwesomeIcon icon={faUsers} className="me-16 d-none" />
               Borrowers
             </Nav.Link>
             <Nav.Link
               as={Link}
               to="/loans"
               active={isActive('/loans')}
-              className="px-16"
+              className="px-24 text-dark"
             >
-              <FontAwesomeIcon icon={faMoneyBillWave} className="me-8" />
+              <FontAwesomeIcon icon={faMoneyBillWave} className="me-16 d-none" />
               Loans
             </Nav.Link>
             <Nav.Link
               as={Link}
               to="/documents"
               active={isActive('/documents')}
-              className="px-16"
+              className="px-24 text-dark"
             >
-              <FontAwesomeIcon icon={faFileAlt} className="me-8" />
+              <FontAwesomeIcon icon={faFileAlt} className="me-16 d-none" />
               Documents
-            </Nav.Link>
-            <Nav.Link
-              as={Link}
-              to="/transactions"
-              active={isActive('/transactions')}
-              className="px-16"
-            >
-              <FontAwesomeIcon icon={faExchangeAlt} className="me-8" />
-              Transactions
             </Nav.Link>
             <Nav.Link
               as={Link}
               to="/reports"
               active={isActive('/reports')}
-              className="px-16"
+              className="px-24 text-dark"
             >
-              <FontAwesomeIcon icon={faChartLine} className="me-8" />
+              <FontAwesomeIcon icon={faChartLine} className="me-16 d-none" />
               Reports
             </Nav.Link>
             <Nav.Link
               as={Link}
               to="/relationship-managers"
               active={isActive('/relationship-managers')}
-              className="px-16"
+              className="px-24 text-dark"
             >
-              <FontAwesomeIcon icon={faUserTie} className="me-8" />
+              <FontAwesomeIcon icon={faUserTie} className="me-16 d-none" />
               Managers
             </Nav.Link>
           </Nav>
           <Nav>
             <NavDropdown
               title={(
-                <>
-                  <FontAwesomeIcon icon={faUser} className="me-8" />
-                  Profile
-                </>
+                <FontAwesomeIcon icon={faUser} className="me-8 text-dark" />
               )}
               id="user-dropdown"
               align="end"
+              className="text-dark"
             >
               <NavDropdown.Item as={Link} to="/profile">
-                <FontAwesomeIcon icon={faUser} className="me-8" />
+                <FontAwesomeIcon icon={faUser} className="me-16 d-none" />
                 My Profile
               </NavDropdown.Item>
               <NavDropdown.Item as={Link} to="/settings">
-                <FontAwesomeIcon icon={faCog} className="me-8" />
+                <FontAwesomeIcon icon={faCog} className="me-16 d-none" />
                 Settings
               </NavDropdown.Item>
               <NavDropdown.Divider />
               <NavDropdown.Item as={Link} to="/logout">
-                <FontAwesomeIcon icon={faSignOutAlt} className="me-8" />
+                <FontAwesomeIcon icon={faSignOutAlt} className="me-16 d-none" />
                 Logout
               </NavDropdown.Item>
             </NavDropdown>

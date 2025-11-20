@@ -1,46 +1,277 @@
-//Common Overwrites.. 
-$primary: #3A2D56;
-$primary-900: #152F58;
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@100;200;300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@200;300;400;500;600;700&display=swap');
 
-$secondary: #D8EF7E;
 
+// PRIMARY
+$primary: #A07CF0;
+$primary-50:  #E4DAFB;
+$primary-100: #DDD0FA;
+$primary-200: #CEBBF7;
+$primary-300: #BEA6F5;
+$primary-400: #AF91F2;
+$primary-500: #A07CF0;
+$primary-600: #8668CA;
+$primary-700: #6D54A3;
+$primary-800: #53407D;
+$primary-900: #3A2D56;
+
+// SECONDARY
+$secondary: #D8E7E1;
+$secondary-50:  #F4FBDB;
+$secondary-100: #F1F9D1;
+$secondary-200: #EBF7BC;
+$secondary-300: #E4F4A7;
+$secondary-400: #DEF293;
+$secondary-500: #D8E7E1;
+$secondary-600: #B5C96A;
+$secondary-700: #93A356;
+$secondary-800: #707C42;
+$secondary-900: #4E562D;
+
+// INFO
 $info: #7CE4F0;
+$info-50:  #DAF7FB;
+$info-100: #D0F5FA;
+$info-200: #BBF1F7;
+$info-300: #A6EDF5;
+$info-400: #91E8F2;
+$info-500: #7CE4F0;
+$info-600: #68C0CA;
+$info-700: #5498A3;
+$info-800: #40777D;
+$info-900: #2D5256;
 
+// SUCCESS
 $success: #7EEF86;
+$success-50:  #DFBFDD;
+$success-100: #D1F9D3;
+$success-200: #BCF7C0;
+$success-300: #A7F4AD;
+$success-400: #93F299;
+$success-500: #7EEF86;
+$success-600: #6AC971;
+$success-700: #56A35B;
+$success-800: #427C46;
+$success-900: #2D5630;
 
+// WARNING
 $warning: #F6B366;
+$warning-50:  #FCEAD4;
+$warning-100: #FCE4C8;
+$warning-200: #FAD7AF;
+$warning-300: #F6CB97;
+$warning-400: #F7BF7E;
+$warning-500: #F6B366;
+$warning-600: #CF9656;
+$warning-700: #A77A45;
+$warning-800: #805D35;
+$warning-900: #594025;
 
+// DANGER
 $danger: #F66666;
+$danger-50:  #FCD4D4;
+$danger-100: #FCC8C8;
+$danger-200: #FAAFAF;
+$danger-300: #F99797;
+$danger-400: #F77E7E;
+$danger-500: #F66666;
+$danger-600: #CF5656;
+$danger-700: #A74545;
+$danger-800: #803535;
+$danger-900: #592525;
 
-$light: #f0f4f6;
-$light-50: #FBFCFC;
+// LIGHT
+$light: #FAF7FF;
+$light-50:  #FEFDFF;
+$light-100: #FDFCFF;
+$light-200: #FCFBFF;
+$light-300: #FCFAFF;
+$light-400: #FBF8FF;
+$light-500: #FAF7FF;
+$light-600: #D2CFD6;
+$light-700: #AAAABD;
+$light-800: #828085;
+$light-900: #5A595C;
 
-$dark: #373636;
-$dark-300: #777676;
-$dark-200: #979696;
+// DARK
+$dark: #151517;
+$dark-50:  #BDBDBE;
+$dark-100: #ABABAB;
+$dark-200: #858586;
+$dark-300: #606061;
+$dark-400: #3A3A3C;
+$dark-500: #151517;
+$dark-600: #121213;
+$dark-700: #0E0E10;
+$dark-800: #08080B;
+$dark-900: #080808;
 
-$grey: #E5E6E9;
+// GREY
+$grey: #6B7280;
+$grey-50:  #D6DBDB;
+$grey-100: #CACCD1;
+$grey-200: #B2B6BD;
+$grey-300: #9FA9A9;
+$grey-400: #838994;
+$grey-500: #6B7280;
+$grey-600: #5A606C;
+$grey-700: #494E57;
+$grey-800: #383B43;
+$grey-900: #27292E;
+
+// WHITE
+$white: #FFFFFF;
+$white-50:  #FFFFFF;
+$white-100: #FFFFFF;
+$white-200: #FFFFFF;
+$white-300: #FFFFFF;
+$white-400: #FFFFFF;
+$white-500: #FFFFFF;
+$white-600: #D6D6D6;
+$white-700: #ADADAD;
+$white-800: #858585;
+$white-900: #5C5C5C;
+
+// BLACK
+$black: #000000;
+$black-50:  #BBBBBB;
+$black-100: #A3A3A3;
+$black-200: #7A7A7A;
+$black-300: #525252;
+$black-400: #292929;
+$black-500: #000000;
+$black-600: #000000;
+$black-700: #000000;
+$black-800: #000000;
+$black-900: #000000;
 
 $transparent: transparent;
 $white: white;
 $black: black;
 
 $theme-colors: (
-  "primary": $primary,
+  "primary":   $primary,
+  "primary-50": $primary-50,
+  "primary-100": $primary-100,
+  "primary-200": $primary-200,
+  "primary-300": $primary-300,
+  "primary-400": $primary-400,
+  "primary-500": $primary-500,
+  "primary-600": $primary-600,
+  "primary-700": $primary-700,
+  "primary-800": $primary-800,
   "primary-900": $primary-900,
   "secondary": $secondary,
+  "secondary-50": $secondary-50,
+  "secondary-100": $secondary-100,
+  "secondary-200": $secondary-200,
+  "secondary-300": $secondary-300,
+  "secondary-400": $secondary-400,
+  "secondary-500": $secondary-500,
+  "secondary-600": $secondary-600,
+  "secondary-700": $secondary-700,
+  "secondary-800": $secondary-800,
+  "secondary-900": $secondary-900,
   "info": $info,
+  "info-50": $info-50,
+  "info-100": $info-100,
+  "info-200": $info-200,
+  "info-300": $info-300,
+  "info-400": $info-400,
+  "info-500": $info-500,
+  "info-600": $info-600,
+  "info-700": $info-700,
+  "info-800": $info-800,
+  "info-900": $info-900,
   "success": $success,
+  "success-50": $success-50,
+  "success-100": $success-100,
+  "success-200": $success-200,
+  "success-300": $success-300,
+  "success-400": $success-400,
+  "success-500": $success-500,
+  "success-600": $success-600,
+  "success-700": $success-700,
+  "success-800": $success-800,
+  "success-900": $success-900,
   "warning": $warning,
+  "warning-50": $warning-50,
+  "warning-100": $warning-100,
+  "warning-200": $warning-200,
+  "warning-300": $warning-300,
+  "warning-400": $warning-400,
+  "warning-500": $warning-500,
+  "warning-600": $warning-600,
+  "warning-700": $warning-700,
+  "warning-800": $warning-800,
+  "warning-900": $warning-900,
   "danger": $danger,
+  "danger-50": $danger-50,
+  "danger-100": $danger-100,
+  "danger-200": $danger-200,
+  "danger-300": $danger-300,
+  "danger-400": $danger-400,
+  "danger-500": $danger-500,
+  "danger-600": $danger-600,
+  "danger-700": $danger-700,
+  "danger-800": $danger-800,
+  "danger-900": $danger-900,
   "light": $light,
+  "light-50": $light-50,
+  "light-100": $light-100,
+  "light-200": $light-200,
+  "light-300": $light-300,
+  "light-400": $light-400,
+  "light-500": $light-500,
+  "light-600": $light-600,
+  "light-700": $light-700,
+  "light-800": $light-800,
+  "light-900": $light-900,
   "dark": $dark,
-  "dark-300": $dark-300,
+  "dark-50": $dark-50,
+  "dark-100": $dark-100,
   "dark-200": $dark-200,
-  "transparent": $transparent,
-  "white": $white,
-  "black": $black,
+  "dark-300": $dark-300,
+  "dark-400": $dark-400,
+  "dark-500": $dark-500,
+  "dark-600": $dark-600,
+  "dark-700": $dark-700,
+  "dark-800": $dark-800,
+  "dark-900": $dark-900,
   "grey": $grey,
+  "grey-50": $grey-50,
+  "grey-100": $grey-100,
+  "grey-200": $grey-200,
+  "grey-300": $grey-300,
+  "grey-400": $grey-400,
+  "grey-500": $grey-500,
+  "grey-600": $grey-600,
+  "grey-700": $grey-700,
+  "grey-800": $grey-800,
+  "grey-900": $grey-900,
+  "white": $white,
+  "white-50": $white-50,
+  "white-100": $white-100,
+  "white-200": $white-200,
+  "white-300": $white-300,
+  "white-400": $white-400,
+  "white-500": $white-500,
+  "white-600": $white-600,
+  "white-700": $white-700,
+  "white-800": $white-800,
+  "white-900": $white-900,
+  "black": $black,
+  "black-50": $black-50,
+  "black-100": $black-100,
+  "black-200": $black-200,
+  "black-300": $black-300,
+  "black-400": $black-400,
+  "black-500": $black-500,
+  "black-600": $black-600,
+  "black-700": $black-700,
+  "black-800": $black-800,
+  "black-900": $black-900,
+  "transparent": $transparent
 );
 
 
@@ -55,10 +286,12 @@ $h4-font-size: 32px;
 $h5-font-size: 24px;
 
 $body-color: $black;
-$font-family-sans-serif: 'Roboto', sans-serif;
+$font-family-sans-serif: 'IBM Plex Sans', sans-serif;
+$headings-font-family: 'Oswald', sans-serif;
 
 $btn-text-color: #ffffff;
 $btn-outline-text-color-hover: #ffffff;
+$card-border-radius: 8px !default;
 
 $spacer: 1rem !default;
 $spacers: () !default;

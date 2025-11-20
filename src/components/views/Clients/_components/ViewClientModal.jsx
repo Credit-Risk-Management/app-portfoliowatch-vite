@@ -9,7 +9,7 @@ const ViewClientModal = () => {
     <div>
       <Row className="mb-16">
         <Col md={6}>
-          <strong>Client ID:</strong> {client.client_id}
+          <strong>Borrower ID:</strong> {client.client_id}
         </Col>
         <Col md={6}>
           <strong>Name:</strong> {client.name}
@@ -43,7 +43,7 @@ const ViewClientModal = () => {
     <UniversalModal
       show={$clientsView.value.showViewModal}
       onHide={() => $clientsView.update({ showViewModal: false })}
-      headerText="Client Contact Information"
+      headerText="Borrower Contact Information"
       body={modalBody}
       leftBtnText="Close"
       rightBtnText=""

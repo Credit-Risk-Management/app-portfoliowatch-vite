@@ -13,6 +13,13 @@ export const $form = Signal({});
 export const $filter = Signal({ page: 1 });
 export const $alert = Signal({});
 
+export const $borrowers = Signal({
+  list: [],
+  selectedBorrower: null,
+  isTableLoading: false,
+  totalCount: 0,
+});
+
 export const $clients = Signal({
   list: [],
   selectedClient: null,
@@ -77,8 +84,9 @@ export const $loansFilter = Signal({
   sortKey: undefined,
   sortDirection: undefined,
   searchTerm: '',
-  loanType: '',
-  status: '',
+  interestType: '',
+  riskRating: '',
+  loanOfficer: '',
 });
 
 export const $loansView = Signal({
@@ -87,25 +95,43 @@ export const $loansView = Signal({
   isSelectAllChecked: false,
   showAddModal: false,
   showEditModal: false,
+  showViewModal: false,
   showDeleteModal: false,
-  showContextMenu: false,
+  showSaveReportModal: false,
+  reportName: '',
   tableHeaders: [],
 });
 
 export const $loansForm = Signal({
   id: '',
-  loan_id: '',
-  client_id: '',
-  loan_name: '',
-  loan_amount: '',
-  loan_type: '',
-  interest_rate: '',
-  loan_term_months: '',
-  loan_purpose: '',
-  collateral_details: '',
-  disbursement_date: '',
-  maturity_date: '',
-  status: 'Pending',
+  loan_number: '',
+  borrower_name: '',
+  borrower_id: null,
+  principal_amount: '',
+  payment_amount: '',
+  next_payment_due_date: '',
+  last_payment_received_date: '',
+  type_of_interest: 'Fixed',
+  current_interest_rate: '',
+  next_rate_adjustment_date: '',
+  loan_maturity_date: '',
+  loan_origination_date: '',
+  last_annual_review: '',
+  last_financial_statement: '',
+  gross_revenue: '',
+  net_income: '',
+  ebitda: '',
+  debt_service: '',
+  current_ratio: '',
+  liquidity: '',
+  retained_earnings: '',
+  current_risk_rating: 3,
+  loan_officer_id: '',
+  maics: '',
+  industry: '',
+  financial_metrics_override_by: null,
+  financial_metrics_override_date: null,
+  financial_metrics_override_notes: '',
 });
 
 export const $documents = Signal({
@@ -176,7 +202,23 @@ export const $relationshipManagersView = Signal({
   isTableLoading: false,
   selectedItems: [],
   showDetailModal: false,
+  showAddModal: false,
+  showEditModal: false,
   tableHeaders: [],
+});
+
+export const $relationshipManagersForm = Signal({
+  id: '',
+  user_id: '',
+  name: '',
+  email: '',
+  phone: '',
+  office_location: '',
+  position_title: '',
+  manager_id: '',
+  is_active: true,
+  created_at: '',
+  updated_at: '',
 });
 
 export const $reports = Signal({
@@ -189,6 +231,7 @@ export const $reportsView = Signal({
   showGenerateModal: false,
   reportType: '',
   parameters: {},
+  selectedReportId: null,
 });
 
 export const $dashboard = Signal({

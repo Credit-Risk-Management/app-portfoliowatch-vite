@@ -17,3 +17,16 @@
   border-bottom-left-radius: 15px !important;
   border-bottom-right-radius: 15px !important;
 }
+
+.bg-gradient-primary-secondary-50 {
+  background: linear-gradient(45deg, $primary-50, $secondary-50);
+  background-size: 125% 125%;
+  background-position: 0 0;
+}
+
+.bg-gradient-secondary-primary-50 {
+  // background: linear-gradient(45deg, $secondary-50,$primary-100);
+  background: var(--Gradient1, linear-gradient(91deg, #F7FFD7 19.94%, #E1D4FF 94%));
+  background-size: 125% 125%;
+  background-position: 0 0;
+}

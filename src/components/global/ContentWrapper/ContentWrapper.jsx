@@ -2,6 +2,7 @@
 import { $auth } from '@fyclabs/tools-fyc-react/signals';
 import { Container } from 'react-bootstrap';
 import Loader from '@src/components/global/Loader';
+import Navigation from '@src/components/global/Navigation';
 
 const ContentWrapper = ({ children, className, fluid }) => {
   if ($auth.value?.isLoading) {
@@ -18,6 +19,7 @@ const ContentWrapper = ({ children, className, fluid }) => {
   }
   return (
     <div>
+      <Navigation />
       <Container fluid={!!fluid} className={className}>
         {children}
       </Container>

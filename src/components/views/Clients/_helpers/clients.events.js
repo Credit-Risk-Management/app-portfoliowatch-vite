@@ -1,43 +1,27 @@
-/* eslint-disable no-promise-executor-return */
 import { $clients, $clientsView, $clientsFilter, $clientsForm } from '@src/signals';
-import { clientsMock } from '@src/api/mocks/clients.mocks';
+import borrowersApi from '@src/api/borrowers.api';
 
 export const fetchClients = async () => {
   try {
     $clientsView.update({ isTableLoading: true });
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    let filteredClients = [...clientsMock];
-
     const { searchTerm, clientType, kycStatus, riskRating } = $clientsFilter.value;
 
-    if (searchTerm) {
-      filteredClients = filteredClients.filter(
-        (client) => client.name.toLowerCase().includes(searchTerm.toLowerCase())
-          || client.email.toLowerCase().includes(searchTerm.toLowerCase())
-          || client.client_id.toLowerCase().includes(searchTerm.toLowerCase()),
-      );
-    }
+    const filters = {
+      searchTerm,
+      borrowerType: clientType,
+      kycStatus,
+      riskRating,
+    };
 
-    if (clientType) {
-      filteredClients = filteredClients.filter((client) => client.client_type === clientType);
-    }
-
-    if (kycStatus) {
-      filteredClients = filteredClients.filter((client) => client.kyc_status === kycStatus);
-    }
-
-    if (riskRating) {
-      filteredClients = filteredClients.filter((client) => client.client_risk_rating === riskRating);
-    }
-
+    const response = await borrowersApi.getAll(filters);
+    
     $clients.update({
-      list: filteredClients,
-      totalCount: filteredClients.length,
+      list: response.data || [],
+      totalCount: response.count || 0,
     });
   } catch (error) {
-    console.error('Error fetching clients:', error);
+    $clients.update({ list: [], totalCount: 0 });
   } finally {
     $clientsView.update({ isTableLoading: false });
   }
@@ -47,26 +31,16 @@ export const handleAddClient = async () => {
   try {
     const formData = $clientsForm.value;
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    const newClient = {
-      ...formData,
-      id: `${Date.now()}`,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
-    $clients.update({
-      list: [...$clients.value.list, newClient],
-      totalCount: $clients.value.totalCount + 1,
-    });
+    const response = await borrowersApi.create(formData);
 
     $clientsView.update({ showAddModal: false });
     $clientsForm.reset();
 
     await fetchClients();
+    
+    return response;
   } catch (error) {
-    console.error('Error adding client:', error);
+    throw error;
   }
 };
 
@@ -74,43 +48,25 @@ export const handleEditClient = async () => {
   try {
     const formData = $clientsForm.value;
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    const updatedClient = {
-      ...formData,
-      updated_at: new Date().toISOString(),
-    };
-
-    const updatedList = $clients.value.list.map((client) => (client.id === formData.id ? updatedClient : client));
-
-    $clients.update({
-      list: updatedList,
-    });
+    await borrowersApi.update(formData.id, formData);
 
     $clientsView.update({ showEditModal: false });
     $clientsForm.reset();
 
     await fetchClients();
   } catch (error) {
-    console.error('Error editing client:', error);
+    throw error;
   }
 };
 
 export const handleDeleteClient = async (clientId) => {
   try {
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    const updatedList = $clients.value.list.filter((client) => client.id !== clientId);
-
-    $clients.update({
-      list: updatedList,
-      totalCount: $clients.value.totalCount - 1,
-    });
+    await borrowersApi.delete(clientId);
 
     $clientsView.update({ showDeleteModal: false });
 
     await fetchClients();
   } catch (error) {
-    console.error('Error deleting client:', error);
+    throw error;
   }
 };

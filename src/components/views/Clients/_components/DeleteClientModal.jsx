@@ -7,7 +7,7 @@ const DeleteClientModal = () => {
 
   const modalBody = client ? (
     <div>
-      <p>Are you sure you want to delete this client?</p>
+      <p>Are you sure you want to delete this borrower?</p>
       <p className="fw-700">{client.name} ({client.client_id})</p>
       <p className="text-danger">This action cannot be undone.</p>
     </div>
@@ -17,7 +17,7 @@ const DeleteClientModal = () => {
     <UniversalModal
       show={$clientsView.value.showDeleteModal}
       onHide={() => $clientsView.update({ showDeleteModal: false })}
-      headerText="Delete Client"
+      headerText="Delete Borrower"
       headerBgColor="danger"
       body={modalBody}
       leftBtnText="Cancel"
