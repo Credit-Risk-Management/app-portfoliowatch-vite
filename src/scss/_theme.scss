@@ -96,3 +96,23 @@ small {
     line-height: 20px;
   }
 }
+
+.list-group-item {
+  background-color: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  transition: all 0.2s !important;
+  &:hover {
+    background-color: $info-700 !important;
+    color: $white !important;
+  }
+}
+
+td {
+  background-color: $info-800 !important;
+  color: $white !important;
+}
+
+input::placeholder {
+  color: $info-600 !important;
+}

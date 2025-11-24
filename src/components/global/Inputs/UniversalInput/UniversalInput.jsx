@@ -187,7 +187,7 @@ const UniversalInput = ({
       type={type || 'text'}
       value={formatValue()}
       placeholder={placeholder}
-      className={`w-100 ${variant} ${className || ''} ${disabled ? 'text-dark-300' : ''} shadow-none py-8 ps-16`}
+      className={className}
       name={name}
       autoComplete={autoComplete}
       onChange={customOnChange || ((e) => signal.update({

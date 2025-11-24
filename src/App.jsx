@@ -4,7 +4,7 @@ import '@src/scss/style.scss';
 import NotFound from '@src/components/views/NotFound';
 import Home from '@src/components/views/Home';
 import Dashboard from '@src/components/views/Dashboard';
-import Clients from '@src/components/views/Clients';
+import Borrowers from '@src/components/views/Borrowers';
 import Loans from '@src/components/views/Loans';
 import LoanDetail from '@src/components/views/Loans/LoanDetail';
 import Reports from '@src/components/views/Reports';
@@ -29,7 +29,7 @@ function App() {
               <Route path="/loans" element={<Loans />} />
               <Route path="/loans/:loanId" element={<LoanDetail />} />
               <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/borrowers" element={<Clients />} />
+              <Route path="/borrowers" element={<Borrowers />} />
               <Route path="/documents" element={<div className="p-24"><h2>Documents - Coming Soon</h2></div>} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/relationship-managers" element={<Managers />} />

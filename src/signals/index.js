@@ -20,24 +20,17 @@ export const $borrowers = Signal({
   totalCount: 0,
 });
 
-export const $clients = Signal({
-  list: [],
-  selectedClient: null,
-  isTableLoading: false,
-  totalCount: 0,
-});
-
-export const $clientsFilter = Signal({
+export const $borrowersFilter = Signal({
   page: 1,
   sortKey: undefined,
   sortDirection: undefined,
   searchTerm: '',
-  clientType: '',
+  borrowerType: [],
   kycStatus: '',
   riskRating: '',
 });
 
-export const $clientsView = Signal({
+export const $borrowersView = Signal({
   isTableLoading: false,
   selectedItems: [],
   isSelectAllChecked: false,
@@ -48,7 +41,7 @@ export const $clientsView = Signal({
   tableHeaders: [],
 });
 
-export const $clientsForm = Signal({
+export const $borrowersForm = Signal({
   id: '',
   client_id: '',
   name: '',
@@ -234,14 +227,20 @@ export const $reportsView = Signal({
   selectedReportId: null,
 });
 
+export const $comments = Signal({
+  list: [],
+  isLoading: false,
+});
+
 export const $dashboard = Signal({
   metrics: {
-    totalClients: 0,
+    totalBorrowers: 0,
     activeLoans: 0,
     portfolioValue: 0,
     atRiskLoans: 0,
   },
   recentActivity: [],
+  recentLoans: [],
   upcomingTasks: [],
   isLoading: false,
 });

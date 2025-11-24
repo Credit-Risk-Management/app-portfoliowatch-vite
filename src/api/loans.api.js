@@ -1,6 +1,7 @@
+import { wrapApiWithDebounce } from '@src/utils/debouncedApi';
 import apiClient from './client';
 
-export const loansApi = {
+const loansApiBase = {
   // Get all loans with optional filters
   getAll: async (filters = {}) => {
     const params = new URLSearchParams();
@@ -13,6 +14,16 @@ export const loansApi = {
     const queryString = params.toString();
     const url = `/loans${queryString ? `?${queryString}` : ''}`;
     return apiClient.get(url);
+  },
+
+  // Get loan metrics aggregated by WATCH score
+  getLoanMetrics: async () => apiClient.get('/loans/metrics'),
+
+  // Get recent loans sorted by updated_at
+  getRecent: async (limit = 8) => {
+    const params = new URLSearchParams();
+    params.append('limit', limit.toString());
+    return apiClient.get(`/loans/recent?${params.toString()}`);
   },
 
   // Get loan by ID
@@ -39,5 +50,14 @@ export const loansApi = {
   // Compute WATCH scores for all loans
   computeAllWatchScores: async () => apiClient.post('/loans/batch/compute-watch-scores'),
 };
+
+// Wrap with debouncing - only debounce read operations that might be called repeatedly
+export const loansApi = wrapApiWithDebounce(loansApiBase, {
+  getAll: 350, // Debounce search/filter calls
+  getById: 300, // Debounce rapid detail views
+  getByBorrower: 350, // Debounce borrower filter
+  getByOfficer: 350, // Debounce officer filter
+  // Note: create, update, delete, and compute operations are NOT debounced
+});
 
 export default loansApi;

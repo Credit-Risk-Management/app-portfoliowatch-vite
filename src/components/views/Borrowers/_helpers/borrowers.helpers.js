@@ -3,9 +3,7 @@ export const getManagerName = (managerId, managers) => {
   return manager ? manager.name : '-';
 };
 
-export const getManagerOptions = (managers) => 
-  managers.map((m) => ({
-    value: m.id,
-    label: m.name,
-  }));
-
+export const getManagerOptions = (managers) => managers.map((m) => ({
+  value: m.id,
+  label: m.name,
+}));

@@ -4,14 +4,14 @@ const UniversalCard = ({
   headerColor = 'light',
   headerText = '',
   bodyBgColor = 'info-800',
-  bodyContainer = 'container-fluid', // OR 'container'
   children = null,
   borderColor = 'info-400',
+  className = '',
 }) => (
-  <Card className={`bg-${bodyBgColor} border border-${borderColor}`}>
+  <Card className={`bg-${bodyBgColor} border border-${borderColor} ${className}`}>
     <Card.Body className="p-24 text-light">
       <div className={`lead text-${headerColor}`}>{headerText}</div>
-      <div className={`${bodyContainer}`}>{children}</div>
+      {children}
     </Card.Body>
   </Card>
 );

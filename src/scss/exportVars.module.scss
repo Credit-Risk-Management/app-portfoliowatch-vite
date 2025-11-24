@@ -4,4 +4,12 @@
   @each $name, $value in $grid-breakpoints {
     #{$name}: $value;
   }
+  
+  // Export theme colors for use in JavaScript
+  primary: $primary;
+  secondary: $secondary;
+  info: $info;
+  warning: $warning;
+  danger: $danger;
+  grey: $grey;
 }

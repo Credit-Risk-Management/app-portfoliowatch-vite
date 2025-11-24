@@ -1,6 +1,7 @@
+import { wrapApiWithDebounce } from '@src/utils/debouncedApi';
 import apiClient from './client';
 
-export const relationshipManagersApi = {
+const relationshipManagersApiBase = {
   // Get all relationship managers with optional filters
   getAll: async (filters = {}) => {
     const params = new URLSearchParams();
@@ -33,6 +34,16 @@ export const relationshipManagersApi = {
   // Delete relationship manager
   delete: async (id) => apiClient.delete(`/relationship-managers/${id}`),
 };
+
+// Wrap with debouncing - only debounce read operations that might be called repeatedly
+export const relationshipManagersApi = wrapApiWithDebounce(relationshipManagersApiBase, {
+  getAll: 350, // Debounce filter calls
+  getById: 300, // Debounce rapid detail views
+  getDirectReports: 350,
+  getManagerChain: 350,
+  getAllReports: 350,
+  // Note: create, update, delete are NOT debounced
+});
 
 export default relationshipManagersApi;
 

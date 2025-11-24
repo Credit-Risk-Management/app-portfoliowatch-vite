@@ -7,13 +7,11 @@ const Search = ({
   signal = $form,
   name = 'localSearch', // because 'search' is already reserved for nav search in $form
   placeholder = 'Search',
-  bg = 'white',
-  containerClassName = '',
-  inputClassName = '',
   hidden = false,
+  onChange,
 }) => (
   <div
-    className={`d-flex align-items-center border border-primary-500 bg-${bg} ps-0 pe-8 ${containerClassName}`}
+    className="d-flex align-items-center bg-info-800 pe-8"
     style={{ borderRadius: '10px' }}
     hidden={hidden}
   >
@@ -22,9 +20,13 @@ const Search = ({
       signal={signal}
       type="text"
       placeholder={placeholder}
-      className={`border-0 bg-${bg} ${inputClassName}`}
+      className="bg-transparent border-0 text-info-100"
+      onChange={(e) => {
+        signal.update({ [name]: e.target.value });
+        onChange();
+      }}
     />
-    <FontAwesomeIcon icon={faSearch} />
+    <FontAwesomeIcon icon={faSearch} className="ms-4 text-info-50 text-info-600" />
   </div>
 );
 

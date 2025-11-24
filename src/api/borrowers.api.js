@@ -1,6 +1,7 @@
+import { wrapApiWithDebounce } from '@src/utils/debouncedApi';
 import apiClient from './client';
 
-export const borrowersApi = {
+const borrowersApiBase = {
   // Get all borrowers with optional filters
   getAll: async (filters = {}) => {
     const params = new URLSearchParams();
@@ -30,5 +31,11 @@ export const borrowersApi = {
   delete: async (id) => apiClient.delete(`/borrowers/${id}`),
 };
 
-export default borrowersApi;
+// Wrap with debouncing - only debounce read operations that might be called repeatedly
+export const borrowersApi = wrapApiWithDebounce(borrowersApiBase, {
+  getAll: 350,
+  getById: 300,
+  getByManager: 350,
+});
 
+export default borrowersApi;

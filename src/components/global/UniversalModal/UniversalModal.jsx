@@ -12,7 +12,6 @@ const UniversalModal = ({
   headerText,
   bodyClass,
   closeButton,
-  body = () => { },
   leftBtnVariant = 'link',
   leftBtnClass = 'text-decoration-none text-dark-300',
   leftBtnText = 'Close',
@@ -23,8 +22,10 @@ const UniversalModal = ({
   rightButtonDisabled = false,
   rightBtnOnClick,
   footerClass,
+  size = 'lg',
+  children = null,
 }) => (
-  <Modal show={show} onHide={onHide} centered>
+  <Modal show={show} onHide={onHide} centered size={size}>
     <Modal.Header
       className={`${headerSize} text-${headerColor} fw-${headerWeight} bg-${headerBgColor} ${closeButton ? 'justify-content-between' : ''} rounded-top-15`}
     >
@@ -36,7 +37,7 @@ const UniversalModal = ({
     <Modal.Body
       className={`${bodyClass}`}
     >
-      {body}
+      {children}
     </Modal.Body>
     <Modal.Footer className={`justify-content-between border-grey-300 p-0 ${footerClass}`}>
       <Button

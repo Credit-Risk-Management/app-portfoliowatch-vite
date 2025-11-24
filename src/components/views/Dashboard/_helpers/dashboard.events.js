@@ -4,7 +4,6 @@ export const handlePieClick = (data, navigate) => {
   }
 };
 
-export const handleMetricCardClick = (path, navigate) => {
-  navigate(path);
+export const handleMetricCardClick = (path) => {
+  window.location.href = path;
 };
-

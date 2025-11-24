@@ -1,20 +1,22 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect } from 'react';
 import { Form, Row, Col } from 'react-bootstrap';
 import UniversalModal from '@src/components/global/UniversalModal';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
-import { $clientsView, $clientsForm, $clients, $relationshipManagers } from '@src/signals';
-import { handleEditClient } from '../_helpers/clients.events';
-import * as consts from '../_helpers/clients.consts';
-import * as helpers from '../_helpers/clients.helpers';
+import { $borrowersView, $borrowersForm, $borrowers, $relationshipManagers } from '@src/signals';
+import { handleEditBorrower } from '../_helpers/borrowers.events';
+import * as consts from '../_helpers/borrowers.consts';
+import * as helpers from '../_helpers/borrowers.helpers';
 
 const EditClientModal = () => {
   useEffect(() => {
-    if ($clientsView.value.showEditModal && $clients.value.selectedClient) {
-      $clientsForm.update($clients.value.selectedClient);
+    if ($borrowersView.value.showEditModal && $borrowers.value.selectedClient) {
+      $borrowersForm.update($borrowers.value.selectedClient);
     }
-  }, [$clientsView.value.showEditModal]);
+  }, [$borrowersView.value.showEditModal]);
 
   const managers = $relationshipManagers.value?.list || [];
+  // eslint-disable-next-line no-unused-vars
   const managerOptions = helpers.getManagerOptions(managers);
 
   const modalBody = (
@@ -24,8 +26,8 @@ const EditClientModal = () => {
           <UniversalInput
             label="Name"
             type="text"
-            value={$clientsForm.value.name}
-            onChange={(e) => $clientsForm.update({ name: e.target.value })}
+            value={$borrowersForm.value.name}
+            onChange={(e) => $borrowersForm.update({ name: e.target.value })}
           />
         </Col>
       </Row>
@@ -34,16 +36,16 @@ const EditClientModal = () => {
           <UniversalInput
             label="Email"
             type="email"
-            value={$clientsForm.value.email}
-            onChange={(e) => $clientsForm.update({ email: e.target.value })}
+            value={$borrowersForm.value.email}
+            onChange={(e) => $borrowersForm.update({ email: e.target.value })}
           />
         </Col>
         <Col md={6} className="mb-16">
           <UniversalInput
             label="Phone"
             type="text"
-            value={$clientsForm.value.phone_number}
-            onChange={(e) => $clientsForm.update({ phone_number: e.target.value })}
+            value={$borrowersForm.value.phone_number}
+            onChange={(e) => $borrowersForm.update({ phone_number: e.target.value })}
           />
         </Col>
       </Row>
@@ -53,10 +55,10 @@ const EditClientModal = () => {
           <UniversalInput
             type="select"
             name="kyc_status"
-            signal={$clientsForm}
+            signal={$borrowersForm}
             selectOptions={consts.KYC_STATUS_OPTIONS}
-            value={consts.KYC_STATUS_OPTIONS.find((opt) => opt.value === $clientsForm.value.kyc_status)}
-            customOnChange={(option) => $clientsForm.update({ kyc_status: option?.value })}
+            value={consts.KYC_STATUS_OPTIONS.find((opt) => opt.value === $borrowersForm.value.kyc_status)}
+            customOnChange={(option) => $borrowersForm.update({ kyc_status: option?.value })}
           />
         </Col>
         <Col md={6} className="mb-16">
@@ -64,10 +66,10 @@ const EditClientModal = () => {
           <UniversalInput
             type="select"
             name="client_risk_rating"
-            signal={$clientsForm}
+            signal={$borrowersForm}
             selectOptions={consts.RISK_RATING_OPTIONS}
-            value={consts.RISK_RATING_OPTIONS.find((opt) => opt.value === $clientsForm.value.client_risk_rating)}
-            customOnChange={(option) => $clientsForm.update({ client_risk_rating: option?.value })}
+            value={consts.RISK_RATING_OPTIONS.find((opt) => opt.value === $borrowersForm.value.client_risk_rating)}
+            customOnChange={(option) => $borrowersForm.update({ client_risk_rating: option?.value })}
           />
         </Col>
       </Row>
@@ -76,16 +78,16 @@ const EditClientModal = () => {
 
   return (
     <UniversalModal
-      show={$clientsView.value.showEditModal}
+      show={$borrowersView.value.showEditModal}
       onHide={() => {
-        $clientsView.update({ showEditModal: false });
-        $clientsForm.reset();
+        $borrowersView.update({ showEditModal: false });
+        $borrowersForm.reset();
       }}
       headerText="Edit Borrower"
       body={modalBody}
       leftBtnText="Cancel"
       rightBtnText="Save Changes"
-      rightBtnOnClick={handleEditClient}
+      rightBtnOnClick={handleEditBorrower}
     />
   );
 };

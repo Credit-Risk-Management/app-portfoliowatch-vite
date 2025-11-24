@@ -58,9 +58,7 @@ const SignalTable = ({
   );
 
   useEffect(() => {
-    // Get the current URL search parameters
     const urlParams = new URLSearchParams(window.location.search);
-    // Extract the parameters you want (e.g., sortKey, sortDirection, page)
     const sortKey = urlParams.get('sortKey');
     const sortDirection = urlParams.get('sortDirection');
     const page = urlParams.get('page') || 1;

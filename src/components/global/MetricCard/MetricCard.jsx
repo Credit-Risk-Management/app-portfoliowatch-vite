@@ -7,9 +7,9 @@ const MetricCard = ({
   onClick,
   variant = 'primary',
 }) => (
-  <Card onClick={onClick} className={`border border-${variant}-300 bg-${variant}-700`}>
-    <Card.Body className="py-40 px-32 text-white">
-      <div className="mb-16">{title}</div>
+  <Card onClick={onClick} className={`border border-${variant}-300 bg-${variant}-500`}>
+    <Card.Body className="pt-24 pb-24 px-40">
+      <div className="mb-8 lead">{title}</div>
       <h2 className="mb-0">{value}</h2>
       <SubComponent />
     </Card.Body>
