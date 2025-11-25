@@ -166,14 +166,30 @@ const LoanDetail = () => {
               )}
               <div className="mt-16 lead">Borrower Details</div>
               <div>
-                <div className="text-info-100 fw-200 mt-8">Primary Contact</div>
-                <div className="text-info-300 lead fw-500">{$loan.value?.loan?.borrower?.primaryContact || 'Unknown'}</div>
-                <div className="text-info-100 fw-200 mt-8">Email</div>
-                <div className="text-info-300 lead fw-500">{$loan.value?.loan?.borrower?.email || 'Unknown'}</div>
-                <div className="text-info-100 fw-200 mt-8">Phone</div>
-                <div className="text-info-300 lead fw-500">{$loan.value?.loan?.borrower?.phoneNumber || 'Unknown'}</div>
-                <div className="text-info-100 fw-200 mt-8">Address</div>
-                <div className="text-info-300 lead fw-500">{$loan.value?.loan?.borrower ? `${$loan.value?.loan?.borrower.streetAddress || ''}, ${$loan.value?.loan?.borrower.city || ''}, ${$loan.value?.loan?.borrower.state || ''} ${$loan.value?.loan?.borrower.zipCode || ''}`.replace(/^,\s*|,\s*$/g, '').trim() || 'Unknown' : 'Unknown'}</div>
+                {$loan.value?.loan?.borrower ? (
+                  <>
+                    <div className="text-info-100 fw-200 mt-8">Borrower Name</div>
+                    <div className="text-info-300 lead fw-500">{$loan.value?.loan?.borrower.name || 'Unknown'}</div>
+                    <div className="text-info-100 fw-200 mt-8">Borrower ID</div>
+                    <div className="text-info-300 lead fw-500">{$loan.value?.loan?.borrower.borrowerId || 'Unknown'}</div>
+                    <div className="text-info-100 fw-200 mt-8">Borrower Type</div>
+                    <div className="text-info-300 lead fw-500">{$loan.value?.loan?.borrower.borrowerType || 'Unknown'}</div>
+                    <div className="text-info-100 fw-200 mt-8">Primary Contact</div>
+                    <div className="text-info-300 lead fw-500">{$loan.value?.loan?.borrower.primaryContact || 'N/A'}</div>
+                    <div className="text-info-100 fw-200 mt-8">Email</div>
+                    <div className="text-info-300 lead fw-500">{$loan.value?.loan?.borrower.email || 'N/A'}</div>
+                    <div className="text-info-100 fw-200 mt-8">Phone</div>
+                    <div className="text-info-300 lead fw-500">{$loan.value?.loan?.borrower.phoneNumber || 'N/A'}</div>
+                    <div className="text-info-100 fw-200 mt-8">Address</div>
+                    <div className="text-info-300 lead fw-500">
+                      {$loan.value?.loan?.borrower.streetAddress || $loan.value?.loan?.borrower.city || $loan.value?.loan?.borrower.state || $loan.value?.loan?.borrower.zipCode
+                        ? `${$loan.value?.loan?.borrower.streetAddress || ''}, ${$loan.value?.loan?.borrower.city || ''}, ${$loan.value?.loan?.borrower.state || ''} ${$loan.value?.loan?.borrower.zipCode || ''}`.replace(/^,\s*|,\s*$/g, '').trim() || 'N/A'
+                        : 'N/A'}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-info-300">Borrower information not available</div>
+                )}
 
                 {$loan.value?.loan?.borrower?.secondaryContacts && $loan.value?.loan?.borrower.secondaryContacts.length > 0 && (
                   <>
@@ -315,62 +331,55 @@ const LoanDetail = () => {
       <Row>
         <Col md={12}>
           <UniversalCard headerText="Financials" bodyContainer="" className="mt-16">
-            <div className="mb-16">
-              <div className="d-flex align-items-end gap-2">
-                <div style={{ flex: 1 }}>
-                  <FileUploader
-                    name="financialFiles"
-                    signal={$financialsUploader}
-                    acceptedTypes=".pdf,.xlsx,.xls,.doc,.docx,.csv"
-                    hideNoFiles={false}
-                  />
-                </div>
-                <Button
-                  variant="primary"
-                  onClick={handleUploadFinancials}
-                  disabled={!$financialsUploader.value?.financialFiles?.length}
-                >
-                  Upload
-                </Button>
-              </div>
-            </div>
+            <Row className="my-16">
+              <Col md={6}>
+                <FileUploader
+                  name="financialFiles"
+                  signal={$financialsUploader}
+                  acceptedTypes=".pdf,.xlsx,.xls,.doc,.docx,.csv"
+                  hideNoFiles={false}
+                  onUpload={handleUploadFinancials}
+                />
 
-            {$loanDetailFinancials.value.length === 0 ? (
-              <div className="text-muted">No financial documents uploaded yet.</div>
-            ) : (
-              <ListGroup variant="flush">
-                {$loanDetailFinancials.value.map((financial) => (
-                  <ListGroup.Item key={financial.id} className="d-flex justify-content-between align-items-center">
-                    <div className="d-flex align-items-center">
-                      <FontAwesomeIcon icon={faFileAlt} className="me-12 text-primary" />
-                      <div>
-                        <div className="fw-bold">{financial.fileName}</div>
-                        <div className="small text-muted">
-                          Uploaded by {financial.uploadedBy} on {formatDate(financial.uploadedAt)}
-                          {financial.fileSize && ` • ${(financial.fileSize / 1024).toFixed(2)} KB`}
+                {$loanDetailFinancials.value.length === 0 ? (
+                  <div className="text-info-100 fw-200">No financial documents uploaded yet.</div>
+                ) : (
+                  <ListGroup variant="flush" className="mt-16">
+                    {$loanDetailFinancials.value.map((financial) => (
+                      <ListGroup.Item key={financial.id} className="d-flex justify-content-between align-items-center">
+                        <div className="d-flex align-items-center">
+                          <FontAwesomeIcon icon={faFileAlt} className="me-12 text-secondary-100" size="lg" />
+                          <div>
+                            <div className="fw-bold text-white">{financial.fileName}</div>
+                            <div className="small text-info-100 fw-200">
+                              Uploaded by {financial.uploadedBy} on {formatDate(financial.uploadedAt)}
+                              {financial.fileSize && ` • ${(financial.fileSize / 1024).toFixed(2)} KB`}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                    <div className="d-flex gap-2">
-                      <Button
-                        variant="outline-primary"
-                        size="sm"
-                        onClick={() => handleDownloadFinancial(financial)}
-                      >
-                        <FontAwesomeIcon icon={faDownload} />
-                      </Button>
-                      <Button
-                        variant="outline-danger"
-                        size="sm"
-                        onClick={() => handleDeleteFinancial(financial.id)}
-                      >
-                        <FontAwesomeIcon icon={faTrash} />
-                      </Button>
-                    </div>
-                  </ListGroup.Item>
-                ))}
-              </ListGroup>
-            )}
+                        <div className="d-flex gap-2">
+                          <Button
+                            variant="outline-primary-100"
+                            size="sm"
+                            onClick={() => handleDownloadFinancial(financial)}
+                            className="me-8"
+                          >
+                            <FontAwesomeIcon icon={faDownload} />
+                          </Button>
+                          <Button
+                            variant="outline-danger-100"
+                            size="sm"
+                            onClick={() => handleDeleteFinancial(financial.id)}
+                          >
+                            <FontAwesomeIcon icon={faTrash} />
+                          </Button>
+                        </div>
+                      </ListGroup.Item>
+                    ))}
+                  </ListGroup>
+                )}
+              </Col>
+            </Row>
           </UniversalCard>
           <UniversalCard headerText="Comments" className="mt-16">
             <LoanComments loanId={loanId} />

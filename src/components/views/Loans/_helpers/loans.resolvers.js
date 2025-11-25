@@ -6,7 +6,9 @@ import relationshipManagersApi from '@src/api/relationshipManagers.api';
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import loansApi from '@src/api/loans.api';
 import commentsApi from '@src/api/comments.api';
+import documentsApi from '@src/api/documents.api';
 import { $comments } from '@src/signals';
+import { $loanDetailFinancials } from './loans.consts';
 
 export const loadReferenceData = async () => {
   try {
@@ -63,18 +65,30 @@ export const fetchLoanDetail = async (loanId) => {
     $loan.update({ isLoading: true });
     $watchScoreBreakdown.update({ isLoading: true });
     
-    const [loanResponse, commentsResponse, watchScoreResponse] = await Promise.all([
+    const [loanResponse, commentsResponse, watchScoreResponse, documentsResponse] = await Promise.all([
       loansApi.getById(loanId),
       commentsApi.getByLoan(loanId),
       loansApi.getWatchScoreBreakdown(loanId),
+      documentsApi.getAll({ loanId, documentType: 'FINANCIAL' }),
     ]);
 
-    $loan.update({ loan: loanResponse.data, isLoading: false });
-    $comments.update({ list: commentsResponse.data || [] });
+    // The API client interceptor returns response.data, so loanResponse is { success: true, data: loan }
+    // Extract the loan object from the response (handle both wrapped and unwrapped responses)
+    const loanData = loanResponse?.data || loanResponse;
+    
+    $loan.update({ loan: loanData, isLoading: false });
+    $comments.update({ list: commentsResponse?.data || commentsResponse || [] });
     $watchScoreBreakdown.update({ 
-      breakdown: watchScoreResponse.data, 
+      breakdown: watchScoreResponse?.data || watchScoreResponse, 
       isLoading: false 
     });
+    
+    // Update financial documents list
+    const financials = documentsResponse?.data || documentsResponse || [];
+    $loanDetailFinancials.value = financials.map(doc => ({
+      ...doc,
+      fileName: doc.documentName,
+    }));
   } catch (error) {
     console.error('Failed to fetch loan detail:', error);
     $loan.update({ loan: null, isLoading: false });

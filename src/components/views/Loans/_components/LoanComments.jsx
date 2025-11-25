@@ -26,10 +26,10 @@ const LoanComments = ({ loanId }) => {
           {localComments.map((c) => (
             <ListGroup.Item key={c.id}>
               <div className="d-flex justify-content-between">
-                <div className="fw-bold">{c.userName}</div>
-                <div className="text-muted">{formatDate(c.createdAt)}</div>
+                <div className="fw-bold text-info-100">{c.userName}</div>
+                <div className="text-info-100 fw-200">{formatDate(c.createdAt)}</div>
               </div>
-              <div>{c.text}</div>
+              <div className="text-info-100 fw-200">{c.text}</div>
             </ListGroup.Item>
           ))}
         </ListGroup>
@@ -39,4 +39,3 @@ const LoanComments = ({ loanId }) => {
 };
 
 export default LoanComments;
-
