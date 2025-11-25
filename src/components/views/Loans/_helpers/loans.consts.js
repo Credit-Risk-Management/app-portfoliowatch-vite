@@ -44,3 +44,7 @@ export const $managers = signal([]);
 export const $loanDetailNewComment = signal('');
 export const $loanDetailShowSecondaryContacts = signal(false);
 export const $loanDetailFinancials = signal([]);
+
+export const $loanDetailView = Signal({
+  showEditLoanModal: false,
+});
