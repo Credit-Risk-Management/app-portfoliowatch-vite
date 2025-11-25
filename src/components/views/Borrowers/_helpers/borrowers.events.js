@@ -57,13 +57,19 @@ export const handleBorrowerFilterChange = async () => {
       ? $borrowersFilter.value.borrowerType.filter((type) => type !== '').join(',')
       : $borrowersFilter.value.borrowerType;
 
+    const relationshipManagerValue = Array.isArray($borrowersFilter.value.relationshipManager)
+      ? $borrowersFilter.value.relationshipManager.filter((manager) => manager !== '').join(',')
+      : $borrowersFilter.value.relationshipManager;
+
+    console.log('relationshipManagerValue', relationshipManagerValue);
+
     const filters = {
       searchTerm: $borrowersFilter.value.searchTerm,
       borrowerType: borrowerTypeValue,
-      kycStatus: $borrowersFilter.value.kycStatus,
-      riskRating: $borrowersFilter.value.riskRating,
+      relationshipManager: relationshipManagerValue,
     };
-    await resolvers.fetchAndSetBorrowerData(filters);
+
+    await resolvers.fetchAndSetBorrowerData(filters, false);
   } catch (error) {
     dangerAlert(error.message || 'Failed to filter borrowers');
   } finally {

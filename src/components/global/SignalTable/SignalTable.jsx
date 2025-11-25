@@ -72,7 +72,7 @@ const SignalTable = ({
   }, [$filter]);
 
   return (
-    <div className="p-0 overflow-hidden" style={{ borderRadius: 12 }}>
+    <div className="p-0 overflow-hidden bg-info-800 border border-info-500" style={{ borderRadius: 12 }}>
       <Table striped responsive style={{ fontSize: 16 }} hover>
         <thead>
           <tr>
@@ -198,7 +198,8 @@ const SignalTable = ({
       </Table>
       {hasPagination && (
         <Pagination
-          itemsPerPageAmount={paginationMaxButtonAmount}
+          $filter={$filter}
+          itemsPerPageAmount={itemsPerPageAmount}
           paginationMaxButtonAmount={paginationMaxButtonAmount}
           totalItemsCount={totalCount}
           currentPageItemsCount={currentPageItemsCount || 0}

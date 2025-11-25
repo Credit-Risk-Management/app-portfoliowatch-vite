@@ -2,11 +2,11 @@ import { Dropdown } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEllipsisV } from '@fortawesome/free-solid-svg-icons';
 
-const ContextMenu = ({ items = [], onItemClick = () => {} }) => (
+const ContextMenu = ({ items = [], onItemClick = () => { } }) => (
   <Dropdown onClick={(e) => e.stopPropagation()}>
     <Dropdown.Toggle
       variant="link"
-      className="text-dark p-0"
+      className="text-white p-0"
       id="dropdown-basic"
     >
       <FontAwesomeIcon icon={faEllipsisV} />

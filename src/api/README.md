@@ -135,7 +135,7 @@ export const loansApi = wrapApiWithDebounce(loansApiBase, {
   getAll: 350,
   getById: 300,
   getByBorrower: 350,
-  getByOfficer: 350,
+  getByRelationshipManager: 350,
   // create, update, delete, computeWatchScore execute immediately
 });
 ```

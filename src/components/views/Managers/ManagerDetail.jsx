@@ -108,7 +108,7 @@ const ManagerDetail = () => {
   }, [manager, allTeamMembers]);
 
   // Get loans for this manager and their team
-  const teamLoans = useMemo(() => loans.filter((loan) => teamMemberIds.includes(loan.loan_officer_id)), [loans, teamMemberIds]);
+  const teamLoans = useMemo(() => loans.filter((loan) => teamMemberIds.includes(loan.relationshipManagerId)), [loans, teamMemberIds]);
 
   // Get clients for this manager
   const managerClients = useMemo(() => borrowers.filter((client) => client.relationship_manager_id === manager?.id), [borrowers, manager]);
@@ -117,39 +117,41 @@ const ManagerDetail = () => {
   const teamMetrics = useMemo(() => {
     const totalPortfolioValue = teamLoans.reduce((sum, loan) => sum + (loan.principal_amount || 0), 0);
     const numberOfLoans = teamLoans.length;
-    const averageRiskRating = numberOfLoans > 0
-      ? teamLoans.reduce((sum, loan) => sum + (loan.current_risk_rating || 0), 0) / numberOfLoans
+    const averageWatchScore = numberOfLoans > 0
+      ? teamLoans.reduce((sum, loan) => sum + (parseFloat(loan.watch_score) || 0), 0) / numberOfLoans
       : 0;
     const numberOfClients = managerClients.length;
     const teamSize = allTeamMembers.length;
 
-    // Calculate risk rating distribution by count
-    const riskRatingCounts = {};
-    const riskRatingAmounts = {};
+    // Calculate watch score distribution by count
+    const watchScoreCounts = {};
+    const watchScoreAmounts = {};
 
     teamLoans.forEach((loan) => {
-      const rating = loan.current_risk_rating;
-      riskRatingCounts[rating] = (riskRatingCounts[rating] || 0) + 1;
-      riskRatingAmounts[rating] = (riskRatingAmounts[rating] || 0) + parseFloat(loan.principal_amount);
+      const score = loan.watch_score;
+      if (score !== null && score !== undefined) {
+        watchScoreCounts[score] = (watchScoreCounts[score] || 0) + 1;
+        watchScoreAmounts[score] = (watchScoreAmounts[score] || 0) + parseFloat(loan.principal_amount);
+      }
     });
 
     // Format data for pie charts
-    const riskRatingCountData = Object.keys(riskRatingCounts).map((rating) => ({
-      name: RISK_RATING_LABELS[rating],
-      value: riskRatingCounts[rating],
-      rating: parseInt(rating, 10),
+    const riskRatingCountData = Object.keys(watchScoreCounts).map((score) => ({
+      name: `Score ${score}`,
+      value: watchScoreCounts[score],
+      rating: parseFloat(score),
     }));
 
-    const riskRatingAmountData = Object.keys(riskRatingAmounts).map((rating) => ({
-      name: RISK_RATING_LABELS[rating],
-      value: riskRatingAmounts[rating],
-      rating: parseInt(rating, 10),
+    const riskRatingAmountData = Object.keys(watchScoreAmounts).map((score) => ({
+      name: `Score ${score}`,
+      value: watchScoreAmounts[score],
+      rating: parseFloat(score),
     }));
 
     return {
       totalPortfolioValue,
       numberOfLoans,
-      averageRiskRating: averageRiskRating.toFixed(2),
+      averageRiskRating: averageWatchScore.toFixed(2),
       numberOfClients,
       teamSize,
       riskRatingCountData,
@@ -159,7 +161,7 @@ const ManagerDetail = () => {
 
   const handlePieClick = (data) => {
     if (data && data.rating) {
-      navigate(`/loans?riskRating=${data.rating}`);
+      navigate(`/loans?watchScore=${data.rating}`);
     }
   };
 

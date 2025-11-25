@@ -1,41 +1,22 @@
-import { $loans, $loansView, $loansFilter, $loansForm, $reports } from '@src/signals';
+import { $loans, $loansView, $loansFilter, $loansForm, $reports, $comments } from '@src/signals';
 import loansApi from '@src/api/loans.api';
 import reportsApi from '@src/api/reports.api';
+import commentsApi from '@src/api/comments.api';
+import { $loan } from '@src/consts/consts';
 import { dangerAlert, successAlert, infoAlert } from '@src/components/global/Alert/_helpers/alert.events';
-
-export const fetchLoans = async () => {
-  try {
-    $loansView.update({ isTableLoading: true });
-
-    const { searchTerm, interestType, riskRating, loanOfficer } = $loansFilter.value;
-
-    const filters = {
-      searchTerm,
-      interestType,
-      riskRating,
-      loanOfficer,
-    };
-
-    const response = await loansApi.getAll(filters);
-
-    $loans.update({
-      list: response?.data || [],
-      totalCount: response?.count || 0,
-    });
-  } catch (error) {
-    $loans.update({ list: [], totalCount: 0 });
-    dangerAlert(`Failed to fetch loans: ${error?.message || 'Unknown error'}`);
-  } finally {
-    $loansView.update({ isTableLoading: false });
-  }
-};
+import { fetchAndSetLoans } from '@src/components/views/Loans/_helpers/loans.resolvers';
+import {
+  $financialsUploader,
+  $loanDetailNewComment,
+  $loanDetailFinancials,
+} from './loans.consts';
 
 export const handleAddLoan = async () => {
   try {
     const formData = $loansForm.value;
 
     // Track who made the override if financial metrics were entered
-    const hasFinancialMetrics = formData.gross_revenue || formData.net_income || formData.ebitda;
+    const hasFinancialMetrics = formData.grossRevenue || formData.netIncome || formData.ebitda;
     const overrideData = hasFinancialMetrics ? {
       financialMetricsOverrideBy: 'Current User', // TODO: Get from auth context
       financialMetricsOverrideDate: new Date().toISOString(),
@@ -51,7 +32,7 @@ export const handleAddLoan = async () => {
     $loansView.update({ showAddModal: false });
     $loansForm.reset();
 
-    await fetchLoans();
+    await fetchAndSetLoans({ isShowLoader: true });
   } catch (error) {
     dangerAlert(error);
     throw error;
@@ -91,7 +72,7 @@ export const handleEditLoan = async () => {
     $loansView.update({ showEditModal: false });
     $loansForm.reset();
 
-    await fetchLoans();
+    await fetchAndSetLoans({ isShowLoader: true });
   } catch (error) {
     dangerAlert(error);
     throw error;
@@ -106,7 +87,7 @@ export const handleDeleteLoan = async (loanId) => {
 
     $loansView.update({ showDeleteModal: false });
 
-    await fetchLoans();
+    await fetchAndSetLoans({ isShowLoader: true });
   } catch (error) {
     dangerAlert(error);
     throw error;
@@ -124,12 +105,12 @@ export const handleSaveReport = async () => {
   const parameters = {
     searchTerm: $loansFilter.value.searchTerm,
     interestType: $loansFilter.value.interestType,
-    riskRating: $loansFilter.value.riskRating,
-    loanOfficer: $loansFilter.value.loanOfficer,
+    watchScore: $loansFilter.value.watchScore,
+    relationshipManager: $loansFilter.value.relationshipManager,
   };
 
   await reportsApi.create({
-    report_name: reportName,
+    reportName,
     parameters,
   });
   const updatedReportsResponse = await reportsApi.getAll();
@@ -143,14 +124,72 @@ export const handleComputeWatchScores = async () => {
     infoAlert('Computing WATCH Scores...');
 
     const result = await loansApi.computeAllWatchScores();
+    const { total, computed, failed } = result.data || {};
 
-    successAlert(`Successfully computed ${result.computed} out of ${result.total} scores`);
+    // Build message based on results
+    let message = `Computed ${computed || 0} out of ${total || 0} scores`;
+    if (failed > 0) {
+      message += ` (${failed} failed)`;
+    }
+
+    if (failed === total) {
+      // All failed - show warning
+      dangerAlert(message);
+    } else if (failed > 0) {
+      // Partial success - show warning
+      dangerAlert(message);
+    } else {
+      // All succeeded - show success
+      successAlert(message);
+    }
 
     // Refresh loans to show updated scores
-    await fetchLoans();
+    await fetchAndSetLoans({ isShowLoader: true });
   } catch (error) {
     dangerAlert(`Failed to compute WATCH scores: ${error.message}`);
   } finally {
     $loansView.update({ isComputingWatchScores: false });
   }
+};
+
+export const handleAddComment = async (loanId) => {
+  const text = $loanDetailNewComment.value?.trim();
+  if (!text) return;
+
+  const newCommentData = {
+    loanId: $loan.value?.loan?.id,
+    text,
+  };
+
+  await commentsApi.create(newCommentData);
+  const updatedCommentsResponse = await commentsApi.getByLoan(loanId);
+  $comments.update({ list: updatedCommentsResponse.data || [] });
+  $loanDetailNewComment.value = '';
+};
+
+export const handleUploadFinancials = () => {
+  const files = $financialsUploader.value?.financialFiles || [];
+  if (!files.length) return;
+
+  const newFinancials = files.map((file) => ({
+    id: `${Date.now()}_${Math.random()}`,
+    loanId: $loan.value?.loan?.id,
+    fileName: file.name,
+    fileSize: file.size,
+    fileType: file.type,
+    uploadedAt: new Date().toISOString(),
+    uploadedBy: 'Current User',
+  }));
+
+  $loanDetailFinancials.value = [...$loanDetailFinancials.value, ...newFinancials];
+  $financialsUploader.update({ financialFiles: [] });
+};
+
+export const handleDeleteFinancial = (financialId) => {
+  $loanDetailFinancials.value = $loanDetailFinancials.value.filter((f) => f.id !== financialId);
+};
+
+export const handleDownloadFinancial = (financial) => {
+  // In a real implementation, this would download the file from storage
+  // Download logic for financial.fileName
 };

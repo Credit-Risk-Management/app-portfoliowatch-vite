@@ -7,7 +7,7 @@ export const getManagerName = (managerId, managers) => {
 };
 
 export const getDirectReports = (managerId, managers) => 
-  managers.filter((m) => m.manager_id === managerId);
+  managers.filter((m) => m.managerId === managerId);
 
 export const getReportsCount = (managerId, managers) => {
   const reports = getDirectReports(managerId, managers);
@@ -25,11 +25,11 @@ export const getAllReportsRecursive = (managerId, managers) => {
 
 export const getLoansCount = (managerId, managers, loans, includeTeam = true) => {
   if (!includeTeam) {
-    return loans.filter((loan) => loan.loan_officer_id === managerId).length;
+    return loans.filter((loan) => loan.relationshipManagerId === managerId).length;
   }
 
   const teamMembers = [managerId, ...getAllReportsRecursive(managerId, managers).map((m) => m.id)];
-  return loans.filter((loan) => teamMembers.includes(loan.loan_officer_id)).length;
+  return loans.filter((loan) => teamMembers.includes(loan.relationshipManagerId)).length;
 };
 
 export const parseStatusFilter = (value) => {
@@ -39,10 +39,10 @@ export const parseStatusFilter = (value) => {
 };
 
 export const getManagerOptionsWithNone = (managers, excludeId = null) => {
-  const filteredManagers = managers.filter((m) => m.is_active && m.id !== excludeId);
+  const filteredManagers = managers.filter((m) => m.isActive && m.id !== excludeId);
   const managerOptions = filteredManagers.map((m) => ({
     value: m.id,
-    label: `${m.name} - ${m.position_title}`,
+    label: `${m.name} - ${m.positionTitle}`,
   }));
   
   return [

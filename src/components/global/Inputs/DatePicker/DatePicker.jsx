@@ -5,8 +5,6 @@ const DatePicker = ({
   name,
   signal = $form,
   value,
-  variant = 'form-control', // || form-control-border
-  className,
 }) => {
   if (!signal || !name) {
     return new Error(`ZipInput has no signal or name (Name: ${name})`);
@@ -16,7 +14,7 @@ const DatePicker = ({
 
   return (
     <Form.Control
-      className={`${variant} ${className} ${val ? '' : 'text-dark-300'} shadow-none py-8 ps-16`}
+      className="bg-info-800 border-0 text-info-100"
       type="date"
       value={val ?? ''}
       onChange={(e) => signal.update({ [name]: e.target.value })}

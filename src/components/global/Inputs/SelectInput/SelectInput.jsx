@@ -67,7 +67,7 @@ const SelectInput = ({
         multiValue: (base) => ({
           ...base,
           backgroundColor: '#68C0CA',
-          color: '#2D5256',
+          color: '#D0F5FA',
           borderRadius: '10px',
           margin: '0',
           marginRight: '4px',
@@ -75,16 +75,16 @@ const SelectInput = ({
         }),
         multiValueLabel: (base) => ({
           ...base,
-          color: 'dark',
+          color: '#D0F5FA',
           paddingLeft: '10px',
         }),
         multiValueRemove: (base) => ({
           ...base,
-          color: 'dark',
+          color: '#D0F5FA',
           borderRadius: '10px',
           ':hover': {
             backgroundColor: '#EDEDED',
-            color: 'dark',
+            color: '#D0F5FA',
           },
         }),
         input: (base) => ({
@@ -101,8 +101,8 @@ const SelectInput = ({
           paddingTop: '0',
           paddingBottom: '0',
           paddingRight: '0',
-          color: 'dark',
-          ':hover': { color: 'dark' },
+          color: '#D0F5FA',
+          ':hover': { color: '#D0F5FA' },
         }),
         indicatorSeparator: (base) => ({
           ...base,
@@ -110,8 +110,14 @@ const SelectInput = ({
         }),
         option: (base, state) => ({
           ...base,
-          backgroundColor: state.isSelected ? '#01738F' : '',
-          ':hover': { backgroundColor: state.isSelected ? '' : '#B8E7F2' },
+          backgroundColor: state.isSelected ? '#2D5256' : '#40777D',
+          ':hover': {
+            backgroundColor: state.isSelected ? '' : '#5498A3',
+          },
+        }),
+        menu: (base) => ({
+          ...base,
+          backgroundColor: '#2D5256',
         }),
       }}
     />

@@ -1,37 +1,46 @@
+import { Signal } from '@fyclabs/tools-fyc-react/signals';
+import { signal } from '@preact/signals-react';
+import { WATCH_SCORE_OPTIONS } from '@src/consts/consts';
+
 export const INTEREST_TYPE_OPTIONS = [
   { value: 'fixed', label: 'Fixed' },
   { value: 'variable', label: 'Variable' },
 ];
 
 export const LOAN_RISK_RATING_OPTIONS = [
-  { value: 1, label: '1 - Minimal Risk' },
-  { value: 2, label: '2 - Low Risk' },
-  { value: 3, label: '3 - Moderate Risk' },
-  { value: 4, label: '4 - Elevated Risk' },
-  { value: 5, label: '5 - High Risk' },
+  { value: 1, label: WATCH_SCORE_OPTIONS[1].label },
+  { value: 2, label: WATCH_SCORE_OPTIONS[2].label },
+  { value: 3, label: WATCH_SCORE_OPTIONS[3].label },
+  { value: 4, label: WATCH_SCORE_OPTIONS[4].label },
+  { value: 5, label: WATCH_SCORE_OPTIONS[5].label },
 ];
 
 export const TABLE_HEADERS = [
-  { key: 'loan_number', value: 'Loan Number', sortKey: 'loan_number' },
-  { key: 'watch_score', value: 'WATCH Score', sortKey: 'watch_score' },
-  { key: 'company_name', value: 'Company', sortKey: 'company_name' },
-  { key: 'primary_contact', value: 'Primary Contact', sortKey: 'primary_contact' },
-  { key: 'principal_amount', value: 'Principal', sortKey: 'principal_amount' },
-  { key: 'payment_amount', value: 'Payment', sortKey: 'payment_amount' },
-  { key: 'next_payment_due_date', value: 'Next Due Date', sortKey: 'next_payment_due_date' },
-  { key: 'debt_service', value: 'Debt Service', sortKey: 'debt_service' },
-  { key: 'current_ratio', value: 'Current Ratio', sortKey: 'current_ratio' },
+  { key: 'loanId', value: 'Loan ID', sortKey: 'loanId' },
+  { key: 'watchScore', value: 'WATCH Score', sortKey: 'watchScore' },
+  { key: 'borrowerName', value: 'Borrower', sortKey: 'borrowerName' },
+  { key: 'principalAmount', value: 'Principal', sortKey: 'principalAmount' },
+  { key: 'paymentAmount', value: 'Payment', sortKey: 'paymentAmount' },
+  { key: 'nextPaymentDueDate', value: 'Next Due Date', sortKey: 'nextPaymentDueDate' },
+  { key: 'debtService', value: 'Debt Service', sortKey: 'debtService' },
+  { key: 'currentRatio', value: 'Current Ratio', sortKey: 'currentRatio' },
   { key: 'liquidity', value: 'Liquidity', sortKey: 'liquidity' },
-  { key: 'loan_officer', value: 'Loan Officer' },
-  { key: 'manager', value: 'Manager' },
+  { key: 'relationshipManager', value: 'Relationship Manager' },
   { key: 'actions', value: 'Actions' },
 ];
 
 export const RISK_RATING_LABELS = {
-  1: '1 - Minimal Risk',
-  2: '2 - Low Risk',
-  3: '3 - Moderate Risk',
-  4: '4 - Elevated Risk',
-  5: '5 - High Risk',
+  1: WATCH_SCORE_OPTIONS[1].label,
+  2: WATCH_SCORE_OPTIONS[2].label,
+  3: WATCH_SCORE_OPTIONS[3].label,
+  4: WATCH_SCORE_OPTIONS[4].label,
+  5: WATCH_SCORE_OPTIONS[5].label,
 };
 
+// Signals for loan detail component state
+export const $financialsUploader = Signal({ financialFiles: [] });
+export const $borrowers = signal([]);
+export const $managers = signal([]);
+export const $loanDetailNewComment = signal('');
+export const $loanDetailShowSecondaryContacts = signal(false);
+export const $loanDetailFinancials = signal([]);

@@ -23,7 +23,9 @@ const Search = ({
       className="bg-transparent border-0 text-info-100"
       onChange={(e) => {
         signal.update({ [name]: e.target.value });
-        onChange();
+        if (onChange) {
+          onChange();
+        }
       }}
     />
     <FontAwesomeIcon icon={faSearch} className="ms-4 text-info-50 text-info-600" />

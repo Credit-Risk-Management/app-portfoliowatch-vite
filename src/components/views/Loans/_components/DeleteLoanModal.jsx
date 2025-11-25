@@ -19,9 +19,9 @@ const DeleteLoanModal = () => {
     >
       {loan ? (
         <div>
-          <p>Are you sure you want to delete this loan?</p>
-          <p className="fw-700">{loan.borrower_name} - Loan #{loan.loan_number}</p>
-          <p className="text-danger">This action cannot be undone.</p>
+          <p className="text-white">Are you sure you want to delete this loan?</p>
+          <p className="fw-700">{loan.borrowerName} - Loan #{loan.loanNumber}</p>
+          <p className="text-danger-200">This action cannot be undone.</p>
         </div>
       ) : null}
     </UniversalModal>

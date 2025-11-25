@@ -30,7 +30,7 @@ const Reports = () => {
 
   const rows = helpers.formatLoansForTable(filteredLoans, managers).map((loan) => ({
     ...loan,
-    current_risk_rating: () => <StatusBadge status={loans.find((l) => l.id === loan.id)?.current_risk_rating} type="risk" />,
+    current_risk_rating: () => <StatusBadge status={loans.find((l) => l.id === loan.id)?.currentRiskRating} type="risk" />,
   }));
 
   return (
@@ -57,9 +57,9 @@ const Reports = () => {
                       className="d-flex justify-content-between align-items-center"
                     >
                       <div className="flex-grow-1">
-                        <div className="fw-600">{report.report_name}</div>
+                        <div className="fw-600">{report.reportName}</div>
                         <small className="text-muted">
-                          {new Date(report.created_at).toLocaleDateString()}
+                          {new Date(report.createdAt).toLocaleDateString()}
                         </small>
                       </div>
                       <Button
@@ -86,9 +86,9 @@ const Reports = () => {
             <>
               <UniversalCard bodyContainer="" className="mb-24">
                 <div className="d-flex justify-content-between align-items-center mb-16">
-                  <div className="lead text-dark">{selectedReport.report_name}</div>
+                  <div className="lead text-dark">{selectedReport.reportName}</div>
                   <small className="text-muted">
-                    Created: {new Date(selectedReport.created_at).toLocaleString()}
+                    Created: {new Date(selectedReport.createdAt).toLocaleString()}
                   </small>
                 </div>
                 <LoanChart loans={filteredLoans} />

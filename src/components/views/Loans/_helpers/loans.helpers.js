@@ -1,28 +1,9 @@
-import { $borrowers, $relationshipManagers } from '@src/signals';
+import { $borrowers } from '@src/signals';
 
 /**
  * Finds and returns a client/borrower by ID
  */
-export const getClientById = (clientId) => 
-  ($borrowers.value?.list || []).find((client) => client.id === clientId) || null;
-
-/**
- * Returns the name of a loan officer by their ID
- */
-export const getLoanOfficerName = (officerId) => {
-  const officer = ($relationshipManagers.value?.list || []).find((m) => m.id === officerId);
-  return officer ? officer.name : '-';
-};
-
-/**
- * Returns the name of a manager for a given loan officer
- */
-export const getManagerName = (officerId) => {
-  const officer = ($relationshipManagers.value?.list || []).find((m) => m.id === officerId);
-  if (!officer || !officer.managerId) return '-';
-  const manager = ($relationshipManagers.value?.list || []).find((m) => m.id === officer.managerId);
-  return manager ? manager.name : '-';
-};
+export const getClientById = (clientId) => ($borrowers.value?.list || []).find((client) => client.id === clientId) || null;
 
 /**
  * Formats a numeric ratio value to 2 decimal places
@@ -42,13 +23,12 @@ export const formatDate = (dateString) => {
 };
 
 /**
- * Returns loan officer options for dropdown
+ * Returns relationship manager options for dropdown
  */
-export const getLoanOfficerOptions = (managers) => 
-  managers.map((m) => ({
-    value: m.id,
-    label: m.name,
-  }));
+export const getRelationshipManagerOptions = (managers) => managers.map((m) => ({
+  value: m.id,
+  label: m.name,
+}));
 
 /**
  * Returns borrower options for dropdown
@@ -68,11 +48,11 @@ export const handleBorrowerChange = (option, borrowers, updateForm) => {
   if (option?.value) {
     const client = borrowers.find((c) => c.id === option.value);
     updateForm({
-      borrower_id: option.value,
-      borrower_name: client?.name || '',
+      borrowerId: option.value,
+      borrowerName: client?.name || '',
     });
   } else {
-    updateForm({ borrower_id: null });
+    updateForm({ borrowerId: null });
   }
 };
 
@@ -87,5 +67,49 @@ export const formatPercentage = (value) => {
 /**
  * Returns the label for a risk rating
  */
-export const getRiskRatingLabel = (rating, labels) => 
-  labels[rating] || rating;
+export const getRiskRatingLabel = (rating, labels) => labels[rating] || rating;
+
+/**
+ * Formats a percentage value (alias for formatPercentage, but handles empty strings)
+ */
+export const formatPercent = (value) => {
+  if (value === null || value === undefined || value === '') return '-';
+  const num = Number(value);
+  if (Number.isNaN(num)) return '-';
+  return `${num.toFixed(2)}%`;
+};
+
+/**
+ * Calculate covenant status and return variant for color coding
+ * All covenants: higher actual is better (actual should be >= covenant)
+ */
+export const getCovenantStatus = (actual, covenant) => {
+  if (!actual || !covenant) return { variant: 'secondary', status: 'N/A', percentage: null };
+
+  const percentage = (actual / covenant) * 100;
+
+  if (actual >= covenant) {
+    return { variant: 'success', status: 'Meeting', percentage };
+  } if (percentage >= 90) {
+    return { variant: 'warning', status: 'Warning', percentage };
+  }
+  return { variant: 'danger', status: 'Below', percentage };
+};
+
+/**
+ * Get health score color class based on score value
+ */
+export const getHealthScoreColor = (score) => {
+  if (score >= 80) return 'text-success';
+  if (score >= 60) return 'text-warning';
+  return 'text-danger';
+};
+
+/**
+ * Convert markdown links to HTML anchor tags
+ */
+export const renderMarkdownLinks = (text) => {
+  if (!text) return '';
+  // Replace [text](url) with <a> tags
+  return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+};

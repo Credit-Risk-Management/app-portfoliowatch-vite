@@ -1,6 +1,6 @@
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import { Container, Row, Col, Badge } from 'react-bootstrap';
-import { faEye, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faEdit, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '@src/components/global/PageHeader';
 import SignalTable from '@src/components/global/SignalTable';
@@ -12,6 +12,7 @@ import {
   $relationshipManagersView,
   $loans,
 } from '@src/signals';
+import SelectInput from '@src/components/global/Inputs/SelectInput';
 import { fetchManagers } from './_helpers/managers.events';
 import AddManagerModal from './_components/AddManagerModal';
 import EditManagerModal from './_components/EditManagerModal';
@@ -36,12 +37,12 @@ const Managers = () => {
 
   const rows = managers.map((manager) => ({
     ...manager,
-    manager: helpers.getManagerName(manager.manager_id, managers),
+    manager: helpers.getManagerName(manager.managerId, managers),
     reports_count: helpers.getReportsCount(manager.id, managers),
     loans_count: helpers.getLoansCount(manager.id, managers, loans, true),
     status: () => (
-      <Badge bg={manager.is_active ? 'success' : 'secondary'}>
-        {manager.is_active ? 'Active' : 'Inactive'}
+      <Badge bg={manager.isActive ? 'success' : 'secondary'}>
+        {manager.isActive ? 'Active' : 'Inactive'}
       </Badge>
     ),
     actions: () => (
@@ -69,6 +70,7 @@ const Managers = () => {
           title="Relationship Managers"
           actionButton
           actionButtonText="Add Manager"
+          actionButtonIcon={faPlus}
           onActionClick={() => $relationshipManagersView.update({ showAddModal: true })}
         />
 
@@ -81,18 +83,35 @@ const Managers = () => {
             />
           </Col>
           <Col md={3}>
-            <select
-              className="form-select"
-              value={$relationshipManagersFilter.value.isActive === true ? 'active' : $relationshipManagersFilter.value.isActive === false ? 'inactive' : 'all'}
-              onChange={(e) => {
-                const value = helpers.parseStatusFilter(e.target.value);
-                $relationshipManagersFilter.update({ isActive: value, page: 1 });
+            <SelectInput
+              name="isActive"
+              signal={$relationshipManagersFilter}
+              value={
+                // eslint-disable-next-line no-nested-ternary
+                $relationshipManagersFilter.value.isActive === true
+                  ? 'active'
+                  : $relationshipManagersFilter.value.isActive === false
+                    ? 'inactive'
+                    : 'all'
+              }
+              options={[
+                { value: 'all', label: 'All Statuses' },
+                { value: 'active', label: 'Active Only' },
+                { value: 'inactive', label: 'Inactive Only' },
+              ]}
+              onChange={() => {
+                // SelectInput handles signal.update already, but we want consistent filter logic.
+                // So manually parse and set.
+                const val = $relationshipManagersFilter.value.isActive;
+                let parsed;
+                if (val === 'active') parsed = true;
+                else if (val === 'inactive') parsed = false;
+                else parsed = null;
+                $relationshipManagersFilter.update({ isActive: parsed, page: 1 });
               }}
-            >
-              <option value="all">All Statuses</option>
-              <option value="active">Active Only</option>
-              <option value="inactive">Inactive Only</option>
-            </select>
+              notClearable
+              placeholder="Status"
+            />
           </Col>
         </Row>
 

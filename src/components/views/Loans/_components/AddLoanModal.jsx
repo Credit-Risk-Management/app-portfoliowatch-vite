@@ -1,6 +1,7 @@
 import { Form, Row, Col } from 'react-bootstrap';
 import UniversalModal from '@src/components/global/UniversalModal';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
+import SelectInput from '@src/components/global/Inputs/SelectInput';
 import DatePicker from '@src/components/global/Inputs/DatePicker';
 import { $loansView, $loansForm, $relationshipManagers, $borrowers } from '@src/signals';
 import { handleAddLoan } from '../_helpers/loans.events';
@@ -11,7 +12,7 @@ const AddLoanModal = () => {
   const managers = $relationshipManagers.value?.list || [];
   const borrowers = $borrowers.value?.list || [];
 
-  const loanOfficerOptions = helpers.getLoanOfficerOptions(managers);
+  const relationshipManagerOptions = helpers.getRelationshipManagerOptions(managers);
   const borrowerOptions = helpers.getBorrowerOptions(borrowers);
 
   return (
@@ -21,33 +22,33 @@ const AddLoanModal = () => {
         $loansView.update({ showAddModal: false });
         $loansForm.reset();
       }}
+      closeButton
       headerText="Add New Loan"
       leftBtnText="Cancel"
       rightBtnText="Add Loan"
       rightBtnOnClick={handleAddLoan}
-      size="xl"
+      size="fullscreen"
     >
-      <Form>
-        <h6 className="mb-16 fw-700">Basic Information</h6>
+      <Form className="text-white">
+        <div className="lead mb-16">Basic Information</div>
         <Row>
           <Col md={6} className="mb-16">
             <Form.Label>Loan Number</Form.Label>
             <UniversalInput
               type="text"
-              name="loan_number"
+              name="loanNumber"
               signal={$loansForm}
               placeholder="Enter loan number"
             />
           </Col>
           <Col md={6} className="mb-16">
             <Form.Label>Type of Interest</Form.Label>
-            <UniversalInput
-              type="select"
-              name="type_of_interest"
+            <SelectInput
+              name="typeOfInterest"
               signal={$loansForm}
-              selectOptions={consts.INTEREST_TYPE_OPTIONS}
-              value={consts.INTEREST_TYPE_OPTIONS.find((opt) => opt.value === $loansForm.value.type_of_interest)}
-              customOnChange={(option) => $loansForm.update({ type_of_interest: option?.value })}
+              options={consts.INTEREST_TYPE_OPTIONS}
+              value={consts.INTEREST_TYPE_OPTIONS.find((opt) => opt.value === $loansForm.value.typeOfInterest)?.value}
+              onChange={(option) => $loansForm.update({ typeOfInterest: option?.value })}
             />
           </Col>
         </Row>
@@ -55,24 +56,23 @@ const AddLoanModal = () => {
         <Row>
           <Col md={12} className="mb-16">
             <Form.Label>Borrower</Form.Label>
-            <UniversalInput
-              type="select"
-              name="borrower_id"
+            <SelectInput
+              name="borrowerId"
               signal={$loansForm}
-              selectOptions={borrowerOptions}
-              value={borrowerOptions.find((opt) => opt.value === $loansForm.value.borrower_id)}
-              customOnChange={(option) => helpers.handleBorrowerChange(option, borrowers, $loansForm.update)}
+              options={borrowerOptions}
+              value={borrowerOptions.find((opt) => opt.value === $loansForm.value.borrowerId)?.value}
+              onChange={(option) => helpers.handleBorrowerChange(option, borrowers, $loansForm.update)}
             />
           </Col>
         </Row>
 
-        {$loansForm.value.borrower_id === null && (
+        {$loansForm.value.borrowerId === null && (
           <Row>
             <Col md={12} className="mb-16">
               <Form.Label>Borrower Name</Form.Label>
               <UniversalInput
                 type="text"
-                name="borrower_name"
+                name="borrowerName"
                 signal={$loansForm}
                 placeholder="Enter borrower name"
               />
@@ -81,13 +81,13 @@ const AddLoanModal = () => {
         )}
 
         <hr className="my-24" />
-        <h6 className="mb-16 fw-700">Loan Details</h6>
+        <div className="lead mb-16">Loan Details</div>
         <Row>
           <Col md={6} className="mb-16">
             <Form.Label>Principal Amount</Form.Label>
             <UniversalInput
               type="number"
-              name="principal_amount"
+              name="principalAmount"
               signal={$loansForm}
               placeholder="0.00"
             />
@@ -96,7 +96,7 @@ const AddLoanModal = () => {
             <Form.Label>Payment Amount</Form.Label>
             <UniversalInput
               type="number"
-              name="payment_amount"
+              name="paymentAmount"
               signal={$loansForm}
               placeholder="0.00"
             />
@@ -108,7 +108,7 @@ const AddLoanModal = () => {
             <Form.Label>Current Interest Rate (%)</Form.Label>
             <UniversalInput
               type="number"
-              name="current_interest_rate"
+              name="currentInterestRate"
               signal={$loansForm}
               step="0.01"
               placeholder="0.00"
@@ -117,7 +117,7 @@ const AddLoanModal = () => {
           <Col md={6} className="mb-16">
             <Form.Label>Loan Origination Date</Form.Label>
             <DatePicker
-              name="loan_origination_date"
+              name="loanOriginationDate"
               signal={$loansForm}
             />
           </Col>
@@ -127,33 +127,33 @@ const AddLoanModal = () => {
           <Col md={6} className="mb-16">
             <Form.Label>Loan Maturity Date</Form.Label>
             <DatePicker
-              name="loan_maturity_date"
+              name="loanMaturityDate"
               signal={$loansForm}
             />
           </Col>
           <Col md={6} className="mb-16">
             <Form.Label>Next Rate Adjustment Date</Form.Label>
             <DatePicker
-              name="next_rate_adjustment_date"
+              name="nextRateAdjustmentDate"
               signal={$loansForm}
             />
           </Col>
         </Row>
 
         <hr className="my-24" />
-        <h6 className="mb-16 fw-700">Payment Information</h6>
+        <div className="lead mb-16">Payment Information</div>
         <Row>
           <Col md={6} className="mb-16">
             <Form.Label>Next Payment Due Date</Form.Label>
             <DatePicker
-              name="next_payment_due_date"
+              name="nextPaymentDueDate"
               signal={$loansForm}
             />
           </Col>
           <Col md={6} className="mb-16">
             <Form.Label>Last Payment Received Date</Form.Label>
             <DatePicker
-              name="last_payment_received_date"
+              name="lastPaymentReceivedDate"
               signal={$loansForm}
             />
           </Col>
@@ -163,27 +163,27 @@ const AddLoanModal = () => {
           <Col md={6} className="mb-16">
             <Form.Label>Last Annual Review</Form.Label>
             <DatePicker
-              name="last_annual_review"
+              name="lastAnnualReview"
               signal={$loansForm}
             />
           </Col>
           <Col md={6} className="mb-16">
             <Form.Label>Last Financial Statement</Form.Label>
             <DatePicker
-              name="last_financial_statement"
+              name="lastFinancialStatement"
               signal={$loansForm}
             />
           </Col>
         </Row>
 
         <hr className="my-24" />
-        <h6 className="mb-16 fw-700">Financial Metrics</h6>
+        <div className="lead mb-16">Financial Metrics</div>
         <Row>
           <Col md={4} className="mb-16">
             <Form.Label>Gross Revenue</Form.Label>
             <UniversalInput
               type="number"
-              name="gross_revenue"
+              name="grossRevenue"
               signal={$loansForm}
               placeholder="0.00"
             />
@@ -192,7 +192,7 @@ const AddLoanModal = () => {
             <Form.Label>Net Income</Form.Label>
             <UniversalInput
               type="number"
-              name="net_income"
+              name="netIncome"
               signal={$loansForm}
               placeholder="0.00"
             />
@@ -213,7 +213,7 @@ const AddLoanModal = () => {
             <Form.Label>Debt Service</Form.Label>
             <UniversalInput
               type="number"
-              name="debt_service"
+              name="debtService"
               signal={$loansForm}
               step="0.01"
               placeholder="0.00"
@@ -223,7 +223,7 @@ const AddLoanModal = () => {
             <Form.Label>Current Ratio</Form.Label>
             <UniversalInput
               type="number"
-              name="current_ratio"
+              name="currentRatio"
               signal={$loansForm}
               step="0.01"
               placeholder="0.00"
@@ -245,7 +245,7 @@ const AddLoanModal = () => {
             <Form.Label>Retained Earnings</Form.Label>
             <UniversalInput
               type="number"
-              name="retained_earnings"
+              name="retainedEarnings"
               signal={$loansForm}
               placeholder="0.00"
             />
@@ -257,7 +257,7 @@ const AddLoanModal = () => {
             <Form.Label>Override Notes</Form.Label>
             <UniversalInput
               type="text"
-              name="financial_metrics_override_notes"
+              name="financialMetricsOverrideNotes"
               signal={$loansForm}
               placeholder="Reason for manual entry or override"
             />
@@ -265,40 +265,38 @@ const AddLoanModal = () => {
         </Row>
 
         <hr className="my-24" />
-        <h6 className="mb-16 fw-700">Additional Information</h6>
+        <div className="lead mb-16">Additional Information</div>
         <Row>
           <Col md={6} className="mb-16">
             <Form.Label>Risk Rating</Form.Label>
-            <UniversalInput
-              type="select"
-              name="current_risk_rating"
+            <SelectInput
+              name="currentRiskRating"
               signal={$loansForm}
-              selectOptions={consts.LOAN_RISK_RATING_OPTIONS}
-              value={consts.LOAN_RISK_RATING_OPTIONS.find((opt) => opt.value === $loansForm.value.current_risk_rating)}
-              customOnChange={(option) => $loansForm.update({ current_risk_rating: option?.value })}
+              options={consts.LOAN_RISK_RATING_OPTIONS}
+              value={consts.LOAN_RISK_RATING_OPTIONS.find((opt) => opt.value === $loansForm.value.currentRiskRating)?.value}
+              onChange={(option) => $loansForm.update({ currentRiskRating: option?.value })}
             />
           </Col>
           <Col md={6} className="mb-16">
-            <Form.Label>Loan Officer</Form.Label>
-            <UniversalInput
-              type="select"
-              name="loan_officer_id"
+            <Form.Label>Relationship Manager</Form.Label>
+            <SelectInput
+              name="relationshipManagerId"
               signal={$loansForm}
-              selectOptions={loanOfficerOptions}
-              value={loanOfficerOptions.find((opt) => opt.value === $loansForm.value.loan_officer_id)}
-              customOnChange={(option) => $loansForm.update({ loan_officer_id: option?.value })}
+              options={relationshipManagerOptions}
+              value={relationshipManagerOptions.find((opt) => opt.value === $loansForm.value.relationshipManagerId)?.value}
+              onChange={(option) => $loansForm.update({ relationshipManagerId: option?.value })}
             />
           </Col>
         </Row>
 
         <Row>
           <Col md={6} className="mb-16">
-            <Form.Label>MAICS Code</Form.Label>
+            <Form.Label>NAICS Code</Form.Label>
             <UniversalInput
               type="text"
-              name="maics"
+              name="naics"
               signal={$loansForm}
-              placeholder="Enter MAICS code"
+              placeholder="Enter NAICS code"
             />
           </Col>
           <Col md={6} className="mb-16">

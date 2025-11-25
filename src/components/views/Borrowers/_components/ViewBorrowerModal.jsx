@@ -16,7 +16,7 @@ const ViewClientModal = () => (
       <div>
         <Row className="mb-16">
           <Col md={6}>
-            <strong>Borrower ID:</strong> {$borrowers.value.selectedBorrower.client_id}
+            <strong>Borrower ID:</strong> {$borrowers.value.selectedBorrower.borrowerId}
           </Col>
           <Col md={6}>
             <strong>Name:</strong> {$borrowers.value.selectedBorrower.name}
@@ -27,20 +27,20 @@ const ViewClientModal = () => (
             <strong>Email:</strong> {$borrowers.value.selectedBorrower.email}
           </Col>
           <Col md={6}>
-            <strong>Phone:</strong> {$borrowers.value.selectedBorrower.phone_number}
+            <strong>Phone:</strong> {$borrowers.value.selectedBorrower.phoneNumber}
           </Col>
         </Row>
         <Row className="mb-16">
           <Col md={12}>
-            <strong>Address:</strong> {$borrowers.value.selectedBorrower.street_address}, {$borrowers.value.selectedBorrower.city}, {$borrowers.value.selectedBorrower.state} {$borrowers.value.selectedBorrower.zip_code}
+            <strong>Address:</strong> {$borrowers.value.selectedBorrower.streetAddress}, {$borrowers.value.selectedBorrower.city}, {$borrowers.value.selectedBorrower.state} {$borrowers.value.selectedBorrower.zipCode}
           </Col>
         </Row>
         <Row className="mb-16">
           <Col md={6}>
-            <strong>KYC Status:</strong> {$borrowers.value.selectedBorrower.kyc_status}
+            <strong>KYC Status:</strong> {$borrowers.value.selectedBorrower.kycStatus}
           </Col>
           <Col md={6}>
-            <strong>Risk Rating:</strong> {$borrowers.value.selectedBorrower.client_risk_rating}
+            <strong>Risk Rating:</strong> {$borrowers.value.selectedBorrower.borrowerRiskRating}
           </Col>
         </Row>
       </div>

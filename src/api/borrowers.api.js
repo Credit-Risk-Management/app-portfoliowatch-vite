@@ -5,10 +5,11 @@ const borrowersApiBase = {
   // Get all borrowers with optional filters
   getAll: async (filters = {}) => {
     const params = new URLSearchParams();
-    if (filters.searchTerm) params.append('searchTerm', filters.searchTerm);
-    if (filters.borrowerType) params.append('borrowerType', filters.borrowerType);
-    if (filters.kycStatus) params.append('kycStatus', filters.kycStatus);
-    if (filters.riskRating) params.append('riskRating', filters.riskRating);
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params.append(key, value);
+      }
+    });
 
     const queryString = params.toString();
     const url = `/borrowers${queryString ? `?${queryString}` : ''}`;

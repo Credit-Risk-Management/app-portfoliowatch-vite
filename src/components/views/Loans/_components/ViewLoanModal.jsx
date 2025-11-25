@@ -138,12 +138,12 @@ const ViewLoanModal = () => {
               <strong>Risk Rating:</strong> {helpers.getRiskRatingLabel(loan.current_risk_rating, consts.RISK_RATING_LABELS)}
             </Col>
             <Col md={6}>
-              <strong>Loan Officer:</strong> {helpers.getLoanOfficerName(loan.loan_officer_id)}
+              <strong>Relationship Manager:</strong> {helpers.getRelationshipManagerName(loan.relationship_manager_id)}
             </Col>
           </Row>
           <Row className="mb-16">
             <Col md={6}>
-              <strong>MAICS Code:</strong> {loan.maics || '-'}
+              <strong>NAICS Code:</strong> {loan.naics || '-'}
             </Col>
             <Col md={6}>
               <strong>Industry:</strong> {loan.industry || '-'}

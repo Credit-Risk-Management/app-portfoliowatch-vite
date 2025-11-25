@@ -1,6 +1,7 @@
 import { Form, Row, Col } from 'react-bootstrap';
 import UniversalModal from '@src/components/global/UniversalModal';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
+import SelectInput from '@src/components/global/Inputs/SelectInput';
 import { $relationshipManagersView, $relationshipManagersForm, $relationshipManagers } from '@src/signals';
 import { handleAddManager } from '../_helpers/managers.events';
 import * as consts from '../_helpers/managers.consts';
@@ -55,9 +56,9 @@ const AddManagerModal = () => (
           <UniversalInput
             label="Position Title"
             type="text"
-            value={$relationshipManagersForm.value.position_title || ''}
-            onChange={(e) => $relationshipManagersForm.update({ position_title: e.target.value })}
-            placeholder="e.g., Senior Loan Officer"
+            value={$relationshipManagersForm.value.positionTitle || ''}
+            onChange={(e) => $relationshipManagersForm.update({ positionTitle: e.target.value })}
+            placeholder="e.g., Senior Relationship Manager"
           />
         </Col>
       </Row>
@@ -66,8 +67,8 @@ const AddManagerModal = () => (
           <UniversalInput
             label="Office Location"
             type="text"
-            value={$relationshipManagersForm.value.office_location || ''}
-            onChange={(e) => $relationshipManagersForm.update({ office_location: e.target.value })}
+            value={$relationshipManagersForm.value.officeLocation || ''}
+            onChange={(e) => $relationshipManagersForm.update({ officeLocation: e.target.value })}
             placeholder="e.g., New York Office"
           />
         </Col>
@@ -75,24 +76,22 @@ const AddManagerModal = () => (
       <Row>
         <Col md={6} className="mb-16">
           <Form.Label>Reports To</Form.Label>
-          <UniversalInput
-            type="select"
-            name="manager_id"
+          <SelectInput
+            name="managerId"
             signal={$relationshipManagersForm}
-            selectOptions={helpers.getManagerOptionsWithNone($relationshipManagers.value?.list || [])}
-            value={helpers.getManagerOptionsWithNone($relationshipManagers.value?.list || []).find((opt) => opt.value === $relationshipManagersForm.value.manager_id) || helpers.getManagerOptionsWithNone($relationshipManagers.value?.list || [])[0]}
-            customOnChange={(option) => $relationshipManagersForm.update({ manager_id: option?.value || '' })}
+            options={helpers.getManagerOptionsWithNone($relationshipManagers.value?.list || [])}
+            value={(helpers.getManagerOptionsWithNone($relationshipManagers.value?.list || []).find((opt) => opt.value === $relationshipManagersForm.value.managerId) || helpers.getManagerOptionsWithNone($relationshipManagers.value?.list || [])[0])?.value}
+            onChange={(option) => $relationshipManagersForm.update({ managerId: option?.value || '' })}
           />
         </Col>
         <Col md={6} className="mb-16">
           <Form.Label>Status</Form.Label>
-          <UniversalInput
-            type="select"
-            name="is_active"
+          <SelectInput
+            name="isActive"
             signal={$relationshipManagersForm}
-            selectOptions={consts.STATUS_OPTIONS}
-            value={consts.STATUS_OPTIONS.find((opt) => opt.value === $relationshipManagersForm.value.is_active) || consts.STATUS_OPTIONS[0]}
-            customOnChange={(option) => $relationshipManagersForm.update({ is_active: option?.value !== undefined ? option.value : true })}
+            options={consts.STATUS_OPTIONS}
+            value={(consts.STATUS_OPTIONS.find((opt) => opt.value === $relationshipManagersForm.value.isActive) || consts.STATUS_OPTIONS[0])?.value}
+            onChange={(option) => $relationshipManagersForm.update({ isActive: option?.value !== undefined ? option.value : true })}
           />
         </Col>
       </Row>

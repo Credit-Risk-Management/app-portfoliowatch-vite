@@ -1,13 +1,13 @@
 export const TABLE_HEADERS = [
   { key: 'name', value: 'Name', sortKey: 'name' },
-  { key: 'position_title', value: 'Position', sortKey: 'position_title' },
+  { key: 'position_title', value: 'Position', sortKey: 'positionTitle' },
   { key: 'email', value: 'Email', sortKey: 'email' },
   { key: 'phone', value: 'Phone', sortKey: 'phone' },
-  { key: 'office_location', value: 'Office', sortKey: 'office_location' },
+  { key: 'office_location', value: 'Office', sortKey: 'officeLocation' },
   { key: 'manager', value: 'Reports To' },
   { key: 'reports_count', value: '# Reports' },
   { key: 'loans_count', value: '# Loans' },
-  { key: 'status', value: 'Status', sortKey: 'is_active' },
+  { key: 'status', value: 'Status', sortKey: 'isActive' },
   { key: 'actions', value: 'Actions' },
 ];
 

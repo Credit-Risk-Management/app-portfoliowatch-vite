@@ -78,8 +78,8 @@ export const $loansFilter = Signal({
   sortDirection: undefined,
   searchTerm: '',
   interestType: '',
-  riskRating: '',
-  loanOfficer: '',
+  watchScore: '',
+  relationshipManager: '',
 });
 
 export const $loansView = Signal({
@@ -119,8 +119,8 @@ export const $loansForm = Signal({
   liquidity: '',
   retained_earnings: '',
   current_risk_rating: 3,
-  loan_officer_id: '',
-  maics: '',
+  relationship_manager_id: '',
+  naics: '',
   industry: '',
   financial_metrics_override_by: null,
   financial_metrics_override_date: null,

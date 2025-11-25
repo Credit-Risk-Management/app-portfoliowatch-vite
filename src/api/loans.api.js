@@ -5,11 +5,11 @@ const loansApiBase = {
   // Get all loans with optional filters
   getAll: async (filters = {}) => {
     const params = new URLSearchParams();
-    if (filters.searchTerm) params.append('searchTerm', filters.searchTerm);
-    if (filters.interestType) params.append('interestType', filters.interestType);
-    if (filters.riskRating) params.append('riskRating', filters.riskRating);
-    if (filters.loanOfficer) params.append('loanOfficer', filters.loanOfficer);
-    if (filters.borrowerId) params.append('borrowerId', filters.borrowerId);
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params.append(key, value);
+      }
+    });
 
     const queryString = params.toString();
     const url = `/loans${queryString ? `?${queryString}` : ''}`;
@@ -32,8 +32,8 @@ const loansApiBase = {
   // Get loans by borrower
   getByBorrower: async (borrowerId) => apiClient.get(`/loans/borrower/${borrowerId}`),
 
-  // Get loans by loan officer
-  getByOfficer: async (officerId) => apiClient.get(`/loans/officer/${officerId}`),
+  // Get loans by relationship manager
+  getByRelationshipManager: async (relationshipManagerId) => apiClient.get(`/loans/relationship-manager/${relationshipManagerId}`),
 
   // Create loan
   create: async (data) => apiClient.post('/loans', data),
@@ -56,7 +56,7 @@ export const loansApi = wrapApiWithDebounce(loansApiBase, {
   getAll: 350, // Debounce search/filter calls
   getById: 300, // Debounce rapid detail views
   getByBorrower: 350, // Debounce borrower filter
-  getByOfficer: 350, // Debounce officer filter
+  getByRelationshipManager: 350, // Debounce relationship manager filter
   // Note: create, update, delete, and compute operations are NOT debounced
 });
 

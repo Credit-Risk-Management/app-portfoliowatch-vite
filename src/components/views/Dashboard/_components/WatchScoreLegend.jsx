@@ -1,4 +1,5 @@
 import { formatMoneyShorthand } from '@src/utils/currency';
+import { WATCH_SCORE_OPTIONS } from '@src/consts/consts';
 import * as consts from '../_helpers/dashboard.consts';
 
 const WatchScoreLegend = ({ data = [], metric = 'totalAmount' }) => {
@@ -14,11 +15,11 @@ const WatchScoreLegend = ({ data = [], metric = 'totalAmount' }) => {
         const percent = totalCount > 0 ? ((data[idx].value / overallAmount) * 100).toFixed(0) : '0';
 
         const labelMap = {
-          1: '1 - Minimal Risk',
-          2: '2 - Low Risk',
-          3: '3 - Moderate Risk',
-          4: '4 - High Risk',
-          5: '5 - Severe Risk',
+          1: WATCH_SCORE_OPTIONS[1].label,
+          2: WATCH_SCORE_OPTIONS[2].label,
+          3: WATCH_SCORE_OPTIONS[3].label,
+          4: WATCH_SCORE_OPTIONS[4].label,
+          5: WATCH_SCORE_OPTIONS[5].label,
         };
 
         return (

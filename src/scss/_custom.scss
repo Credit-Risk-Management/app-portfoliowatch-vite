@@ -29,3 +29,47 @@
   background-size: 125% 125%;
   background-position: 0 0;
 }
+
+// Fullscreen Modal Styles
+.modal-fullscreen-custom {
+  max-width: 100vw !important;
+  margin: 0 !important;
+  margin-top: 56px !important; // Below navigation
+  height: calc(100vh - 56px); // Full height minus navigation
+
+  .modal-content {
+    height: 100%;
+    border-radius: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .modal-fullscreen-header {
+    position: fixed;
+    top: 56px; // Below navigation
+    left: 0;
+    right: 0;
+    z-index: 1040; // Below navigation's z-index-9999
+    flex-shrink: 0;
+  }
+
+  .modal-fullscreen-body {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-top: 60px; // Space for fixed header
+    padding-bottom: 80px; // Space for fixed footer
+  }
+
+  .modal-fullscreen-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1040; // Below navigation's z-index-9999
+    flex-shrink: 0;
+    background-color: inherit;
+    border-top: 1px solid;
+  }
+}

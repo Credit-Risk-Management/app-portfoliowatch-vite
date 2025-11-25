@@ -1,5 +1,5 @@
 /* eslint-disable import/prefer-default-export */
-import { $relationshipManagers, $borrowers, $borrowersView } from '@src/signals';
+import { $relationshipManagers, $borrowers, $borrowersView, $borrowersFilter } from '@src/signals';
 import relationshipManagersApi from '@src/api/relationshipManagers.api';
 import borrowersApi from '@src/api/borrowers.api';
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
@@ -9,9 +9,18 @@ export const loadReferenceData = async () => {
   $relationshipManagers.update({ list: managersResponse.data || [] });
 };
 
-export const fetchAndSetBorrowerData = async (filters = {}) => {
+export const fetchAndSetBorrowerData = async (filters = {}, isShowLoader = true) => {
+  if (isShowLoader) {
+    $borrowersView.update({ isTableLoading: true });
+  }
   try {
-    const response = await borrowersApi.getAll(filters);
+    const paginationAndSortParams = {
+      page: $borrowersFilter.value?.page || 1,
+      limit: 10,
+      sortKey: $borrowersFilter.value?.sortKey,
+      sortDirection: $borrowersFilter.value?.sortDirection,
+    };
+    const response = await borrowersApi.getAll({ ...filters, ...paginationAndSortParams });
     $borrowers.update({
       list: response.data || [],
       totalCount: response.count || 0,

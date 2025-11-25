@@ -1,9 +1,9 @@
 import { Container, Button, ListGroup } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import { $filter } from '@src/signals';
 
 const Pagination = ({
+  $filter,
   itemsPerPageAmount,
   paginationMaxButtonAmount,
   totalItemsCount,
@@ -29,7 +29,7 @@ const Pagination = ({
   };
 
   return (
-    <Container className={`d-flex flex-column align-items-center justify-content-center p-0 py-16 ${className}`}>
+    <Container className={`d-flex flex-column align-items-center justify-content-center p-0 py-8 ${className}`}>
       {showPagination && (
         <ListGroup horizontal>
           <ListGroup.Item className="bg-transparent border-0">
@@ -39,7 +39,7 @@ const Pagination = ({
               disabled={disabled || currentPage === 1}
               onClick={() => setCurrentPage(null, 'backward')}
             >
-              <FontAwesomeIcon className="text-primary" icon={faChevronLeft} />
+              <FontAwesomeIcon className="text-info" icon={faChevronLeft} />
             </Button>
           </ListGroup.Item>
 
@@ -47,7 +47,7 @@ const Pagination = ({
             <ListGroup.Item key={page} className="bg-transparent border-0">
               <Button
                 variant="transparent"
-                className={`border-0 p-0 ${currentPage === page ? 'fw-bold text-primary' : 'fw-normal text-dark'}`}
+                className={`border-0 p-0 ${currentPage === page ? 'fw-bold text-info' : 'fw-normal text-dark'}`}
                 disabled={disabled || currentPage === page}
                 onClick={() => setCurrentPage(page)}
               >
@@ -63,7 +63,7 @@ const Pagination = ({
               disabled={disabled || currentPage >= pagesCount}
               onClick={() => setCurrentPage(null, 'forward')}
             >
-              <FontAwesomeIcon className="text-primary" icon={faChevronRight} />
+              <FontAwesomeIcon className="text-info" icon={faChevronRight} />
             </Button>
           </ListGroup.Item>
         </ListGroup>

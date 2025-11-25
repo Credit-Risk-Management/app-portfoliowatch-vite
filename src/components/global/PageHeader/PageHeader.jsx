@@ -1,3 +1,4 @@
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Button, Breadcrumb } from 'react-bootstrap';
 
 const PageHeader = ({
@@ -5,6 +6,8 @@ const PageHeader = ({
   breadcrumbs = [],
   actionButton,
   actionButtonText,
+  actionButtonIcon,
+  AdditionalComponents = null,
   onActionClick = () => { },
 }) => (
   <div className="pb-24">
@@ -23,11 +26,17 @@ const PageHeader = ({
     )}
     <div className="d-flex justify-content-between align-items-center">
       <h4 className="mb-0 text-light">{title}</h4>
-      {actionButton && (
-        <Button variant="primary" onClick={onActionClick}>
-          {actionButtonText}
-        </Button>
-      )}
+      <div className="d-flex align-items-center gap-8">
+        {actionButton && (
+          <Button variant="outline-primary-100" onClick={onActionClick}>
+            {actionButtonIcon && (
+              <FontAwesomeIcon icon={actionButtonIcon} className="me-4" />
+            )}
+            {actionButtonText}
+          </Button>
+        )}
+        {AdditionalComponents && <AdditionalComponents />}
+      </div>
     </div>
   </div>
 );

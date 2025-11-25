@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Form, Row, Col } from 'react-bootstrap';
 import UniversalModal from '@src/components/global/UniversalModal';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
+import SelectInput from '@src/components/global/Inputs/SelectInput';
 import DatePicker from '@src/components/global/Inputs/DatePicker';
 import { $loansView, $loansForm, $loans, $relationshipManagers, $borrowers } from '@src/signals';
 import { handleEditLoan } from '../_helpers/loans.events';
@@ -18,7 +19,7 @@ const EditLoanModal = () => {
   const managers = $relationshipManagers.value?.list || [];
   const borrowers = $borrowers.value?.list || [];
 
-  const loanOfficerOptions = helpers.getLoanOfficerOptions(managers);
+  const relationshipManagerOptions = helpers.getRelationshipManagerOptions(managers);
   const borrowerOptions = helpers.getBorrowerOptions(borrowers);
 
   const formatOverrideDate = (dateString) => {
@@ -34,45 +35,46 @@ const EditLoanModal = () => {
         $loansView.update({ showEditModal: false });
         $loansForm.reset();
       }}
+      closeButton
       headerText="Edit Loan"
       leftBtnText="Cancel"
       rightBtnText="Save Changes"
       rightBtnOnClick={handleEditLoan}
-      size="xl"
+      size="fullscreen"
     >
-      <Form>
-        {$loansForm.value.financial_metrics_override_by && (
+      <Form className="text-white">
+        {$loansForm.value.financialMetricsOverrideBy && (
           <div className="mb-16 p-16" style={{ backgroundColor: '#f8f9fa', borderRadius: '4px' }}>
             <small className="text-muted">
               <strong>Override Information:</strong><br />
-              Last modified by: {$loansForm.value.financial_metrics_override_by}<br />
-              Date: {formatOverrideDate($loansForm.value.financial_metrics_override_date)}
-              {$loansForm.value.financial_metrics_override_notes && (
-                <><br />Notes: {$loansForm.value.financial_metrics_override_notes}</>
+              Last modified by: {$loansForm.value.financialMetricsOverrideBy}<br />
+              Date: {formatOverrideDate($loansForm.value.financialMetricsOverrideDate)}
+              {$loansForm.value.financialMetricsOverrideNotes && (
+                <><br />Notes: {$loansForm.value.financialMetricsOverrideNotes}</>
               )}
             </small>
           </div>
         )}
 
-        <h6 className="mb-16 fw-700">Basic Information</h6>
+        <div className="lead mb-16">Basic Information</div>
         <Row>
           <Col md={6} className="mb-16">
+            <Form.Label>Loan Number</Form.Label>
             <UniversalInput
-              label="Loan Number"
               type="text"
-              value={$loansForm.value.loan_number}
-              onChange={(e) => $loansForm.update({ loan_number: e.target.value })}
+              name="loanNumber"
+              signal={$loansForm}
+              placeholder="Enter loan number"
             />
           </Col>
           <Col md={6} className="mb-16">
             <Form.Label>Type of Interest</Form.Label>
-            <UniversalInput
-              type="select"
-              name="type_of_interest"
+            <SelectInput
+              name="typeOfInterest"
               signal={$loansForm}
-              selectOptions={consts.INTEREST_TYPE_OPTIONS}
-              value={consts.INTEREST_TYPE_OPTIONS.find((opt) => opt.value === $loansForm.value.type_of_interest)}
-              customOnChange={(option) => $loansForm.update({ type_of_interest: option?.value })}
+              options={consts.INTEREST_TYPE_OPTIONS}
+              value={consts.INTEREST_TYPE_OPTIONS.find((opt) => opt.value === $loansForm.value.typeOfInterest)?.value}
+              onChange={(option) => $loansForm.update({ typeOfInterest: option?.value })}
             />
           </Col>
         </Row>
@@ -80,65 +82,68 @@ const EditLoanModal = () => {
         <Row>
           <Col md={12} className="mb-16">
             <Form.Label>Borrower</Form.Label>
-            <UniversalInput
-              type="select"
-              name="borrower_id"
+            <SelectInput
+              name="borrowerId"
               signal={$loansForm}
-              selectOptions={borrowerOptions}
-              value={borrowerOptions.find((opt) => opt.value === $loansForm.value.borrower_id)}
-              customOnChange={(option) => helpers.handleBorrowerChange(option, borrowers, $loansForm.update)}
+              options={borrowerOptions}
+              value={borrowerOptions.find((opt) => opt.value === $loansForm.value.borrowerId)?.value}
+              onChange={(option) => helpers.handleBorrowerChange(option, borrowers, $loansForm.update)}
             />
           </Col>
         </Row>
 
-        {$loansForm.value.borrower_id === null && (
+        {$loansForm.value.borrowerId === null && (
           <Row>
             <Col md={12} className="mb-16">
+              <Form.Label>Borrower Name</Form.Label>
               <UniversalInput
-                label="Borrower Name"
                 type="text"
-                value={$loansForm.value.borrower_name}
-                onChange={(e) => $loansForm.update({ borrower_name: e.target.value })}
+                name="borrowerName"
+                signal={$loansForm}
+                placeholder="Enter borrower name"
               />
             </Col>
           </Row>
         )}
 
         <hr className="my-24" />
-        <h6 className="mb-16 fw-700">Loan Details</h6>
+        <div className="lead mb-16">Loan Details</div>
         <Row>
           <Col md={6} className="mb-16">
+            <Form.Label>Principal Amount</Form.Label>
             <UniversalInput
-              label="Principal Amount"
               type="number"
-              value={$loansForm.value.principal_amount}
-              onChange={(e) => $loansForm.update({ principal_amount: e.target.value })}
+              name="principalAmount"
+              signal={$loansForm}
+              placeholder="0.00"
             />
           </Col>
           <Col md={6} className="mb-16">
+            <Form.Label>Payment Amount</Form.Label>
             <UniversalInput
-              label="Payment Amount"
               type="number"
-              value={$loansForm.value.payment_amount}
-              onChange={(e) => $loansForm.update({ payment_amount: e.target.value })}
+              name="paymentAmount"
+              signal={$loansForm}
+              placeholder="0.00"
             />
           </Col>
         </Row>
 
         <Row>
           <Col md={6} className="mb-16">
+            <Form.Label>Current Interest Rate (%)</Form.Label>
             <UniversalInput
-              label="Current Interest Rate (%)"
               type="number"
+              name="currentInterestRate"
+              signal={$loansForm}
               step="0.01"
-              value={$loansForm.value.current_interest_rate}
-              onChange={(e) => $loansForm.update({ current_interest_rate: e.target.value })}
+              placeholder="0.00"
             />
           </Col>
           <Col md={6} className="mb-16">
             <Form.Label>Loan Origination Date</Form.Label>
             <DatePicker
-              name="loan_origination_date"
+              name="loanOriginationDate"
               signal={$loansForm}
             />
           </Col>
@@ -148,33 +153,33 @@ const EditLoanModal = () => {
           <Col md={6} className="mb-16">
             <Form.Label>Loan Maturity Date</Form.Label>
             <DatePicker
-              name="loan_maturity_date"
+              name="loanMaturityDate"
               signal={$loansForm}
             />
           </Col>
           <Col md={6} className="mb-16">
             <Form.Label>Next Rate Adjustment Date</Form.Label>
             <DatePicker
-              name="next_rate_adjustment_date"
+              name="nextRateAdjustmentDate"
               signal={$loansForm}
             />
           </Col>
         </Row>
 
         <hr className="my-24" />
-        <h6 className="mb-16 fw-700">Payment Information</h6>
+        <div className="lead mb-16">Payment Information</div>
         <Row>
           <Col md={6} className="mb-16">
             <Form.Label>Next Payment Due Date</Form.Label>
             <DatePicker
-              name="next_payment_due_date"
+              name="nextPaymentDueDate"
               signal={$loansForm}
             />
           </Col>
           <Col md={6} className="mb-16">
             <Form.Label>Last Payment Received Date</Form.Label>
             <DatePicker
-              name="last_payment_received_date"
+              name="lastPaymentReceivedDate"
               signal={$loansForm}
             />
           </Col>
@@ -184,142 +189,149 @@ const EditLoanModal = () => {
           <Col md={6} className="mb-16">
             <Form.Label>Last Annual Review</Form.Label>
             <DatePicker
-              name="last_annual_review"
+              name="lastAnnualReview"
               signal={$loansForm}
             />
           </Col>
           <Col md={6} className="mb-16">
             <Form.Label>Last Financial Statement</Form.Label>
             <DatePicker
-              name="last_financial_statement"
+              name="lastFinancialStatement"
               signal={$loansForm}
             />
           </Col>
         </Row>
 
         <hr className="my-24" />
-        <h6 className="mb-16 fw-700">Financial Metrics</h6>
+        <div className="lead mb-16">Financial Metrics</div>
         <Row>
           <Col md={4} className="mb-16">
+            <Form.Label>Gross Revenue</Form.Label>
             <UniversalInput
-              label="Gross Revenue"
               type="number"
-              value={$loansForm.value.gross_revenue}
-              onChange={(e) => $loansForm.update({ gross_revenue: e.target.value })}
+              name="grossRevenue"
+              signal={$loansForm}
+              placeholder="0.00"
             />
           </Col>
           <Col md={4} className="mb-16">
+            <Form.Label>Net Income</Form.Label>
             <UniversalInput
-              label="Net Income"
               type="number"
-              value={$loansForm.value.net_income}
-              onChange={(e) => $loansForm.update({ net_income: e.target.value })}
+              name="netIncome"
+              signal={$loansForm}
+              placeholder="0.00"
             />
           </Col>
           <Col md={4} className="mb-16">
+            <Form.Label>EBITDA</Form.Label>
             <UniversalInput
-              label="EBITDA"
               type="number"
-              value={$loansForm.value.ebitda}
-              onChange={(e) => $loansForm.update({ ebitda: e.target.value })}
+              name="ebitda"
+              signal={$loansForm}
+              placeholder="0.00"
             />
           </Col>
         </Row>
 
         <Row>
           <Col md={4} className="mb-16">
+            <Form.Label>Debt Service</Form.Label>
             <UniversalInput
-              label="Debt Service"
               type="number"
+              name="debtService"
+              signal={$loansForm}
               step="0.01"
-              value={$loansForm.value.debt_service}
-              onChange={(e) => $loansForm.update({ debt_service: e.target.value })}
+              placeholder="0.00"
             />
           </Col>
           <Col md={4} className="mb-16">
+            <Form.Label>Current Ratio</Form.Label>
             <UniversalInput
-              label="Current Ratio"
               type="number"
+              name="currentRatio"
+              signal={$loansForm}
               step="0.01"
-              value={$loansForm.value.current_ratio}
-              onChange={(e) => $loansForm.update({ current_ratio: e.target.value })}
+              placeholder="0.00"
             />
           </Col>
           <Col md={4} className="mb-16">
+            <Form.Label>Liquidity</Form.Label>
             <UniversalInput
-              label="Liquidity"
               type="number"
-              value={$loansForm.value.liquidity}
-              onChange={(e) => $loansForm.update({ liquidity: e.target.value })}
+              name="liquidity"
+              signal={$loansForm}
+              placeholder="0.00"
             />
           </Col>
         </Row>
 
         <Row>
           <Col md={12} className="mb-16">
+            <Form.Label>Retained Earnings</Form.Label>
             <UniversalInput
-              label="Retained Earnings"
               type="number"
-              value={$loansForm.value.retained_earnings}
-              onChange={(e) => $loansForm.update({ retained_earnings: e.target.value })}
+              name="retainedEarnings"
+              signal={$loansForm}
+              placeholder="0.00"
             />
           </Col>
         </Row>
 
         <Row>
           <Col md={12} className="mb-16">
+            <Form.Label>Override Notes</Form.Label>
             <UniversalInput
-              label="Override Notes"
               type="text"
+              name="financialMetricsOverrideNotes"
+              signal={$loansForm}
               placeholder="Reason for manual entry or override"
-              value={$loansForm.value.financial_metrics_override_notes}
-              onChange={(e) => $loansForm.update({ financial_metrics_override_notes: e.target.value })}
             />
           </Col>
         </Row>
 
         <hr className="my-24" />
-        <h6 className="mb-16 fw-700">Additional Information</h6>
+        <div className="lead mb-16">Additional Information</div>
         <Row>
           <Col md={6} className="mb-16">
             <Form.Label>Risk Rating</Form.Label>
-            <UniversalInput
-              type="select"
-              name="current_risk_rating"
+            <SelectInput
+              name="currentRiskRating"
               signal={$loansForm}
-              selectOptions={consts.LOAN_RISK_RATING_OPTIONS}
-              value={consts.LOAN_RISK_RATING_OPTIONS.find((opt) => opt.value === $loansForm.value.current_risk_rating)}
-              customOnChange={(option) => $loansForm.update({ current_risk_rating: option?.value })}
+              options={consts.LOAN_RISK_RATING_OPTIONS}
+              value={consts.LOAN_RISK_RATING_OPTIONS.find((opt) => opt.value === $loansForm.value.currentRiskRating)?.value}
+              onChange={(option) => $loansForm.update({ currentRiskRating: option?.value })}
             />
           </Col>
           <Col md={6} className="mb-16">
-            <Form.Label>Loan Officer</Form.Label>
-            <UniversalInput
-              type="select"
-              name="loan_officer_id"
+            <Form.Label>Relationship Manager</Form.Label>
+            <SelectInput
+              name="relationshipManagerId"
               signal={$loansForm}
-              selectOptions={loanOfficerOptions}
-              value={loanOfficerOptions.find((opt) => opt.value === $loansForm.value.loan_officer_id)}
-              customOnChange={(option) => $loansForm.update({ loan_officer_id: option?.value })}
+              options={relationshipManagerOptions}
+              value={relationshipManagerOptions.find((opt) => opt.value === $loansForm.value.relationshipManagerId)?.value}
+              onChange={(option) => $loansForm.update({ relationshipManagerId: option?.value })}
             />
           </Col>
         </Row>
 
         <Row>
           <Col md={6} className="mb-16">
+            <Form.Label>NAICS Code</Form.Label>
             <UniversalInput
-              label="MAICS Code"
               type="text"
-              value={$loansForm.value.maics}
-              onChange={(e) => $loansForm.update({ maics: e.target.value })}
+              name="naics"
+              signal={$loansForm}
+              placeholder="Enter NAICS code"
             />
           </Col>
           <Col md={6} className="mb-16">
+            <Form.Label>Industry</Form.Label>
             <UniversalInput
-              label="Industry"
               type="text"
-              value={$loansForm.value.industry}
-              onChange={(e) => $loansForm.update({ industry: e.target.value })}
+              name="industry"
+              signal={$loansForm}
+              placeholder="Enter industry"
             />
           </Col>
         </Row>

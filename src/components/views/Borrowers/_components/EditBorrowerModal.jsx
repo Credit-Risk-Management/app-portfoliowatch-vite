@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { Form, Row, Col } from 'react-bootstrap';
 import UniversalModal from '@src/components/global/UniversalModal';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
+import SelectInput from '@src/components/global/Inputs/SelectInput';
 import { $borrowersView, $borrowersForm, $borrowers, $relationshipManagers } from '@src/signals';
 import { handleEditBorrower } from '../_helpers/borrowers.events';
 import * as consts from '../_helpers/borrowers.consts';
@@ -44,32 +45,30 @@ const EditClientModal = () => {
           <UniversalInput
             label="Phone"
             type="text"
-            value={$borrowersForm.value.phone_number}
-            onChange={(e) => $borrowersForm.update({ phone_number: e.target.value })}
+            value={$borrowersForm.value.phoneNumber}
+            onChange={(e) => $borrowersForm.update({ phoneNumber: e.target.value })}
           />
         </Col>
       </Row>
       <Row>
         <Col md={6} className="mb-16">
           <Form.Label>KYC Status</Form.Label>
-          <UniversalInput
-            type="select"
-            name="kyc_status"
+          <SelectInput
+            name="kycStatus"
             signal={$borrowersForm}
-            selectOptions={consts.KYC_STATUS_OPTIONS}
-            value={consts.KYC_STATUS_OPTIONS.find((opt) => opt.value === $borrowersForm.value.kyc_status)}
-            customOnChange={(option) => $borrowersForm.update({ kyc_status: option?.value })}
+            options={consts.KYC_STATUS_OPTIONS}
+            value={consts.KYC_STATUS_OPTIONS.find((opt) => opt.value === $borrowersForm.value.kycStatus)?.value}
+            onChange={(option) => $borrowersForm.update({ kycStatus: option?.value })}
           />
         </Col>
         <Col md={6} className="mb-16">
           <Form.Label>Risk Rating</Form.Label>
-          <UniversalInput
-            type="select"
-            name="client_risk_rating"
+          <SelectInput
+            name="borrowerRiskRating"
             signal={$borrowersForm}
-            selectOptions={consts.RISK_RATING_OPTIONS}
-            value={consts.RISK_RATING_OPTIONS.find((opt) => opt.value === $borrowersForm.value.client_risk_rating)}
-            customOnChange={(option) => $borrowersForm.update({ client_risk_rating: option?.value })}
+            options={consts.RISK_RATING_OPTIONS}
+            value={consts.RISK_RATING_OPTIONS.find((opt) => opt.value === $borrowersForm.value.borrowerRiskRating)?.value}
+            onChange={(option) => $borrowersForm.update({ borrowerRiskRating: option?.value })}
           />
         </Col>
       </Row>

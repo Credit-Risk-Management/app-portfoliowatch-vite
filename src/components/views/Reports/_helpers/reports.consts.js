@@ -8,6 +8,6 @@ export const TABLE_HEADERS = [
   { key: 'debt_service', value: 'Debt Service', sortKey: 'debt_service' },
   { key: 'current_ratio', value: 'Current Ratio', sortKey: 'current_ratio' },
   { key: 'liquidity', value: 'Liquidity', sortKey: 'liquidity' },
-  { key: 'loan_officer', value: 'Loan Officer' },
+  { key: 'relationship_manager', value: 'Relationship Manager' },
 ];
 
