@@ -1,11 +1,13 @@
+import { wrapApiWithDebounce } from '@src/utils/debouncedApi';
 import apiClient from './client';
 
-export const documentsApi = {
+const documentsApiBase = {
   // Get all documents with optional filters
   getAll: async (filters = {}) => {
     const params = new URLSearchParams();
     if (filters.loanId) params.append('loanId', filters.loanId);
     if (filters.documentType) params.append('documentType', filters.documentType);
+    if (filters.searchTerm) params.append('searchTerm', filters.searchTerm);
 
     const queryString = params.toString();
     const url = `/documents${queryString ? `?${queryString}` : ''}`;
@@ -53,6 +55,14 @@ export const documentsApi = {
     return apiClient.get(`/documents/${documentId}/download?expiresIn=${expiresIn}`);
   },
 };
+
+// Wrap with debouncing - only debounce read operations that might be called repeatedly
+export const documentsApi = wrapApiWithDebounce(documentsApiBase, {
+  getAll: 350, // Debounce search/filter calls
+  getById: 300, // Debounce rapid detail views
+  getByLoan: 350, // Debounce loan filter
+  // Note: create, update, delete, upload operations are NOT debounced
+});
 
 export default documentsApi;
 

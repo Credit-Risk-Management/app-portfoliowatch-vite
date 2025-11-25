@@ -7,6 +7,7 @@ import Dashboard from '@src/components/views/Dashboard';
 import Borrowers from '@src/components/views/Borrowers';
 import Loans from '@src/components/views/Loans';
 import LoanDetail from '@src/components/views/Loans/LoanDetail';
+import Documents from '@src/components/views/Documents';
 import Reports from '@src/components/views/Reports';
 import Managers from '@src/components/views/Managers';
 import ManagerDetail from '@src/components/views/Managers/ManagerDetail';
@@ -30,7 +31,7 @@ function App() {
               <Route path="/loans/:loanId" element={<LoanDetail />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/borrowers" element={<Borrowers />} />
-              <Route path="/documents" element={<div className="p-24"><h2>Documents - Coming Soon</h2></div>} />
+              <Route path="/documents" element={<Documents />} />
               <Route path="/reports" element={<Reports />} />
               <Route path="/relationship-managers" element={<Managers />} />
               <Route path="/relationship-managers/:managerId" element={<ManagerDetail />} />
