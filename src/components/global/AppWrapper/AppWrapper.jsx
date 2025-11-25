@@ -2,35 +2,21 @@
 import useWindowSize from '@src/utils/windowSize';
 import { Badge, Container } from 'react-bootstrap';
 import { Outlet } from 'react-router-dom';
-import { auth } from '@src/utils/firebase';
 import { $global } from '@src/signals';
-import { getCurrentAuthenticatedUser, handleFirebaseLogin, handleFirebaseLogout } from '@src/utils/auth';
 import Loadable from '../Loadable';
 
 const AppWrapper = () => {
   const { breakPoint } = useWindowSize();
 
-  auth.onAuthStateChanged(async (fbUser) => {
-    $global.update({
-      isLoading: true,
-    });
-    if (fbUser) {
-      await handleFirebaseLogin(fbUser);
-      await getCurrentAuthenticatedUser();
-    } else if ($global.value.isSignedIn) {
-      await handleFirebaseLogout();
-    }
+  // Note: Auth state listener is now initialized in App.jsx using initAuthListener()
+  // This provides better integration with our new auth system
 
-    $global.update({
-      isLoading: false,
-    });
-  });
   return (
-    <Container fluid className="p-0">
+    <Container fluid className="p-0 bg-info-900 vh-100">
       {import.meta.env.VITE_DEV_IS_BREAKPOINT_VISABLE === 'true' && (
-      <Badge bg="primary" className="breakpointBadge">
-        {breakPoint}
-      </Badge>
+        <Badge bg="primary" className="breakpointBadge">
+          {breakPoint}
+        </Badge>
       )}
       <Loadable signal={$global}>
         <Outlet />

@@ -5,8 +5,24 @@ export const $global = Signal({
   isSignedIn: false,
 });
 export const $view = Signal({});
-export const $auth = Signal({});
-export const $user = Signal({});
+export const $auth = Signal({
+  user: null,
+  token: null,
+  isLoading: true,
+});
+export const $user = Signal({
+  id: null,
+  email: null,
+  name: null,
+  organizationId: null,
+  role: null,
+});
+export const $organization = Signal({
+  id: null,
+  name: null,
+  industry: null,
+  createdAt: null,
+});
 export const $list = Signal({});
 export const $detail = Signal({});
 export const $form = Signal({});

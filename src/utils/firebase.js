@@ -13,13 +13,19 @@ if (!firebase.apps.length) {
 
 const auth = firebase.auth();
 
-const getAuthForTenant = (tenantId) => {
-  if (!tenantId) {
-    auth.tenantId = 'default';
-  } else {
-    auth.tenantId = tenantId;
-  }
+// Clear any tenant ID to avoid auth/invalid-tenant-id errors
+// We're not using Firebase's multi-tenancy feature
+// Multi-tenancy is handled at the application level with organizations
+auth.tenantId = null;
 
+const getAuthForTenant = (tenantId) => {
+  // Only set tenant ID if explicitly provided and not 'default'
+  if (tenantId && tenantId !== 'default') {
+    auth.tenantId = tenantId;
+  } else {
+    // Clear tenant ID to use default Firebase auth
+    auth.tenantId = null;
+  }
   return auth;
 };
 
@@ -31,6 +37,71 @@ const fbKey = `firebase:authUser:${getConfig('VITE_APP_FIREBASE_PUB_KEY')}:[DEFA
 
 const getLocalStorage = () => Object.keys(window.localStorage)
   .filter((item) => item.startsWith('firebase:authUser'))[0];
+
+/**
+ * Sign in with email and password
+ */
+export const signInWithEmailAndPassword = async (email, password) => {
+  try {
+    const result = await auth.signInWithEmailAndPassword(email, password);
+    return result.user;
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Create user with email and password
+ */
+export const createUserWithEmailAndPassword = async (email, password) => {
+  try {
+    const result = await auth.createUserWithEmailAndPassword(email, password);
+    return result.user;
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Sign in with Google
+ */
+export const signInWithGoogle = async () => {
+  try {
+    const result = await auth.signInWithPopup(googleProvider);
+    return result.user;
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Sign out
+ */
+export const signOut = async () => {
+  try {
+    await auth.signOut();
+  } catch (error) {
+    throw error;
+  }
+};
+
+/**
+ * Get current user's ID token
+ */
+export const getIdToken = async () => {
+  const user = auth.currentUser;
+  if (user) {
+    return await user.getIdToken();
+  }
+  return null;
+};
+
+/**
+ * Listen to auth state changes
+ */
+export const onAuthStateChanged = (callback) => {
+  return auth.onAuthStateChanged(callback);
+};
 
 export {
   auth,

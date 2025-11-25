@@ -33,8 +33,13 @@ apiClient.interceptors.response.use(
       const { status, data } = error.response;
 
       if (status === 401) {
-        // Unauthorized - could redirect to login
-        console.error('Unauthorized access - please login');
+        // Unauthorized - redirect to login
+        console.error('Unauthorized access - redirecting to login');
+        // Save current path for redirect after login
+        const currentPath = window.location.pathname;
+        if (currentPath !== '/login' && currentPath !== '/signup') {
+          window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+        }
       } else if (status === 403) {
         // Forbidden
         console.error('Access forbidden');

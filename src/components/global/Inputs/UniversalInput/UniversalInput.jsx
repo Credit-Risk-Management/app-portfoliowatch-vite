@@ -187,7 +187,7 @@ const UniversalInput = ({
       type={type || 'text'}
       value={formatValue()}
       placeholder={placeholder}
-      className="bg-info-800 border-0 text-info-100"
+      className={`bg-info-800 border-0 text-info-100 ${className}`}
       name={name}
       autoComplete={autoComplete}
       onChange={customOnChange || ((e) => signal.update({

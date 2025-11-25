@@ -1,4 +1,5 @@
 /* eslint-disable no-unreachable */
+import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import '@src/scss/style.scss';
 import NotFound from '@src/components/views/NotFound';
@@ -11,21 +12,41 @@ import Documents from '@src/components/views/Documents';
 import Reports from '@src/components/views/Reports';
 import Managers from '@src/components/views/Managers';
 import ManagerDetail from '@src/components/views/Managers/ManagerDetail';
+import { Login, Signup } from '@src/components/views/Auth';
 import PublicRoutes from '@src/components/global/PublicRoutes';
 import PrivateRoutes from '@src/components/global/PrivateRoutes';
+import { initAuthListener } from '@src/utils/auth.utils';
 import AppWrapper from './components/global/AppWrapper';
 import Alert from './components/global/Alert';
 
 function App() {
+  useEffect(() => {
+    // Initialize Firebase auth listener
+    const unsubscribe = initAuthListener();
+
+    // Cleanup on unmount
+    return () => {
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, []);
+
   return (
     <>
       <Alert />
       <Router>
         <Routes>
           <Route element={<AppWrapper />}>
+            {/* Public auth routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+
+            {/* Redirect root to dashboard */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/home" element={<Home />} />
 
+            {/* Protected routes */}
             <Route element={<PrivateRoutes />}>
               <Route path="/loans" element={<Loans />} />
               <Route path="/loans/:loanId" element={<LoanDetail />} />
@@ -39,10 +60,12 @@ function App() {
               <Route path="/settings" element={<div className="p-24"><h2>Settings - Coming Soon</h2></div>} />
             </Route>
 
+            {/* Public routes */}
             <Route element={<PublicRoutes />}>
               <Route path="/public" element={<h1>Public Route</h1>} />
             </Route>
 
+            {/* 404 catch-all */}
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
