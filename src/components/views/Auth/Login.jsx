@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Container, Row, Col, Form, Button, Card, Alert } from 'react-bootstrap';
-import { loginUser, loginWithGoogle } from '@src/utils/auth.utils';
+import { loginUser } from '@src/utils/auth.utils';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import { $form } from '@src/signals';
 

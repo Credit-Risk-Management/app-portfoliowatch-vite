@@ -42,10 +42,10 @@ const Clients = () => {
         ]}
         onItemClick={(item) => {
           if (item.action === 'edit') {
-            $borrowers.update({ selectedBorrower: borrower });
+            $borrowers.update({ selectedClient: borrower });
             $borrowersView.update({ showEditModal: true });
           } else if (item.action === 'view') {
-            $borrowers.update({ selectedClient: borrower });
+            $borrowers.update({ selectedBorrower: borrower });
             $borrowersView.update({ showViewModal: true });
           } else if (item.action === 'delete') {
             $borrowers.update({ selectedBorrower: borrower });

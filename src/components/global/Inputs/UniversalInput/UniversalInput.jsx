@@ -9,6 +9,7 @@ import { formatDate, formatPhone, formatTime, isEmailValid } from './_helpers/un
 const $select = Signal({});
 
 const UniversalInput = ({
+  label,
   type,
   name,
   signal = $form,
@@ -183,22 +184,25 @@ const UniversalInput = ({
   };
 
   return (
-    <Form.Control
-      type={type || 'text'}
-      value={formatValue()}
-      placeholder={placeholder}
-      className={`bg-info-800 border-0 text-info-100 ${className}`}
-      name={name}
-      autoComplete={autoComplete}
-      onChange={customOnChange || ((e) => signal.update({
-        [name]: inputFormatCallback ? inputFormatCallback(e.target.value) : e.target.value,
-      }))}
-      isValid={validation[type] ? validation[type].valid : isValid}
-      isInvalid={validation[type] ? val && validation[type].invalid : isInvalid}
-      disabled={disabled}
-      maxLength={type === 'phone' ? 14 : ''}
-      {...props}
-    />
+    <div>
+      {label && <Form.Label>{label}</Form.Label>}
+      <Form.Control
+        type={type || 'text'}
+        value={formatValue()}
+        placeholder={placeholder}
+        className={`bg-info-800 border-0 text-info-100 ${className}`}
+        name={name}
+        autoComplete={autoComplete}
+        onChange={customOnChange || ((e) => signal.update({
+          [name]: inputFormatCallback ? inputFormatCallback(e.target.value) : e.target.value,
+        }))}
+        isValid={validation[type] ? validation[type].valid : isValid}
+        isInvalid={validation[type] ? val && validation[type].invalid : isInvalid}
+        disabled={disabled}
+        maxLength={type === 'phone' ? 14 : ''}
+        {...props}
+      />
+    </div>
   );
 };
 

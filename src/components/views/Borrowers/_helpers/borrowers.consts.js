@@ -29,6 +29,7 @@ export const INDUSTRY_TYPE_OPTIONS = [
 export const TABLE_HEADERS = [
   { key: 'borrowerId', value: 'Borrower ID', sortKey: 'borrower_id' },
   { key: 'name', value: 'Name', sortKey: 'name' },
+  { key: 'email', value: 'Email', sortKey: 'email' },
   { key: 'borrowerType', value: 'Type', sortKey: 'client_type' },
   { key: 'relationshipManager', value: 'Manager' },
   { key: 'actions', value: 'Actions' },

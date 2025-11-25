@@ -260,3 +260,28 @@ export const $dashboard = Signal({
   upcomingTasks: [],
   isLoading: false,
 });
+
+export const $contacts = Signal({
+  list: [],
+  selectedContact: null,
+  isLoading: false,
+  totalCount: 0,
+});
+
+export const $contactsView = Signal({
+  showAddModal: false,
+  showEditModal: false,
+  showDeleteModal: false,
+});
+
+export const $contactsForm = Signal({
+  id: '',
+  borrowerId: '',
+  firstName: '',
+  lastName: '',
+  email: '',
+  phone: '',
+  title: '',
+  isPrimary: false,
+  organizationId: '',
+});
