@@ -1,5 +1,4 @@
 import { WATCH_SCORE_OPTIONS } from '@src/consts/consts';
-import colors from '@src/scss/exportVars.module.scss';
 
 export const RISK_RATING_LABELS = {
   1: WATCH_SCORE_OPTIONS[1].label,

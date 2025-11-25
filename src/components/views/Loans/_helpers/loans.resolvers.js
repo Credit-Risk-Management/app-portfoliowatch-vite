@@ -1,6 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import { $borrowers, $loans, $loansFilter, $loansView, $relationshipManagers } from '@src/signals';
-import { $loan } from '@src/consts/consts';
+import { $loan, $watchScoreBreakdown } from '@src/consts/consts';
 import borrowersApi from '@src/api/borrowers.api';
 import relationshipManagersApi from '@src/api/relationshipManagers.api';
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
@@ -61,16 +61,24 @@ export const fetchLoanDetail = async (loanId) => {
 
   try {
     $loan.update({ isLoading: true });
-    const [loanResponse, commentsResponse] = await Promise.all([
+    $watchScoreBreakdown.update({ isLoading: true });
+    
+    const [loanResponse, commentsResponse, watchScoreResponse] = await Promise.all([
       loansApi.getById(loanId),
       commentsApi.getByLoan(loanId),
+      loansApi.getWatchScoreBreakdown(loanId),
     ]);
 
     $loan.update({ loan: loanResponse.data, isLoading: false });
     $comments.update({ list: commentsResponse.data || [] });
+    $watchScoreBreakdown.update({ 
+      breakdown: watchScoreResponse.data, 
+      isLoading: false 
+    });
   } catch (error) {
     console.error('Failed to fetch loan detail:', error);
     $loan.update({ loan: null, isLoading: false });
+    $watchScoreBreakdown.update({ breakdown: null, isLoading: false });
     dangerAlert(`Failed to fetch loan detail: ${error?.message || 'Unknown error'}`);
   }
 };

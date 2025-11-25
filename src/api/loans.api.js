@@ -29,6 +29,9 @@ const loansApiBase = {
   // Get loan by ID
   getById: async (id) => apiClient.get(`/loans/${id}`),
 
+  // Get Watch Score breakdown for a loan
+  getWatchScoreBreakdown: async (id) => apiClient.get(`/loans/${id}/watch-score-breakdown`),
+
   // Get loans by borrower
   getByBorrower: async (borrowerId) => apiClient.get(`/loans/borrower/${borrowerId}`),
 

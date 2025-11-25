@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Button, ListGroup, Collapse } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFileAlt, faDownload, faTrash, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { faFileAlt, faDownload, faTrash, faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';
 import FileUploader from '@src/components/global/FileUploader';
 import MetricCard from '@src/components/global/MetricCard';
@@ -122,10 +122,14 @@ const LoanDetail = () => {
           </UniversalCard>
           <UniversalCard headerText="Borrower Owner Info" className="mt-16">
             <div className="py-16">
-              <div className="mb-8"><span className="text-muted">Primary Contact: </span>{$loan.value?.loan?.borrower?.primaryContact || 'Unknown'}</div>
-              <div className="mb-8"><span className="text-muted">Email: </span>{$loan.value?.loan?.borrower?.email || 'Unknown'}</div>
-              <div className="mb-8"><span className="text-muted">Phone: </span>{$loan.value?.loan?.borrower?.phoneNumber || 'Unknown'}</div>
-              <div className="mb-8"><span className="text-muted">Address: </span>{$loan.value?.loan?.borrower ? `${$loan.value?.loan?.borrower.streetAddress || ''}, ${$loan.value?.loan?.borrower.city || ''}, ${$loan.value?.loan?.borrower.state || ''} ${$loan.value?.loan?.borrower.zipCode || ''}`.replace(/^,\s*|,\s*$/g, '').trim() || 'Unknown' : 'Unknown'}</div>
+              <div className="text-info-100 fw-200 mt-8">Primary Contact</div>
+              <div className="text-info-300 lead fw-500">{$loan.value?.loan?.borrower?.primaryContact || 'Unknown'}</div>
+              <div className="text-info-100 fw-200 mt-8">Email</div>
+              <div className="text-info-300 lead fw-500">{$loan.value?.loan?.borrower?.email || 'Unknown'}</div>
+              <div className="text-info-100 fw-200 mt-8">Phone</div>
+              <div className="text-info-300 lead fw-500">{$loan.value?.loan?.borrower?.phoneNumber || 'Unknown'}</div>
+              <div className="text-info-100 fw-200 mt-8">Address</div>
+              <div className="text-info-300 lead fw-500">{$loan.value?.loan?.borrower ? `${$loan.value?.loan?.borrower.streetAddress || ''}, ${$loan.value?.loan?.borrower.city || ''}, ${$loan.value?.loan?.borrower.state || ''} ${$loan.value?.loan?.borrower.zipCode || ''}`.replace(/^,\s*|,\s*$/g, '').trim() || 'Unknown' : 'Unknown'}</div>
 
               {$loan.value?.loan?.borrower?.secondaryContacts && $loan.value?.loan?.borrower.secondaryContacts.length > 0 && (
                 <>
@@ -145,10 +149,14 @@ const LoanDetail = () => {
                     <div id="secondary-contacts-collapse" className="mt-12">
                       {$loan.value?.loan?.borrower.secondaryContacts.map((contact, index) => (
                         <div key={index} className={index > 0 ? 'mt-12 pt-12 border-top' : ''}>
-                          <div className="mb-4"><span className="text-muted">Name: </span><strong>{contact.name}</strong></div>
-                          <div className="mb-4"><span className="text-muted">Role: </span>{contact.role}</div>
-                          <div className="mb-4"><span className="text-muted">Email: </span>{contact.email}</div>
-                          <div className="mb-4"><span className="text-muted">Phone: </span>{contact.phone}</div>
+                          <div className="text-info-100 fw-200 mt-8">Name</div>
+                          <div className="text-info-300 lead fw-500"><strong>{contact.name}</strong></div>
+                          <div className="text-info-100 fw-200 mt-8">Role</div>
+                          <div className="text-info-300 lead fw-500">{contact.role}</div>
+                          <div className="text-info-100 fw-200 mt-8">Email</div>
+                          <div className="text-info-300 lead fw-500">{contact.email}</div>
+                          <div className="text-info-100 fw-200 mt-8">Phone</div>
+                          <div className="text-info-300 lead fw-500">{contact.phone}</div>
                         </div>
                       ))}
                     </div>
@@ -159,7 +167,7 @@ const LoanDetail = () => {
           </UniversalCard>
         </Col>
         <Col md={6}>
-          <LoanRadarChart loan={$loan.value?.loan} />
+          <LoanRadarChart />
           <div className="mt-16">
             <LoanTrendChart loan={$loan.value?.loan} />
           </div>
@@ -248,70 +256,36 @@ const LoanDetail = () => {
         </Col>
         <Col md={3}>
           <UniversalCard headerText="Relationship Manager(s)">
-            <Row>
-              <Col md={6}>
-                <div className="mb-8">
-                  <span className="text-muted">Relationship Manager: </span>
-                  {$loan.value?.loan?.relationshipManager ? (
-                    <Button
-                      variant="link"
-                      className="p-0"
-                      onClick={() => navigate(`/relationship-managers/${$loan.value?.loan?.relationshipManager.id}`)}
-                    >
-                      {$loan.value?.loan?.relationshipManager.name}
-                    </Button>
-                  ) : (
-                    'Unknown'
-                  )}
+            <div className="text-info-100 fw-200 mt-8">Relationship Manager</div>
+            <div className="text-info-300 lead fw-500">
+              {$loan.value?.loan?.relationshipManager ? (
+                <Button
+                  variant="link"
+                  className="p-0 text-secondary-100 lead fw-500 text-start text-decoration-none"
+                  onClick={() => navigate(`/relationship-managers/${$loan.value?.loan?.relationshipManager.id}`)}
+                >
+                  {$loan.value?.loan?.relationshipManager.name}
+                  <FontAwesomeIcon icon={faArrowRight} className="ms-4" size="xs" />
+                </Button>
+              ) : (
+                'Unknown'
+              )}
+            </div>
+            {$loan.value?.loan?.relationshipManager && (
+              <>
+                <div className="text-info-100 fw-200 mt-8">Position</div>
+                <div className="text-info-300 lead fw-500">{$loan.value?.loan?.relationshipManager.positionTitle}</div>
+                <div className="text-info-100 fw-200 mt-8">Email</div>
+                <div className="text-info-300 lead fw-500">
+                  {$loan.value?.loan?.relationshipManager.email}
                 </div>
-                {$loan.value?.loan?.relationshipManager && (
-                  <>
-                    <div className="mb-8">
-                      <span className="text-muted">Position: </span>
-                      {$loan.value?.loan?.relationshipManager.positionTitle}
-                    </div>
-                    <div className="mb-8">
-                      <span className="text-muted">Email: </span>
-                      <a href={`mailto:${$loan.value?.loan?.relationshipManager.email}`}>{$loan.value?.loan?.relationshipManager.email}</a>
-                    </div>
-                    <div className="mb-8">
-                      <span className="text-muted">Phone: </span>
-                      <a href={`tel:${$loan.value?.loan?.relationshipManager.phone}`}>{$loan.value?.loan?.relationshipManager.phone}</a>
-                    </div>
-                  </>
-                )}
-              </Col>
-              <Col md={6}>
-                {$loan.value?.loan?.relationshipManager?.manager ? (
-                  <>
-                    <div className="mb-8">
-                      <span className="text-muted">Reports To: </span>
-                      <Button
-                        variant="link"
-                        className="p-0"
-                        onClick={() => navigate(`/relationship-managers/${$loan.value?.loan?.relationshipManager?.manager.id}`)}
-                      >
-                        {$loan.value?.loan?.relationshipManager?.manager.name}
-                      </Button>
-                    </div>
-                    <div className="mb-8">
-                      <span className="text-muted">Position: </span>
-                      {$loan.value?.loan?.relationshipManager?.manager.positionTitle}
-                    </div>
-                    <div className="mb-8">
-                      <span className="text-muted">Email: </span>
-                      <a href={`mailto:${$loan.value?.loan?.relationshipManager?.manager.email}`}>{$loan.value?.loan?.relationshipManager?.manager.email}</a>
-                    </div>
-                    <div className="mb-8">
-                      <span className="text-muted">Phone: </span>
-                      <a href={`tel:${$loan.value?.loan?.relationshipManager?.manager.phone}`}>{$loan.value?.loan?.relationshipManager?.manager.phone}</a>
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-muted">No manager assigned</div>
-                )}
-              </Col>
-            </Row>
+                <div className="text-info-100 fw-200 mt-8">Phone</div>
+                <div className="text-info-300 lead fw-500">
+                  {$loan.value?.loan?.relationshipManager.phone}
+                </div>
+              </>
+            )}
+
           </UniversalCard>
           <UniversalCard headerText="Financials" bodyContainer="" className="mt-16">
             <div className="mb-16">
