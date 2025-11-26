@@ -1,6 +1,6 @@
-import { signal } from '@preact/signals-react';
+import { Signal } from '@fyclabs/tools-fyc-react/signals';
 
 // Signals for borrower detail component state
-export const $borrowerDetailView = signal({
+export const $borrowerDetailView = Signal({
   showEditBorrowerModal: false,
 });

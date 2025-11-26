@@ -1,126 +1,126 @@
 project:
-name: Portfolio Watch Vite
-framework: Vite + React
-styling: Bootstrap + SCSS
-language: JavaScript
+  name: Portfolio Watch Vite
+  framework: Vite + React
+  styling: Bootstrap + SCSS
+  language: JavaScript
 
 rules:
-- description: Use `SignalTable.jsx` when rendering tabular data.
-  enforcement: |
-    - Prefer importing and using `SignalTable` over custom tables.
+  - description: Use `SignalTable.jsx` when rendering tabular data.
+    enforcement: |
+      - Prefer importing and using `SignalTable` over custom tables.
       - Bind tables to signals for reactivity.
       - Avoid local component state when using SignalTable.
 
-- description: Follow the `_helpers` design pattern for state, logic, and events.
-  enforcement: |
-    - Maintain signals in helpers instead of local React state.
+  - description: Follow the `_helpers` design pattern for state, logic, and events.
+    enforcement: |
+      - Maintain signals in helpers instead of local React state.
       - Keep components declarative.
-      - Avoid`useState` and `useReducer` when a signal can be used.
+      - Avoid `useState` and `useReducer` when a signal can be used.
 
   - description: Follow the `_helpers` folder structure.
-  enforcement: |
-    - consts: Signals + constants.
-      - events: UI interactions(clicks, submits).
+    enforcement: |
+      - consts: Signals + constants.
+      - events: UI interactions (clicks, submits).
       - resolvers: All data fetching and updates to signals.
       - Store helpers in `/lib/_helpers/{componentName}/` or next to the component.
       - NEVER make API calls inside components.
       - Components should only call resolver functions.
 
   - description: Distinguish UI state vs form data.
-  enforcement: |
-    - UI state(loading flags, validation, dirty flags) must not be inside form data signals.
+    enforcement: |
+      - UI state (loading flags, validation, dirty flags) must not be inside form data signals.
       - Form data = only values sent to backend.
 
   - description: Use UniversalInput for all form fields.
-  enforcement: |
-    - Always use`@components/global/Inputs/UniversalInput/UniversalInput.jsx`.
-      - Do NOT use native < input >, <textarea>, or react-bootstrap inputs.
+    enforcement: |
+      - Always use `@components/global/Inputs/UniversalInput/UniversalInput.jsx`.
+      - Do NOT use native <input>, <textarea>, or react-bootstrap inputs.
 
   - description: Avoid console statements in production.
-  enforcement: |
-  - Remove all console.log / warn / error before merging.
-  - Use proper logging utilities instead.
+    enforcement: |
+      - Remove all console.log / warn / error before merging.
+      - Use proper logging utilities instead.
 
   - description: Never make API calls in component files.
-  enforcement: |
-  - Only resolver files may call API modules.
-  - Components may only call resolver functions.
+    enforcement: |
+      - Only resolver files may call API modules.
+      - Components may only call resolver functions.
 
   - description: Reference signal values directly.
-  enforcement: |
-  - Do not extract signal values into local variables unless needed.
-  - Access signals inline like: $borrowers.value?.list || [].
+    enforcement: |
+      - Do not extract signal values into local variables unless needed.
+      - Access signals inline like: $borrowers.value?.list || [].
 
   - description: Keep components clean.
-  enforcement: |
-  - Components should only contain imports, useEffectAsync, and JSX.
-  - Move handlers to `{component}.events.js`.
-  - Move utilities to `{component}.helpers.js`.
+    enforcement: |
+      - Components should only contain imports, useEffectAsync, and JSX.
+      - Move handlers to `{component}.events.js`.
+      - Move utilities to `{component}.helpers.js`.
 
-  structure_generation:
+structure_generation:
   - description: Scaffold new components automatically.
-  pattern: "/components/{ComponentName}/"
+    pattern: "/components/{ComponentName}/"
 
-  generate:
+generate:
   - file: "{ComponentName}.tsx"
-  template: |
-  import React from "react";
-  import * as consts from "./_helpers/consts";
-  import * as events from "./_helpers/events";
-  import * as resolvers from "./_helpers/resolvers";
-  import {useEffectAsync} from "@fyclabs/tools-fyc-react/utils";
+    template: |
+      import React from "react";
+      import * as consts from "./_helpers/consts";
+      import * as events from "./_helpers/events";
+      import * as resolvers from "./_helpers/resolvers";
+      import { useEffectAsync } from "@fyclabs/tools-fyc-react/utils";
 
-  export default function {ComponentName}() {
-    useEffectAsync(async () => {
-      await resolvers.loadData();
-    }, []);
+      export default function {ComponentName}() {
+        useEffectAsync(async () => {
+          await resolvers.loadData();
+        }, []);
 
-  return (
-  <div className="p-3">
-    {/* Component layout */}
-  </div>
-  );
+        return (
+          <div className="p-3">
+            {/* Component layout */}
+          </div>
+        );
       }
 
   - folder: "_helpers"
 
   - file: "_helpers/consts.ts"
-  template: |
-  import {signal} from "@preact/signals-react";
-  export const signalName = signal<any>(null);
-
-    - file: "_helpers/events.ts"
     template: |
-    import * as resolvers from "./resolvers";
+      import { signal } from "@preact/signals-react";
+      export const signalName = signal<any>(null);
+
+  - file: "_helpers/events.ts"
+    template: |
+      import * as resolvers from "./resolvers";
       export const handleClick = () => {
-      console.info("Event triggered");
+        console.info("Event triggered");
       };
 
-    - file: "_helpers/resolvers.ts"
+  - file: "_helpers/resolvers.ts"
     template: |
-    import * as consts from "./consts";
+      import * as consts from "./consts";
       export const loadData = async () => {
         const data = await fetch("/api/example").then(res => res.json());
-    consts.signalName.value = data;
+        consts.signalName.value = data;
       };
 
-    - file: "_helpers/helpers.ts"
+  - file: "_helpers/helpers.ts"
     template: |
       export const formatValue = (value: any) => value;
 
-    general_conventions:
-    component_naming: PascalCase
-    helper_naming: camelCase
+general_conventions:
+  component_naming: PascalCase
+  helper_naming: camelCase
 
-    avoid:
-    - useState
-    - useReducer
-    - inline CSS
+avoid:
+  - useState
+  - useReducer
+  - inline CSS
 
-    prefer:
-    - Signals for state management
-    - useEffectAsync for async effects
+prefer:
+  - Signals for state management
+  - useEffectAsync for async effects
 
-    export_rules:
-    - Default export only for main React component
-    - Named exports for all helpers, events, consts, resolvers
+export_rules:
+  - Default export only for main React component
+  - Named exports for all helpers, events, consts, resolvers

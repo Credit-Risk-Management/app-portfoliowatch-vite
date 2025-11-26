@@ -377,36 +377,6 @@ const LoanDetail = () => {
               </Row>
             </div>
           </UniversalCard>
-          <UniversalCard headerText="Financials" bodyContainer="" className="mt-16">
-            <div className="d-flex justify-content-end gap-2 px-24 pt-16">
-              <Button
-                variant="outline-secondary-100"
-                size="sm"
-                onClick={() => {
-                  $borrowerFinancialsView.update({
-                    showHistoryModal: true,
-                    currentBorrowerId: $loan.value?.loan?.borrower?.id,
-                  });
-                }}
-              >
-                <FontAwesomeIcon icon={faHistory} className="me-8" />
-                View History
-              </Button>
-              <Button
-                variant="primary-100"
-                size="sm"
-                onClick={() => {
-                  $borrowerFinancialsView.update({
-                    showSubmitModal: true,
-                    currentBorrowerId: $loan.value?.loan?.borrower?.id,
-                  });
-                }}
-              >
-                <FontAwesomeIcon icon={faChartLine} className="me-8" />
-                Submit Financials
-              </Button>
-            </div>
-          </UniversalCard>
           <UniversalCard headerText="Comments" className="mt-16">
             <LoanComments loanId={loanId} />
           </UniversalCard>

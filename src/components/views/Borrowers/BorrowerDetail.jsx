@@ -12,6 +12,7 @@ import { getWatchScoreColor } from '@src/components/views/Dashboard/_helpers/das
 import { WATCH_SCORE_OPTIONS } from '@src/consts/consts';
 import FinancialHistoryModal from './_components/FinancialHistoryModal';
 import SubmitFinancialsModal from './_components/SubmitFinancialsModal';
+import EditBorrowerDetailModal from './_components/EditBorrowerDetailModal';
 import {
   formatDate,
   formatAddress,
@@ -79,7 +80,7 @@ const BorrowerDetail = () => {
           Back to Borrowers
         </Button>
         <Button
-          onClick={() => $borrowerDetailView.value = { ...($borrowerDetailView.value), showEditBorrowerModal: true }}
+          onClick={() => $borrowerDetailView.update({ showEditBorrowerModal: true })}
           variant="outline-primary-100"
         >
           <FontAwesomeIcon icon={faEdit} className="me-8" />
@@ -369,6 +370,9 @@ const BorrowerDetail = () => {
       {/* Financial Modals */}
       <FinancialHistoryModal />
       <SubmitFinancialsModal />
+      
+      {/* Edit Borrower Modal */}
+      <EditBorrowerDetailModal />
     </Container>
   );
 };

@@ -16,7 +16,7 @@ const LoanComments = ({ loanId }) => {
           placeholder="Add a comment..."
           value={$loanDetailNewComment.value}
           onChange={(e) => { $loanDetailNewComment.value = e.target.value; }}
-          className="mb-8"
+          className="mb-8 bg-info-900 text-info-100"
         />
         <Button onClick={() => handleAddComment(loanId)} disabled={!$loanDetailNewComment.value.trim()}>Add Comment</Button>
       </Form>

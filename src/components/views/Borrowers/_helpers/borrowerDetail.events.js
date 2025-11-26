@@ -1,11 +1,13 @@
 import { $borrower } from '@src/consts/consts';
 import borrowersApi from '@src/api/borrowers.api';
 import { dangerAlert, successAlert, infoAlert } from '@src/components/global/Alert/_helpers/alert.events';
+import { $borrowersForm } from '@src/signals';
 import { fetchBorrowerDetail } from './borrowerDetail.resolvers';
+import { $borrowerDetailView } from './borrowerDetail.consts';
 
 export const handleGenerateIndustryReport = async (borrowerId) => {
   const borrower = $borrower.value?.borrower;
-  
+
   if (!borrower?.id) {
     dangerAlert('Borrower information not available');
     return;
@@ -37,13 +39,31 @@ export const handleGenerateIndustryReport = async (borrowerId) => {
   }
 };
 
-export const handleEditBorrower = () => {
-  // This will be implemented when the edit modal is ready
-  console.log('Edit borrower - to be implemented');
+export const handleEditBorrowerDetail = async () => {
+  try {
+    const formData = $borrowersForm.value;
+
+    if (!formData.id) {
+      dangerAlert('Borrower ID is required');
+      return;
+    }
+
+    await borrowersApi.update(formData.id, formData);
+
+    $borrowerDetailView.update({ showEditBorrowerModal: false });
+    $borrowersForm.reset();
+
+    // Refresh the borrower detail to show updated data
+    const borrowerId = $borrower.value?.borrower?.id || $borrower.value?.borrower?.borrowerId;
+    if (borrowerId) {
+      await fetchBorrowerDetail(borrowerId);
+    }
+  } catch (error) {
+    dangerAlert(error.message || 'Failed to edit borrower');
+  }
 };
 
 export const handleDeleteBorrower = () => {
   // This will be implemented when the delete modal is ready
   console.log('Delete borrower - to be implemented');
 };
-
