@@ -314,3 +314,50 @@ export const $borrowerFinancialsForm = Signal({
   notes: '',
   documentIds: [],
 });
+
+export const $users = Signal({
+  list: [],
+  invitations: [],
+  isLoading: false,
+  totalCount: 0,
+});
+
+export const $usersView = Signal({
+  showInviteModal: false,
+  showDeleteModal: false,
+});
+
+export const $usersForm = Signal({
+  email: '',
+  role: 'USER',
+});
+
+export const $profile = Signal({
+  isLoading: false,
+  isEditing: false,
+});
+
+export const $profileView = Signal({
+  isEditing: false,
+  isSaving: false,
+});
+
+export const $profileForm = Signal({
+  name: '',
+});
+
+export const $settings = Signal({
+  isLoading: false,
+  activeTab: 'organization',
+});
+
+export const $settingsView = Signal({
+  activeTab: 'organization',
+  isSaving: false,
+  showInviteModal: false,
+});
+
+export const $settingsForm = Signal({
+  organizationName: '',
+  organizationIndustry: '',
+});

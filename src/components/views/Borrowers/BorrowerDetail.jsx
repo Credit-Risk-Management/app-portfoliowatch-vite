@@ -1,17 +1,18 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Row, Col, Button, ListGroup, Badge } from 'react-bootstrap';
+import { Container, Row, Col, Button, ListGroup, Badge, InputGroup, Form } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faArrowRight, faEdit, faMagic, faEnvelope, faPhone, faHistory, faChartLine, faFileAlt } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faArrowRight, faEdit, faMagic, faEnvelope, faPhone, faHistory, faChartLine, faFileAlt, faLink, faCopy, faCheck } from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';
 import UniversalCard from '@src/components/global/UniversalCard';
-import { $borrower, WATCH_SCORE_OPTIONS } from '@src/consts/consts';
+import { $borrower } from '@src/consts/consts';
 import { $contacts, $borrowerFinancialsView } from '@src/signals';
 import { formatCurrency } from '@src/utils/formatCurrency';
-import { getWatchScoreColor } from '@src/components/views/Dashboard/_helpers/dashboard.consts';
 import FinancialHistoryModal from './_components/FinancialHistoryModal';
 import SubmitFinancialsModal from './_components/SubmitFinancialsModal';
 import EditBorrowerDetailModal from './_components/EditBorrowerDetailModal';
+import { createUploadLink, getUploadLinks } from '@src/api/borrowerFinancialUploadLink.api';
+import { successAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import {
   formatDate,
   formatAddress,
@@ -30,11 +31,62 @@ import { handleGenerateIndustryReport, handleGenerateAnnualReview } from './_hel
 const BorrowerDetail = () => {
   const { borrowerId } = useParams();
   const navigate = useNavigate();
+  const [uploadLinks, setUploadLinks] = useState([]);
+  const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+  const [copiedLinkId, setCopiedLinkId] = useState(null);
 
   // Fetch borrower detail on mount or when borrowerId changes
   useEffect(() => {
     fetchBorrowerDetail(borrowerId);
   }, [borrowerId]);
+
+  // Fetch upload links when borrower is available
+  useEffect(() => {
+    if ($borrower.value?.borrower?.id) {
+      fetchUploadLinks();
+    }
+  }, [$borrower.value?.borrower?.id]);
+
+  const fetchUploadLinks = async () => {
+    if (!$borrower.value?.borrower?.id) return;
+    try {
+      const response = await getUploadLinks($borrower.value.borrower.id);
+      if (response.status === 'success') {
+        setUploadLinks(response.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching upload links:', error);
+    }
+  };
+
+  const handleGenerateLink = async () => {
+    if (!$borrower.value?.borrower?.id) return;
+    try {
+      setIsGeneratingLink(true);
+      const response = await createUploadLink($borrower.value.borrower.id);
+      if (response.status === 'success') {
+        await fetchUploadLinks();
+        successAlert('Upload link generated successfully!', 'toast');
+      }
+    } catch (error) {
+      console.error('Error generating upload link:', error);
+      successAlert(error.message || 'Failed to generate upload link', 'toast');
+    } finally {
+      setIsGeneratingLink(false);
+    }
+  };
+
+  const handleCopyLink = async (linkUrl, linkId) => {
+    try {
+      await navigator.clipboard.writeText(linkUrl);
+      setCopiedLinkId(linkId);
+      successAlert('Link copied to clipboard!', 'toast');
+      setTimeout(() => setCopiedLinkId(null), 2000);
+    } catch (error) {
+      console.error('Error copying link:', error);
+      successAlert('Failed to copy link', 'toast');
+    }
+  };
 
   // Reset component state when the borrower changes
   useEffect(() => {
@@ -309,6 +361,69 @@ const BorrowerDetail = () => {
                   Submit Financials
                 </Button>
               </div>
+            </div>
+
+            {/* Upload Link Section */}
+            <div className="mt-24 pt-24 border-top border-info-700">
+              <div className="d-flex justify-content-between align-items-center mb-16">
+                <h6 className="text-info-100 mb-0">
+                  <FontAwesomeIcon icon={faLink} className="me-8" />
+                  Borrower Upload Link
+                </h6>
+                <Button
+                  variant="outline-primary-100"
+                  size="sm"
+                  onClick={handleGenerateLink}
+                  disabled={isGeneratingLink}
+                >
+                  {isGeneratingLink ? 'Generating...' : 'Generate Upload Link'}
+                </Button>
+              </div>
+              <p className="text-info-200 small mb-16">
+                Generate a secure link that allows the borrower to upload their financials without logging in. The link expires in 7 days.
+              </p>
+
+              {uploadLinks.length > 0 && (
+                <div className="mt-16">
+                  {uploadLinks.map((link) => {
+                    const isExpired = link.isExpired || new Date(link.expiresAt) < new Date();
+                    return (
+                      <div key={link.id} className="mb-16 p-16 bg-info-800 rounded">
+                        <div className="d-flex justify-content-between align-items-start mb-8">
+                          <div className="flex-grow-1">
+                            <InputGroup>
+                              <Form.Control
+                                type="text"
+                                value={link.uploadLinkUrl}
+                                readOnly
+                                className="bg-info-700 text-info-100"
+                              />
+                              <Button
+                                variant={copiedLinkId === link.id ? 'success' : 'primary-100'}
+                                onClick={() => handleCopyLink(link.uploadLinkUrl, link.id)}
+                              >
+                                <FontAwesomeIcon
+                                  icon={copiedLinkId === link.id ? faCheck : faCopy}
+                                  className="me-8"
+                                />
+                                {copiedLinkId === link.id ? 'Copied!' : 'Copy'}
+                              </Button>
+                            </InputGroup>
+                          </div>
+                        </div>
+                        <div className="d-flex justify-content-between align-items-center mt-8">
+                          <small className="text-info-200">
+                            Created: {new Date(link.createdAt).toLocaleDateString()}
+                          </small>
+                          <Badge bg={isExpired ? 'danger' : 'success'}>
+                            {isExpired ? 'Expired' : `Expires: ${new Date(link.expiresAt).toLocaleDateString()}`}
+                          </Badge>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </UniversalCard>
         </Col>

@@ -1,13 +1,27 @@
-import sleep from '@fyclabs/tools-fyc-react/utils/sleep';
+import apiClient from './client';
 
-async function getUsers() {
-  await sleep(1500);
-  return {
-    firstName: 'Justin',
-    lastName: 'Fortier',
-  };
-}
+/**
+ * Get current user profile
+ */
+export const getCurrentUser = async () => {
+  try {
+    const response = await apiClient.get('/users/me');
+    return response;
+  } catch (error) {
+    console.error('Get current user API error:', error);
+    throw error;
+  }
+};
 
-export default {
-  get: getUsers,
+/**
+ * Update current user profile
+ */
+export const updateCurrentUser = async (data) => {
+  try {
+    const response = await apiClient.put('/users/me', data);
+    return response;
+  } catch (error) {
+    console.error('Update user API error:', error);
+    throw error;
+  }
 };

@@ -13,7 +13,10 @@ import Documents from '@src/components/views/Documents';
 import Reports from '@src/components/views/Reports';
 import Managers from '@src/components/views/Managers';
 import ManagerDetail from '@src/components/views/Managers/ManagerDetail';
-import { Login, Signup } from '@src/components/views/Auth';
+import { Login, Signup, AcceptInvitation } from '@src/components/views/Auth';
+import Profile from '@src/components/views/Profile';
+import Settings from '@src/components/views/Settings';
+import PublicFinancialUpload from '@src/components/views/Borrowers/PublicFinancialUpload';
 import PublicRoutes from '@src/components/global/PublicRoutes';
 import PrivateRoutes from '@src/components/global/PrivateRoutes';
 import { initAuthListener } from '@src/utils/auth.utils';
@@ -42,6 +45,8 @@ function App() {
             {/* Public auth routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/accept-invitation" element={<AcceptInvitation />} />
+            <Route path="/upload-financials/:token" element={<PublicFinancialUpload />} />
 
             {/* Redirect root to dashboard */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -58,8 +63,8 @@ function App() {
               <Route path="/reports" element={<Reports />} />
               <Route path="/relationship-managers" element={<Managers />} />
               <Route path="/relationship-managers/:managerId" element={<ManagerDetail />} />
-              <Route path="/profile" element={<div className="p-24"><h2>Profile - Coming Soon</h2></div>} />
-              <Route path="/settings" element={<div className="p-24"><h2>Settings - Coming Soon</h2></div>} />
+              <Route path="/profile" element={<Profile />} />
+              <Route path="/settings" element={<Settings />} />
             </Route>
 
             {/* Public routes */}

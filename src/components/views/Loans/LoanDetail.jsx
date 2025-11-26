@@ -1,10 +1,9 @@
 import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Row, Col, Button, ListGroup, Collapse, Spinner } from 'react-bootstrap';
+import { Container, Row, Col, Button, Collapse, Spinner } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFileAlt, faDownload, faTrash, faArrowLeft, faArrowRight, faEdit, faMagic, faHistory, faChartLine } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faArrowRight, faMagic, faHistory, faChartLine } from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';
-import FileUploader from '@src/components/global/FileUploader';
 import UniversalCard from '@src/components/global/UniversalCard';
 import { $loan, WATCH_SCORE_OPTIONS } from '@src/consts/consts';
 import { formatCurrency } from '@src/utils/formatCurrency';

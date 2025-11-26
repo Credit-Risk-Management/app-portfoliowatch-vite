@@ -85,21 +85,39 @@ export const handleGenerateAnnualReview = async (borrowerId) => {
   }
 
   try {
-    infoAlert('Generating annual review with AI narratives...');
+    infoAlert('Generating annual review with AI narratives and PDF...');
 
-    // Generate report data with AI narratives
+    // Generate report data with AI narratives and PDF
     const response = await annualReviewsApi.generateForLoan(firstLoan.id, {
       generateNarratives: true,
       includeFinancials: true,
+      generatePdf: true,
     });
 
     if (!response.success) {
       throw new Error(response.error || 'Failed to generate annual review');
     }
 
-    successAlert('Annual review generated successfully! You can now create the review from the data.');
+    // Download the PDF if included in response
+    if (response.pdf && response.pdf.buffer) {
+      try {
+        const pdfBlob = base64ToBlob(response.pdf.buffer, 'application/pdf');
+        downloadBlob(pdfBlob, response.pdf.filename);
+        successAlert('Annual review and PDF generated successfully!');
+      } catch (pdfError) {
+        console.error('Failed to download PDF:', pdfError);
+        successAlert('Annual review generated successfully! (PDF download failed)');
+      }
+    } else {
+      if (response.pdfError) {
+        console.error('PDF generation error:', response.pdfError);
+        successAlert('Annual review data generated successfully! (PDF generation failed)');
+      } else {
+        successAlert('Annual review generated successfully!');
+      }
+    }
 
-    // Optionally, you can log the generated data or navigate somewhere
+    // Log the generated data for debugging
     console.log('Generated annual review data:', response.data);
     
     return response.data;
@@ -108,3 +126,30 @@ export const handleGenerateAnnualReview = async (borrowerId) => {
     dangerAlert(`Failed to generate annual review: ${error.message}`);
   }
 };
+
+// Helper function to convert base64 to Blob
+function base64ToBlob(base64, type) {
+  const binStr = atob(base64);
+  const len = binStr.length;
+  const arr = new Uint8Array(len);
+  for (let i = 0; i < len; i++) {
+    arr[i] = binStr.charCodeAt(i);
+  }
+  return new Blob([arr], { type });
+}
+
+// Helper function to download Blob as file
+function downloadBlob(blob, filename) {
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  
+  // Cleanup
+  setTimeout(() => {
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  }, 100);
+}

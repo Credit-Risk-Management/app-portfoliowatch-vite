@@ -65,6 +65,9 @@ const annualReviewsApiBase = {
     if (options.includeFinancials !== undefined) {
       params.append('includeFinancials', options.includeFinancials);
     }
+    if (options.generatePdf !== undefined) {
+      params.append('generatePdf', options.generatePdf);
+    }
 
     const queryString = params.toString();
     const url = `/annual-reviews/loan/${loanId}/generate${queryString ? `?${queryString}` : ''}`;
@@ -77,6 +80,14 @@ const annualReviewsApiBase = {
 
   // Export annual review as JSON
   exportToJSON: async (id) => apiClient.get(`/annual-reviews/${id}/export/json`),
+
+  // Export annual review as PDF
+  exportToPDF: async (id) => {
+    const response = await apiClient.get(`/annual-reviews/${id}/export/pdf`, {
+      responseType: 'blob',
+    });
+    return response;
+  },
 
   // Compute financial ratios
   computeRatios: async (financialStatements) => 
