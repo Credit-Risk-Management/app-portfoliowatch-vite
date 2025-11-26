@@ -55,13 +55,15 @@ const UniversalModal = ({
         >
           {leftBtnText}
         </Button>
-        <Button
-          className={rightBtnClass}
-          onClick={rightBtnOnClick}
-          disabled={rightButtonDisabled}
-        >
-          {rightBtnText}
-        </Button>
+        {rightBtnText !== null && (
+          <Button
+            className={rightBtnClass}
+            onClick={rightBtnOnClick}
+            disabled={rightButtonDisabled}
+          >
+            {rightBtnText}
+          </Button>
+        )}
       </Modal.Footer>
     </Modal>
   );

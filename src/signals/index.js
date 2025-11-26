@@ -298,6 +298,7 @@ export const $borrowerFinancialsView = Signal({
 });
 
 export const $borrowerFinancialsForm = Signal({
+  asOfDate: '',
   grossRevenue: '',
   netIncome: '',
   ebitda: '',

@@ -4,7 +4,7 @@
 4a. Add a "Grid view" to teh signal table
 • Add Borrower Detail view with list of loans
 √ 5. Add date on activity
-6. Add Finacial history view
+√ 6. Add Finacial history view
 7. Add demo flow for upload financials and recompute watch score
   - Upload financials and then allow for modification
   - Choose the month/quarter for the financials
@@ -22,3 +22,4 @@
   - Restructured ?
   - Note Mods?
   Description of Previous Note Modifications
+16. Update Submit new financials to actual use OCR

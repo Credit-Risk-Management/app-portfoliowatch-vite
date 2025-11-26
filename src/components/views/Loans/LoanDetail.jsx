@@ -27,14 +27,10 @@ import {
   $loanDetailNewComment,
   $loanDetailShowSecondaryContacts,
   $loanDetailFinancials,
-  $loanDetailView,
   $industryReportGenerating,
 } from './_helpers/loans.consts';
 import { fetchLoanDetail } from './_helpers/loans.resolvers';
 import {
-  handleUploadFinancials,
-  handleDeleteFinancial,
-  handleDownloadFinancial,
   handleGenerateIndustryReport,
 } from './_helpers/loans.events';
 
@@ -88,13 +84,33 @@ const LoanDetail = () => {
           <FontAwesomeIcon icon={faArrowLeft} className="me-8" />
           Back to Loans
         </Button>
-        <Button
-          onClick={() => $loanDetailView.update({ showEditLoanModal: true })}
-          variant="outline-primary-100"
-        >
-          <FontAwesomeIcon icon={faEdit} className="me-8" />
-          Edit Loan
-        </Button>
+        <div>
+          <Button
+            variant="outline-secondary-100"
+            onClick={() => {
+              $borrowerFinancialsView.update({
+                showHistoryModal: true,
+                currentBorrowerId: $loan.value?.loan?.borrower?.id,
+              });
+            }}
+            className="me-8"
+          >
+            <FontAwesomeIcon icon={faHistory} className="me-8" />
+            Financial History
+          </Button>
+          <Button
+            variant="outline-primary-100"
+            onClick={() => {
+              $borrowerFinancialsView.update({
+                showSubmitModal: true,
+                currentBorrowerId: $loan.value?.loan?.borrower?.id,
+              });
+            }}
+          >
+            <FontAwesomeIcon icon={faChartLine} className="me-8" />
+            Submit New Financials
+          </Button>
+        </div>
       </div>
       <div className="text-info-50">Loan Id: {$loan.value?.loan?.loanNumber}</div>
       <PageHeader
@@ -234,7 +250,7 @@ const LoanDetail = () => {
         </Col>
       </Row>
       <Row>
-        <Col md={6}>
+        <Col md={12}>
           <UniversalCard headerText="Covenants" bodyContainer="container-fluid" className="mt-16">
             <Row style={{ height: '500px' }}>
               <Col md={6}>
@@ -300,7 +316,9 @@ const LoanDetail = () => {
             </Row>
           </UniversalCard>
         </Col>
-        <Col md={6}>
+      </Row>
+      <Row>
+        <Col md={12}>
           <UniversalCard headerText="Industry Analysis" className="mt-16">
             <div style={{ height: '500px' }}>
               <Row>
@@ -359,10 +377,6 @@ const LoanDetail = () => {
               </Row>
             </div>
           </UniversalCard>
-        </Col>
-      </Row>
-      <Row>
-        <Col md={12}>
           <UniversalCard headerText="Financials" bodyContainer="" className="mt-16">
             <div className="d-flex justify-content-end gap-2 px-24 pt-16">
               <Button
@@ -392,55 +406,6 @@ const LoanDetail = () => {
                 Submit Financials
               </Button>
             </div>
-            <Row className="my-16">
-              <Col md={6}>
-                <FileUploader
-                  name="financialFiles"
-                  signal={$financialsUploader}
-                  acceptedTypes=".pdf,.xlsx,.xls,.doc,.docx,.csv"
-                  hideNoFiles={false}
-                  onUpload={handleUploadFinancials}
-                />
-
-                {$loanDetailFinancials.value.length === 0 ? (
-                  <div className="text-info-100 fw-200">No financial documents uploaded yet.</div>
-                ) : (
-                  <ListGroup variant="flush" className="mt-16">
-                    {$loanDetailFinancials.value.map((financial) => (
-                      <ListGroup.Item key={financial.id} className="d-flex justify-content-between align-items-center">
-                        <div className="d-flex align-items-center">
-                          <FontAwesomeIcon icon={faFileAlt} className="me-12 text-secondary-100" size="lg" />
-                          <div>
-                            <div className="fw-bold text-white">{financial.fileName}</div>
-                            <div className="small text-info-100 fw-200">
-                              Uploaded by {financial.uploadedBy} on {formatDate(financial.uploadedAt)}
-                              {financial.fileSize && ` • ${(financial.fileSize / 1024).toFixed(2)} KB`}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="d-flex gap-2">
-                          <Button
-                            variant="outline-primary-100"
-                            size="sm"
-                            onClick={() => handleDownloadFinancial(financial)}
-                            className="me-8"
-                          >
-                            <FontAwesomeIcon icon={faDownload} />
-                          </Button>
-                          <Button
-                            variant="outline-danger-100"
-                            size="sm"
-                            onClick={() => handleDeleteFinancial(financial.id)}
-                          >
-                            <FontAwesomeIcon icon={faTrash} />
-                          </Button>
-                        </div>
-                      </ListGroup.Item>
-                    ))}
-                  </ListGroup>
-                )}
-              </Col>
-            </Row>
           </UniversalCard>
           <UniversalCard headerText="Comments" className="mt-16">
             <LoanComments loanId={loanId} />

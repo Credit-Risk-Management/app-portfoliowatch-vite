@@ -1,3 +1,5 @@
+/* eslint-disable no-nested-ternary */
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect } from 'react';
 import { Table, Badge, Spinner } from 'react-bootstrap';
 import UniversalModal from '@src/components/global/UniversalModal';
@@ -17,9 +19,9 @@ const FinancialHistoryModal = () => {
       $borrowerFinancials.update({ isLoading: true });
       const response = await borrowerFinancialsApi.getByBorrowerId(
         $borrowerFinancialsView.value.currentBorrowerId,
-        { sortKey: 'submittedAt', sortDirection: 'desc' }
+        { sortKey: 'submittedAt', sortDirection: 'desc' },
       );
-      
+
       if (response.success) {
         $borrowerFinancials.update({
           list: response.data || [],
@@ -40,15 +42,15 @@ const FinancialHistoryModal = () => {
   const formatDate = (dateString) => {
     if (!dateString) return '-';
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
     });
   };
 
   const handleClose = () => {
-    $borrowerFinancialsView.update({ 
+    $borrowerFinancialsView.update({
       showHistoryModal: false,
       currentBorrowerId: null,
     });
@@ -61,12 +63,13 @@ const FinancialHistoryModal = () => {
       onHide={handleClose}
       headerText="Financial History"
       leftBtnText="Close"
-      rightBtnText=""
-      rightBtnOnClick={() => {}}
+      rightBtnText={null}
+      // rightBtnOnClick={() => { }}
       footerClass="justify-content-start"
-      size="fullscreen"
+      size="xl"
+      closeButton
     >
-      <div className="py-16">
+      <div>
         {$borrowerFinancials.value.isLoading ? (
           <div className="text-center py-32">
             <Spinner animation="border" variant="primary" />
@@ -75,28 +78,30 @@ const FinancialHistoryModal = () => {
         ) : $borrowerFinancials.value.list.length > 0 ? (
           <>
             <div className="mb-16">
-              <Badge bg="secondary-100" className="me-8">
+              <Badge bg="secondary-100" className="me-8 text-secondary-900">
                 Total Records: {$borrowerFinancials.value.totalCount}
               </Badge>
             </div>
-            <Table striped bordered hover responsive className="text-info-100">
+            <Table striped responsive className="text-info-100">
               <thead className="bg-info-800">
                 <tr>
-                  <th>Submitted Date</th>
-                  <th>Gross Revenue</th>
-                  <th>Net Income</th>
-                  <th>EBITDA</th>
-                  <th>Debt Service</th>
-                  <th>Current Ratio</th>
-                  <th>Liquidity</th>
-                  <th>Submitted By</th>
-                  <th>Documents</th>
+                  <th className="bg-info-700 text-info-50 fw-500">As Of Date</th>
+                  <th className="bg-info-700 text-info-50 fw-500">Submitted Date</th>
+                  <th className="bg-info-700 text-info-50 fw-500">Gross Revenue</th>
+                  <th className="bg-info-700 text-info-50 fw-500">Net Income</th>
+                  <th className="bg-info-700 text-info-50 fw-500">EBITDA</th>
+                  <th className="bg-info-700 text-info-50 fw-500">Debt Service</th>
+                  <th className="bg-info-700 text-info-50 fw-500">Current Ratio</th>
+                  <th className="bg-info-700 text-info-50 fw-500">Liquidity</th>
+                  <th className="bg-info-700 text-info-50 fw-500">Submitted By</th>
+                  <th className="bg-info-700 text-info-50 fw-500">Documents</th>
                 </tr>
               </thead>
               <tbody>
                 {$borrowerFinancials.value.list.map((financial) => (
                   <tr key={financial.id}>
-                    <td className="fw-500">{formatDate(financial.submittedAt)}</td>
+                    <td className="fw-bold text-secondary-100">{formatDate(financial.asOfDate)}</td>
+                    <td className="fw-500 text-info-200">{formatDate(financial.submittedAt)}</td>
                     <td className="text-success-500 fw-500">
                       {formatCurrency(financial.grossRevenue)}
                     </td>
@@ -140,4 +145,3 @@ const FinancialHistoryModal = () => {
 };
 
 export default FinancialHistoryModal;
-

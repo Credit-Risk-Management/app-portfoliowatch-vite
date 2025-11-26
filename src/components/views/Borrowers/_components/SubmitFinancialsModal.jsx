@@ -8,21 +8,48 @@ import { $borrowerFinancialsView, $borrowerFinancialsForm, $user } from '@src/si
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
 import { Signal } from '@fyclabs/tools-fyc-react/signals';
 import { useState } from 'react';
+import { successAlert } from '@src/components/global/Alert/_helpers/alert.events';
 
-// Mock OCR data - predefined values to populate when document is uploaded
-const MOCK_OCR_DATA = {
-  grossRevenue: '5000000',
-  netIncome: '750000',
-  ebitda: '1200000',
-  debtService: '1.45',
-  debtServiceCovenant: '1.25',
-  currentRatio: '2.1',
-  currentRatioCovenant: '1.5',
-  liquidity: '850000',
-  liquidityCovenant: '500000',
-  liquidityRatio: '1.85',
-  liquidityRatioCovenant: '1.2',
-  retainedEarnings: '2300000',
+// Mock OCR - generate random but realistic financial data
+const generateMockFinancialData = () => {
+  // Generate realistic random values within typical ranges
+  const grossRevenue = Math.floor(Math.random() * (10000000 - 2000000) + 2000000); // $2M - $10M
+  const netIncomeMargin = 0.10 + Math.random() * 0.15; // 10% - 25% margin
+  const netIncome = Math.floor(grossRevenue * netIncomeMargin);
+  const ebitdaMargin = 0.15 + Math.random() * 0.15; // 15% - 30% margin
+  const ebitda = Math.floor(grossRevenue * ebitdaMargin);
+
+  // Generate a quarter-end date (randomly pick last 4 quarters)
+  const today = new Date();
+  const quartersBack = Math.floor(Math.random() * 4); // 0-3 quarters back
+  const currentQuarter = Math.floor(today.getMonth() / 3);
+  const targetQuarter = currentQuarter - quartersBack;
+
+  // Calculate year and quarter
+  const yearOffset = Math.floor((targetQuarter < 0 ? targetQuarter - 3 : targetQuarter) / 4);
+  const year = today.getFullYear() + yearOffset;
+  const quarter = ((targetQuarter % 4) + 4) % 4; // Handle negative modulo
+
+  // Quarter end months: 0=Mar(2), 1=Jun(5), 2=Sep(8), 3=Dec(11)
+  const month = quarter * 3 + 2;
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  const asOfDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+  return {
+    asOfDate,
+    grossRevenue: grossRevenue.toString(),
+    netIncome: netIncome.toString(),
+    ebitda: ebitda.toString(),
+    debtService: (1.0 + Math.random() * 2.0).toFixed(2), // 1.0 - 3.0
+    debtServiceCovenant: (1.0 + Math.random() * 0.5).toFixed(2), // 1.0 - 1.5
+    currentRatio: (1.5 + Math.random() * 2.0).toFixed(2), // 1.5 - 3.5
+    currentRatioCovenant: (1.2 + Math.random() * 0.5).toFixed(2), // 1.2 - 1.7
+    liquidity: Math.floor(Math.random() * (2000000 - 300000) + 300000).toString(), // $300K - $2M
+    liquidityCovenant: Math.floor(Math.random() * (800000 - 250000) + 250000).toString(), // $250K - $800K
+    liquidityRatio: (1.2 + Math.random() * 1.5).toFixed(2), // 1.2 - 2.7
+    liquidityRatioCovenant: (1.0 + Math.random() * 0.5).toFixed(2), // 1.0 - 1.5
+    retainedEarnings: Math.floor(grossRevenue * (0.3 + Math.random() * 0.4)).toString(), // 30% - 70% of revenue
+  };
 };
 
 // Local signal for file uploader
@@ -34,9 +61,11 @@ const SubmitFinancialsModal = () => {
   const [ocrApplied, setOcrApplied] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  // eslint-disable-next-line no-unused-vars
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const handleClose = () => {
-    $borrowerFinancialsView.update({ 
+    $borrowerFinancialsView.update({
       showSubmitModal: false,
     });
     $borrowerFinancialsForm.reset();
@@ -45,13 +74,19 @@ const SubmitFinancialsModal = () => {
     setError(null);
   };
 
-  const handleFileUpload = (files) => {
+  const handleFileUpload = () => {
     // Mock OCR: When files are uploaded, auto-populate the form with mock data
-    if (files && files.length > 0 && !ocrApplied) {
+    // Get files from the signal
+    const files = $financialDocsUploader.value.financialDocs || [];
+
+    if (files.length > 0 && !ocrApplied) {
       // Simulate OCR processing
       setTimeout(() => {
-        $borrowerFinancialsForm.update(MOCK_OCR_DATA);
+        const mockData = generateMockFinancialData();
+        $borrowerFinancialsForm.update(mockData);
         setOcrApplied(true);
+        // Force React to re-render so inputs show updated values
+        setRefreshKey(prev => prev + 1);
       }, 500);
     }
   };
@@ -63,6 +98,7 @@ const SubmitFinancialsModal = () => {
 
       const financialData = {
         borrowerId: $borrowerFinancialsView.value.currentBorrowerId,
+        asOfDate: $borrowerFinancialsForm.value.asOfDate,
         grossRevenue: $borrowerFinancialsForm.value.grossRevenue || null,
         netIncome: $borrowerFinancialsForm.value.netIncome || null,
         ebitda: $borrowerFinancialsForm.value.ebitda || null,
@@ -85,8 +121,8 @@ const SubmitFinancialsModal = () => {
 
       if (response.success) {
         handleClose();
-        // You might want to show a success toast here
-        alert('Financial data submitted successfully!');
+        // INSERT_YOUR_CODE
+        successAlert('Submitted new financials! Loan health scores will update shortly.', 'toast');
       } else {
         setError(response.error || 'Failed to submit financial data');
       }
@@ -108,6 +144,7 @@ const SubmitFinancialsModal = () => {
       rightBtnOnClick={handleSubmit}
       rightButtonDisabled={isSubmitting}
       size="fullscreen"
+      closeButton
     >
       <div className="py-16">
         {error && (
@@ -140,6 +177,26 @@ const SubmitFinancialsModal = () => {
         </div>
 
         <Form>
+          <h5 className="text-info-100 mb-16 fw-600">Financial Period</h5>
+          <Row>
+            <Col md={6} className="mb-24">
+              <UniversalInput
+                label="As Of Date (Financial Statement Date)"
+                type="date"
+                placeholder="YYYY-MM-DD"
+                value={$borrowerFinancialsForm.value.asOfDate}
+                name="asOfDate"
+                signal={$borrowerFinancialsForm}
+                required
+              />
+              <Form.Text className="text-info-200">
+                The date these financials are effective (e.g., end of quarter: 2024-03-31)
+              </Form.Text>
+            </Col>
+          </Row>
+
+          <hr className="my-24 border-info-700" />
+
           <h5 className="text-info-100 mb-16 fw-600">Revenue & Income</h5>
           <Row>
             <Col md={4} className="mb-16">
@@ -313,4 +370,3 @@ const SubmitFinancialsModal = () => {
 };
 
 export default SubmitFinancialsModal;
-

@@ -17,26 +17,20 @@ export const initAuthListener = () => {
   $global.value = { ...$global.value, isLoading: true };
 
   return onAuthStateChanged(async (firebaseUser) => {
-    console.log('🔐 Auth state changed:', firebaseUser ? 'User logged in' : 'No user');
-    
     if (firebaseUser) {
       try {
         // Get Firebase ID token
         const token = await firebaseUser.getIdToken();
-        console.log('🎫 Got Firebase token:', token ? 'Token exists' : 'No token');
 
         // Fetch user data from backend
         const response = await getCurrentUser(token);
-        console.log('👤 Backend response:', response);
 
         // Handle both response structures: {data: {...}} or direct {user, organization}
         const responseData = response?.data || response;
-        
+
         if (responseData && (responseData.user || responseData.data?.user)) {
           const user = responseData.user || responseData.data?.user;
           const organization = responseData.organization || responseData.data?.organization;
-          console.log('✅ User data:', user);
-          console.log('🏢 Organization:', organization);
 
           // Update signals
           $auth.value = {
@@ -63,13 +57,11 @@ export const initAuthListener = () => {
             isLoading: false,
             isSignedIn: true,
           };
-          console.log('✅ Global state updated - user is signed in');
         }
       } catch (error) {
-        console.error('❌ Error fetching user data:', error);
+        console.error('Error fetching user data:', error);
         // User is signed in with Firebase but not in backend
         // This means they haven't completed signup
-        console.log('⚠️ User not found in backend - setting signed out');
         $global.value = {
           isLoading: false,
           isSignedIn: false,
@@ -78,7 +70,6 @@ export const initAuthListener = () => {
       }
     } else {
       // User is signed out
-      console.log('👋 User signed out');
       $global.value = {
         isLoading: false,
         isSignedIn: false,
@@ -96,11 +87,11 @@ export const initAuthListener = () => {
 export const loginUser = async (email, password) => {
   try {
     const user = await signInWithEmailAndPassword(email, password);
-    
+
     // Wait for auth state to be fully updated before returning
     // This ensures the user data is fetched from backend before redirecting
     await waitForAuthStateUpdate();
-    
+
     return { success: true, user };
   } catch (error) {
     console.error('Login error:', error);
@@ -114,10 +105,10 @@ export const loginUser = async (email, password) => {
 export const loginWithGoogle = async () => {
   try {
     const user = await signInWithGoogle();
-    
+
     // Wait for auth state to be fully updated before returning
     await waitForAuthStateUpdate();
-    
+
     return { success: true, user };
   } catch (error) {
     console.error('Google login error:', error);
@@ -138,7 +129,7 @@ const waitForAuthStateUpdate = () => {
         resolve();
       }
     }, 100);
-    
+
     // Timeout after 10 seconds
     setTimeout(() => {
       clearInterval(checkInterval);
