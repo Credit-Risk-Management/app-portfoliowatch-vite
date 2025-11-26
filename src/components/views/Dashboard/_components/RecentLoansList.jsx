@@ -38,7 +38,7 @@ const RecentLoansList = ({ loans }) => {
               <div className="fw-bold">{borrowerName}</div>
               <div>
                 <span className="fw-700 me-8">{formatMoneyShorthand(loanAmount)}{' '}</span>
-                <small className={`${scoreColor} fw-700`}>Watch - {watchScore}</small>
+                <small className={`${scoreColor} fw-700`}>WATCH - {watchScore}</small>
               </div>
             </div>
             <div>

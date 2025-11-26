@@ -9,10 +9,10 @@ const LoanRadarChart = () => {
   // If no breakdown data is available, show loading or empty state
   if (!breakdown || !breakdown.components) {
     return (
-      <UniversalCard headerText="Watch Score Performance Overview" bodyContainer="">
+      <UniversalCard headerText="WATCH Score Performance Overview" bodyContainer="">
         <div className="text-center py-48">
           <p className="text-muted">
-            {$watchScoreBreakdown.value?.isLoading ? 'Loading Watch Score data...' : 'Watch Score data not available'}
+            {$watchScoreBreakdown.value?.isLoading ? 'Loading WATCH Score data...' : 'WATCH Score data not available'}
           </p>
         </div>
       </UniversalCard>
@@ -85,7 +85,7 @@ const LoanRadarChart = () => {
   ]; // Show all 6 metrics, even if some don't have data
 
   return (
-    <UniversalCard headerText="Watch Score Performance Overview">
+    <UniversalCard headerText="WATCH Score Performance Overview">
       <div style={{ height: '867px' }}>
         <ResponsiveContainer width="100%" height={400}>
           <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
@@ -118,7 +118,7 @@ const LoanRadarChart = () => {
           <Row className="mb-16">
             <Col md={12} className="text-center mb-12">
               <div className="small" style={{ opacity: 0.9 }}>
-                Watch Score (Lower scores indicate better performance)
+                WATCH Score (Lower scores indicate better performance)
               </div>
             </Col>
           </Row>

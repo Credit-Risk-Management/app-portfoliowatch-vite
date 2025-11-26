@@ -95,7 +95,7 @@ const LoanDetail = () => {
       <PageHeader
         title={`${$loan.value?.loan?.borrowerName}`}
         AdditionalComponents={() => (
-          <div className={`text-info-300 text-${getWatchScoreColor($loan.value?.loan?.watchScore)}-200`}><h4>Watch Score: {WATCH_SCORE_OPTIONS[$loan.value?.loan?.watchScore].label}</h4></div>
+          <div className={`text-info-300 text-${getWatchScoreColor($loan.value?.loan?.watchScore)}-200`}><h4>WATCH Score: {WATCH_SCORE_OPTIONS[$loan.value?.loan?.watchScore].label}</h4></div>
         )}
       />
       <Row>
