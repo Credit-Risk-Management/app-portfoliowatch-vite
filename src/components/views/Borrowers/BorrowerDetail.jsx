@@ -2,14 +2,13 @@ import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Button, ListGroup, Badge } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faArrowRight, faEdit, faMagic, faEnvelope, faPhone, faHistory, faChartLine } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faArrowRight, faEdit, faMagic, faEnvelope, faPhone, faHistory, faChartLine, faFileAlt } from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';
 import UniversalCard from '@src/components/global/UniversalCard';
-import { $borrower } from '@src/consts/consts';
+import { $borrower, WATCH_SCORE_OPTIONS } from '@src/consts/consts';
 import { $contacts, $borrowerFinancialsView } from '@src/signals';
 import { formatCurrency } from '@src/utils/formatCurrency';
 import { getWatchScoreColor } from '@src/components/views/Dashboard/_helpers/dashboard.consts';
-import { WATCH_SCORE_OPTIONS } from '@src/consts/consts';
 import FinancialHistoryModal from './_components/FinancialHistoryModal';
 import SubmitFinancialsModal from './_components/SubmitFinancialsModal';
 import EditBorrowerDetailModal from './_components/EditBorrowerDetailModal';
@@ -26,7 +25,7 @@ import {
   $borrowerDetailView,
 } from './_helpers/borrowerDetail.consts';
 import { fetchBorrowerDetail } from './_helpers/borrowerDetail.resolvers';
-import { handleGenerateIndustryReport } from './_helpers/borrowerDetail.events';
+import { handleGenerateIndustryReport, handleGenerateAnnualReview } from './_helpers/borrowerDetail.events';
 
 const BorrowerDetail = () => {
   const { borrowerId } = useParams();
@@ -65,7 +64,7 @@ const BorrowerDetail = () => {
     );
   }
 
-  const borrower = $borrower.value.borrower;
+  const { borrower } = $borrower.value;
   const contacts = $contacts.value?.list || [];
   const loans = borrower.loans || [];
 
@@ -79,13 +78,24 @@ const BorrowerDetail = () => {
           <FontAwesomeIcon icon={faArrowLeft} className="me-8" />
           Back to Borrowers
         </Button>
-        <Button
-          onClick={() => $borrowerDetailView.update({ showEditBorrowerModal: true })}
-          variant="outline-primary-100"
-        >
-          <FontAwesomeIcon icon={faEdit} className="me-8" />
-          Edit Borrower
-        </Button>
+        <div>
+          <Button
+            onClick={() => $borrowerDetailView.update({ showEditBorrowerModal: true })}
+            variant="outline-primary-100"
+            className="me-8"
+          >
+            <FontAwesomeIcon icon={faEdit} className="me-8" />
+            Edit Borrower
+          </Button>
+          <Button
+            variant="outline-success-500"
+            onClick={() => handleGenerateAnnualReview(borrowerId)}
+            disabled={loans.length === 0}
+          >
+            <FontAwesomeIcon icon={faFileAlt} className="me-8" />
+            Generate Annual Review
+          </Button>
+        </div>
       </div>
       <div className="text-info-50">Borrower ID: {borrower.borrowerId}</div>
       <PageHeader
@@ -103,40 +113,40 @@ const BorrowerDetail = () => {
             <div style={{ minHeight: '600px' }}>
               <div className="text-info-100 fw-200 mt-8">Borrower Type</div>
               <div className="text-info-50 lead fw-500">{borrower.borrowerType || 'Unknown'}</div>
-              
+
               <div className="text-info-100 fw-200 mt-16">Primary Contact</div>
               <div className="text-info-50 lead fw-500">{borrower.primaryContact || 'N/A'}</div>
-              
+
               <div className="text-info-100 fw-200 mt-16">Email</div>
               <div className="text-info-50 lead fw-500">{formatEmail(borrower.email)}</div>
-              
+
               <div className="text-info-100 fw-200 mt-16">Phone</div>
               <div className="text-info-50 lead fw-500">{formatPhoneNumber(borrower.phoneNumber)}</div>
-              
+
               <div className="text-info-100 fw-200 mt-16">Address</div>
               <div className="text-info-50 lead fw-500">{formatAddress(borrower)}</div>
-              
+
               {borrower.taxId && (
                 <>
                   <div className="text-info-100 fw-200 mt-16">Tax ID</div>
                   <div className="text-info-50 lead fw-500">{borrower.taxId}</div>
                 </>
               )}
-              
+
               {borrower.creditScore && (
                 <>
                   <div className="text-info-100 fw-200 mt-16">Credit Score</div>
                   <div className="text-info-50 lead fw-500">{borrower.creditScore}</div>
                 </>
               )}
-              
+
               {borrower.dateOfBirth && (
                 <>
                   <div className="text-info-100 fw-200 mt-16">Date of Birth</div>
                   <div className="text-info-50 lead fw-500">{formatDate(borrower.dateOfBirth)}</div>
                 </>
               )}
-              
+
               {borrower.businessStartDate && (
                 <>
                   <div className="text-info-100 fw-200 mt-16">Business Start Date</div>
@@ -366,11 +376,11 @@ const BorrowerDetail = () => {
           </Col>
         </Row>
       )}
-      
+
       {/* Financial Modals */}
       <FinancialHistoryModal />
       <SubmitFinancialsModal />
-      
+
       {/* Edit Borrower Modal */}
       <EditBorrowerDetailModal />
     </Container>
@@ -378,4 +388,3 @@ const BorrowerDetail = () => {
 };
 
 export default BorrowerDetail;
-

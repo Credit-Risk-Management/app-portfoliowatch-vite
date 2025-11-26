@@ -252,7 +252,7 @@ const LoanDetail = () => {
       <Row>
         <Col md={12}>
           <UniversalCard headerText="Covenants" bodyContainer="container-fluid" className="mt-16">
-            <Row style={{ height: '500px' }}>
+            <Row>
               <Col md={6}>
                 <div className="text-info-100 fw-200 mt-16 mb-4">Debt Service Coverage</div>
                 <div>
@@ -315,67 +315,61 @@ const LoanDetail = () => {
               </Col>
             </Row>
           </UniversalCard>
-        </Col>
-      </Row>
-      <Row>
-        <Col md={12}>
           <UniversalCard headerText="Industry Analysis" className="mt-16">
-            <div style={{ height: '500px' }}>
-              <Row>
-                <Col md={8}>
-                  <Button
-                    variant="primary-100"
-                    size="sm"
-                    onClick={handleGenerateIndustryReport}
-                    disabled={$industryReportGenerating.value}
-                  >
-                    {$industryReportGenerating.value ? (
-                      <>
-                        <Spinner animation="border" size="sm" className="me-8" />
-                        Generating...
-                      </>
-                    ) : (
-                      <>
-                        <FontAwesomeIcon icon={faMagic} className="me-8" />
-                        Generate Industry Report
-                      </>
-                    )}
-                  </Button>
-                  <div className="mt-16">
-                    <span className="text-info-100 fw-200">NAICS Code: </span>
-                    <span className="fw-bold">{$loan.value?.loan?.naicsCode || 'N/A'}</span>
-                  </div>
-                  <div>
-                    <span className="text-info-100 fw-200">Industry: </span>
-                    <span className="fw-bold">{$loan.value?.loan?.naicsDescription || 'N/A'}</span>
-                  </div>
-                </Col>
-                <Col md={4} className="text-md-end">
-                  <div className="text-info-100 fw-200">Industry Health Score</div>
-                  <div className={`fs-1 fw-bold ${getHealthScoreColor($loan.value?.loan?.borrower?.industryHealthScore)}`}>
-                    {$loan.value?.loan?.borrower?.industryHealthScore || '-'}
-                  </div>
-                  <div className="text-info-100 fw-200 small">out of 100</div>
-                </Col>
-              </Row>
-              <Row>
-                <Col md={12}>
-                  <div>
-                    <div className="text-info-100 fw-200 mt-16 mb-8 fw-semibold">Industry Analysis</div>
-                    {$loan.value?.loan?.borrower?.industryHealthReport ? (
-                      <div
-                        dangerouslySetInnerHTML={{ __html: renderMarkdownLinks($loan.value?.loan?.borrower?.industryHealthReport) }}
-                        style={{ lineHeight: '1.6' }}
-                      />
-                    ) : (
-                      <div className="text-info-100 fw-200 fst-italic">
-                        No industry report generated yet. Click the button above to generate one.
-                      </div>
-                    )}
-                  </div>
-                </Col>
-              </Row>
-            </div>
+            <Row>
+              <Col md={8}>
+                <Button
+                  variant="primary-100 mt-16"
+                  size="sm"
+                  onClick={handleGenerateIndustryReport}
+                  disabled={$industryReportGenerating.value}
+                >
+                  {$industryReportGenerating.value ? (
+                    <>
+                      <Spinner animation="border" size="sm" className="me-8" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <FontAwesomeIcon icon={faMagic} className="me-8" />
+                      Generate Industry Report
+                    </>
+                  )}
+                </Button>
+                <div className="mt-16">
+                  <span className="text-info-100 fw-200">NAICS Code: </span>
+                  <span className="fw-bold">{$loan.value?.loan?.naicsCode || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className="text-info-100 fw-200">Industry: </span>
+                  <span className="fw-bold">{$loan.value?.loan?.naicsDescription || 'N/A'}</span>
+                </div>
+              </Col>
+              <Col md={4} className="text-md-end">
+                <div className="text-info-100 fw-200">Industry Health Score</div>
+                <div className={`fs-1 fw-bold ${getHealthScoreColor($loan.value?.loan?.borrower?.industryHealthScore)}`}>
+                  {$loan.value?.loan?.borrower?.industryHealthScore || '-'}
+                </div>
+                <div className="text-info-100 fw-200 small">out of 100</div>
+              </Col>
+            </Row>
+            <Row>
+              <Col md={12}>
+                <div>
+                  <div className="text-info-100 fw-200 mt-16 mb-8 fw-semibold">Industry Analysis</div>
+                  {$loan.value?.loan?.borrower?.industryHealthReport ? (
+                    <div
+                      dangerouslySetInnerHTML={{ __html: renderMarkdownLinks($loan.value?.loan?.borrower?.industryHealthReport) }}
+                      style={{ lineHeight: '1.6' }}
+                    />
+                  ) : (
+                    <div className="text-info-100 fw-200 fst-italic">
+                      No industry report generated yet. Click the button above to generate one.
+                    </div>
+                  )}
+                </div>
+              </Col>
+            </Row>
           </UniversalCard>
           <UniversalCard headerText="Comments" className="mt-16">
             <LoanComments loanId={loanId} />
