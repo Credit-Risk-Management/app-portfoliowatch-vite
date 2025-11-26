@@ -13,7 +13,7 @@ export const handleAddContact = async () => {
     $contactsForm.reset();
 
     successAlert('Contact added successfully');
-    
+
     // Reload contacts for the current borrower
     if (formData.borrowerId) {
       await resolvers.fetchAndSetContactsData(formData.borrowerId);
@@ -75,4 +75,3 @@ export const handleSetPrimaryContact = async (contactId, borrowerId) => {
     dangerAlert(error.message || 'Failed to set primary contact');
   }
 };
-

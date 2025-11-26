@@ -3,15 +3,18 @@ import loansApi from '@src/api/loans.api';
 import reportsApi from '@src/api/reports.api';
 import commentsApi from '@src/api/comments.api';
 import documentsApi from '@src/api/documents.api';
+import borrowersApi from '@src/api/borrowers.api';
 import { $loan } from '@src/consts/consts';
 import { dangerAlert, successAlert, infoAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import { fetchAndSetLoans } from '@src/components/views/Loans/_helpers/loans.resolvers';
+import { fetchLoanDetail } from '@src/components/views/Loans/_helpers/loans.resolvers';
 import { auth } from '@src/utils/firebase';
 import { uploadMultipleFiles } from './loans.upload';
 import {
   $financialsUploader,
   $loanDetailNewComment,
   $loanDetailFinancials,
+  $industryReportGenerating,
 } from './loans.consts';
 
 export const handleAddLoan = async () => {
@@ -306,5 +309,35 @@ export const handleDownloadFinancial = async (financial) => {
   } catch (error) {
     console.error('Error downloading financial:', error);
     dangerAlert(`Failed to download document: ${error.message}`);
+  }
+};
+
+export const handleGenerateIndustryReport = async () => {
+  const loan = $loan.value?.loan;
+  
+  if (!loan?.borrower?.id || !loan?.id) {
+    dangerAlert('Loan or borrower information not available');
+    return;
+  }
+
+  try {
+    $industryReportGenerating.value = true;
+    infoAlert('Generating industry health report...');
+
+    const response = await borrowersApi.generateIndustryReport(loan.borrower.id, loan.id);
+
+    if (!response.success) {
+      throw new Error(response.error || 'Failed to generate report');
+    }
+
+    successAlert('Industry health report generated successfully!');
+
+    // Refresh the loan detail to show updated borrower data
+    await fetchLoanDetail(loan.loanId);
+  } catch (error) {
+    console.error('Error generating industry report:', error);
+    dangerAlert(`Failed to generate industry report: ${error.message}`);
+  } finally {
+    $industryReportGenerating.value = false;
   }
 };

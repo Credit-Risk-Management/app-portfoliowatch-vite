@@ -3,13 +3,6 @@ export const CLIENT_TYPE_OPTIONS = [
   { value: 'Business', label: 'Business' },
 ];
 
-export const KYC_STATUS_OPTIONS = [
-  { value: 'Pending', label: 'Pending' },
-  { value: 'In Progress', label: 'In Progress' },
-  { value: 'Completed', label: 'Completed' },
-  { value: 'Failed', label: 'Failed' },
-];
-
 export const RISK_RATING_OPTIONS = [
   { value: 'Low', label: 'Low' },
   { value: 'Medium', label: 'Medium' },

@@ -1,4 +1,5 @@
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
+import { useNavigate } from 'react-router-dom';
 import { Container, Row, Col } from 'react-bootstrap';
 import { faEdit, faEye, faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';
@@ -23,6 +24,8 @@ import * as helpers from './_helpers/borrowers.helpers';
 import { handleBorrowerFilterChange } from './_helpers/borrowers.events';
 
 const Clients = () => {
+  const navigate = useNavigate();
+  
   useEffectAsync(async () => {
     await resolvers.loadReferenceData();
     await resolvers.fetchAndSetBorrowerData();
@@ -30,23 +33,21 @@ const Clients = () => {
 
   const rows = $borrowers.value.list.map((borrower) => ({
     ...borrower,
-    kycStatus: () => <StatusBadge status={borrower.kycStatus} type="kyc" />,
     clientRiskRating: () => <StatusBadge status={borrower.clientRiskRating} type="risk" />,
     relationshipManager: helpers.getManagerName(borrower.relationshipManagerId, $relationshipManagers.value.list),
     actions: () => (
       <ContextMenu
         items={[
+          { label: 'View Detail', icon: faEye, action: 'detail' },
           { label: 'Edit', icon: faEdit, action: 'edit' },
-          { label: 'View Contact', icon: faEye, action: 'view' },
           { label: 'Delete', icon: faTrash, action: 'delete' },
         ]}
         onItemClick={(item) => {
-          if (item.action === 'edit') {
+          if (item.action === 'detail') {
+            navigate(`/borrowers/${borrower.id}`);
+          } else if (item.action === 'edit') {
             $borrowers.update({ selectedClient: borrower });
             $borrowersView.update({ showEditModal: true });
-          } else if (item.action === 'view') {
-            $borrowers.update({ selectedBorrower: borrower });
-            $borrowersView.update({ showViewModal: true });
           } else if (item.action === 'delete') {
             $borrowers.update({ selectedBorrower: borrower });
             $borrowersView.update({ showDeleteModal: true });
@@ -98,14 +99,6 @@ const Clients = () => {
               name="relationshipManager"
               isMulti
             />
-          </Col>
-          <Col md={2}>
-            {/* <SelectInput
-              options={[{ value: '', label: 'All Statuses' }, ...kycStatusOptions]}
-              value={$borrowersFilter.value.kycStatus}
-              onChange={(option) => $borrowersFilter.update({ kycStatus: option?.value || '', page: 1 })}
-              placeholder="KYC Status"
-            /> */}
           </Col>
           <Col md={2}>
             {/* <SelectInput

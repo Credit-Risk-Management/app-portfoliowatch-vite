@@ -17,4 +17,3 @@ export const fetchAndSetContactsData = async (borrowerId) => {
     $contacts.update({ isLoading: false });
   }
 };
-

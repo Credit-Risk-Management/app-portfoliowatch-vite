@@ -39,6 +39,11 @@ export const $loan = Signal({
   isLoading: false,
 });
 
+export const $borrower = Signal({
+  borrower: null,
+  isLoading: false,
+});
+
 export const $watchScoreBreakdown = Signal({
   breakdown: null,
   isLoading: false,

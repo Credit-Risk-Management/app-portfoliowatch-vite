@@ -18,7 +18,7 @@ const DeleteContactModal = () => (
     rightBtnClass="text-white"
     rightBtnOnClick={() => handleDeleteContact(
       $contacts.value.selectedContact?.id,
-      $contacts.value.selectedContact?.borrowerId
+      $contacts.value.selectedContact?.borrowerId,
     )}
   >
     {$contacts.value.selectedContact ? (
@@ -37,4 +37,3 @@ const DeleteContactModal = () => (
 );
 
 export default DeleteContactModal;
-

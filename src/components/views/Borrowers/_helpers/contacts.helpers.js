@@ -12,12 +12,11 @@ export const getPrimaryContactBadge = (isPrimary) => {
 
 export const formatContactDisplay = (contacts) => {
   if (!contacts || contacts.length === 0) return 'No contacts';
-  
+
   const primaryContact = contacts.find((c) => c.isPrimary);
   if (primaryContact) {
     return formatContactName(primaryContact);
   }
-  
+
   return formatContactName(contacts[0]);
 };
-

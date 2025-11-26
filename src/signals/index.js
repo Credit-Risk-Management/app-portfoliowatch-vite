@@ -42,7 +42,6 @@ export const $borrowersFilter = Signal({
   sortDirection: undefined,
   searchTerm: '',
   borrowerType: [],
-  kycStatus: '',
   riskRating: '',
 });
 
@@ -75,7 +74,6 @@ export const $borrowersForm = Signal({
   business_start_date: '',
   industry_type: '',
   relationship_manager_id: '',
-  kyc_status: 'Pending',
   client_risk_rating: 'Medium',
   credit_score: '',
   notes: '',
@@ -284,4 +282,34 @@ export const $contactsForm = Signal({
   title: '',
   isPrimary: false,
   organizationId: '',
+});
+
+export const $borrowerFinancials = Signal({
+  list: [],
+  isLoading: false,
+  totalCount: 0,
+  selectedFinancial: null,
+});
+
+export const $borrowerFinancialsView = Signal({
+  showHistoryModal: false,
+  showSubmitModal: false,
+  currentBorrowerId: null,
+});
+
+export const $borrowerFinancialsForm = Signal({
+  grossRevenue: '',
+  netIncome: '',
+  ebitda: '',
+  debtService: '',
+  debtServiceCovenant: '',
+  currentRatio: '',
+  currentRatioCovenant: '',
+  liquidity: '',
+  liquidityCovenant: '',
+  liquidityRatio: '',
+  liquidityRatioCovenant: '',
+  retainedEarnings: '',
+  notes: '',
+  documentIds: [],
 });

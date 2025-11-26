@@ -119,16 +119,6 @@ const AddBorrowerModal = () => (
 
       <Row>
         <Col md={6} className="mb-16">
-          <Form.Label>KYC Status</Form.Label>
-          <SelectInput
-            name="kycStatus"
-            signal={$borrowersForm}
-            options={consts.KYC_STATUS_OPTIONS}
-            value={consts.KYC_STATUS_OPTIONS.find((opt) => opt.value === $borrowersForm.value.kycStatus)?.value}
-            onChange={(option) => $borrowersForm.update({ kycStatus: option?.value })}
-          />
-        </Col>
-        <Col md={6} className="mb-16">
           <Form.Label>Risk Rating</Form.Label>
           <SelectInput
             name="borrowerRiskRating"

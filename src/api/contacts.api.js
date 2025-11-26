@@ -28,4 +28,3 @@ export const contactsApi = wrapApiWithDebounce(contactsApiBase, {
 });
 
 export default contactsApi;
-

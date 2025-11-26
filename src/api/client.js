@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { auth } from '@src/utils/firebase';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3333';
 
 // Create axios instance
 const apiClient = axios.create({
@@ -17,7 +17,7 @@ apiClient.interceptors.request.use(
     const user = auth.currentUser;
     if (user) {
       const token = await user.getIdToken();
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers.Authorization = `Bearer ${token}`; // eslint-disable-line no-param-reassign
     }
     return config;
   },

@@ -54,9 +54,6 @@ const ViewClientModal = () => {
           </Row>
           <Row className="mb-16">
             <Col md={6}>
-              <strong>KYC Status:</strong> {$borrowers.value.selectedBorrower.kycStatus}
-            </Col>
-            <Col md={6}>
               <strong>Risk Rating:</strong> {$borrowers.value.selectedBorrower.borrowerRiskRating}
             </Col>
           </Row>

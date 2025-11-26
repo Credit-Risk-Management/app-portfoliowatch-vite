@@ -86,7 +86,7 @@ const LoanRadarChart = () => {
 
   return (
     <UniversalCard headerText="WATCH Score Performance Overview">
-      <div style={{ height: '867px' }}>
+      <div style={{ height: '1000px' }}>
         <ResponsiveContainer width="100%" height={400}>
           <RadarChart cx="50%" cy="50%" outerRadius="80%" data={chartData}>
             <PolarGrid strokeDasharray="5 5" stroke="#68C0CA" strokeOpacity={1} />
@@ -107,8 +107,8 @@ const LoanRadarChart = () => {
             <Radar
               name="Performance"
               dataKey="performance"
-              stroke="#707C42"
-              fill="#E4F4A7"
+              stroke="#7EEF86"
+              fill="#7EEF86"
               fillOpacity={0.5}
               strokeWidth={2}
             />
@@ -153,15 +153,15 @@ const LoanRadarChart = () => {
               };
 
               return (
-                <Col key={metric.metric} md={12} lg={4} className="mb-16">
+                <Col key={metric.metric} md={12} lg={6} className="mb-16">
                   <div className="p-8 rounded bg-info-900" style={{ minHeight: '130px' }}>
                     <div className="d-flex justify-content-between align-items-center mb-8">
-                      <div className="fw-bold small">{metric.description}</div>
-                      <span className={`badge ${getScoreColor(metric.score)}`}>
+                      <div className="fw-bold me-4">{metric.description}</div>
+                      <span className={`badge ${getScoreColor(metric.score)}`} style={{ fontSize: '12px' }}>
                         {metric.score || 'N/A'}
                       </span>
                     </div>
-                    <div className="small" style={{ opacity: 0.85 }}>
+                    <div>
                       <div className="mb-4">
                         <span style={{ opacity: 0.7 }}>Value: </span>
                         <strong>{formatValue(metric.value, metric.metric)}</strong>
