@@ -25,4 +25,6 @@ export const TABLE_HEADERS = [
   { key: 'email', value: 'Email', sortKey: 'email' },
   { key: 'borrowerType', value: 'Type', sortKey: 'client_type' },
   { key: 'relationshipManager', value: 'Manager' },
+  { key: 'loanCount', value: 'Loans' },
+  { key: 'totalBalance', value: 'Total Balance' },
 ];

@@ -7,7 +7,9 @@ import App from './App';
 const initializeUserback = async () => {
   if (window.location.href.includes('qa')) {
     try {
-      await Userback('A-ksUnFdmWEsWU3CvfGKILuh0kK');
+      await Userback('P-pp6nVhShpQINeGlCa3A228pz4', {
+        theme: 'light',
+      });
     } catch (error) {
       console.error('Failed to initialize Userback:', error);
     }

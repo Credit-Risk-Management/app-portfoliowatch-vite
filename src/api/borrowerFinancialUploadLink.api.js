@@ -30,6 +30,19 @@ export const getUploadLinks = async (borrowerId) => {
 };
 
 /**
+ * Get or create permanent upload link for borrower (protected)
+ */
+export const getPermanentUploadLink = async (borrowerId) => {
+  try {
+    const response = await apiClient.get(`/borrower-financial-upload-links/borrower/${borrowerId}/permanent`);
+    return response;
+  } catch (error) {
+    console.error('Get permanent upload link API error:', error);
+    throw error;
+  }
+};
+
+/**
  * Revoke upload link (protected)
  */
 export const revokeUploadLink = async (linkId) => {

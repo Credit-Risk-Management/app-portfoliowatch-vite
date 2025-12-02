@@ -14,6 +14,7 @@ import {
   $relationshipManagers,
 } from '@src/signals';
 import SelectInput from '@src/components/global/Inputs/SelectInput';
+import { formatCurrency } from '@src/utils/formatCurrency';
 import * as consts from './_helpers/borrowers.consts';
 import * as resolvers from './_helpers/borrowers.resolvers';
 import * as helpers from './_helpers/borrowers.helpers';
@@ -31,6 +32,8 @@ const Borrowers = () => {
     ...borrower,
     clientRiskRating: () => <StatusBadge status={borrower.clientRiskRating} type="risk" />,
     relationshipManager: helpers.getManagerName(borrower.relationshipManagerId, $relationshipManagers.value.list),
+    loanCount: borrower.loanCount || 0,
+    totalBalance: formatCurrency(borrower.totalBalance),
     actions: () => (
       <ContextMenu
         items={[

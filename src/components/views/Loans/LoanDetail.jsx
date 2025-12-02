@@ -126,6 +126,10 @@ const LoanDetail = () => {
               <div className="text-success-500 d-flex align-items-end mb-8"><h4 className="mb-0">{formatCurrency($loan.value?.loan?.principalAmount)}</h4></div>
               <div className="text-info-100 fw-200 mt-8">Last Submitted Financials</div>
               <div className="text-info-50 lead fw-500">{formatDate($loan.value?.loan?.lastFinancialStatement)}</div>
+              <div className="text-info-100 fw-200 mt-8">Financial Submission Frequency</div>
+              <div className="text-info-50 lead fw-500">Monthly</div>
+              <div className="text-info-100 fw-200 mt-8">Next Financials Due</div>
+              <div className="text-info-50 lead fw-500">12/20/2025</div>
               <div className="text-info-100 fw-200 mt-8">Interest Rate</div>
               <div className="text-info-50 lead fw-500">{formatPercent($loan.value?.loan?.currentInterestRate)}</div>
               <div className="text-info-100 fw-200 mt-8">Interest Type</div>
@@ -206,6 +210,8 @@ const LoanDetail = () => {
                         ? `${$loan.value?.loan?.borrower.streetAddress || ''}, ${$loan.value?.loan?.borrower.city || ''}, ${$loan.value?.loan?.borrower.state || ''} ${$loan.value?.loan?.borrower.zipCode || ''}`.replace(/^,\s*|,\s*$/g, '').trim() || 'N/A'
                         : 'N/A'}
                     </div>
+                    <div className="text-info-100 fw-200 mt-8">Borrower Fiscal Year End</div>
+                    <div className="text-info-50 lead fw-500">12/31/2025</div>
                   </>
                 ) : (
                   <div className="text-info-50">Borrower information not available</div>

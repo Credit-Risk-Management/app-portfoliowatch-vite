@@ -13,6 +13,16 @@
   - Needs testing and improvement
 • 13. Add company settings
 • 17. Create external link for Borrower to upload fincial docs
+• 18. Add Guarantors to Borrower
+• 19. Add Collateral to Borrower
+  - Collateral tab - Asset, Value, valuation date, LTV %
+• 20. Improve upload experience
+  - The lender will be sending an email to Small Business requesting financial statements 
+• Setup Submit Financial reminders
+  - Add a field to the loans table for "next financial statement due"
+  - If we do not get the value explicitly, require next financials due at quarter end
+  - Add to loan detail the financial submission frequency values
+  - Add Fiscal year end
 
 
 11. Create Quartlerly Spreadsheet from last few pages from annual report
