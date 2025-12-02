@@ -11,11 +11,11 @@ import * as settingsEvents from './_helpers/settings.events';
 
 const Settings = () => {
   const settingsView = $settingsView.value;
-  const activeTab = settingsView.activeTab;
+  const { activeTab } = settingsView;
 
   return (
     <>
-      <Container fluid className="py-24">
+      <Container className="py-24">
         <PageHeader title="Settings" />
 
         <Nav variant="tabs" className="mt-24 mb-24">
@@ -23,7 +23,7 @@ const Settings = () => {
             <Nav.Link
               active={activeTab === consts.TABS.ORGANIZATION}
               onClick={() => settingsEvents.setActiveTab(consts.TABS.ORGANIZATION)}
-              className="cursor-pointer"
+              className="cursor-pointer bg-info-700 text-info-50 border-0"
             >
               <FontAwesomeIcon icon={faBuilding} className="me-8" />
               {consts.TAB_LABELS[consts.TABS.ORGANIZATION]}
@@ -51,4 +51,3 @@ const Settings = () => {
 };
 
 export default Settings;
-

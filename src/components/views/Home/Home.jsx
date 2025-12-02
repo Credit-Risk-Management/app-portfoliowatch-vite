@@ -3,7 +3,7 @@ import { Col, Container, Row } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import Loadable from '@src/components/global/Loadable';
 import { $detail } from '@fyclabs/tools-fyc-react/signals';
-import users from '@src/api/users.api';
+import usersApi from '@src/api/users.api';
 import { fetchAndSetSignal } from '@fyclabs/tools-fyc-react/signals/utils';
 import useCleanup from '@src/utils/useCleanup';
 
@@ -11,7 +11,7 @@ const Home = () => {
   useEffectAsync(async () => {
     await fetchAndSetSignal({
       signal: $detail,
-      method: users.get,
+      method: usersApi.get,
       params: { id: 1 },
     });
   });
@@ -24,7 +24,7 @@ const Home = () => {
         <Row className="text-center">
           <Col sm={{ span: 8, offset: 2 }}>
             <div>
-              <h1 className="mb-0">Welcome to FYC&apos;s Vite Boilerplate</h1>
+              <h1 className="mb-0">Welcome to Portfolio Watch</h1>
               <hr />
               <p>
                 Brace yourself for an epic journey through our collection of components, where coding is as

@@ -1,5 +1,5 @@
 import { $profileView, $profileForm, $user, $alert } from '@src/signals';
-import * as usersApi from '@src/api/users.api';
+import usersApi from '@src/api/users.api';
 
 export const startEditing = () => {
   // Populate form with current user data
