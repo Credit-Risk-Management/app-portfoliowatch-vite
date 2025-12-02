@@ -26,3 +26,14 @@ export const $borrowerFinancialsFilter = Signal({
 export const $borrowerFinancialsTableView = Signal({
   isTableLoading: false,
 });
+
+// Signals for borrower documents table
+export const $borrowerDocumentsFilter = Signal({
+  page: 1,
+  sortKey: undefined,
+  sortDirection: undefined,
+});
+
+export const $borrowerDocumentsView = Signal({
+  isTableLoading: false,
+});

@@ -2,13 +2,13 @@ import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Button, ListGroup, Badge } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faArrowRight, faEdit, faMagic, faEnvelope, faPhone, faChartLine, faFileAlt, faCopy, faCheck, faUser, faAddressBook, faMoneyBillWave, faDollarSign, faIndustry, faStickyNote, faEye, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faArrowRight, faEdit, faMagic, faEnvelope, faPhone, faChartLine, faFileAlt, faCopy, faCheck, faUser, faAddressBook, faMoneyBillWave, faDollarSign, faIndustry, faStickyNote, faEye, faTrash, faFile } from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';
 import UniversalCard from '@src/components/global/UniversalCard';
 import SignalTable from '@src/components/global/SignalTable';
 import ContextMenu from '@src/components/global/ContextMenu';
 import { $borrower, WATCH_SCORE_OPTIONS } from '@src/consts/consts';
-import { $contacts, $borrowerFinancialsView, $borrowerFinancials, $loansView, $loans } from '@src/signals';
+import { $contacts, $borrowerFinancialsView, $borrowerFinancials, $loansView, $loans, $documents, $documentsView } from '@src/signals';
 import { formatCurrency } from '@src/utils/formatCurrency';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
 import { successAlert } from '@src/components/global/Alert/_helpers/alert.events';
@@ -32,9 +32,15 @@ import {
   $borrowerLoansView,
   $borrowerFinancialsFilter,
   $borrowerFinancialsTableView,
+  $borrowerDocumentsFilter,
+  $borrowerDocumentsView,
 } from './_helpers/borrowerDetail.consts';
-import { fetchBorrowerDetail } from './_helpers/borrowerDetail.resolvers';
+import { fetchBorrowerDetail, fetchBorrowerDocuments } from './_helpers/borrowerDetail.resolvers';
 import { handleGenerateIndustryReport, handleGenerateAnnualReview } from './_helpers/borrowerDetail.events';
+import { handleDownloadDocument } from '@src/components/views/Documents/_helpers/documents.events';
+import { formatFileSize, formatUploadDate, getLoanNumber } from '@src/components/views/Documents/_helpers/documents.helpers';
+import { TABLE_HEADERS as DOCUMENTS_TABLE_HEADERS } from '@src/components/views/Documents/_helpers/documents.consts';
+import DeleteBorrowerDocumentModal from './_components/DeleteBorrowerDocumentModal';
 
 const BorrowerDetail = () => {
   const { borrowerId } = useParams();
@@ -61,6 +67,13 @@ const BorrowerDetail = () => {
       fetchFinancialHistory();
     }
   }, [activeTab, $borrower.value?.borrower?.id, $borrowerFinancialsFilter.value]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch documents when documents tab is active
+  useEffect(() => {
+    if (activeTab === 'documents' && borrowerId) {
+      fetchBorrowerDocuments(borrowerId);
+    }
+  }, [activeTab, borrowerId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchFinancialHistory = async () => {
     if (!$borrower.value?.borrower?.id) return;
@@ -228,6 +241,37 @@ const BorrowerDetail = () => {
     [loans, navigate],
   );
 
+  // Transform documents into table rows
+  const documentsTableRows = useMemo(
+    () => {
+      const documentsList = $documents.value?.list || [];
+      return documentsList.map((document) => ({
+        ...document,
+        documentName: document.documentName,
+        loanNumber: getLoanNumber(document.loanId, loans),
+        uploadedAt: formatUploadDate(document.uploadedAt),
+        fileSize: formatFileSize(Number(document.fileSize)),
+        actions: () => (
+          <ContextMenu
+            items={[
+              { label: 'View', icon: faEye, action: 'download' },
+              { label: 'Delete', icon: faTrash, action: 'delete' },
+            ]}
+            onItemClick={(item) => {
+              if (item.action === 'download') {
+                handleDownloadDocument(document.id, document.documentName);
+              } else if (item.action === 'delete') {
+                $documents.update({ selectedDocument: document });
+                $documentsView.update({ showDeleteModal: true });
+              }
+            }}
+          />
+        ),
+      }));
+    },
+    [$documents.value?.list, loans],
+  );
+
   if ($borrower.value?.isLoading) {
     return (
       <Container fluid className="py-24">
@@ -258,6 +302,7 @@ const BorrowerDetail = () => {
     { key: 'contacts', title: 'Contacts', icon: faAddressBook },
     { key: 'loans', title: 'Loans', icon: faMoneyBillWave },
     { key: 'financials', title: 'Financials', icon: faDollarSign },
+    { key: 'documents', title: 'Documents', icon: faFile },
     { key: 'industry', title: 'Industry Analysis', icon: faIndustry },
     ...(borrower.notes ? [{ key: 'notes', title: 'Notes', icon: faStickyNote }] : []),
   ];
@@ -532,6 +577,40 @@ const BorrowerDetail = () => {
           </UniversalCard>
         );
 
+      case 'documents':
+        return (
+          <div>
+            {(() => {
+              const isLoading = $borrowerDocumentsView.value?.isTableLoading && !$documents.value?.list?.length;
+              if (isLoading) {
+                return (
+                  <div className="text-center py-32">
+                    <p className="text-info-100">Loading documents...</p>
+                  </div>
+                );
+              }
+              if (documentsTableRows.length === 0) {
+                return (
+                  <div className="text-center py-32">
+                    <p className="text-info-100 lead">No documents found for this borrower.</p>
+                  </div>
+                );
+              }
+              return (
+                <SignalTable
+                  $filter={$borrowerDocumentsFilter}
+                  $view={$borrowerDocumentsView}
+                  headers={DOCUMENTS_TABLE_HEADERS}
+                  rows={documentsTableRows}
+                  totalCount={$documents.value?.totalCount || 0}
+                  currentPage={$borrowerDocumentsFilter.value.page}
+                  itemsPerPageAmount={10}
+                />
+              );
+            })()}
+          </div>
+        );
+
       case 'notes':
         return (
           <UniversalCard headerText="Notes">
@@ -626,6 +705,9 @@ const BorrowerDetail = () => {
       {/* Loan Modals */}
       <EditLoanModal />
       <DeleteLoanModal />
+
+      {/* Document Modals */}
+      <DeleteBorrowerDocumentModal />
     </Container>
   );
 };

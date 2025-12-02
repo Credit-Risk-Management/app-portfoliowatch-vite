@@ -1,9 +1,10 @@
 import { $borrower } from '@src/consts/consts';
 import borrowersApi from '@src/api/borrowers.api';
 import annualReviewsApi from '@src/api/annualReviews.api';
+import documentsApi from '@src/api/documents.api';
 import { dangerAlert, successAlert, infoAlert } from '@src/components/global/Alert/_helpers/alert.events';
-import { $borrowersForm } from '@src/signals';
-import { fetchBorrowerDetail } from './borrowerDetail.resolvers';
+import { $borrowersForm, $documentsView } from '@src/signals';
+import { fetchBorrowerDetail, fetchBorrowerDocuments } from './borrowerDetail.resolvers';
 import { $borrowerDetailView } from './borrowerDetail.consts';
 
 export const handleGenerateIndustryReport = async (borrowerId) => {
@@ -153,3 +154,20 @@ function downloadBlob(blob, filename) {
     document.body.removeChild(a);
   }, 100);
 }
+
+export const handleDeleteBorrowerDocument = async (documentId, borrowerId) => {
+  try {
+    await documentsApi.delete(documentId);
+    $documentsView.update({ showDeleteModal: false });
+    successAlert('Document deleted successfully');
+    
+    // Refresh borrower documents after deletion
+    if (borrowerId) {
+      await fetchBorrowerDocuments(borrowerId);
+    }
+  } catch (error) {
+    dangerAlert(error.message || 'Failed to delete document');
+  } finally {
+    $documentsView.update({ isTableLoading: false });
+  }
+};

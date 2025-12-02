@@ -23,6 +23,10 @@
   - If we do not get the value explicitly, require next financials due at quarter end
   - Add to loan detail the financial submission frequency values
   - Add Fiscal year end
+  - Create Loan Documents Type upload form. So lender can identify which documents they need. By default we will have P&L, Balance Sheet, Tax Returns. Bank will let us know what is the default, but they can add loan by loan if needed. 
+  - Put a notice on the loan saying "X/10 documents provided"
+  - This stages the docs for review (financials are subimitted automatically but not verified).
+  - VIew financials between unverified and verified
 
 
 11. Create Quartlerly Spreadsheet from last few pages from annual report
