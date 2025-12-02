@@ -1547,6 +1547,11 @@
   resolved "https://registry.npmjs.org/@ungap/structured-clone/-/structured-clone-1.2.0.tgz"
   integrity sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==
 
+"@userback/widget@^0.3.12":
+  version "0.3.12"
+  resolved "https://registry.yarnpkg.com/@userback/widget/-/widget-0.3.12.tgz#285c34976fef8bd007706b3b89b05dac2e07895c"
+  integrity sha512-68YihQblx1+4kFpd7e4nDBSV6ljSY0+hzIHHgbxgbJPJIhNgN4lyvOjcDbCrEb9qh6yXx5W6HBLKTMJD4hLXGg==
+
 "@vitejs/plugin-react-swc@^3.5.0":
   version "3.5.0"
   resolved "https://registry.npmjs.org/@vitejs/plugin-react-swc/-/plugin-react-swc-3.5.0.tgz"

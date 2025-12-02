@@ -12,7 +12,7 @@
     "clean-cache": "rm -rf node_modules/.vite",
     "dev-restart": "yalc update && yarn clean-cache",
     "watch": "nodemon --watch .yalc --exec 'yarn dev-restart'",
-    "deploy": "yarn build && firebase deploy --only hosting"
+    "deploy": "rm -rf dist && rm -rf .firebase && yarn install && yarn build && firebase deploy --only hosting"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.35",
@@ -21,6 +21,7 @@
     "@fortawesome/free-solid-svg-icons": "^6.2.1",
     "@fortawesome/react-fontawesome": "^0.2.0",
     "@fyclabs/tools-fyc-react": "^0.0.3",
+    "@userback/widget": "^0.3.12",
     "axios": "^1.13.2",
     "bootstrap": "^5.2.3",
     "bootstrap-sass": "^3.4.1",

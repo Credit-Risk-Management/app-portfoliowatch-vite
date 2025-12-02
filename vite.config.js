@@ -25,4 +25,12 @@ export default defineConfig({
       '@src': '/src',
     },
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        silenceDeprecations: ['legacy-js-api', 'color-functions', 'global-builtin'],
+        quietDeps: true,
+      },
+    },
+  },
 });

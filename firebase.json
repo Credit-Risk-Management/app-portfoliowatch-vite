@@ -1,29 +1,40 @@
 {
-    "hosting": [
-      {
-        "target": "prod",
-        "source": ".",
-        "ignore": [
-          "firebase.json",
-          "**/.*",
-          "**/node_modules/**"
-        ],
-        "frameworksBackend": {
-          "region": "us-west1"
+  "hosting": [
+    {
+      "target": "prod",
+      "public": "dist",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
         }
-      },
-      {
-        "target": "qa",
-        "source": ".",
-        "ignore": [
-          "firebase.json",
-          "**/.*",
-          "**/node_modules/**"
-        ],
-        "frameworksBackend": {
-          "region": "us-west1"
-        }
+      ],
+      "frameworksBackend": {
+        "region": "us-west1"
       }
-    ]
-  }
-  
+    },
+    {
+      "target": "qa",
+      "public": "dist",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ],
+      "frameworksBackend": {
+        "region": "us-west1"
+      }
+    }
+  ]
+}
