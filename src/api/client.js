@@ -37,7 +37,7 @@ apiClient.interceptors.response.use(
         console.error('Unauthorized access - redirecting to login');
         // Save current path for redirect after login
         const currentPath = window.location.pathname;
-        if (currentPath !== '/login' && currentPath !== '/signup') {
+        if (currentPath !== '/login') {
           window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
         }
       } else if (status === 403) {

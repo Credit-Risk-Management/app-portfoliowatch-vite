@@ -1,24 +1,6 @@
 import apiClient from './client';
 
 /**
- * Sign up - create new user and organization
- * Note: This is a public endpoint, so we pass token explicitly
- */
-export const signup = async (userData, token) => {
-  try {
-    const response = await apiClient.post('/auth/signup', userData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response;
-  } catch (error) {
-    console.error('Signup API error:', error);
-    throw error;
-  }
-};
-
-/**
  * Verify token and return user info
  */
 export const verifyToken = async (token) => {

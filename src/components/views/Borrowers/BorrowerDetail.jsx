@@ -15,6 +15,9 @@ import { successAlert } from '@src/components/global/Alert/_helpers/alert.events
 import { formatRatio, formatDate as formatLoanDate } from '@src/components/views/Loans/_helpers/loans.helpers';
 import { TABLE_HEADERS } from '@src/components/views/Loans/_helpers/loans.consts';
 import { EditLoanModal, DeleteLoanModal } from '@src/components/views/Loans/_components';
+import { handleDownloadDocument } from '@src/components/views/Documents/_helpers/documents.events';
+import { formatFileSize, formatUploadDate, getLoanNumber } from '@src/components/views/Documents/_helpers/documents.helpers';
+import { TABLE_HEADERS as DOCUMENTS_TABLE_HEADERS } from '@src/components/views/Documents/_helpers/documents.consts';
 import SubmitFinancialsModal from './_components/SubmitFinancialsModal';
 import EditBorrowerDetailModal from './_components/EditBorrowerDetailModal';
 import {
@@ -37,9 +40,6 @@ import {
 } from './_helpers/borrowerDetail.consts';
 import { fetchBorrowerDetail, fetchBorrowerDocuments } from './_helpers/borrowerDetail.resolvers';
 import { handleGenerateIndustryReport, handleGenerateAnnualReview } from './_helpers/borrowerDetail.events';
-import { handleDownloadDocument } from '@src/components/views/Documents/_helpers/documents.events';
-import { formatFileSize, formatUploadDate, getLoanNumber } from '@src/components/views/Documents/_helpers/documents.helpers';
-import { TABLE_HEADERS as DOCUMENTS_TABLE_HEADERS } from '@src/components/views/Documents/_helpers/documents.consts';
 import DeleteBorrowerDocumentModal from './_components/DeleteBorrowerDocumentModal';
 
 const BorrowerDetail = () => {
@@ -115,7 +115,6 @@ const BorrowerDetail = () => {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(getUploadLinkUrl);
         setCopiedLink(true);
-        successAlert('Copied', 'toast');
         setTimeout(() => setCopiedLink(false), 2000);
       } else {
         // Fallback for older browsers - create a temporary input element
@@ -485,7 +484,7 @@ const BorrowerDetail = () => {
                   size="sm"
                 >
                   <FontAwesomeIcon icon={copiedLink ? faCheck : faCopy} className="me-8" />
-                  {copiedLink ? 'Copied!' : 'Copy'}
+                  {copiedLink ? 'Copied!' : 'Copy Borrower Link'}
                 </Button>
               </div>
             </div>
@@ -655,12 +654,6 @@ const BorrowerDetail = () => {
       <div className="text-info-50">Borrower ID: {borrower.borrowerId}</div>
       <PageHeader
         title={`${borrower.name}`}
-        AdditionalComponents={() => (
-          <div className="text-info-50">
-            <Badge bg="secondary-100" className="me-8">{borrower.borrowerType}</Badge>
-            {borrower.industryType && <Badge bg="info-100">{borrower.industryType}</Badge>}
-          </div>
-        )}
       />
       <Row>
         <Col md={2}>

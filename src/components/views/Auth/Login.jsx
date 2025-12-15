@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Container, Row, Col, Form, Button, Card, Alert } from 'react-bootstrap';
 import { loginUser } from '@src/utils/auth.utils';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
@@ -104,14 +104,6 @@ const Login = () => {
                   {loading ? 'Signing in...' : 'Sign In'}
                 </Button>
 
-                <div className="text-center mt-16">
-                  <p className="text-muted mb-0">
-                    Don&apos;t have an account?{' '}
-                    <Link to="/signup" className="text-primary fw-semibold">
-                      Sign up
-                    </Link>
-                  </p>
-                </div>
               </Form>
             </Card.Body>
           </Card>

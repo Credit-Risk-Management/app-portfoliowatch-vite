@@ -13,7 +13,7 @@ import Documents from '@src/components/views/Documents';
 import Reports from '@src/components/views/Reports';
 import Managers from '@src/components/views/Managers';
 import ManagerDetail from '@src/components/views/Managers/ManagerDetail';
-import { Login, Signup, AcceptInvitation } from '@src/components/views/Auth';
+import { Login, AcceptInvitation } from '@src/components/views/Auth';
 import Profile from '@src/components/views/Profile';
 import Settings from '@src/components/views/Settings';
 import PublicFinancialUpload from '@src/components/views/Borrowers/PublicFinancialUpload';
@@ -44,7 +44,6 @@ function App() {
           <Route element={<AppWrapper />}>
             {/* Public auth routes */}
             <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
             <Route path="/accept-invitation" element={<AcceptInvitation />} />
             <Route path="/upload-financials/:token" element={<PublicFinancialUpload />} />
 

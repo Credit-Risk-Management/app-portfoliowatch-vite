@@ -1,13 +1,12 @@
 import {
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
   signInWithGoogle,
   signOut as firebaseSignOut,
   getIdToken,
   onAuthStateChanged,
 } from './firebase';
 import { $global, $auth, $user, $organization } from '@src/signals';
-import { signup, getCurrentUser } from '@src/api/auth.api';
+import { getCurrentUser } from '@src/api/auth.api';
 
 /**
  * Initialize auth listener
@@ -61,7 +60,7 @@ export const initAuthListener = () => {
       } catch (error) {
         console.error('Error fetching user data:', error);
         // User is signed in with Firebase but not in backend
-        // This means they haven't completed signup
+        // This means they haven't completed account setup
         $global.value = {
           isLoading: false,
           isSignedIn: false,
@@ -138,72 +137,6 @@ const waitForAuthStateUpdate = () => {
   });
 };
 
-/**
- * Sign up user with email/password and create organization
- */
-export const signupUser = async (userData, orgData) => {
-  try {
-    // Create Firebase user
-    const firebaseUser = await createUserWithEmailAndPassword(
-      userData.email,
-      userData.password
-    );
-
-    // Get Firebase ID token
-    const token = await firebaseUser.getIdToken();
-
-    // Create user and organization in backend
-    const response = await signup({
-      firebaseUid: firebaseUser.uid,
-      email: userData.email,
-      name: userData.name,
-      organizationName: orgData.organizationName,
-      industry: orgData.industry,
-    }, token);
-
-    if (response && response.data) {
-      // The auth listener will handle updating signals
-      return { success: true, data: response.data };
-    }
-
-    return { success: false, error: 'Failed to create user account' };
-  } catch (error) {
-    console.error('Signup error:', error);
-    return { success: false, error: error.message };
-  }
-};
-
-/**
- * Sign up user with Google and create organization
- */
-export const signupWithGoogle = async (orgData) => {
-  try {
-    // Sign in with Google (or create account if doesn't exist)
-    const firebaseUser = await signInWithGoogle();
-
-    // Get Firebase ID token
-    const token = await firebaseUser.getIdToken();
-
-    // Create user and organization in backend
-    const response = await signup({
-      firebaseUid: firebaseUser.uid,
-      email: firebaseUser.email,
-      name: firebaseUser.displayName || firebaseUser.email,
-      organizationName: orgData.organizationName,
-      industry: orgData.industry,
-    }, token);
-
-    if (response && response.data) {
-      // The auth listener will handle updating signals
-      return { success: true, data: response.data };
-    }
-
-    return { success: false, error: 'Failed to create user account' };
-  } catch (error) {
-    console.error('Google signup error:', error);
-    return { success: false, error: error.message };
-  }
-};
 
 /**
  * Logout user
