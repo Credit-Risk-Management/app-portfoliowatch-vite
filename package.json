@@ -12,7 +12,8 @@
     "clean-cache": "rm -rf node_modules/.vite",
     "dev-restart": "yalc update && yarn clean-cache",
     "watch": "nodemon --watch .yalc --exec 'yarn dev-restart'",
-    "deploy": "rm -rf dist && rm -rf .firebase && yarn install && yarn build && firebase deploy --only hosting"
+    "deploy:prod": "rm -rf dist && rm -rf .firebase && yarn install && yarn build && firebase deploy --only hosting:prod",
+    "deploy:qa": "rm -rf dist && rm -rf .firebase && yarn install && yarn build && firebase deploy --only hosting:qa"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.35",
