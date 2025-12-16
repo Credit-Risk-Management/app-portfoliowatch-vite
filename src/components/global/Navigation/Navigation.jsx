@@ -21,7 +21,7 @@ const Navigation = () => {
   const navigate = useNavigate();
 
   const isActive = (path) => location.pathname === path;
-  const activeClass = 'fw-700 text-secondary-50';
+  const activeClass = 'fw-700 text-dark';
 
   // Don't show navigation if not signed in
   if (!$global.value.isSignedIn) {
@@ -36,11 +36,11 @@ const Navigation = () => {
   };
 
   return (
-    <Navbar variant="light" expand="lg" className="bg-info-800 mb-0 position-sticky top-0 py-8 px-16 z-index-9999 shadow-sm">
+    <Navbar variant="light" expand="lg" className="bg-gradient-secondary-primary-50 mb-0 position-sticky top-0 py-8 px-16 z-index-9999 shadow-sm w-100">
       <Container fluid>
         <Navbar.Brand as={Link} to="/dashboard" className="me-64">
           <img
-            src="/logo.svg"
+            src="/logo_dark.svg"
             alt="Logo"
             height="30"
             className="d-inline-block align-top"
@@ -53,7 +53,7 @@ const Navigation = () => {
               as={Link}
               to="/dashboard"
               active={isActive('/dashboard')}
-              className={`px-16 ${isActive('/dashboard') ? activeClass : 'text-info-50'}`}
+              className={`px-16 ${isActive('/dashboard') ? activeClass : 'text-dark'}`}
             >
               <FontAwesomeIcon icon={faHome} className="me-16 d-none" />
               Dashboard
@@ -62,7 +62,7 @@ const Navigation = () => {
               as={Link}
               to="/borrowers"
               active={isActive('/borrowers')}
-              className={`px-16 text-info-50 ${isActive('/borrowers') ? activeClass : ''}`}
+              className={`px-16 text-info-50 ${isActive('/borrowers') ? activeClass : 'text-dark'}`}
             >
               <FontAwesomeIcon icon={faUsers} className="me-16 d-none" />
               Borrowers
@@ -71,7 +71,7 @@ const Navigation = () => {
               as={Link}
               to="/loans"
               active={isActive('/loans')}
-              className={`px-16 text-info-50 ${isActive('/loans') ? activeClass : ''}`}
+              className={`px-16 text-info-50 ${isActive('/loans') ? activeClass : 'text-dark'}`}
             >
               <FontAwesomeIcon icon={faMoneyBillWave} className="me-16 d-none" />
               Loans
@@ -80,7 +80,7 @@ const Navigation = () => {
               as={Link}
               to="/documents"
               active={isActive('/documents')}
-              className={`px-16 text-info-50 ${isActive('/documents') ? activeClass : ''}`}
+              className={`px-16 text-info-50 ${isActive('/documents') ? activeClass : 'text-dark'}`}
             >
               <FontAwesomeIcon icon={faFileAlt} className="me-16 d-none" />
               Documents
@@ -89,7 +89,7 @@ const Navigation = () => {
               as={Link}
               to="/reports"
               active={isActive('/reports')}
-              className={`px-16 text-info-50 ${isActive('/reports') ? activeClass : ''}`}
+              className={`px-16 text-info-50 ${isActive('/reports') ? activeClass : 'text-dark'}`}
             >
               <FontAwesomeIcon icon={faChartLine} className="me-16 d-none" />
               Reports
@@ -98,7 +98,7 @@ const Navigation = () => {
               as={Link}
               to="/relationship-managers"
               active={isActive('/relationship-managers')}
-              className={`px-16 text-info-50 ${isActive('/relationship-managers') ? activeClass : ''}`}
+              className={`px-16 text-info-50 ${isActive('/relationship-managers') ? activeClass : 'text-dark'}`}
             >
               <FontAwesomeIcon icon={faUserTie} className="me-16 d-none" />
               Managers
@@ -107,14 +107,14 @@ const Navigation = () => {
           <Nav>
             <NavDropdown
               title={(
-                <span className="text-info-50">
+                <span className="text-dark">
                   <FontAwesomeIcon icon={faUser} className="me-8" />
                   {$user.value.name || 'User'}
                 </span>
               )}
               id="user-dropdown"
               align="end"
-              className="text-info-50"
+              className="text-dark"
             >
               <NavDropdown.Header>
                 <div className="fw-bold">{$user.value.name}</div>
