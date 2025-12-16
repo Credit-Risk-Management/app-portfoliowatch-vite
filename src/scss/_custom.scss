@@ -9,10 +9,12 @@
 .rounded-15 {
   border-radius: 15px !important;
 }
+
 .rounded-top-15 {
   border-top-left-radius: 15px !important;
   border-top-right-radius: 15px !important;
 }
+
 .rounded-bottom-15 {
   border-bottom-left-radius: 15px !important;
   border-bottom-right-radius: 15px !important;
@@ -72,4 +74,15 @@
     background-color: inherit;
     border-top: 1px solid;
   }
+}
+
+// Layout helper so main content scrolls only below the fixed navigation bar
+.content-with-fixed-nav {
+  position: fixed;
+  top: 56px; // Match navigation height
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
 }

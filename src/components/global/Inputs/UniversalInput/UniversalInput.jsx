@@ -4,7 +4,7 @@ import Signal from '@fyclabs/tools-fyc-react/signals/Signal';
 import { $form } from '@src/signals';
 import InputBoxGroup from '@src/components/global/Inputs/UniversalInput/components/InputBoxGroup';
 import CheckBoxInput from '@src/components/global/Inputs/UniversalInput/components/CheckBoxInput';
-import { formatDate, formatPhone, formatTime, isEmailValid } from './_helpers/universalinput.events';
+import { formatDate, formatPhone, formatTime, isEmailValid, formatCurrencyDisplay } from './_helpers/universalinput.events';
 
 const $select = Signal({});
 
@@ -169,6 +169,9 @@ const UniversalInput = ({
   };
 
   const formatValue = () => {
+    if (type === 'currency') {
+      return formatCurrencyDisplay(val || value || '');
+    }
     if (type === 'phone') {
       return formatPhone(val);
     }
@@ -184,11 +187,14 @@ const UniversalInput = ({
     return val || value || '';
   };
 
+  const allowedNativeTypes = ['text', 'email', 'number', 'password', 'tel', 'date', 'time'];
+  const inputType = allowedNativeTypes.includes(type) ? type : 'text';
+
   return (
     <div>
       {label && <Form.Label className={labelClassName}>{label}</Form.Label>}
       <Form.Control
-        type={type || 'text'}
+        type={inputType}
         value={formatValue()}
         placeholder={placeholder}
         className={`bg-info-800 border-0 text-info-100 ${className}`}

@@ -36,7 +36,11 @@ const Navigation = () => {
   };
 
   return (
-    <Navbar variant="light" expand="lg" className="bg-gradient-secondary-primary-50 mb-0 position-sticky top-0 py-8 px-16 z-index-9999 shadow-sm w-100">
+    <Navbar
+      variant="light"
+      expand="lg"
+      className="bg-gradient-secondary-primary-50 mb-0 position-fixed top-0 start-0 w-100 py-8 px-16 z-index-9999 shadow-sm"
+    >
       <Container fluid>
         <Navbar.Brand as={Link} to="/dashboard" className="me-64">
           <img

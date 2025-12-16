@@ -1,4 +1,4 @@
-import { Form, Row, Col, Alert } from 'react-bootstrap';
+import { Form, Row, Col, Alert, Card, Button } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMagic } from '@fortawesome/free-solid-svg-icons';
 import UniversalModal from '@src/components/global/UniversalModal';
@@ -9,6 +9,7 @@ import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
 import { Signal } from '@fyclabs/tools-fyc-react/signals';
 import { useState } from 'react';
 import { successAlert } from '@src/components/global/Alert/_helpers/alert.events';
+import { normalizeCurrencyValue } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
 
 // Mock OCR - generate random but realistic financial data
 const generateMockFinancialData = () => {
@@ -228,6 +229,11 @@ const SubmitFinancialsModal = () => {
             className="pe-0"
             style={{ maxHeight: '75vh', overflowY: 'auto', overflowX: 'hidden' }}
           >
+            <Card className="bg-info-700 text-center">
+              <h4 className="text-info-100 mb-8">$DOC_TYPE document</h4>
+              <Button variant="primary-100" className="w-auto mx-auto mb-8">Change Doument Type</Button>
+              <p>We found 20/25 financial inputs!</p>
+            </Card>
             <Form key={refreshKey}>
               <h5 className="text-info-100 mb-16 fw-600">Financial Period</h5>
               <Row>
@@ -256,33 +262,36 @@ const SubmitFinancialsModal = () => {
                   <UniversalInput
                     label="Gross Revenue"
                     labelClassName="text-info-100"
-                    type="number"
-                    placeholder="5000000"
+                    type="currency"
+                    placeholder="$5,000,000.00"
                     value={$borrowerFinancialsForm.value.grossRevenue}
                     name="grossRevenue"
                     signal={$borrowerFinancialsForm}
+                    inputFormatCallback={normalizeCurrencyValue}
                   />
                 </Col>
                 <Col md={12} className="mb-16">
                   <UniversalInput
                     label="Net Income"
                     labelClassName="text-info-100"
-                    type="number"
-                    placeholder="750000"
+                    type="currency"
+                    placeholder="$750,000.00"
                     value={$borrowerFinancialsForm.value.netIncome}
                     name="netIncome"
                     signal={$borrowerFinancialsForm}
+                    inputFormatCallback={normalizeCurrencyValue}
                   />
                 </Col>
                 <Col md={12} className="mb-16">
                   <UniversalInput
                     label="EBITDA"
                     labelClassName="text-info-100"
-                    type="number"
-                    placeholder="1200000"
+                    type="currency"
+                    placeholder="$1,200,000.00"
                     value={$borrowerFinancialsForm.value.ebitda}
                     name="ebitda"
                     signal={$borrowerFinancialsForm}
+                    inputFormatCallback={normalizeCurrencyValue}
                   />
                 </Col>
               </Row>
@@ -355,22 +364,24 @@ const SubmitFinancialsModal = () => {
                   <UniversalInput
                     label="Liquidity"
                     labelClassName="text-info-100"
-                    type="number"
-                    placeholder="850000"
+                    type="currency"
+                    placeholder="$850,000.00"
                     value={$borrowerFinancialsForm.value.liquidity}
                     name="liquidity"
                     signal={$borrowerFinancialsForm}
+                    inputFormatCallback={normalizeCurrencyValue}
                   />
                 </Col>
                 <Col md={12} className="mb-16">
                   <UniversalInput
                     label="Liquidity Covenant"
                     labelClassName="text-info-100"
-                    type="number"
-                    placeholder="500000"
+                    type="currency"
+                    placeholder="$500,000.00"
                     value={$borrowerFinancialsForm.value.liquidityCovenant}
                     name="liquidityCovenant"
                     signal={$borrowerFinancialsForm}
+                    inputFormatCallback={normalizeCurrencyValue}
                   />
                 </Col>
               </Row>
@@ -410,11 +421,12 @@ const SubmitFinancialsModal = () => {
                   <UniversalInput
                     label="Retained Earnings"
                     labelClassName="text-info-100"
-                    type="number"
-                    placeholder="2300000"
+                    type="currency"
+                    placeholder="$2,300,000.00"
                     value={$borrowerFinancialsForm.value.retainedEarnings}
                     name="retainedEarnings"
                     signal={$borrowerFinancialsForm}
+                    inputFormatCallback={normalizeCurrencyValue}
                   />
                 </Col>
                 <Col md={12} className="mb-16">
