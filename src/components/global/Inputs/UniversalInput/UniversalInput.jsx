@@ -27,6 +27,7 @@ const UniversalInput = ({
   notClearable, // For select type
   isMulti = false, // For select type
   disabled,
+  labelClassName,
   ...props
 }) => {
   if ((!signal || !name) && !customOnChange && type !== 'select') {
@@ -185,7 +186,7 @@ const UniversalInput = ({
 
   return (
     <div>
-      {label && <Form.Label>{label}</Form.Label>}
+      {label && <Form.Label className={labelClassName}>{label}</Form.Label>}
       <Form.Control
         type={type || 'text'}
         value={formatValue()}

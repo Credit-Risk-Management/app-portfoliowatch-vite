@@ -41,7 +41,7 @@ const UniversalModal = ({
       </Modal.Header>
       <Modal.Body className={`bg-info-900 ${isFullscreen ? 'modal-fullscreen-body pt-16' : ''}`}>
         {size === 'fullscreen' ? (
-          <Container>
+          <Container fluid>
             {children}
           </Container>
         ) : (
