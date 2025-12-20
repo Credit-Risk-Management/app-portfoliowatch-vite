@@ -295,22 +295,50 @@ export const $borrowerFinancialsView = Signal({
   showHistoryModal: false,
   showSubmitModal: false,
   currentBorrowerId: null,
+  isEditMode: false,
+  editingFinancialId: null,
+  refreshTrigger: 0, // Used to trigger refresh after updates
 });
 
 export const $borrowerFinancialsForm = Signal({
+  activeTab: 'documents',
+  documentType: 'balanceSheet',
   asOfDate: '',
+  // Income Statement fields
   grossRevenue: '',
   netIncome: '',
   ebitda: '',
+  rentalExpenses: '',
+  profitMargin: '',
+  // Balance Sheet fields
+  totalCurrentAssets: '',
+  totalCurrentLiabilities: '',
+  cash: '',
+  cashEquivalents: '',
+  equity: '',
+  accountsReceivable: '',
+  accountsPayable: '',
+  inventory: '',
+  // Debt Service fields
   debtService: '',
   debtServiceCovenant: '',
+  // Current Ratio fields
   currentRatio: '',
   currentRatioCovenant: '',
+  // Liquidity fields
   liquidity: '',
   liquidityCovenant: '',
   liquidityRatio: '',
   liquidityRatioCovenant: '',
   retainedEarnings: '',
+  // Trigger fields (calculated by backend)
+  changeInCash: '',
+  changeInEbitda: '',
+  changeInAccountsReceivable: '',
+  changeInProfitMargin: '',
+  changeInInventory: '',
+  changeInAccountsPayable: '',
+  // Other
   notes: '',
   documentIds: [],
 });

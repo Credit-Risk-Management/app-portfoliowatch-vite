@@ -43,9 +43,11 @@ function App() {
         <Routes>
           <Route element={<AppWrapper />}>
             {/* Public auth routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/accept-invitation" element={<AcceptInvitation />} />
-            <Route path="/upload-financials/:token" element={<PublicFinancialUpload />} />
+            <Route element={<PublicRoutes />}>x
+              <Route path="/login" element={<Login />} />
+              <Route path="/accept-invitation" element={<AcceptInvitation />} />
+              <Route path="/upload-financials/:token" element={<PublicFinancialUpload />} />
+            </Route>
 
             {/* Redirect root to dashboard */}
             <Route path="/" element={<Navigate to="/dashboard" replace />} />

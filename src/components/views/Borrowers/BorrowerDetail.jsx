@@ -20,6 +20,7 @@ import { formatFileSize, formatUploadDate, getLoanNumber } from '@src/components
 import { TABLE_HEADERS as DOCUMENTS_TABLE_HEADERS } from '@src/components/views/Documents/_helpers/documents.consts';
 import SubmitFinancialsModal from './_components/SubmitFinancialsModal';
 import EditBorrowerDetailModal from './_components/EditBorrowerDetailModal';
+import { handleOpenEditMode } from './_components/submitFinancialsModal.handlers';
 import {
   formatDate,
   formatAddress,
@@ -66,7 +67,7 @@ const BorrowerDetail = () => {
     if (activeTab === 'financials' && $borrower.value?.borrower?.id) {
       fetchFinancialHistory();
     }
-  }, [activeTab, $borrower.value?.borrower?.id, $borrowerFinancialsFilter.value]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeTab, $borrower.value?.borrower?.id, $borrowerFinancialsFilter.value, $borrowerFinancialsView.value.refreshTrigger]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch documents when documents tab is active
   useEffect(() => {
@@ -516,6 +517,15 @@ const BorrowerDetail = () => {
                   totalCount={$borrowerFinancials.value?.totalCount || 0}
                   currentPage={$borrowerFinancialsFilter.value.page}
                   itemsPerPageAmount={10}
+                  onRowClick={(financial) => {
+                    // Get the original financial data from the list (not the formatted table row)
+                    const originalFinancial = $borrowerFinancials.value?.list?.find(
+                      (f) => f.id === financial.id,
+                    );
+                    if (originalFinancial) {
+                      handleOpenEditMode(originalFinancial);
+                    }
+                  }}
                 />
               );
             })()}
