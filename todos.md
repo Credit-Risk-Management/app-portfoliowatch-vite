@@ -35,3 +35,61 @@
 
 
 }dIQqt^m-G`\OH1T
+
+2. Update WATCH Algorithm
+1. Fix OCR Workflow
+
+
+Weighted Exposure Fields
+√ Add ebidta field to the borrower financials table
+√ Add debt service field to the borrower financials table
+√ Add total current assets field to the borrower financials table
+√ Add total current liabilities field to the borrower financials table
+√ Add cash field to the borrower financials table
+√ add cash equivalents field to the borrower financials table
+√ add equity field to the borrower financials table
+√ add rental expenses field to the borrower financials table
+√ add accounts receivable field to the borrower financials table
+√ add profit margin field to the borrower financials table
+add inventorty field to the borrower financials table
+add accounts payable field to the borrower financials table
+
+Triggers
+add change in cash field to the borrower financials table
+add change in ebidta field to the borrower financials table
+add change in accounts receivable field to the borrower financials table
+add change in profit margin field to the borrower financials table
+add change in inventory field to the borrower financials table
+add change in accounts payable field to the borrower financials table
+
+Collateral
+add collateral to the loans table
+
+Balance Sheet
+
+totalCurrentAssets
+totalCurrentLiabilities
+cash
+cashEquivalents
+equity
+accountsReceivable
+accountsPayable
+inventory
+
+Income Statement
+
+ebidta
+rentalExpenses
+profitMargin
+
+Debt Service Work Sheet
+debt service
+
+Computed Triggers
+changeInCash
+changeInEbidta
+changeInProfit
+changeInAccountsReceivable
+changeInProfitMargin
+changeInInventory
+changeInAccountsPayable

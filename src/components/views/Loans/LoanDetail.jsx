@@ -1,16 +1,16 @@
+/* eslint-disable react/no-danger */
 import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Button, Collapse, Spinner } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faArrowRight, faMagic, faHistory, faChartLine } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faArrowRight, faMagic, faUser, faLandmark } from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';
 import UniversalCard from '@src/components/global/UniversalCard';
 import { $loan, WATCH_SCORE_OPTIONS } from '@src/consts/consts';
 import { formatCurrency } from '@src/utils/formatCurrency';
 import { getWatchScoreColor } from '@src/components/views/Dashboard/_helpers/dashboard.consts';
-import FinancialHistoryModal from '@src/components/views/Borrowers/_components/FinancialHistoryModal';
-import SubmitFinancialsModal from '@src/components/views/Borrowers/_components/SubmitFinancialsModal';
-import { $borrowerFinancialsView } from '@src/signals';
+import SubmitCollateralModal from './_components/SubmitCollateralModal';
+import { $loanCollateralView } from './_components/submitCollateralModal.signals';
 import LoanRadarChart from './_components/LoanRadarChart';
 import LoanComments from './_components/LoanComments';
 import {
@@ -22,10 +22,10 @@ import {
   renderMarkdownLinks,
 } from './_helpers/loans.helpers';
 import {
-  $financialsUploader,
   $loanDetailNewComment,
   $loanDetailShowSecondaryContacts,
   $loanDetailFinancials,
+  $loanDetailCollateral,
   $industryReportGenerating,
 } from './_helpers/loans.consts';
 import { fetchLoanDetail } from './_helpers/loans.resolvers';
@@ -42,12 +42,12 @@ const LoanDetail = () => {
     fetchLoanDetail(loanId);
   }, [loanId]);
 
-  // Reset the financials uploader signal and component state when the loan changes
+  // Reset component state when the loan changes
   useEffect(() => {
-    $financialsUploader.update({ financialFiles: [] });
     $loanDetailNewComment.value = '';
     $loanDetailShowSecondaryContacts.value = false;
     $loanDetailFinancials.value = [];
+    $loanDetailCollateral.value = [];
   }, [loanId]);
 
   if ($loan.value?.isLoading) {
@@ -84,30 +84,35 @@ const LoanDetail = () => {
           Back to Loans
         </Button>
         <div>
+          {$loan.value?.loan?.borrower?.id && (
+            <Button
+              variant="outline-primary-100"
+              onClick={() => navigate(`/borrowers/${$loan.value?.loan?.borrower?.id}`)}
+              className="me-8"
+            >
+              <FontAwesomeIcon icon={faUser} className="me-8" />
+              View Borrower
+            </Button>
+          )}
           <Button
-            variant="outline-secondary-100"
+            variant="outline-success-100"
             onClick={() => {
-              $borrowerFinancialsView.update({
-                showHistoryModal: true,
-                currentBorrowerId: $loan.value?.loan?.borrower?.id,
-              });
-            }}
-            className="me-8"
-          >
-            <FontAwesomeIcon icon={faHistory} className="me-8" />
-            Financial History
-          </Button>
-          <Button
-            variant="outline-primary-100"
-            onClick={() => {
-              $borrowerFinancialsView.update({
+              const hasExistingCollateral = $loanDetailCollateral.value && $loanDetailCollateral.value.length > 0;
+              const latestCollateralId = hasExistingCollateral && $loanDetailCollateral.value[0]?.id
+                ? $loanDetailCollateral.value[0].id
+                : null;
+              $loanCollateralView.update({
                 showSubmitModal: true,
-                currentBorrowerId: $loan.value?.loan?.borrower?.id,
+                currentLoanId: $loan.value?.loan?.id,
+                isEditMode: hasExistingCollateral,
+                editingCollateralId: latestCollateralId,
               });
             }}
           >
-            <FontAwesomeIcon icon={faChartLine} className="me-8" />
-            Submit New Financials
+            <FontAwesomeIcon icon={faLandmark} className="me-8" />
+            {$loanDetailCollateral.value && $loanDetailCollateral.value.length > 0
+              ? 'Update Collateral Value'
+              : 'Submit Collateral Value'}
           </Button>
         </div>
       </div>
@@ -115,7 +120,7 @@ const LoanDetail = () => {
       <PageHeader
         title={`${$loan.value?.loan?.borrowerName}`}
         AdditionalComponents={() => (
-          <div className={`text-info-50 text-${getWatchScoreColor($loan.value?.loan?.watchScore)}-200`}><h4>WATCH Score: {WATCH_SCORE_OPTIONS[$loan.value?.loan?.watchScore].label}</h4></div>
+          <div className={`text-${WATCH_SCORE_OPTIONS[$loan.value?.loan?.watchScore].color}-200`}><h4>WATCH Score: {WATCH_SCORE_OPTIONS[$loan.value?.loan?.watchScore].label}</h4></div>
         )}
       />
       <Row>
@@ -376,15 +381,76 @@ const LoanDetail = () => {
               </Col>
             </Row>
           </UniversalCard>
+          <UniversalCard headerText="Collateral Values" className="mt-16">
+            {$loanDetailCollateral.value && $loanDetailCollateral.value.length > 0 ? (
+              <div>
+                <div className="table-responsive">
+                  <table className="table table-hover">
+                    <thead>
+                      <tr>
+                        <th className="text-info-100">As Of Date</th>
+                        <th className="text-info-100">Items</th>
+                        <th className="text-info-100 text-end">Total Value</th>
+                        <th className="text-info-100">Submitted By</th>
+                        <th className="text-info-100">Date Submitted</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {$loanDetailCollateral.value.map((entry) => (
+                        <tr key={entry.id}>
+                          <td className="text-info-50">{formatDate(entry.asOfDate)}</td>
+                          <td className="text-info-50">
+                            <div className="small">
+                              {Array.isArray(entry.collateralItems) && entry.collateralItems.length > 0 ? (
+                                <ul className="mb-0 ps-16">
+                                  {entry.collateralItems.map((item, idx) => (
+                                    <li key={idx}>
+                                      {item.description}: {formatCurrency(item.value)}
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <span className="text-muted">No items</span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="text-info-50 text-end fw-bold">
+                            {formatCurrency(entry.totalValue || 0)}
+                          </td>
+                          <td className="text-info-50">{entry.submittedBy || 'Unknown'}</td>
+                          <td className="text-info-50">{formatDate(entry.createdAt)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="mt-16 pt-16 border-top">
+                  <div className="d-flex justify-content-between align-items-center">
+                    <div className="text-info-100 fw-bold">Latest Total Collateral Value:</div>
+                    <div className="text-success-500 fs-5 fw-bold">
+                      {formatCurrency(
+                        $loanDetailCollateral.value.length > 0
+                          ? ($loanDetailCollateral.value[0]?.totalValue || 0)
+                          : 0,
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-info-100 fw-200 fst-italic py-16">
+                No collateral values submitted yet. Click the &quot;Submit Collateral Value&quot; button above to add collateral.
+              </div>
+            )}
+          </UniversalCard>
           <UniversalCard headerText="Comments" className="mt-16">
             <LoanComments loanId={loanId} />
           </UniversalCard>
         </Col>
       </Row>
 
-      {/* Financial Modals */}
-      <FinancialHistoryModal />
-      <SubmitFinancialsModal />
+      {/* Collateral Modal */}
+      <SubmitCollateralModal />
     </Container>
   );
 };

@@ -3,12 +3,12 @@ import { WATCH_SCORE_OPTIONS } from '@src/consts/consts';
 // Color mapping from Bootstrap class names to hex values
 // These match the SCSS variables in _vars.scss
 const COLOR_HEX_MAP = {
-  success: '#7EEF86',   // WATCH Score 1 - Winning
-  info: '#7CE4F0',       // WATCH Score 2 - Anchor
-  primary: '#A07CF0',    // WATCH Score 3 - Typical
-  warning: '#F6B366',    // WATCH Score 4 - Concerning
-  danger: '#F66666',     // WATCH Score 5 - High Risk
-  secondary: '#6B7280',  // No score (grey)
+  success: '#7EEF86', // WATCH Score 1 - Winning
+  info: '#7CE4F0', // WATCH Score 2 - Anchor
+  primary: '#A07CF0', // WATCH Score 3 - Typical
+  warning: '#F6B366', // WATCH Score 4 - Concerning
+  danger: '#F66666', // WATCH Score 5 - High Risk
+  secondary: '#6B7280', // No score (grey)
 };
 
 export const RISK_RATING_LABELS = {

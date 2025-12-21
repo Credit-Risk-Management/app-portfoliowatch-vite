@@ -67,7 +67,7 @@ const Loans = () => {
     // eslint-disable-next-line arrow-body-style
     watchScore: () => {
       const score = WATCH_SCORE_OPTIONS[loan.watchScore];
-      return <span className={`text-${score.color}-200 fw-700`}>{score.label}</span>;
+      return <span className={`text-${score?.color}-200 fw-700`}>{score.label}</span>;
     },
     relationshipManager: loan.relationshipManager ? loan.relationshipManager.name : '-',
     actions: () => (

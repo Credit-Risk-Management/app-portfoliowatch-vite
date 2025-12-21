@@ -15,19 +15,21 @@ const Search = ({
     style={{ borderRadius: '10px' }}
     hidden={hidden}
   >
-    <UniversalInput
-      name={name}
-      signal={signal}
-      type="text"
-      placeholder={placeholder}
-      className="bg-transparent border-0 text-info-100"
-      onChange={(e) => {
-        signal.update({ [name]: e.target.value });
-        if (onChange) {
-          onChange();
-        }
-      }}
-    />
+    <div className="flex-grow-1">
+      <UniversalInput
+        name={name}
+        signal={signal}
+        type="text"
+        placeholder={placeholder}
+        className="bg-transparent border-0 text-info-100"
+        onChange={(e) => {
+          signal.update({ [name]: e.target.value });
+          if (onChange) {
+            onChange();
+          }
+        }}
+      />
+    </div>
     <FontAwesomeIcon icon={faSearch} className="ms-4 text-info-50 text-info-600" />
   </div>
 );

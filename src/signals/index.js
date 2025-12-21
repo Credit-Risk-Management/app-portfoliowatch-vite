@@ -295,24 +295,73 @@ export const $borrowerFinancialsView = Signal({
   showHistoryModal: false,
   showSubmitModal: false,
   currentBorrowerId: null,
+  isEditMode: false,
+  editingFinancialId: null,
+  refreshTrigger: 0, // Used to trigger refresh after updates
 });
 
 export const $borrowerFinancialsForm = Signal({
+  activeTab: 'documents',
+  documentType: 'balanceSheet',
   asOfDate: '',
+  accountabilityScore: '',
+  // Income Statement fields
   grossRevenue: '',
   netIncome: '',
   ebitda: '',
+  rentalExpenses: '',
+  profitMargin: '',
+  // Balance Sheet fields
+  totalCurrentAssets: '',
+  totalCurrentLiabilities: '',
+  cash: '',
+  cashEquivalents: '',
+  equity: '',
+  accountsReceivable: '',
+  accountsPayable: '',
+  inventory: '',
+  // Debt Service fields (actual value, covenant is on Loan)
   debtService: '',
-  debtServiceCovenant: '',
+  // Current Ratio fields (actual value, covenant is on Loan)
   currentRatio: '',
-  currentRatioCovenant: '',
+  // Liquidity fields (actual values, covenants are on Loan)
   liquidity: '',
-  liquidityCovenant: '',
   liquidityRatio: '',
-  liquidityRatioCovenant: '',
   retainedEarnings: '',
+  // Trigger fields (calculated by backend)
+  changeInCash: '',
+  changeInEbitda: '',
+  changeInAccountsReceivable: '',
+  changeInProfitMargin: '',
+  changeInInventory: '',
+  changeInAccountsPayable: '',
+  // Other
   notes: '',
   documentIds: [],
+});
+
+export const $debtServiceHistory = Signal({
+  list: [],
+  isLoading: false,
+  totalCount: 0,
+  selectedRecord: null,
+});
+
+export const $debtServiceHistoryView = Signal({
+  showAddModal: false,
+  showEditModal: false,
+  showDeleteModal: false,
+  isEditMode: false,
+  editingRecordId: null,
+  refreshTrigger: 0,
+});
+
+export const $debtServiceHistoryForm = Signal({
+  asOfDate: '',
+  debtLineItems: [],
+  totalCurrentBalance: 0,
+  totalMonthlyPayment: 0,
+  notes: '',
 });
 
 export const $users = Signal({

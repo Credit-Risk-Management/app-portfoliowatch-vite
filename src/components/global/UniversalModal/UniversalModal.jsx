@@ -30,18 +30,18 @@ const UniversalModal = ({
       className={isFullscreen ? '' : 'pt-32 text-info-200'}
     >
       <Modal.Header
-        className={`bg-info-900 lead border-0 d-flex justify-content-between ${isFullscreen ? 'modal-fullscreen-header pt-16 border-bottom border-info' : ''}`}
+        className={`bg-info-600 lead border-0 d-flex justify-content-between ${isFullscreen ? 'modal-fullscreen-header pt-16 border-bottom border-info' : ''}`}
       >
-        <div className="lead text-info-300 fw-500">
+        <div className="lead text-dark fw-500">
           {headerText}
         </div>
         {closeButton && (
-          <FontAwesomeIcon role="button" icon={faTimes} onClick={onHide} size="lg" className="text-info-300" />
+          <FontAwesomeIcon role="button" icon={faTimes} onClick={onHide} size="lg" className="text-dark" />
         )}
       </Modal.Header>
       <Modal.Body className={`bg-info-900 ${isFullscreen ? 'modal-fullscreen-body pt-16' : ''}`}>
         {size === 'fullscreen' ? (
-          <Container>
+          <Container fluid>
             {children}
           </Container>
         ) : (

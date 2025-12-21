@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Button, ListGroup, Badge } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faArrowRight, faEdit, faMagic, faEnvelope, faPhone, faChartLine, faFileAlt, faCopy, faCheck, faUser, faAddressBook, faMoneyBillWave, faDollarSign, faIndustry, faStickyNote, faEye, faTrash, faFile } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faArrowRight, faEdit, faMagic, faEnvelope, faPhone, faChartLine, faFileAlt, faCopy, faCheck, faUser, faAddressBook, faMoneyBillWave, faDollarSign, faIndustry, faStickyNote, faEye, faTrash, faFile, faReceipt } from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';
 import UniversalCard from '@src/components/global/UniversalCard';
 import SignalTable from '@src/components/global/SignalTable';
@@ -20,6 +20,8 @@ import { formatFileSize, formatUploadDate, getLoanNumber } from '@src/components
 import { TABLE_HEADERS as DOCUMENTS_TABLE_HEADERS } from '@src/components/views/Documents/_helpers/documents.consts';
 import SubmitFinancialsModal from './_components/SubmitFinancialsModal';
 import EditBorrowerDetailModal from './_components/EditBorrowerDetailModal';
+import DebtServiceTab from './_components/DebtServiceTab';
+import { handleOpenEditMode } from './_components/submitFinancialsModal.handlers';
 import {
   formatDate,
   formatAddress,
@@ -66,7 +68,7 @@ const BorrowerDetail = () => {
     if (activeTab === 'financials' && $borrower.value?.borrower?.id) {
       fetchFinancialHistory();
     }
-  }, [activeTab, $borrower.value?.borrower?.id, $borrowerFinancialsFilter.value]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeTab, $borrower.value?.borrower?.id, $borrowerFinancialsFilter.value, $borrowerFinancialsView.value.refreshTrigger]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch documents when documents tab is active
   useEffect(() => {
@@ -152,6 +154,7 @@ const BorrowerDetail = () => {
   const financialsTableHeaders = [
     { key: 'asOfDate', value: 'As Of Date', sortKey: 'asOfDate' },
     { key: 'submittedAt', value: 'Submitted Date', sortKey: 'submittedAt' },
+    { key: 'accountabilityScore', value: 'Accountability Score', sortKey: 'accountabilityScore' },
     { key: 'grossRevenue', value: 'Gross Revenue', sortKey: 'grossRevenue' },
     { key: 'netIncome', value: 'Net Income', sortKey: 'netIncome' },
     { key: 'ebitda', value: 'EBITDA', sortKey: 'ebitda' },
@@ -181,6 +184,7 @@ const BorrowerDetail = () => {
         ...financial,
         asOfDate: formatFinancialDate(financial.asOfDate),
         submittedAt: formatFinancialDate(financial.submittedAt),
+        accountabilityScore: financial.accountabilityScore || '-',
         grossRevenue: <span className="text-success-500 fw-500">{formatCurrency(financial.grossRevenue)}</span>,
         netIncome: <span className="text-success-500 fw-500">{formatCurrency(financial.netIncome)}</span>,
         ebitda: <span className="text-success-500 fw-500">{formatCurrency(financial.ebitda)}</span>,
@@ -301,6 +305,7 @@ const BorrowerDetail = () => {
     { key: 'contacts', title: 'Contacts', icon: faAddressBook },
     { key: 'loans', title: 'Loans', icon: faMoneyBillWave },
     { key: 'financials', title: 'Financials', icon: faDollarSign },
+    { key: 'debtService', title: 'Debt Service', icon: faReceipt },
     { key: 'documents', title: 'Documents', icon: faFile },
     { key: 'industry', title: 'Industry Analysis', icon: faIndustry },
     ...(borrower.notes ? [{ key: 'notes', title: 'Notes', icon: faStickyNote }] : []),
@@ -516,11 +521,23 @@ const BorrowerDetail = () => {
                   totalCount={$borrowerFinancials.value?.totalCount || 0}
                   currentPage={$borrowerFinancialsFilter.value.page}
                   itemsPerPageAmount={10}
+                  onRowClick={(financial) => {
+                    // Get the original financial data from the list (not the formatted table row)
+                    const originalFinancial = $borrowerFinancials.value?.list?.find(
+                      (f) => f.id === financial.id,
+                    );
+                    if (originalFinancial) {
+                      handleOpenEditMode(originalFinancial);
+                    }
+                  }}
                 />
               );
             })()}
           </div>
         );
+
+      case 'debtService':
+        return <DebtServiceTab />;
 
       case 'industry':
         return (

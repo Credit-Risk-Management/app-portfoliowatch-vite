@@ -20,6 +20,7 @@ const Pagination = ({
   const pages = Array.from({ length: lastPage - firstPage + 1 }, (_, i) => firstPage + i);
 
   const setCurrentPage = (value, direction = 'forward') => {
+    if (!$filter) return;
     if (direction === 'forward' && !value) $filter.update({ page: currentPage + 1 });
     if (direction === 'backward' && !value) $filter.update({ page: currentPage - 1 });
     if (value) $filter.update({ page: value });
