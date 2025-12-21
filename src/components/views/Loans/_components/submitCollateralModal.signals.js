@@ -16,7 +16,7 @@ export const $loanCollateralForm = Signal({
 });
 
 export const $collateralDocUploader = Signal({
-  collateralDoc: null,
+  collateralDoc: [],
 });
 
 export const $collateralModalState = Signal({

@@ -263,10 +263,20 @@ export const handleSubmit = async ($modalState, onCloseCallback) => {
       $borrowerFinancialsView.update({
         refreshTrigger: $borrowerFinancialsView.value.refreshTrigger + 1,
       });
+      
+      // Close the submit modal first
       onCloseCallback();
+      
+      // Show the watch score results modal with the updated loans
+      const updatedLoans = response.data?.updatedLoans || [];
+      $modalState.update({
+        showWatchScoreResults: true,
+        updatedLoans,
+      });
+      
       const message = isEditMode
-        ? 'Financial data updated successfully! Loan health scores will update shortly.'
-        : 'Submitted new financials! Loan health scores will update shortly.';
+        ? 'Financial data updated successfully!'
+        : 'Submitted new financials!';
       successAlert(message, 'toast');
     } else {
       $modalState.update({ error: response.error || 'Failed to submit financial data' });

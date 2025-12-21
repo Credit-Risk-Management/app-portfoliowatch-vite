@@ -25,5 +25,8 @@ export const $modalState = Signal({
     incomeStatement: 0,
     debtServiceWorksheet: 0,
   },
+  // Watch score results modal
+  showWatchScoreResults: false,
+  updatedLoans: [],
 });
 

@@ -1,7 +1,64 @@
-import { $user, $loan } from '@src/consts/consts';
+import { $loan } from '@src/consts/consts';
+import { $user } from '@src/signals';
 import loanCollateralValueApi from '@src/api/loanCollateralValue.api';
 import { successAlert } from '@src/components/global/Alert/_helpers/alert.events';
+import { fetchLoanDetail } from '@src/components/views/Loans/_helpers/loans.resolvers';
 import { $loanCollateralView, $loanCollateralForm, $collateralDocUploader, $collateralModalState } from './submitCollateralModal.signals';
+
+/**
+ * Handles opening the modal and loading existing collateral if in edit mode
+ */
+export const handleOpenModal = async () => {
+  const { isEditMode, editingCollateralId } = $loanCollateralView.value;
+
+  if (isEditMode && editingCollateralId) {
+    try {
+      // Load the existing collateral value
+      const response = await loanCollateralValueApi.getById(editingCollateralId);
+      const collateral = response?.data || response;
+
+      if (collateral) {
+        // Format the asOfDate for the date input (YYYY-MM-DD)
+        const asOfDate = collateral.asOfDate
+          ? new Date(collateral.asOfDate).toISOString().split('T')[0]
+          : '';
+
+        // Convert collateral items to form format
+        const collateralItems = Array.isArray(collateral.collateralItems) && collateral.collateralItems.length > 0
+          ? collateral.collateralItems.map(item => ({
+            description: item.description || '',
+            value: item.value || '',
+          }))
+          : [{ description: '', value: '' }];
+
+        // Pre-populate the form
+        $loanCollateralForm.update({
+          asOfDate,
+          collateralItems,
+          notes: collateral.notes || '',
+        });
+
+        // If there's an existing document, show it
+        if (collateral.documentName) {
+          $collateralModalState.update({
+            uploadedDocument: {
+              fileName: collateral.documentName,
+              fileSize: 0,
+              mimeType: '',
+            },
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load existing collateral:', error);
+      // If loading fails, reset to empty form
+      $loanCollateralForm.reset();
+    }
+  } else {
+    // Reset form for new submission
+    $loanCollateralForm.reset();
+  }
+};
 
 /**
  * Handles closing the submit collateral modal and resetting all state
@@ -13,7 +70,7 @@ export const handleClose = () => {
     editingCollateralId: null,
   });
   $loanCollateralForm.reset();
-  $collateralDocUploader.update({ collateralDoc: null });
+  $collateralDocUploader.update({ collateralDoc: [] });
 
   // Revoke document URL if exists
   const { documentPreviewUrl } = $collateralModalState.value;
@@ -65,9 +122,11 @@ export const handleUpdateCollateralItem = (index, field, value) => {
  * Handles file upload for collateral document
  */
 export const handleFileUpload = async () => {
-  const file = $collateralDocUploader.value.collateralDoc;
+  const files = $collateralDocUploader.value.collateralDoc;
 
-  if (!file) return;
+  if (!files || files.length === 0) return;
+
+  const file = files[0]; // Take the first file
 
   // Create preview URL
   const previewUrl = URL.createObjectURL(file);
@@ -83,7 +142,7 @@ export const handleFileUpload = async () => {
   });
 
   // Clear the uploader
-  $collateralDocUploader.update({ collateralDoc: null });
+  $collateralDocUploader.update({ collateralDoc: [] });
 };
 
 /**
@@ -143,7 +202,7 @@ export const handleSubmit = async () => {
     const validItems = validateForm();
 
     const { asOfDate, notes } = $loanCollateralForm.value;
-    const { currentLoanId } = $loanCollateralView.value;
+    const { currentLoanId, isEditMode, editingCollateralId } = $loanCollateralView.value;
     const { uploadedDocument } = $collateralModalState.value;
 
     if (!currentLoanId) {
@@ -174,31 +233,44 @@ export const handleSubmit = async () => {
       // and get back a URL to store in documentUrl
     }
 
-    // Submit to API
-    const response = await loanCollateralValueApi.create(data);
+    // Submit to API (create or update)
+    let response;
+    if (isEditMode && editingCollateralId) {
+      response = await loanCollateralValueApi.update(editingCollateralId, data);
+    } else {
+      response = await loanCollateralValueApi.create(data);
+    }
 
     if (!response.success) {
-      throw new Error(response.error || 'Failed to submit collateral value');
+      throw new Error(response.error || `Failed to ${isEditMode ? 'update' : 'submit'} collateral value`);
     }
 
     // Success
-    successAlert('Collateral value submitted successfully!');
+    successAlert(`Collateral value ${isEditMode ? 'updated' : 'submitted'} successfully!`);
 
     // Trigger refresh
     $loanCollateralView.update({
       refreshTrigger: $loanCollateralView.value.refreshTrigger + 1,
     });
 
-    // Optionally refresh loan detail if needed
+    // Refresh loan detail to get updated WATCH score
+    // The backend recomputes the WATCH score asynchronously after collateral submission
     if ($loan.value?.loan?.id === currentLoanId) {
-      // Could trigger a loan refresh here if needed
+      // Refresh immediately to get any cached updates
+      fetchLoanDetail(currentLoanId);
+
+      // Refresh again after a short delay to ensure we get the recomputed WATCH score
+      // The backend processes the WATCH score computation asynchronously
+      setTimeout(() => {
+        fetchLoanDetail(currentLoanId);
+      }, 2000);
     }
 
     handleClose();
   } catch (error) {
-    console.error('Error submitting collateral value:', error);
+    console.error(`Error ${$loanCollateralView.value.isEditMode ? 'updating' : 'submitting'} collateral value:`, error);
     $collateralModalState.update({
-      error: error.message || 'An error occurred while submitting',
+      error: error.message || `An error occurred while ${$loanCollateralView.value.isEditMode ? 'updating' : 'submitting'}`,
       isSubmitting: false,
     });
   }

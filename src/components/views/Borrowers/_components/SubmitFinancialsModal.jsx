@@ -1,12 +1,14 @@
-import { Alert, ButtonGroup, Button, Row, Col } from 'react-bootstrap';
+import { Alert, ButtonGroup, Button, Row, Col, Form } from 'react-bootstrap';
 import UniversalModal from '@src/components/global/UniversalModal';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import { $borrowerFinancialsView, $borrowerFinancialsForm } from '@src/signals';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
+import SelectInput from '@src/components/global/Inputs/SelectInput';
 import DocumentsTab from './DocumentsTab';
 import TriggersTab from './TriggersTab';
 import DebtServiceTab from './DebtServiceTab';
+import WatchScoreResultsModal from './WatchScoreResultsModal';
 import {
   handleClose as handleCloseHelper,
   setActiveTab as setActiveTabHelper,
@@ -63,111 +65,115 @@ const SubmitFinancialsModal = () => {
   }
 
   return (
-    <UniversalModal
-      show={$borrowerFinancialsView.value.showSubmitModal}
-      onHide={() => handleCloseHelper($financialDocsUploader, $modalState, pdfUrl)}
-      headerText={modalTitle}
-      leftBtnText="Cancel"
-      rightBtnText={submitButtonText}
-      rightBtnOnClick={() => handleSubmitHelper($modalState, () => handleCloseHelper($financialDocsUploader, $modalState, pdfUrl))}
-      rightButtonDisabled={isSubmitting}
-      size="fullscreen"
-      closeButton
-    >
-      <div className="pt-16">
-        {error && (
-          <Alert variant="danger" dismissible onClose={() => $modalState.update({ error: null })}>
-            {error}
-          </Alert>
-        )}
-
-        {/* As Of Date and Tab Navigation */}
-        <Row className="align-items-end my-16">
-          <Col md={3}>
-            <UniversalInput
-              label="As Of Date (Financial Statement Date)"
-              labelClassName="text-info-100"
-              type="date"
-              placeholder="YYYY-MM-DD"
-              value={$borrowerFinancialsForm.value.asOfDate}
-              name="asOfDate"
-              signal={$borrowerFinancialsForm}
-              required
-            />
-          </Col>
-          <Col md={2}>
-            <UniversalInput
-              label="Accountability Score"
-              labelClassName="text-info-100"
-              type="select"
-              value={$borrowerFinancialsForm.value.accountabilityScore}
-              name="accountabilityScore"
-              signal={$borrowerFinancialsForm}
-              options={[
-                { value: '', label: 'Select Score' },
-                { value: '1', label: '1' },
-                { value: '2', label: '2' },
-                { value: '3', label: '3' },
-                { value: '4', label: '4' },
-                { value: '5', label: '5' },
-                { value: '6', label: '6' },
-              ]}
-            />
-          </Col>
-          <Col md={7} className="d-flex justify-content-end">
-            <ButtonGroup>
-              <Button
-                variant={activeTab === 'documents' ? 'info' : 'outline-info'}
-                className={activeTab === 'documents' ? activeTabClass : inactiveTabClass}
-                onClick={() => setActiveTabHelper('documents')}
-              >
-                Documents
-              </Button>
-              <Button
-                variant={activeTab === 'triggers' ? 'info' : 'outline-info'}
-                className={activeTab === 'triggers' ? activeTabClass : inactiveTabClass}
-                onClick={() => setActiveTabHelper('triggers')}
-              >
-                Triggers
-              </Button>
-              <Button
-                variant={activeTab === 'debtService' ? 'info' : 'outline-info'}
-                className={activeTab === 'debtService' ? activeTabClass : inactiveTabClass}
-                onClick={() => setActiveTabHelper('debtService')}
-              >
-                Debt Service
-              </Button>
-            </ButtonGroup>
-          </Col>
-        </Row>
-        <div className="px-32 border-top border-info-100 pt-8">
-          {/* Documents Tab */}
-          {activeTab === 'documents' && (
-            <DocumentsTab
-              pdfUrl={pdfUrl}
-              ocrApplied={ocrApplied}
-              handleFileUpload={() => handleFileUploadHelper($financialDocsUploader, $modalState, ocrApplied, pdfUrl)}
-              refreshKey={refreshKey}
-              $financialDocsUploader={$financialDocsUploader}
-              $modalState={$modalState}
-              handleRemoveDocument={handleRemoveDocumentHelper}
-              handleSwitchDocument={handleSwitchDocumentHelper}
-            />
+    <>
+      <UniversalModal
+        show={$borrowerFinancialsView.value.showSubmitModal}
+        onHide={() => handleCloseHelper($financialDocsUploader, $modalState, pdfUrl)}
+        headerText={modalTitle}
+        leftBtnText="Cancel"
+        rightBtnText={submitButtonText}
+        rightBtnOnClick={() => handleSubmitHelper($modalState, () => handleCloseHelper($financialDocsUploader, $modalState, pdfUrl))}
+        rightButtonDisabled={isSubmitting}
+        size="fullscreen"
+        closeButton
+      >
+        <div className="pt-16">
+          {error && (
+            <Alert variant="danger" dismissible onClose={() => $modalState.update({ error: null })}>
+              {error}
+            </Alert>
           )}
 
-          {/* Triggers Tab */}
-          {activeTab === 'triggers' && (
-            <TriggersTab
-              previousFinancial={previousFinancial}
-              isLoadingPrevious={isLoadingPrevious}
-            />
-          )}
+          {/* As Of Date and Tab Navigation */}
+          <Row className="align-items-end my-16">
+            <Col md={3}>
+              <UniversalInput
+                label="As Of Date (Financial Statement Date)"
+                labelClassName="text-info-100"
+                type="date"
+                placeholder="YYYY-MM-DD"
+                value={$borrowerFinancialsForm.value.asOfDate}
+                name="asOfDate"
+                signal={$borrowerFinancialsForm}
+                required
+              />
+            </Col>
+            <Col md={2}>
+              <Form.Label className="text-info-100">Accountability Score</Form.Label>
+              <SelectInput
+                value={$borrowerFinancialsForm.value.accountabilityScore}
+                name="accountabilityScore"
+                signal={$borrowerFinancialsForm}
+                options={[
+                  { value: '', label: 'Select Accountability Score' },
+                  { value: '1', label: '1 - Excellent' },
+                  { value: '2', label: '2 - Good' },
+                  { value: '3', label: '3 - Satisfactory' },
+                  { value: '4', label: '4 - Marginal' },
+                  { value: '5', label: '5 - Poor' },
+                  { value: '6', label: '6 - Poor' },
+                ]}
+                placeholder="Select Accountability Score"
+              />
+            </Col>
+            <Col md={7} className="d-flex justify-content-end">
+              <ButtonGroup>
+                <Button
+                  variant={activeTab === 'documents' ? 'info' : 'outline-info'}
+                  className={activeTab === 'documents' ? activeTabClass : inactiveTabClass}
+                  onClick={() => setActiveTabHelper('documents')}
+                >
+                  Documents
+                </Button>
+                <Button
+                  variant={activeTab === 'triggers' ? 'info' : 'outline-info'}
+                  className={activeTab === 'triggers' ? activeTabClass : inactiveTabClass}
+                  onClick={() => setActiveTabHelper('triggers')}
+                >
+                  Triggers
+                </Button>
+                <Button
+                  variant={activeTab === 'debtService' ? 'info' : 'outline-info'}
+                  className={activeTab === 'debtService' ? activeTabClass : inactiveTabClass}
+                  onClick={() => setActiveTabHelper('debtService')}
+                >
+                  Debt Service
+                </Button>
+              </ButtonGroup>
+            </Col>
+          </Row>
+          <div className="px-32 border-top border-info-100 pt-8">
+            {/* Documents Tab */}
+            {activeTab === 'documents' && (
+              <DocumentsTab
+                pdfUrl={pdfUrl}
+                ocrApplied={ocrApplied}
+                handleFileUpload={() => handleFileUploadHelper($financialDocsUploader, $modalState, ocrApplied, pdfUrl)}
+                refreshKey={refreshKey}
+                $financialDocsUploader={$financialDocsUploader}
+                $modalState={$modalState}
+                handleRemoveDocument={handleRemoveDocumentHelper}
+                handleSwitchDocument={handleSwitchDocumentHelper}
+              />
+            )}
 
-          {/* Debt Service Tab */}
-          {activeTab === 'debtService' && <DebtServiceTab />}
+            {/* Triggers Tab */}
+            {activeTab === 'triggers' && (
+              <TriggersTab
+                previousFinancial={previousFinancial}
+                isLoadingPrevious={isLoadingPrevious}
+              />
+            )}
+
+            {/* Debt Service Tab */}
+            {activeTab === 'debtService' && <DebtServiceTab />}
+          </div>
         </div>
-      </div>
-    </UniversalModal>
+      </UniversalModal>
+
+      {/* Watch Score Results Modal */}
+      <WatchScoreResultsModal />
+    </>
   );
 };
 

@@ -340,6 +340,30 @@ export const $borrowerFinancialsForm = Signal({
   documentIds: [],
 });
 
+export const $debtServiceHistory = Signal({
+  list: [],
+  isLoading: false,
+  totalCount: 0,
+  selectedRecord: null,
+});
+
+export const $debtServiceHistoryView = Signal({
+  showAddModal: false,
+  showEditModal: false,
+  showDeleteModal: false,
+  isEditMode: false,
+  editingRecordId: null,
+  refreshTrigger: 0,
+});
+
+export const $debtServiceHistoryForm = Signal({
+  asOfDate: '',
+  debtLineItems: [],
+  totalCurrentBalance: 0,
+  totalMonthlyPayment: 0,
+  notes: '',
+});
+
 export const $users = Signal({
   list: [],
   invitations: [],

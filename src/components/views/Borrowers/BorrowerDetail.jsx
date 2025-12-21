@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Button, ListGroup, Badge } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faArrowRight, faEdit, faMagic, faEnvelope, faPhone, faChartLine, faFileAlt, faCopy, faCheck, faUser, faAddressBook, faMoneyBillWave, faDollarSign, faIndustry, faStickyNote, faEye, faTrash, faFile } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faArrowRight, faEdit, faMagic, faEnvelope, faPhone, faChartLine, faFileAlt, faCopy, faCheck, faUser, faAddressBook, faMoneyBillWave, faDollarSign, faIndustry, faStickyNote, faEye, faTrash, faFile, faReceipt } from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';
 import UniversalCard from '@src/components/global/UniversalCard';
 import SignalTable from '@src/components/global/SignalTable';
@@ -20,6 +20,7 @@ import { formatFileSize, formatUploadDate, getLoanNumber } from '@src/components
 import { TABLE_HEADERS as DOCUMENTS_TABLE_HEADERS } from '@src/components/views/Documents/_helpers/documents.consts';
 import SubmitFinancialsModal from './_components/SubmitFinancialsModal';
 import EditBorrowerDetailModal from './_components/EditBorrowerDetailModal';
+import DebtServiceTab from './_components/DebtServiceTab';
 import { handleOpenEditMode } from './_components/submitFinancialsModal.handlers';
 import {
   formatDate,
@@ -304,6 +305,7 @@ const BorrowerDetail = () => {
     { key: 'contacts', title: 'Contacts', icon: faAddressBook },
     { key: 'loans', title: 'Loans', icon: faMoneyBillWave },
     { key: 'financials', title: 'Financials', icon: faDollarSign },
+    { key: 'debtService', title: 'Debt Service', icon: faReceipt },
     { key: 'documents', title: 'Documents', icon: faFile },
     { key: 'industry', title: 'Industry Analysis', icon: faIndustry },
     ...(borrower.notes ? [{ key: 'notes', title: 'Notes', icon: faStickyNote }] : []),
@@ -533,6 +535,9 @@ const BorrowerDetail = () => {
             })()}
           </div>
         );
+
+      case 'debtService':
+        return <DebtServiceTab />;
 
       case 'industry':
         return (

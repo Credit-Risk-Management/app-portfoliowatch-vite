@@ -1,14 +1,16 @@
-import { Alert, Button, Row, Col, Form } from 'react-bootstrap';
+import { useEffect } from 'react';
+import { Alert, Button, Row, Col } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTrash, faDollarSign } from '@fortawesome/free-solid-svg-icons';
 import UniversalModal from '@src/components/global/UniversalModal';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
-import UniversalFileUploader from '@src/components/global/UniversalFileUploader';
+import FileUploader from '@src/components/global/FileUploader/FileUploader';
 import { formatCurrency } from '@src/utils/formatCurrency';
 import { $loanCollateralView, $loanCollateralForm, $collateralDocUploader, $collateralModalState } from './submitCollateralModal.signals';
 import {
   handleClose,
   handleSubmit,
+  handleOpenModal,
   handleAddCollateralItem,
   handleRemoveCollateralItem,
   handleUpdateCollateralItem,
@@ -19,17 +21,27 @@ import {
 
 const SubmitCollateralModal = () => {
   const { showSubmitModal, isEditMode } = $loanCollateralView.value;
-  const { collateralItems, asOfDate, notes, hasDocument } = $loanCollateralForm.value;
-  const { isSubmitting, error, documentPreviewUrl, uploadedDocument } = $collateralModalState.value;
+  const { collateralItems, asOfDate, notes } = $loanCollateralForm.value;
+  const { isSubmitting, error, uploadedDocument } = $collateralModalState.value;
+
+  // Load existing collateral when modal opens in edit mode
+  useEffect(() => {
+    if (showSubmitModal) {
+      handleOpenModal();
+    }
+  }, [showSubmitModal]);
 
   // Calculate total value
   const totalValue = calculateTotalValue();
 
   // Modal title and button text
-  const modalTitle = isEditMode ? 'Edit Collateral Value' : 'Submit Collateral Value';
-  const submitButtonText = isSubmitting
-    ? (isEditMode ? 'Updating...' : 'Submitting...')
-    : (isEditMode ? 'Update' : 'Submit');
+  const modalTitle = isEditMode ? 'Update Collateral Value' : 'Submit Collateral Value';
+  let submitButtonText;
+  if (isSubmitting) {
+    submitButtonText = isEditMode ? 'Updating...' : 'Submitting...';
+  } else {
+    submitButtonText = isEditMode ? 'Update' : 'Submit';
+  }
 
   return (
     <UniversalModal
@@ -83,28 +95,24 @@ const SubmitCollateralModal = () => {
           {collateralItems.map((item, index) => (
             <Row key={index} className="mb-12 align-items-end">
               <Col md={6}>
-                <Form.Group>
-                  <Form.Label className="text-info-100">Description</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="e.g., Real Estate, Equipment, Inventory"
-                    value={item.description}
-                    onChange={(e) => handleUpdateCollateralItem(index, 'description', e.target.value)}
-                  />
-                </Form.Group>
+                <UniversalInput
+                  label="Description"
+                  labelClassName="text-info-100"
+                  type="text"
+                  placeholder="e.g., Real Estate, Equipment, Inventory"
+                  value={item.description}
+                  customOnChange={(e) => handleUpdateCollateralItem(index, 'description', e.target.value)}
+                />
               </Col>
               <Col md={4}>
-                <Form.Group>
-                  <Form.Label className="text-info-100">Value</Form.Label>
-                  <Form.Control
-                    type="number"
-                    placeholder="0.00"
-                    step="0.01"
-                    min="0"
-                    value={item.value}
-                    onChange={(e) => handleUpdateCollateralItem(index, 'value', e.target.value)}
-                  />
-                </Form.Group>
+                <UniversalInput
+                  label="Value"
+                  labelClassName="text-info-100"
+                  type="number"
+                  placeholder="0.00"
+                  value={item.value}
+                  customOnChange={(e) => handleUpdateCollateralItem(index, 'value', e.target.value)}
+                />
               </Col>
               <Col md={2}>
                 <Button
@@ -121,13 +129,13 @@ const SubmitCollateralModal = () => {
           ))}
 
           {/* Total Value Display */}
-          <div className="mt-16 p-16 bg-light border rounded">
+          <div className="mt-16 fw-bold pt-8 border-top border-info-700">
             <div className="d-flex justify-content-between align-items-center">
-              <h5 className="mb-0 text-info-100">Total Collateral Value:</h5>
-              <h4 className="mb-0 text-success-500">
+              <div className="mb-0 text-info-100">Total Collateral Value:</div>
+              <div className="mb-0 text-success-300 fs-6">
                 <FontAwesomeIcon icon={faDollarSign} className="me-8" />
                 {formatCurrency(totalValue)}
-              </h4>
+              </div>
             </div>
           </div>
         </div>
@@ -137,13 +145,11 @@ const SubmitCollateralModal = () => {
           <h5 className="mb-12">Supporting Document (Optional)</h5>
 
           {!uploadedDocument ? (
-            <UniversalFileUploader
-              buttonText="Upload Document"
-              infoText="Upload an appraisal, valuation report, or supporting document (PDF, DOC, DOCX, XLS, XLSX)"
-              acceptedFileTypes="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-              uploadFunction={handleFileUpload}
+            <FileUploader
+              name="collateralDoc"
               signal={$collateralDocUploader}
-              signalFieldName="collateralDoc"
+              acceptedTypes=".pdf,.doc,.docx,.xls,.xlsx"
+              onUpload={handleFileUpload}
             />
           ) : (
             <div className="p-16 bg-light border rounded">
