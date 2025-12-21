@@ -83,7 +83,7 @@ const SubmitFinancialsModal = () => {
 
         {/* As Of Date and Tab Navigation */}
         <Row className="align-items-end my-16">
-          <Col md={4}>
+          <Col md={3}>
             <UniversalInput
               label="As Of Date (Financial Statement Date)"
               labelClassName="text-info-100"
@@ -95,7 +95,26 @@ const SubmitFinancialsModal = () => {
               required
             />
           </Col>
-          <Col md={8} className="d-flex justify-content-end">
+          <Col md={2}>
+            <UniversalInput
+              label="Accountability Score"
+              labelClassName="text-info-100"
+              type="select"
+              value={$borrowerFinancialsForm.value.accountabilityScore}
+              name="accountabilityScore"
+              signal={$borrowerFinancialsForm}
+              options={[
+                { value: '', label: 'Select Score' },
+                { value: '1', label: '1' },
+                { value: '2', label: '2' },
+                { value: '3', label: '3' },
+                { value: '4', label: '4' },
+                { value: '5', label: '5' },
+                { value: '6', label: '6' },
+              ]}
+            />
+          </Col>
+          <Col md={7} className="d-flex justify-content-end">
             <ButtonGroup>
               <Button
                 variant={activeTab === 'documents' ? 'info' : 'outline-info'}

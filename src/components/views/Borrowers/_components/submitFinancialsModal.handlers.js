@@ -215,6 +215,7 @@ export const handleSubmit = async ($modalState, onCloseCallback) => {
     const financialData = {
       borrowerId: $borrowerFinancialsView.value.currentBorrowerId,
       asOfDate: $borrowerFinancialsForm.value.asOfDate,
+      accountabilityScore: $borrowerFinancialsForm.value.accountabilityScore || null,
       // Income Statement
       grossRevenue: $borrowerFinancialsForm.value.grossRevenue || null,
       netIncome: $borrowerFinancialsForm.value.netIncome || null,
@@ -230,17 +231,13 @@ export const handleSubmit = async ($modalState, onCloseCallback) => {
       accountsReceivable: $borrowerFinancialsForm.value.accountsReceivable || null,
       accountsPayable: $borrowerFinancialsForm.value.accountsPayable || null,
       inventory: $borrowerFinancialsForm.value.inventory || null,
-      // Debt Service
+      // Debt Service (actual value, not covenant)
       debtService: $borrowerFinancialsForm.value.debtService || null,
-      debtServiceCovenant: $borrowerFinancialsForm.value.debtServiceCovenant || null,
-      // Current Ratio
+      // Current Ratio (actual value, not covenant)
       currentRatio: $borrowerFinancialsForm.value.currentRatio || null,
-      currentRatioCovenant: $borrowerFinancialsForm.value.currentRatioCovenant || null,
-      // Liquidity
+      // Liquidity (actual values, not covenants)
       liquidity: $borrowerFinancialsForm.value.liquidity || null,
-      liquidityCovenant: $borrowerFinancialsForm.value.liquidityCovenant || null,
       liquidityRatio: $borrowerFinancialsForm.value.liquidityRatio || null,
-      liquidityRatioCovenant: $borrowerFinancialsForm.value.liquidityRatioCovenant || null,
       retainedEarnings: $borrowerFinancialsForm.value.retainedEarnings || null,
       notes: $borrowerFinancialsForm.value.notes || null,
       submittedBy: $user.value.email || $user.value.name || 'Unknown User',
@@ -301,6 +298,7 @@ export const handleOpenEditMode = async (financial) => {
     activeTab: 'documents',
     documentType: 'balanceSheet',
     asOfDate: formatDateForInput(financial.asOfDate),
+    accountabilityScore: financial.accountabilityScore?.toString() || '',
     // Income Statement fields
     grossRevenue: financial.grossRevenue?.toString() || '',
     netIncome: financial.netIncome?.toString() || '',
@@ -316,17 +314,13 @@ export const handleOpenEditMode = async (financial) => {
     accountsReceivable: financial.accountsReceivable?.toString() || '',
     accountsPayable: financial.accountsPayable?.toString() || '',
     inventory: financial.inventory?.toString() || '',
-    // Debt Service fields
+    // Debt Service fields (actual value, covenant is on Loan)
     debtService: financial.debtService?.toString() || '',
-    debtServiceCovenant: financial.debtServiceCovenant?.toString() || '',
-    // Current Ratio fields
+    // Current Ratio fields (actual value, covenant is on Loan)
     currentRatio: financial.currentRatio?.toString() || '',
-    currentRatioCovenant: financial.currentRatioCovenant?.toString() || '',
-    // Liquidity fields
+    // Liquidity fields (actual values, covenants are on Loan)
     liquidity: financial.liquidity?.toString() || '',
-    liquidityCovenant: financial.liquidityCovenant?.toString() || '',
     liquidityRatio: financial.liquidityRatio?.toString() || '',
-    liquidityRatioCovenant: financial.liquidityRatioCovenant?.toString() || '',
     retainedEarnings: financial.retainedEarnings?.toString() || '',
     // Trigger fields
     changeInCash: financial.changeInCash?.toString() || '',

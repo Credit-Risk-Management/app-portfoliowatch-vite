@@ -153,6 +153,7 @@ const BorrowerDetail = () => {
   const financialsTableHeaders = [
     { key: 'asOfDate', value: 'As Of Date', sortKey: 'asOfDate' },
     { key: 'submittedAt', value: 'Submitted Date', sortKey: 'submittedAt' },
+    { key: 'accountabilityScore', value: 'Accountability Score', sortKey: 'accountabilityScore' },
     { key: 'grossRevenue', value: 'Gross Revenue', sortKey: 'grossRevenue' },
     { key: 'netIncome', value: 'Net Income', sortKey: 'netIncome' },
     { key: 'ebitda', value: 'EBITDA', sortKey: 'ebitda' },
@@ -182,6 +183,7 @@ const BorrowerDetail = () => {
         ...financial,
         asOfDate: formatFinancialDate(financial.asOfDate),
         submittedAt: formatFinancialDate(financial.submittedAt),
+        accountabilityScore: financial.accountabilityScore || '-',
         grossRevenue: <span className="text-success-500 fw-500">{formatCurrency(financial.grossRevenue)}</span>,
         netIncome: <span className="text-success-500 fw-500">{formatCurrency(financial.netIncome)}</span>,
         ebitda: <span className="text-success-500 fw-500">{formatCurrency(financial.ebitda)}</span>,

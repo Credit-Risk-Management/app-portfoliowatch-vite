@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Button, Collapse, Spinner } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faArrowRight, faMagic, faHistory, faChartLine } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faArrowRight, faMagic, faHistory, faChartLine, faLandmark } from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';
 import UniversalCard from '@src/components/global/UniversalCard';
 import { $loan, WATCH_SCORE_OPTIONS } from '@src/consts/consts';
@@ -10,7 +10,9 @@ import { formatCurrency } from '@src/utils/formatCurrency';
 import { getWatchScoreColor } from '@src/components/views/Dashboard/_helpers/dashboard.consts';
 import FinancialHistoryModal from '@src/components/views/Borrowers/_components/FinancialHistoryModal';
 import SubmitFinancialsModal from '@src/components/views/Borrowers/_components/SubmitFinancialsModal';
+import SubmitCollateralModal from './_components/SubmitCollateralModal';
 import { $borrowerFinancialsView } from '@src/signals';
+import { $loanCollateralView } from './_components/submitCollateralModal.signals';
 import LoanRadarChart from './_components/LoanRadarChart';
 import LoanComments from './_components/LoanComments';
 import {
@@ -105,9 +107,22 @@ const LoanDetail = () => {
                 currentBorrowerId: $loan.value?.loan?.borrower?.id,
               });
             }}
+            className="me-8"
           >
             <FontAwesomeIcon icon={faChartLine} className="me-8" />
             Submit New Financials
+          </Button>
+          <Button
+            variant="outline-success-100"
+            onClick={() => {
+              $loanCollateralView.update({
+                showSubmitModal: true,
+                currentLoanId: $loan.value?.loan?.id,
+              });
+            }}
+          >
+            <FontAwesomeIcon icon={faLandmark} className="me-8" />
+            Submit Collateral Value
           </Button>
         </div>
       </div>
@@ -385,6 +400,7 @@ const LoanDetail = () => {
       {/* Financial Modals */}
       <FinancialHistoryModal />
       <SubmitFinancialsModal />
+      <SubmitCollateralModal />
     </Container>
   );
 };

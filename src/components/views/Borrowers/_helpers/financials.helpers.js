@@ -154,20 +154,17 @@ const generateMockFinancialData = (documentType = 'all', filename = null) => {
 
   if (documentType === 'debtServiceWorksheet' || documentType === 'all') {
     Object.assign(baseData, {
-      debtService: (1.0 + Math.random() * 2.0).toFixed(2), // 1.0 - 3.0
-      debtServiceCovenant: (1.0 + Math.random() * 0.5).toFixed(2), // 1.0 - 1.5
+      debtService: (1.0 + Math.random() * 2.0).toFixed(2), // 1.0 - 3.0 (actual value, not covenant)
     });
   }
 
   // Legacy fields for backward compatibility (when documentType is 'all')
+  // Note: Covenant values are now stored on Loan model, not BorrowerFinancial
   if (documentType === 'all') {
     Object.assign(baseData, {
       currentRatio: (1.5 + Math.random() * 2.0).toFixed(2), // 1.5 - 3.5
-      currentRatioCovenant: (1.2 + Math.random() * 0.5).toFixed(2), // 1.2 - 1.7
       liquidity: Math.floor(Math.random() * (2000000 - 300000) + 300000).toString(), // $300K - $2M
-      liquidityCovenant: Math.floor(Math.random() * (800000 - 250000) + 250000).toString(), // $250K - $800K
       liquidityRatio: (1.2 + Math.random() * 1.5).toFixed(2), // 1.2 - 2.7
-      liquidityRatioCovenant: (1.0 + Math.random() * 0.5).toFixed(2), // 1.0 - 1.5
       retainedEarnings: Math.floor(grossRevenue * (0.3 + Math.random() * 0.4)).toString(), // 30% - 70% of revenue
     });
   }

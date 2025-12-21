@@ -304,6 +304,7 @@ export const $borrowerFinancialsForm = Signal({
   activeTab: 'documents',
   documentType: 'balanceSheet',
   asOfDate: '',
+  accountabilityScore: '',
   // Income Statement fields
   grossRevenue: '',
   netIncome: '',
@@ -319,17 +320,13 @@ export const $borrowerFinancialsForm = Signal({
   accountsReceivable: '',
   accountsPayable: '',
   inventory: '',
-  // Debt Service fields
+  // Debt Service fields (actual value, covenant is on Loan)
   debtService: '',
-  debtServiceCovenant: '',
-  // Current Ratio fields
+  // Current Ratio fields (actual value, covenant is on Loan)
   currentRatio: '',
-  currentRatioCovenant: '',
-  // Liquidity fields
+  // Liquidity fields (actual values, covenants are on Loan)
   liquidity: '',
-  liquidityCovenant: '',
   liquidityRatio: '',
-  liquidityRatioCovenant: '',
   retainedEarnings: '',
   // Trigger fields (calculated by backend)
   changeInCash: '',

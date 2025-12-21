@@ -434,18 +434,6 @@ const DocumentsTab = ({
                   signal={$borrowerFinancialsForm}
                 />
               </Col>
-              <Col md={12} className="mb-16">
-                <UniversalInput
-                  label="Debt Service Covenant"
-                  labelClassName="text-info-100"
-                  type="number"
-                  step="0.01"
-                  placeholder="1.25"
-                  value={$borrowerFinancialsForm.value.debtServiceCovenant}
-                  name="debtServiceCovenant"
-                  signal={$borrowerFinancialsForm}
-                />
-              </Col>
             </Row>
           )}
 
