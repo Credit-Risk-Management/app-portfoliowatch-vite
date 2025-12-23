@@ -17,8 +17,7 @@ const borrowerFinancialsApiBase = {
   },
 
   // Get latest financial by borrower ID
-  getLatestByBorrowerId: async (borrowerId) => 
-    apiClient.get(`/borrower-financials/borrower/${borrowerId}/latest`),
+  getLatestByBorrowerId: async (borrowerId) => apiClient.get(`/borrower-financials/borrower/${borrowerId}/latest`),
 
   // Get financial by ID
   getById: async (id) => apiClient.get(`/borrower-financials/${id}`),
@@ -41,4 +40,3 @@ export const borrowerFinancialsApi = wrapApiWithDebounce(borrowerFinancialsApiBa
 });
 
 export default borrowerFinancialsApi;
-

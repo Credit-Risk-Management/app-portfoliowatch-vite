@@ -29,7 +29,7 @@ const SignalTable = ({
   const handleToggleColumn = (header) => {
     if (typeof onColumnToggle === 'function') {
       onColumnToggle(header.key, !header.isHidden);
-    } else {
+    } else if ($view) {
       const updatedHeaders = headers.map((h) => (
         h.key === header.key ? { ...h, isHidden: !h.isHidden } : h
       ));
@@ -58,6 +58,8 @@ const SignalTable = ({
   );
 
   useEffect(() => {
+    if (!$filter) return;
+
     const urlParams = new URLSearchParams(window.location.search);
     const sortKey = urlParams.get('sortKey');
     const sortDirection = urlParams.get('sortDirection');
@@ -79,13 +81,15 @@ const SignalTable = ({
             {hasCheckboxes && (
               <td className="border-0 fw-800 py-16" aria-label="Check Box">
                 <Form.Check
-                  checked={$view.value?.isSelectAllChecked}
+                  checked={$view?.value?.isSelectAllChecked}
                   onChange={(e) => {
                     e.stopPropagation();
-                    $view.update({
-                      isSelectAllChecked: e.target.checked,
-                      selectedItems: e.target.checked ? rows : [],
-                    });
+                    if ($view) {
+                      $view.update({
+                        isSelectAllChecked: e.target.checked,
+                        selectedItems: e.target.checked ? rows : [],
+                      });
+                    }
                   }}
                 />
               </td>
@@ -97,7 +101,7 @@ const SignalTable = ({
                 role="button"
                 tabIndex={idx}
                 onClick={() => {
-                  if (!sortKey) return;
+                  if (!sortKey || !$filter) return;
                   const isAscending = $filter?.value?.sortKey === sortKey && $filter?.value?.sortDirection === 'asc';
                   const isDescending = $filter?.value?.sortKey === sortKey && $filter?.value?.sortDirection === 'desc';
                   $filter.update({
@@ -142,37 +146,40 @@ const SignalTable = ({
           </tr>
         </thead>
         <tbody>
-          {!rows.length && !$view.value?.isTableLoading && (
+          {!rows.length && !$view?.value?.isTableLoading && (
             <tr>
               <td className="border-0 w-100" colSpan={headers.length + (canFilterColumns ? 2 : 1)}>
                 No records found
               </td>
             </tr>
           )}
-          {$view.value?.isTableLoading && (
+          {$view?.value?.isTableLoading && (
             <tr>
               <td colSpan={headers.length + (canFilterColumns ? 2 : 1)} className="text-center border-0">
                 <TableLoader length={itemsPerPageAmount} />
               </td>
             </tr>
           )}
-          {!$view.value?.isTableLoading && rows.map((row, rowIdx) => (
+          {!$view?.value?.isTableLoading && rows.map((row, rowIdx) => (
             <tr
               key={rowIdx}
               onClick={() => onRowClick(row)}
-              style={{ cursor: 'pointer', visibility: $view.value?.isTableLoading ? 'hidden' : 'visible' }}
+              style={{ cursor: 'pointer', visibility: $view?.value?.isTableLoading ? 'hidden' : 'visible' }}
               className={rowClassName}
             >
               {hasCheckboxes && (
                 <td className="border-0 py-16">
                   <Form.Check
-                    checked={$view.value?.selectedItems?.some(({ id }) => id === row.id)}
+                    checked={$view?.value?.selectedItems?.some(({ id }) => id === row.id)}
                     onClick={(e) => {
                       e.stopPropagation();
-                      $view.update({ isShiftKey: e.shiftKey });
+                      if ($view) {
+                        $view.update({ isShiftKey: e.shiftKey });
+                      }
                     }}
                     onChange={(e) => {
                       e.stopPropagation();
+                      if (!$view) return;
                       let selectedItems = $view.value?.selectedItems || [];
                       if (!e.target.checked) {
                         selectedItems = selectedItems.filter(({ id }) => id !== row.id);

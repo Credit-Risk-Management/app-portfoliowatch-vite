@@ -114,6 +114,7 @@ const SelectInput = ({
           ':hover': {
             backgroundColor: state.isSelected ? '' : '#5498A3',
           },
+          color: '#D0F5FA',
         }),
         menu: (base) => ({
           ...base,

@@ -282,8 +282,8 @@ const ManagerDetail = () => {
                   onClick={(data) => handlePieClick(data)}
                   style={{ cursor: 'pointer' }}
                 >
-                  {(teamMetrics.riskRatingCountData || []).map((entry) => (
-                    <Cell key={`cell-${entry.rating}`} fill={RISK_RATING_COLORS[entry.rating]} />
+                  {(teamMetrics.riskRatingCountData || []).map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={RISK_RATING_COLORS[entry.rating]} />
                   ))}
                 </Pie>
                 <Tooltip content={renderCustomTooltip} />
@@ -309,8 +309,8 @@ const ManagerDetail = () => {
                   onClick={(data) => handlePieClick(data)}
                   style={{ cursor: 'pointer' }}
                 >
-                  {(teamMetrics.riskRatingAmountData || []).map((entry) => (
-                    <Cell key={`cell-${entry.rating}`} fill={RISK_RATING_COLORS[entry.rating]} />
+                  {(teamMetrics.riskRatingAmountData || []).map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={RISK_RATING_COLORS[entry.rating]} />
                   ))}
                 </Pie>
                 <Tooltip content={renderCustomTooltip} />

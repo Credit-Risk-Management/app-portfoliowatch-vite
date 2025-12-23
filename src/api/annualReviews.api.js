@@ -75,8 +75,7 @@ const annualReviewsApiBase = {
   },
 
   // Generate/regenerate AI narratives for an existing review
-  generateNarratives: async (id, sections = []) => 
-    apiClient.post(`/annual-reviews/${id}/generate-narratives`, { sections }),
+  generateNarratives: async (id, sections = []) => apiClient.post(`/annual-reviews/${id}/generate-narratives`, { sections }),
 
   // Export annual review as JSON
   exportToJSON: async (id) => apiClient.get(`/annual-reviews/${id}/export/json`),
@@ -90,8 +89,7 @@ const annualReviewsApiBase = {
   },
 
   // Compute financial ratios
-  computeRatios: async (financialStatements) => 
-    apiClient.post('/annual-reviews/compute-ratios', { financialStatements }),
+  computeRatios: async (financialStatements) => apiClient.post('/annual-reviews/compute-ratios', { financialStatements }),
 };
 
 // Wrap with debouncing - only debounce read operations that might be called repeatedly
@@ -103,4 +101,3 @@ export const annualReviewsApi = wrapApiWithDebounce(annualReviewsApiBase, {
 });
 
 export default annualReviewsApi;
-

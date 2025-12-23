@@ -75,7 +75,7 @@ const Dashboard = () => {
                       label={false}
                     >
                       {($dashboard.value?.metrics?.watchScoreCountData || []).map((entry, index) => (
-                        <Cell key={`cell-${entry.rating || index}`} fill={consts.getWatchScoreColor(entry.rating)} />
+                        <Cell key={`cell-${index}`} fill={consts.getWatchScoreColor(entry.rating)} />
                       ))}
                     </Pie>
                   </PieChart>
@@ -101,7 +101,7 @@ const Dashboard = () => {
                       label={false}
                     >
                       {($dashboard.value?.metrics?.watchScoreAmountData || []).map((entry, index) => (
-                        <Cell key={`cell-${entry.rating || index}`} fill={consts.getWatchScoreColor(entry.rating)} />
+                        <Cell key={`cell-${index}`} fill={consts.getWatchScoreColor(entry.rating)} />
                       ))}
                     </Pie>
                   </PieChart>
@@ -199,8 +199,8 @@ const Dashboard2 = () => {
                       onClick={(data) => events.handlePieClick(data)}
                       style={{ cursor: 'pointer' }}
                     >
-                      {(metrics.riskRatingCountData || []).map((entry) => (
-                        <Cell key={`cell-${entry.rating}`} fill={consts.RISK_RATING_COLORS[entry.rating]} />
+                      {(metrics.riskRatingCountData || []).map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={consts.RISK_RATING_COLORS[entry.rating]} />
                       ))}
                     </Pie>
                     <Tooltip content={<ChartTooltip />} />
@@ -225,8 +225,8 @@ const Dashboard2 = () => {
                       onClick={(data) => events.handlePieClick(data)}
                       style={{ cursor: 'pointer' }}
                     >
-                      {(metrics.riskRatingAmountData || []).map((entry) => (
-                        <Cell key={`cell-${entry.rating}`} fill={consts.RISK_RATING_COLORS[entry.rating]} />
+                      {(metrics.riskRatingAmountData || []).map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={consts.RISK_RATING_COLORS[entry.rating]} />
                       ))}
                     </Pie>
                     <Tooltip content={<ChartTooltip />} />

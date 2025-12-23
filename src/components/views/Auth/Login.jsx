@@ -28,7 +28,7 @@ const Login = () => {
     if (result.success) {
       // Clear form and redirect to intended page or dashboard
       $form.update({ email: '', password: '' });
-      navigate(redirect);
+      navigate(redirect, { replace: true });
     } else {
       setError(result.error || 'Login failed. Please try again.');
       setLoading(false);

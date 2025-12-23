@@ -52,7 +52,23 @@ export const initAuthListener = () => {
             industry: organization.industry,
           };
 
+          // User is logged in - ensure isSignedIn is set to true
           $global.value = {
+            ...$global.value,
+            isLoading: false,
+            isSignedIn: true,
+          };
+        } else {
+          // Backend call succeeded but response structure is unexpected
+          // Still set isSignedIn to true since user is authenticated with Firebase
+          console.warn('Unexpected response structure from getCurrentUser:', responseData);
+          $auth.value = {
+            user: firebaseUser,
+            token,
+            isLoading: false,
+          };
+          $global.value = {
+            ...$global.value,
             isLoading: false,
             isSignedIn: true,
           };
@@ -62,6 +78,7 @@ export const initAuthListener = () => {
         // User is signed in with Firebase but not in backend
         // This means they haven't completed account setup
         $global.value = {
+          ...$global.value,
           isLoading: false,
           isSignedIn: false,
         };
@@ -70,6 +87,7 @@ export const initAuthListener = () => {
     } else {
       // User is signed out
       $global.value = {
+        ...$global.value,
         isLoading: false,
         isSignedIn: false,
       };
