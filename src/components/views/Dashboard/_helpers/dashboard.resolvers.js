@@ -47,12 +47,12 @@ export const loadDashboardData = async () => {
 
     $dashboard.update({
       metrics: {
-        totalClients: borrowers.length || 10,
+        totalClients: borrowersResponse.count || 0,
         portfolioValue: loanMetrics.totalPortfolioValue || 0,
         watchScoreCountData: watchScoreCountData || [],
         watchScoreAmountData: watchScoreAmountData || [],
         activeLoans: loanMetrics.totalActiveLoans || 0,
-        totalBorrowers: borrowers.length || 10,
+        totalBorrowers: borrowersResponse.count || 0,
       },
       recentLoans,
       isLoading: false,

@@ -28,6 +28,32 @@ const Borrowers = () => {
     await resolvers.fetchAndSetBorrowerData();
   }, []);
 
+  // Watch for filter changes and refresh table data
+  useEffectAsync(async () => {
+    const borrowerTypeValue = Array.isArray($borrowersFilter.value.borrowerType)
+      ? $borrowersFilter.value.borrowerType.filter((type) => type !== '').join(',')
+      : $borrowersFilter.value.borrowerType;
+
+    const relationshipManagerValue = Array.isArray($borrowersFilter.value.relationshipManager)
+      ? $borrowersFilter.value.relationshipManager.filter((manager) => manager !== '').join(',')
+      : $borrowersFilter.value.relationshipManager;
+
+    const filters = {
+      searchTerm: $borrowersFilter.value.searchTerm,
+      borrowerType: borrowerTypeValue,
+      relationshipManager: relationshipManagerValue,
+    };
+
+    await resolvers.fetchAndSetBorrowerData(filters, false);
+  }, [
+    $borrowersFilter.value.searchTerm,
+    $borrowersFilter.value.borrowerType,
+    $borrowersFilter.value.relationshipManager,
+    $borrowersFilter.value.page,
+    $borrowersFilter.value.sortKey,
+    $borrowersFilter.value.sortDirection,
+  ]);
+
   const rows = $borrowers.value.list.map((borrower) => ({
     ...borrower,
     clientRiskRating: () => <StatusBadge status={borrower.clientRiskRating} type="risk" />,
