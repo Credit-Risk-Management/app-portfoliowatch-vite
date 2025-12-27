@@ -8,7 +8,6 @@ import PageHeader from '@src/components/global/PageHeader';
 import UniversalCard from '@src/components/global/UniversalCard';
 import { $loan, WATCH_SCORE_OPTIONS } from '@src/consts/consts';
 import { formatCurrency } from '@src/utils/formatCurrency';
-import { getWatchScoreColor } from '@src/components/views/Dashboard/_helpers/dashboard.consts';
 import SubmitCollateralModal from './_components/SubmitCollateralModal';
 import { $loanCollateralView } from './_components/submitCollateralModal.signals';
 import LoanRadarChart from './_components/LoanRadarChart';
