@@ -1,4 +1,3 @@
-/* eslint-disable implicit-arrow-linebreak */
 import useWindowSize from '@src/utils/windowSize';
 import { Badge, Container } from 'react-bootstrap';
 import { Outlet } from 'react-router-dom';

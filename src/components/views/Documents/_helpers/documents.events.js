@@ -21,7 +21,7 @@ export const handleDeleteDocument = async (documentId) => {
 export const handleDownloadDocument = async (documentId, fileName) => {
   try {
     const response = await documentsApi.getDownloadUrl(documentId);
-    
+
     if (response.data && response.data.downloadUrl) {
       // Create a temporary anchor element to trigger download
       const link = document.createElement('a');
@@ -31,7 +31,7 @@ export const handleDownloadDocument = async (documentId, fileName) => {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      
+
       successAlert('Download started');
     } else {
       dangerAlert('Failed to get download URL');
@@ -55,4 +55,3 @@ export const handleDocumentFilterChange = async () => {
     $documentsView.update({ isTableLoading: false });
   }
 };
-

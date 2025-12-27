@@ -7,4 +7,3 @@ export const ROLE_BADGE_VARIANTS = {
   ADMIN: 'primary',
   USER: 'secondary',
 };
-

@@ -1,3 +1,5 @@
+import { $global, $auth, $user, $organization } from '@src/signals';
+import { getCurrentUser } from '@src/api/auth.api';
 import {
   signInWithEmailAndPassword,
   signInWithGoogle,
@@ -5,8 +7,6 @@ import {
   getIdToken,
   onAuthStateChanged,
 } from './firebase';
-import { $global, $auth, $user, $organization } from '@src/signals';
-import { getCurrentUser } from '@src/api/auth.api';
 
 /**
  * Initialize auth listener
@@ -137,24 +137,21 @@ export const loginWithGoogle = async () => {
  * Wait for auth state to be fully updated
  * This ensures user data is fetched from backend before proceeding
  */
-const waitForAuthStateUpdate = () => {
-  return new Promise((resolve) => {
-    const checkInterval = setInterval(() => {
-      // Wait until auth is no longer loading and user is signed in
-      if (!$global.value.isLoading && $global.value.isSignedIn) {
-        clearInterval(checkInterval);
-        resolve();
-      }
-    }, 100);
-
-    // Timeout after 10 seconds
-    setTimeout(() => {
+const waitForAuthStateUpdate = () => new Promise((resolve) => {
+  const checkInterval = setInterval(() => {
+    // Wait until auth is no longer loading and user is signed in
+    if (!$global.value.isLoading && $global.value.isSignedIn) {
       clearInterval(checkInterval);
       resolve();
-    }, 10000);
-  });
-};
+    }
+  }, 100);
 
+  // Timeout after 10 seconds
+  setTimeout(() => {
+    clearInterval(checkInterval);
+    resolve();
+  }, 10000);
+});
 
 /**
  * Logout user
@@ -181,4 +178,3 @@ export const getCurrentToken = async () => {
     return null;
   }
 };
-

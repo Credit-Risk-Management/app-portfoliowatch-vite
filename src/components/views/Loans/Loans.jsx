@@ -19,7 +19,7 @@ import SelectInput from '@src/components/global/Inputs/SelectInput';
 import { WATCH_SCORE_OPTIONS } from '@src/consts/consts';
 import { handleSaveToReports, handleComputeWatchScores } from './_helpers/loans.events';
 import { loadReferenceData, fetchAndSetLoans } from './_helpers/loans.resolvers';
-import { formatRatio, formatDate } from './_helpers/loans.helpers';
+import { formatDate } from './_helpers/loans.helpers';
 import * as loansConsts from './_helpers/loans.consts';
 
 const Loans = () => {
@@ -57,14 +57,13 @@ const Loans = () => {
 
   const rows = ($loans.value?.list || []).map((loan) => ({
     ...loan,
+    loanId: loan.loanId || loan.loanNumber || loan.id || '-',
     borrowerName: loan.borrowerName || '-',
     principalAmount: formatCurrency(loan.principalAmount),
     paymentAmount: formatCurrency(loan.paymentAmount),
     nextPaymentDueDate: formatDate(loan.nextPaymentDueDate),
-    debtService: formatRatio(loan.debtService),
-    currentRatio: formatRatio(loan.currentRatio),
     liquidity: formatCurrency(loan.liquidity),
-    // eslint-disable-next-line arrow-body-style
+
     watchScore: () => {
       const score = WATCH_SCORE_OPTIONS[loan.watchScore];
       return <span className={`text-${score?.color}-200 fw-700`}>{score.label}</span>;

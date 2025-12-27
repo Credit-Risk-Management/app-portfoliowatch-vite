@@ -75,7 +75,7 @@ export const submitFinancialsViaToken = async (token, financialData) => {
   try {
     const response = await publicClient.post(
       `/borrower-financial-upload-links/public/${token}/submit`,
-      financialData
+      financialData,
     );
     return response;
   } catch (error) {
@@ -83,4 +83,3 @@ export const submitFinancialsViaToken = async (token, financialData) => {
     throw error;
   }
 };
-

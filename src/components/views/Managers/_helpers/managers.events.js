@@ -33,6 +33,17 @@ export const fetchManagers = async () => {
   }
 };
 
+// Fetch single manager by ID (for detail page)
+export const fetchManagerById = async (managerId) => {
+  try {
+    const managerResponse = await relationshipManagersApi.getById(managerId);
+    return managerResponse.data || managerResponse;
+  } catch (error) {
+    console.error('Error fetching manager:', error);
+    return null;
+  }
+};
+
 // Handle add manager
 export const handleAddManager = async () => {
   try {
@@ -61,7 +72,7 @@ export const handleAddManager = async () => {
 };
 
 // Handle edit manager
-export const handleEditManager = async () => {
+export const handleEditManager = async (onSuccess) => {
   try {
     const formData = $relationshipManagersForm.value;
 
@@ -79,6 +90,11 @@ export const handleEditManager = async () => {
     // Close modal and reset form
     $relationshipManagersView.update({ showEditModal: false });
     $relationshipManagersForm.reset();
+
+    // Call success callback if provided (for detail page refresh)
+    if (onSuccess) {
+      onSuccess(updatedManager);
+    }
   } catch (error) {
     // Error is already handled by the API client
   }

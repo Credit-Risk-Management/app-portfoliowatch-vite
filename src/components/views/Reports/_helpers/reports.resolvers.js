@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 import { $reports, $loans, $relationshipManagers } from '@src/signals';
 import reportsApi from '@src/api/reports.api';
 import loansApi from '@src/api/loans.api';
@@ -13,4 +14,3 @@ export const loadReportsData = async () => {
   $loans.update({ list: loansResponse.data || [] });
   $relationshipManagers.update({ list: managersResponse.data || [] });
 };
-

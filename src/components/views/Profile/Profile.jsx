@@ -1,4 +1,4 @@
-import { Container, Row, Col, Card, Form, Button, Badge, Spinner } from 'react-bootstrap';
+import { Container, Row, Col, Form, Button, Badge, Spinner } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUser, faEnvelope, faBuilding, faShieldAlt, faEdit, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';

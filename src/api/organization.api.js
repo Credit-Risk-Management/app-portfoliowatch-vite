@@ -82,4 +82,3 @@ export const updateMemberRole = async (id, userId, role) => {
     throw error;
   }
 };
-

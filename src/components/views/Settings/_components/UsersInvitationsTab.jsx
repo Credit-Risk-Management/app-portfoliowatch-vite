@@ -1,5 +1,5 @@
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
-import { Card, Table, Badge, Button } from 'react-bootstrap';
+import { Table, Badge, Button } from 'react-bootstrap';
 import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { $users, $settingsView } from '@src/signals';

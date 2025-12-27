@@ -1,3 +1,5 @@
+/* eslint-disable react/no-danger */
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Button, ListGroup, Badge } from 'react-bootstrap';
@@ -8,11 +10,11 @@ import UniversalCard from '@src/components/global/UniversalCard';
 import SignalTable from '@src/components/global/SignalTable';
 import ContextMenu from '@src/components/global/ContextMenu';
 import { $borrower, WATCH_SCORE_OPTIONS } from '@src/consts/consts';
-import { $contacts, $borrowerFinancialsView, $borrowerFinancials, $loansView, $loans, $documents, $documentsView, $relationshipManagers } from '@src/signals';
+import { $contacts, $borrowerFinancialsView, $borrowerFinancials, $loansView, $loans, $documents, $documentsView } from '@src/signals';
 import { formatCurrency } from '@src/utils/formatCurrency';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
 import { successAlert } from '@src/components/global/Alert/_helpers/alert.events';
-import { formatRatio, formatDate as formatLoanDate } from '@src/components/views/Loans/_helpers/loans.helpers';
+import { formatDate as formatLoanDate } from '@src/components/views/Loans/_helpers/loans.helpers';
 import { TABLE_HEADERS } from '@src/components/views/Loans/_helpers/loans.consts';
 import { EditLoanModal, DeleteLoanModal } from '@src/components/views/Loans/_components';
 import { handleDownloadDocument } from '@src/components/views/Documents/_helpers/documents.events';
@@ -68,14 +70,14 @@ const BorrowerDetail = () => {
     if (activeTab === 'financials' && $borrower.value?.borrower?.id) {
       fetchFinancialHistory();
     }
-  }, [activeTab, $borrower.value?.borrower?.id, $borrowerFinancialsFilter.value, $borrowerFinancialsView.value.refreshTrigger]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeTab, $borrower.value?.borrower?.id, $borrowerFinancialsFilter.value, $borrowerFinancialsView.value.refreshTrigger]);
 
   // Fetch documents when documents tab is active
   useEffect(() => {
     if (activeTab === 'documents' && borrowerId) {
       fetchBorrowerDocuments(borrowerId);
     }
-  }, [activeTab, borrowerId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeTab, borrowerId]);
 
   const fetchFinancialHistory = async () => {
     if (!$borrower.value?.borrower?.id) return;
@@ -207,11 +209,10 @@ const BorrowerDetail = () => {
     () => loans.map((loan) => ({
       ...loan,
       loanId: loan.loanId || loan.loanNumber || loan.id || '-',
+      borrowerName: loan.borrowerName || '-',
       principalAmount: loan.principalAmount ? formatCurrency(loan.principalAmount) : '-',
       paymentAmount: loan.paymentAmount ? formatCurrency(loan.paymentAmount) : '-',
       nextPaymentDueDate: loan.nextPaymentDueDate ? formatLoanDate(loan.nextPaymentDueDate) : '-',
-      debtService: loan.debtService ? formatRatio(loan.debtService) : '-',
-      currentRatio: loan.currentRatio ? formatRatio(loan.currentRatio) : '-',
       liquidity: loan.liquidity ? formatCurrency(loan.liquidity) : '-',
       watchScore: () => {
         const score = WATCH_SCORE_OPTIONS[loan.watchScore];
@@ -691,7 +692,7 @@ const BorrowerDetail = () => {
                 className={`d-flex align-items-center p-8 mb-8 rounded cursor-pointer ${activeTab === tab.key
                   ? 'bg-info-100 text-info-900 fw-bold'
                   : 'text-info-100 hover-bg-info-700'
-                  }`}
+                }`}
                 style={{
                   transition: 'background-color 0.2s ease',
                 }}

@@ -2,7 +2,7 @@ import { Form, Row, Col } from 'react-bootstrap';
 import UniversalModal from '@src/components/global/UniversalModal';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import SelectInput from '@src/components/global/Inputs/SelectInput';
-import { $usersView, $usersForm, $user, $organization } from '@src/signals';
+import { $usersView, $usersForm } from '@src/signals';
 import { handleInviteUser } from '../_helpers/users.events';
 
 const ROLE_OPTIONS = [

@@ -12,4 +12,3 @@ export const INVITATION_TABLE_HEADERS = [
   { key: 'status', label: 'Status', sortable: false },
   { key: 'actions', label: 'Actions', sortable: false },
 ];
-

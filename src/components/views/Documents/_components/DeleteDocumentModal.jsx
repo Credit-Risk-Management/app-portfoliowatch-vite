@@ -25,4 +25,3 @@ const DeleteDocumentModal = () => (
 );
 
 export default DeleteDocumentModal;
-

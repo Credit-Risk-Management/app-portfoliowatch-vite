@@ -14,6 +14,7 @@ const EditLoanModal = () => {
     if ($loansView.value.showEditModal && $loans.value.selectedLoan) {
       $loansForm.update($loans.value.selectedLoan);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [$loansView.value.showEditModal]);
 
   const managers = $relationshipManagers.value?.list || [];

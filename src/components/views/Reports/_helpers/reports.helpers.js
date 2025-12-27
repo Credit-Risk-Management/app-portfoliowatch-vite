@@ -42,15 +42,13 @@ export const applyFilters = (loans, filters) => {
   return filteredLoans;
 };
 
-export const formatLoansForTable = (loans, managers) => 
-  loans.map((loan) => ({
-    ...loan,
-    principal_amount: formatCurrency(loan.principalAmount),
-    payment_amount: formatCurrency(loan.paymentAmount),
-    next_payment_due_date: formatDate(loan.nextPaymentDueDate),
-    debt_service: formatRatio(loan.debtService),
-    current_ratio: formatRatio(loan.currentRatio),
-    liquidity: formatCurrency(loan.liquidity),
-    relationship_manager: getRelationshipManagerName(loan.relationshipManagerId, managers),
-  }));
-
+export const formatLoansForTable = (loans, managers) => loans.map((loan) => ({
+  ...loan,
+  principal_amount: formatCurrency(loan.principalAmount),
+  payment_amount: formatCurrency(loan.paymentAmount),
+  next_payment_due_date: formatDate(loan.nextPaymentDueDate),
+  debt_service: formatRatio(loan.debtService),
+  current_ratio: formatRatio(loan.currentRatio),
+  liquidity: formatCurrency(loan.liquidity),
+  relationship_manager: getRelationshipManagerName(loan.relationshipManagerId, managers),
+}));

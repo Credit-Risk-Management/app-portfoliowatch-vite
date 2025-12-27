@@ -29,4 +29,3 @@ export const $modalState = Signal({
   showWatchScoreResults: false,
   updatedLoans: [],
 });
-

@@ -1,3 +1,5 @@
+/* eslint-disable no-await-in-loop */
+/* eslint-disable no-restricted-syntax */
 import documentsApi from '@src/api/documents.api';
 import { dangerAlert, successAlert } from '@src/components/global/Alert/_helpers/alert.events';
 
@@ -13,7 +15,7 @@ export const uploadToFirebase = async (file, signedUrl) => {
     console.log('Signed URL:', signedUrl);
     console.log('File type:', file.type);
     console.log('File size:', file.size);
-    
+
     const response = await fetch(signedUrl, {
       method: 'PUT',
       body: file,
@@ -139,10 +141,9 @@ export const uploadMultipleFiles = async (loanId, files, userId) => {
     dangerAlert(`Failed to upload all ${results.total} file(s)`);
   } else {
     dangerAlert(
-      `Uploaded ${results.successful.length} of ${results.total} file(s). ${results.failed.length} failed.`
+      `Uploaded ${results.successful.length} of ${results.total} file(s). ${results.failed.length} failed.`,
     );
   }
 
   return results;
 };
-

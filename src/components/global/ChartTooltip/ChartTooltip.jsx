@@ -29,4 +29,3 @@ const ChartTooltip = ({ active, payload }) => {
 };
 
 export default ChartTooltip;
-

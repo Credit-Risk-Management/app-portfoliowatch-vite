@@ -1,11 +1,10 @@
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import { Container, Row, Col, Badge } from 'react-bootstrap';
-import { faEye, faEdit, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '@src/components/global/PageHeader';
 import SignalTable from '@src/components/global/SignalTable';
 import Search from '@src/components/global/Inputs/Search';
-import ContextMenu from '@src/components/global/ContextMenu';
 import {
   $relationshipManagers,
   $relationshipManagersFilter,
@@ -44,22 +43,6 @@ const Managers = () => {
       <Badge bg={manager.isActive ? 'success' : 'secondary'}>
         {manager.isActive ? 'Active' : 'Inactive'}
       </Badge>
-    ),
-    actions: () => (
-      <ContextMenu
-        items={[
-          { label: 'Edit', icon: faEdit, action: 'edit' },
-          { label: 'View Details', icon: faEye, action: 'view' },
-        ]}
-        onItemClick={(item) => {
-          if (item.action === 'edit') {
-            $relationshipManagers.update({ selectedManager: manager });
-            $relationshipManagersView.update({ showEditModal: true });
-          } else if (item.action === 'view') {
-            navigate(`/relationship-managers/${manager.id}`);
-          }
-        }}
-      />
     ),
   }));
 
@@ -127,6 +110,7 @@ const Managers = () => {
               totalCount={$relationshipManagers.value.totalCount}
               currentPage={$relationshipManagersFilter.value.page}
               itemsPerPageAmount={10}
+              onRowClick={(manager) => navigate(`/relationship-managers/${manager.id}`)}
             />
           </Col>
         </Row>

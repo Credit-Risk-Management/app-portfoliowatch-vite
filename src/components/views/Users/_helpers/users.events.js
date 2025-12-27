@@ -1,7 +1,6 @@
-import { $users, $usersView, $usersForm, $user, $organization } from '@src/signals';
+import { $users, $usersView, $usersForm, $user, $organization, $alert } from '@src/signals';
 import * as invitationApi from '@src/api/invitation.api';
 import * as organizationApi from '@src/api/organization.api';
-import { $alert } from '@src/signals';
 
 export const fetchUsers = async () => {
   try {
@@ -59,7 +58,7 @@ export const handleInviteUser = async () => {
     await invitationApi.createInvitation(
       organizationId,
       formData.email,
-      formData.role || 'USER'
+      formData.role || 'USER',
     );
 
     // Refresh invitations list
@@ -103,4 +102,3 @@ export const handleRevokeInvitation = async (invitationId) => {
     });
   }
 };
-

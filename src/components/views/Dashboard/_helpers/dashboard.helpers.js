@@ -1,5 +1,3 @@
-import { RISK_RATING_LABELS } from './dashboard.consts';
-
 export const calculatePortfolioValue = (loans) => loans.reduce((sum, loan) => sum + parseFloat(loan.principalAmount || 0), 0);
 
 export const calculateRiskRatingData = (loans) => {

@@ -35,4 +35,3 @@ export const transactionsApi = {
 };
 
 export default transactionsApi;
-

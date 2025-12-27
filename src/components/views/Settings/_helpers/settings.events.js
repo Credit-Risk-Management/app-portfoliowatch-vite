@@ -1,4 +1,4 @@
-import { $settingsView, $settingsForm, $organization, $alert, $user } from '@src/signals';
+import { $settingsView, $settingsForm, $organization, $alert } from '@src/signals';
 import * as organizationApi from '@src/api/organization.api';
 
 export const setActiveTab = (tab) => {
@@ -58,4 +58,3 @@ export const saveOrganization = async () => {
     });
   }
 };
-

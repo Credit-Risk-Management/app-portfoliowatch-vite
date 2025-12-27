@@ -1,5 +1,4 @@
-/* eslint-disable import/prefer-default-export */
-import { $borrowers, $loans, $loansFilter, $loansView, $relationshipManagers } from '@src/signals';
+import { $borrowers, $loans, $loansFilter, $loansView, $relationshipManagers, $comments } from '@src/signals';
 import { $loan, $watchScoreBreakdown } from '@src/consts/consts';
 import borrowersApi from '@src/api/borrowers.api';
 import relationshipManagersApi from '@src/api/relationshipManagers.api';
@@ -7,9 +6,8 @@ import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events'
 import loansApi from '@src/api/loans.api';
 import commentsApi from '@src/api/comments.api';
 import documentsApi from '@src/api/documents.api';
-import { $comments } from '@src/signals';
-import { $loanDetailFinancials, $loanDetailCollateral } from './loans.consts';
 import loanCollateralValueApi from '@src/api/loanCollateralValue.api';
+import { $loanDetailFinancials, $loanDetailCollateral } from './loans.consts';
 
 export const loadReferenceData = async () => {
   try {
@@ -65,7 +63,7 @@ export const fetchLoanDetail = async (loanId) => {
   try {
     $loan.update({ isLoading: true });
     $watchScoreBreakdown.update({ isLoading: true });
-    
+
     const [loanResponse, commentsResponse, watchScoreResponse, documentsResponse, collateralResponse] = await Promise.all([
       loansApi.getById(loanId),
       commentsApi.getByLoan(loanId),
@@ -77,21 +75,21 @@ export const fetchLoanDetail = async (loanId) => {
     // The API client interceptor returns response.data, so loanResponse is { success: true, data: loan }
     // Extract the loan object from the response (handle both wrapped and unwrapped responses)
     const loanData = loanResponse?.data || loanResponse;
-    
+
     $loan.update({ loan: loanData, isLoading: false });
     $comments.update({ list: commentsResponse?.data || commentsResponse || [] });
-    $watchScoreBreakdown.update({ 
-      breakdown: watchScoreResponse?.data || watchScoreResponse, 
-      isLoading: false 
+    $watchScoreBreakdown.update({
+      breakdown: watchScoreResponse?.data || watchScoreResponse,
+      isLoading: false,
     });
-    
+
     // Update financial documents list
     const financials = documentsResponse?.data || documentsResponse || [];
     $loanDetailFinancials.value = financials.map(doc => ({
       ...doc,
       fileName: doc.documentName,
     }));
-    
+
     // Update collateral history list
     const collateral = collateralResponse?.data || collateralResponse || [];
     $loanDetailCollateral.value = Array.isArray(collateral) ? collateral : [];

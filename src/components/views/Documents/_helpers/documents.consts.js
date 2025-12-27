@@ -13,4 +13,3 @@ export const TABLE_HEADERS = [
   { key: 'fileSize', value: 'File Size' },
   { key: 'actions', value: 'Actions' },
 ];
-

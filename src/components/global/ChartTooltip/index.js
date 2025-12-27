@@ -1,2 +1,3 @@
-export { default } from './ChartTooltip';
+import ChartTooltip from './ChartTooltip';
 
+export default ChartTooltip;

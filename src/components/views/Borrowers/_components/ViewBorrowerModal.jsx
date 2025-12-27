@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect } from 'react';
 import { Row, Col, Table, Badge } from 'react-bootstrap';
@@ -62,7 +63,7 @@ const ViewClientModal = () => {
           <Row className="mt-24">
             <Col md={12}>
               <h5 className="mb-16">Contacts</h5>
-              
+
               {$contacts.value.isLoading ? (
                 <p>Loading contacts...</p>
               ) : $contacts.value.list.length > 0 ? (

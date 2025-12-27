@@ -1,3 +1,5 @@
+/* eslint-disable indent */
+/* eslint-disable no-nested-ternary */
 import { Row, Col } from 'react-bootstrap';
 import { formatCurrency } from '@src/utils/formatCurrency';
 
@@ -76,9 +78,8 @@ const LoanChart = ({ loans }) => {
                   </div>
                   <div className="progress" style={{ height: '24px' }}>
                     <div
-                      className={`progress-bar ${
-                        rating <= 2 ? 'bg-success' : rating === 3 ? 'bg-warning' : 'bg-danger'
-                      }`}
+                      className={`progress-bar ${rating <= 2 ? 'bg-success' : rating === 3 ? 'bg-warning' : 'bg-danger'
+                        }`}
                       role="progressbar"
                       style={{ width: `${percentage}%` }}
                       aria-valuenow={count}
@@ -133,4 +134,3 @@ const LoanChart = ({ loans }) => {
 };
 
 export default LoanChart;
-

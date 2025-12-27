@@ -1,13 +1,10 @@
-import { $relationshipManagers, $loans } from '@src/signals';
-
 export const getManagerName = (managerId, managers) => {
   if (!managerId) return '-';
   const manager = managers.find((m) => m.id === managerId);
   return manager ? manager.name : '-';
 };
 
-export const getDirectReports = (managerId, managers) => 
-  managers.filter((m) => m.managerId === managerId);
+export const getDirectReports = (managerId, managers) => managers.filter((m) => m.managerId === managerId);
 
 export const getReportsCount = (managerId, managers) => {
   const reports = getDirectReports(managerId, managers);
@@ -44,10 +41,9 @@ export const getManagerOptionsWithNone = (managers, excludeId = null) => {
     value: m.id,
     label: `${m.name} - ${m.positionTitle}`,
   }));
-  
+
   return [
     { value: '', label: 'None (Top Level)' },
     ...managerOptions,
   ];
 };
-

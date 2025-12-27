@@ -1,5 +1,5 @@
-import Borrowers from './Borrowers.jsx';
-import BorrowerDetail from './BorrowerDetail.jsx';
+import Borrowers from './Borrowers';
+import BorrowerDetail from './BorrowerDetail';
 
 export default Borrowers;
 export { BorrowerDetail };

@@ -228,6 +228,22 @@ export const $relationshipManagersForm = Signal({
   updated_at: '',
 });
 
+export const $managerDetail = Signal({
+  manager: null,
+  loans: [],
+  borrowers: [],
+  comments: [],
+  recentLoans: [],
+  allManagers: [],
+  metrics: {
+    portfolioValue: 0,
+    totalBorrowers: 0,
+    activeLoans: 0,
+    watchScoreCountData: [],
+    watchScoreAmountData: [],
+  },
+});
+
 export const $reports = Signal({
   list: [],
   selectedReport: null,

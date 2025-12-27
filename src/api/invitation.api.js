@@ -20,7 +20,7 @@ export const createInvitation = async (organizationId, email, role) => {
 /**
  * Get invitations for organization
  */
-export const getInvitations = async (organizationId) => {
+export const getInvitations = async () => {
   try {
     const response = await apiClient.get('/invitations');
     return response;
@@ -71,4 +71,3 @@ export const revokeInvitation = async (invitationId) => {
     throw error;
   }
 };
-

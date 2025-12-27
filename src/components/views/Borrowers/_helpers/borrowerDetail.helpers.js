@@ -28,13 +28,13 @@ export const formatEmail = (email) => {
  */
 export const formatAddress = (borrower) => {
   if (!borrower) return 'N/A';
-  
+
   const { streetAddress, city, state, zipCode } = borrower;
-  
+
   if (!streetAddress && !city && !state && !zipCode) {
     return 'N/A';
   }
-  
+
   const parts = [];
   if (streetAddress) parts.push(streetAddress);
   if (city) parts.push(city);
@@ -45,7 +45,7 @@ export const formatAddress = (borrower) => {
   } else if (zipCode) {
     parts.push(zipCode);
   }
-  
+
   return parts.join(', ') || 'N/A';
 };
 
@@ -75,5 +75,3 @@ export const renderMarkdownLinks = (text) => {
   // Replace [text](url) with <a> tags
   return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
 };
-
-

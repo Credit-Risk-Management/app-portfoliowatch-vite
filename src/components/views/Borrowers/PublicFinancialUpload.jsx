@@ -1,163 +1,40 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Form, Button, Alert, Card } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileAlt, faMagic, faCheckCircle, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import FileUploader from '@src/components/global/FileUploader';
-import { Signal } from '@fyclabs/tools-fyc-react/signals';
-import { getUploadLinkByToken, submitFinancialsViaToken } from '@src/api/borrowerFinancialUploadLink.api';
+import { useSignal } from '@fyclabs/tools-fyc-react/signals';
 import ContentWrapper from '@src/components/global/ContentWrapper';
-
-// Local signal for form data
-const $publicFinancialForm = Signal({
-  asOfDate: '',
-  grossRevenue: '',
-  netIncome: '',
-  ebitda: '',
-  debtService: '',
-  debtServiceCovenant: '',
-  currentRatio: '',
-  currentRatioCovenant: '',
-  liquidity: '',
-  liquidityCovenant: '',
-  liquidityRatio: '',
-  liquidityRatioCovenant: '',
-  retainedEarnings: '',
-  notes: '',
-});
-
-// Local signal for file uploader
-const $financialDocsUploader = Signal({
-  financialDocs: [],
-});
-
-// Mock OCR - generate random but realistic financial data
-const generateMockFinancialData = () => {
-  const grossRevenue = Math.floor(Math.random() * (10000000 - 2000000) + 2000000);
-  const netIncomeMargin = 0.10 + Math.random() * 0.15;
-  const netIncome = Math.floor(grossRevenue * netIncomeMargin);
-  const ebitdaMargin = 0.15 + Math.random() * 0.15;
-  const ebitda = Math.floor(grossRevenue * ebitdaMargin);
-
-  const today = new Date();
-  const quartersBack = Math.floor(Math.random() * 4);
-  const currentQuarter = Math.floor(today.getMonth() / 3);
-  const targetQuarter = currentQuarter - quartersBack;
-
-  const yearOffset = Math.floor((targetQuarter < 0 ? targetQuarter - 3 : targetQuarter) / 4);
-  const year = today.getFullYear() + yearOffset;
-  const quarter = ((targetQuarter % 4) + 4) % 4;
-  const month = quarter * 3 + 2;
-  const lastDay = new Date(year, month + 1, 0).getDate();
-  const asOfDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-
-  return {
-    asOfDate,
-    grossRevenue: grossRevenue.toString(),
-    netIncome: netIncome.toString(),
-    ebitda: ebitda.toString(),
-    debtService: (1.0 + Math.random() * 2.0).toFixed(2),
-    debtServiceCovenant: (1.0 + Math.random() * 0.5).toFixed(2),
-    currentRatio: (1.5 + Math.random() * 2.0).toFixed(2),
-    currentRatioCovenant: (1.2 + Math.random() * 0.5).toFixed(2),
-    liquidity: Math.floor(Math.random() * (2000000 - 300000) + 300000).toString(),
-    liquidityCovenant: Math.floor(Math.random() * (800000 - 250000) + 250000).toString(),
-    liquidityRatio: (1.2 + Math.random() * 1.5).toFixed(2),
-    liquidityRatioCovenant: (1.0 + Math.random() * 0.5).toFixed(2),
-    retainedEarnings: Math.floor(grossRevenue * (0.3 + Math.random() * 0.4)).toString(),
-  };
-};
+import {
+  $publicFinancialForm,
+  $financialDocsUploader,
+  $publicFinancialUploadView,
+} from './_helpers/publicFinancialUpload.consts';
+import { fetchUploadLinkData } from './_helpers/publicFinancialUpload.resolvers';
+import {
+  handleFileUpload,
+  handleSubmit,
+  handleSubmitAnother,
+  clearError,
+} from './_helpers/publicFinancialUpload.events';
 
 const PublicFinancialUpload = () => {
   const { token } = useParams();
   const navigate = useNavigate();
-  const [linkData, setLinkData] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
-  const [ocrApplied, setOcrApplied] = useState(false);
-  const [refreshKey, setRefreshKey] = useState(0);
 
+  // Use signals for reactive state
+  const viewState = useSignal($publicFinancialUploadView);
+  const formData = useSignal($publicFinancialForm);
+
+  // Fetch upload link data on mount
   useEffect(() => {
-    const fetchLinkData = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const response = await getUploadLinkByToken(token);
-        if (response.status === 'success') {
-          setLinkData(response.data);
-        } else {
-          setError('Failed to load upload link');
-        }
-      } catch (err) {
-        console.error('Error fetching link data:', err);
-        setError(err.message || 'Invalid or expired upload link');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    if (token) {
-      fetchLinkData();
-    } else {
-      setError('No token provided');
-      setIsLoading(false);
-    }
+    fetchUploadLinkData(token);
   }, [token]);
 
-  const handleFileUpload = () => {
-    const files = $financialDocsUploader.value.financialDocs || [];
-    if (files.length > 0 && !ocrApplied) {
-      setTimeout(() => {
-        const mockData = generateMockFinancialData();
-        $publicFinancialForm.update(mockData);
-        setOcrApplied(true);
-        setRefreshKey(prev => prev + 1);
-      }, 500);
-    }
-  };
-
-  const handleSubmit = async () => {
-    try {
-      setIsSubmitting(true);
-      setError(null);
-
-      const financialData = {
-        asOfDate: $publicFinancialForm.value.asOfDate,
-        grossRevenue: $publicFinancialForm.value.grossRevenue || null,
-        netIncome: $publicFinancialForm.value.netIncome || null,
-        ebitda: $publicFinancialForm.value.ebitda || null,
-        debtService: $publicFinancialForm.value.debtService || null,
-        debtServiceCovenant: $publicFinancialForm.value.debtServiceCovenant || null,
-        currentRatio: $publicFinancialForm.value.currentRatio || null,
-        currentRatioCovenant: $publicFinancialForm.value.currentRatioCovenant || null,
-        liquidity: $publicFinancialForm.value.liquidity || null,
-        liquidityCovenant: $publicFinancialForm.value.liquidityCovenant || null,
-        liquidityRatio: $publicFinancialForm.value.liquidityRatio || null,
-        liquidityRatioCovenant: $publicFinancialForm.value.liquidityRatioCovenant || null,
-        retainedEarnings: $publicFinancialForm.value.retainedEarnings || null,
-        notes: $publicFinancialForm.value.notes || null,
-        documentIds: [], // In a real implementation, this would include uploaded document IDs
-      };
-
-      const response = await submitFinancialsViaToken(token, financialData);
-
-      if (response.status === 'success') {
-        setSuccess(true);
-        $publicFinancialForm.reset();
-        $financialDocsUploader.update({ financialDocs: [] });
-      } else {
-        setError(response.message || 'Failed to submit financial data');
-      }
-    } catch (err) {
-      console.error('Error submitting financial data:', err);
-      setError(err.message || 'An error occurred while submitting financial data');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  // Destructure view state for easier access
+  const { linkData, isLoading, isSubmitting, error, success, ocrApplied } = viewState;
 
   if (isLoading) {
     return (
@@ -199,12 +76,7 @@ const PublicFinancialUpload = () => {
               <p className="text-info-200 mb-24">
                 Thank you for submitting your financial information. Your data has been received and will be processed shortly.
               </p>
-              <Button variant="primary-100" onClick={() => {
-                setSuccess(false);
-                $publicFinancialForm.reset();
-                $financialDocsUploader.update({ financialDocs: [] });
-                setOcrApplied(false);
-              }}>
+              <Button variant="primary-100" onClick={handleSubmitAnother}>
                 Submit Another
               </Button>
             </Card.Body>
@@ -233,7 +105,7 @@ const PublicFinancialUpload = () => {
           </Card.Header>
           <Card.Body className="py-16 py-md-24">
             {error && (
-              <Alert variant="danger" dismissible onClose={() => setError(null)} className="mb-16 mb-md-24">
+              <Alert variant="danger" dismissible onClose={clearError} className="mb-16 mb-md-24">
                 {error}
               </Alert>
             )}
@@ -269,7 +141,7 @@ const PublicFinancialUpload = () => {
                     label="As Of Date (Financial Statement Date)"
                     type="date"
                     placeholder="YYYY-MM-DD"
-                    value={$publicFinancialForm.value.asOfDate}
+                    value={formData.asOfDate}
                     name="asOfDate"
                     signal={$publicFinancialForm}
                     required
@@ -289,7 +161,7 @@ const PublicFinancialUpload = () => {
                     label="Gross Revenue"
                     type="number"
                     placeholder="5000000"
-                    value={$publicFinancialForm.value.grossRevenue}
+                    value={formData.grossRevenue}
                     name="grossRevenue"
                     signal={$publicFinancialForm}
                   />
@@ -299,7 +171,7 @@ const PublicFinancialUpload = () => {
                     label="Net Income"
                     type="number"
                     placeholder="750000"
-                    value={$publicFinancialForm.value.netIncome}
+                    value={formData.netIncome}
                     name="netIncome"
                     signal={$publicFinancialForm}
                   />
@@ -309,7 +181,7 @@ const PublicFinancialUpload = () => {
                     label="EBITDA"
                     type="number"
                     placeholder="1200000"
-                    value={$publicFinancialForm.value.ebitda}
+                    value={formData.ebitda}
                     name="ebitda"
                     signal={$publicFinancialForm}
                   />
@@ -326,7 +198,7 @@ const PublicFinancialUpload = () => {
                     type="number"
                     step="0.01"
                     placeholder="1.45"
-                    value={$publicFinancialForm.value.debtService}
+                    value={formData.debtService}
                     name="debtService"
                     signal={$publicFinancialForm}
                   />
@@ -337,7 +209,7 @@ const PublicFinancialUpload = () => {
                     type="number"
                     step="0.01"
                     placeholder="1.25"
-                    value={$publicFinancialForm.value.debtServiceCovenant}
+                    value={formData.debtServiceCovenant}
                     name="debtServiceCovenant"
                     signal={$publicFinancialForm}
                   />
@@ -354,7 +226,7 @@ const PublicFinancialUpload = () => {
                     type="number"
                     step="0.01"
                     placeholder="2.1"
-                    value={$publicFinancialForm.value.currentRatio}
+                    value={formData.currentRatio}
                     name="currentRatio"
                     signal={$publicFinancialForm}
                   />
@@ -365,7 +237,7 @@ const PublicFinancialUpload = () => {
                     type="number"
                     step="0.01"
                     placeholder="1.5"
-                    value={$publicFinancialForm.value.currentRatioCovenant}
+                    value={formData.currentRatioCovenant}
                     name="currentRatioCovenant"
                     signal={$publicFinancialForm}
                   />
@@ -381,7 +253,7 @@ const PublicFinancialUpload = () => {
                     label="Liquidity"
                     type="number"
                     placeholder="850000"
-                    value={$publicFinancialForm.value.liquidity}
+                    value={formData.liquidity}
                     name="liquidity"
                     signal={$publicFinancialForm}
                   />
@@ -391,7 +263,7 @@ const PublicFinancialUpload = () => {
                     label="Liquidity Covenant"
                     type="number"
                     placeholder="500000"
-                    value={$publicFinancialForm.value.liquidityCovenant}
+                    value={formData.liquidityCovenant}
                     name="liquidityCovenant"
                     signal={$publicFinancialForm}
                   />
@@ -405,7 +277,7 @@ const PublicFinancialUpload = () => {
                     type="number"
                     step="0.01"
                     placeholder="1.85"
-                    value={$publicFinancialForm.value.liquidityRatio}
+                    value={formData.liquidityRatio}
                     name="liquidityRatio"
                     signal={$publicFinancialForm}
                   />
@@ -416,7 +288,7 @@ const PublicFinancialUpload = () => {
                     type="number"
                     step="0.01"
                     placeholder="1.2"
-                    value={$publicFinancialForm.value.liquidityRatioCovenant}
+                    value={formData.liquidityRatioCovenant}
                     name="liquidityRatioCovenant"
                     signal={$publicFinancialForm}
                   />
@@ -432,7 +304,7 @@ const PublicFinancialUpload = () => {
                     label="Retained Earnings"
                     type="number"
                     placeholder="2300000"
-                    value={$publicFinancialForm.value.retainedEarnings}
+                    value={formData.retainedEarnings}
                     name="retainedEarnings"
                     signal={$publicFinancialForm}
                   />
@@ -442,7 +314,7 @@ const PublicFinancialUpload = () => {
                     label="Notes"
                     type="text"
                     placeholder="Additional notes or comments"
-                    value={$publicFinancialForm.value.notes}
+                    value={formData.notes}
                     name="notes"
                     signal={$publicFinancialForm}
                   />
@@ -453,8 +325,8 @@ const PublicFinancialUpload = () => {
                 <Button
                   variant="primary-100"
                   size="lg"
-                  onClick={handleSubmit}
-                  disabled={isSubmitting || !$publicFinancialForm.value.asOfDate}
+                  onClick={() => handleSubmit(token)}
+                  disabled={isSubmitting || !formData.asOfDate}
                 >
                   {isSubmitting ? 'Submitting...' : 'Submit Financial Data'}
                 </Button>
@@ -468,4 +340,3 @@ const PublicFinancialUpload = () => {
 };
 
 export default PublicFinancialUpload;
-

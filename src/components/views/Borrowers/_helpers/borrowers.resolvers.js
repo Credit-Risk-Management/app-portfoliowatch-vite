@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import { $relationshipManagers, $borrowers, $borrowersView, $borrowersFilter } from '@src/signals';
 import relationshipManagersApi from '@src/api/relationshipManagers.api';
 import borrowersApi from '@src/api/borrowers.api';

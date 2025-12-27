@@ -42,47 +42,31 @@ const getLocalStorage = () => Object.keys(window.localStorage)
  * Sign in with email and password
  */
 export const signInWithEmailAndPassword = async (email, password) => {
-  try {
-    const result = await auth.signInWithEmailAndPassword(email, password);
-    return result.user;
-  } catch (error) {
-    throw error;
-  }
+  const result = await auth.signInWithEmailAndPassword(email, password);
+  return result.user;
 };
 
 /**
  * Create user with email and password
  */
 export const createUserWithEmailAndPassword = async (email, password) => {
-  try {
-    const result = await auth.createUserWithEmailAndPassword(email, password);
-    return result.user;
-  } catch (error) {
-    throw error;
-  }
+  const result = await auth.createUserWithEmailAndPassword(email, password);
+  return result.user;
 };
 
 /**
  * Sign in with Google
  */
 export const signInWithGoogle = async () => {
-  try {
-    const result = await auth.signInWithPopup(googleProvider);
-    return result.user;
-  } catch (error) {
-    throw error;
-  }
+  const result = await auth.signInWithPopup(googleProvider);
+  return result.user;
 };
 
 /**
  * Sign out
  */
 export const signOut = async () => {
-  try {
-    await auth.signOut();
-  } catch (error) {
-    throw error;
-  }
+  await auth.signOut();
 };
 
 /**
@@ -91,7 +75,7 @@ export const signOut = async () => {
 export const getIdToken = async () => {
   const user = auth.currentUser;
   if (user) {
-    return await user.getIdToken();
+    return user.getIdToken();
   }
   return null;
 };
@@ -99,9 +83,7 @@ export const getIdToken = async () => {
 /**
  * Listen to auth state changes
  */
-export const onAuthStateChanged = (callback) => {
-  return auth.onAuthStateChanged(callback);
-};
+export const onAuthStateChanged = (callback) => auth.onAuthStateChanged(callback);
 
 export {
   auth,

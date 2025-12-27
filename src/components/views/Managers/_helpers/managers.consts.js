@@ -8,7 +8,6 @@ export const TABLE_HEADERS = [
   { key: 'reports_count', value: '# Reports' },
   { key: 'loans_count', value: '# Loans' },
   { key: 'status', value: 'Status', sortKey: 'isActive' },
-  { key: 'actions', value: 'Actions' },
 ];
 
 export const STATUS_FILTER_OPTIONS = [
@@ -21,4 +20,3 @@ export const STATUS_OPTIONS = [
   { value: true, label: 'Active' },
   { value: false, label: 'Inactive' },
 ];
-

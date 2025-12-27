@@ -26,4 +26,3 @@ const SaveReportModal = () => (
 );
 
 export default SaveReportModal;
-

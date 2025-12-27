@@ -1,150 +1,42 @@
-import { useState, useEffect } from 'react';
+/* eslint-disable react/no-unescaped-entities */
+import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Container, Row, Col, Card, Alert, Button, Spinner } from 'react-bootstrap';
+import { useSignal } from '@fyclabs/tools-fyc-react/signals';
 import { $global, $user } from '@src/signals';
-import * as invitationApi from '@src/api/invitation.api';
-import { createUserWithEmailAndPassword, signInWithGoogle, signInWithEmailAndPassword } from '@src/utils/firebase';
-import { getCurrentToken } from '@src/utils/auth.utils';
-import { auth } from '@src/utils/firebase';
+import UniversalInput from '@src/components/global/Inputs/UniversalInput';
+import {
+  $acceptInvitationView,
+  $acceptInvitationForm,
+} from './_helpers/acceptInvitation.consts';
+import { fetchInvitation } from './_helpers/acceptInvitation.resolvers';
+import {
+  handleAcceptWithEmail,
+  handleAcceptWithGoogle,
+  handleAcceptSignedIn,
+  clearError,
+} from './_helpers/acceptInvitation.events';
 
 const AcceptInvitation = () => {
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
   const navigate = useNavigate();
-  const [invitation, setInvitation] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [accepting, setAccepting] = useState(false);
-  const [error, setError] = useState('');
-  const [name, setName] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
 
-  const isSignedIn = $global.value.isSignedIn;
-  const currentUser = $user.value;
+  // Use signals for reactive state
+  const viewState = useSignal($acceptInvitationView);
+  const formData = useSignal($acceptInvitationForm);
+  const { isSignedIn } = useSignal($global);
+  const currentUser = useSignal($user);
 
-  useEffect(() => {
-    if (!token) {
-      setError('Invalid invitation link. No token provided.');
-      setLoading(false);
-      return;
-    }
-
-    fetchInvitation();
+  // Fetch invitation on mount
+  useEffectAsync(async () => {
+    await fetchInvitation(token);
   }, [token]);
 
-  const fetchInvitation = async () => {
-    try {
-      setLoading(true);
-      const response = await invitationApi.getInvitationByToken(token);
-      setInvitation(response.data);
-      
-      // If user is signed in and email matches, pre-fill name
-      if (isSignedIn && currentUser?.email === response.data.email) {
-        setName(currentUser.name || '');
-      }
-    } catch (err) {
-      const errorMessage = err?.response?.data?.message || err?.message || 'Failed to load invitation';
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Destructure view state for easier access
+  const { invitation, isLoading, isAccepting, error } = viewState;
 
-  const handleAcceptWithEmail = async (e) => {
-    e.preventDefault();
-    setError('');
-
-    if (!name.trim()) {
-      setError('Name is required');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
-    }
-
-    setAccepting(true);
-
-    try {
-      let firebaseUid;
-
-      if (isSignedIn && currentUser?.email === invitation.email) {
-        // User is already signed in with matching email
-        firebaseUid = auth.currentUser?.uid;
-        if (!firebaseUid) {
-          throw new Error('User not authenticated');
-        }
-      } else {
-        // Try to create Firebase account (will fail if user already exists)
-        try {
-          const firebaseUser = await createUserWithEmailAndPassword(
-            invitation.email,
-            password
-          );
-          firebaseUid = firebaseUser.uid;
-        } catch (createError) {
-          // If user already exists, try to sign in
-          if (createError.code === 'auth/email-already-in-use') {
-            const firebaseUser = await signInWithEmailAndPassword(
-              invitation.email,
-              password
-            );
-            firebaseUid = firebaseUser.uid;
-          } else {
-            throw createError;
-          }
-        }
-      }
-
-      // Accept invitation
-      await invitationApi.acceptInvitation(token, firebaseUid, name);
-
-      // Redirect to dashboard
-      navigate('/dashboard');
-    } catch (err) {
-      const errorMessage = err?.response?.data?.message || err?.message || 'Failed to accept invitation';
-      setError(errorMessage);
-      setAccepting(false);
-    }
-  };
-
-  const handleAcceptWithGoogle = async () => {
-    setError('');
-    setAccepting(true);
-
-    try {
-      const firebaseUser = await signInWithGoogle();
-      
-      // Verify email matches invitation
-      if (firebaseUser.email !== invitation.email) {
-        setError('Google account email does not match invitation email');
-        setAccepting(false);
-        return;
-      }
-
-      // Accept invitation
-      await invitationApi.acceptInvitation(
-        token,
-        firebaseUser.uid,
-        firebaseUser.displayName || firebaseUser.email
-      );
-
-      // Redirect to dashboard
-      navigate('/dashboard');
-    } catch (err) {
-      const errorMessage = err?.response?.data?.message || err?.message || 'Failed to accept invitation';
-      setError(errorMessage);
-      setAccepting(false);
-    }
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
       <Container className="min-vh-100 d-flex align-items-center justify-content-center">
         <Spinner animation="border" role="status">
@@ -200,7 +92,7 @@ const AcceptInvitation = () => {
               )}
 
               {error && (
-                <Alert variant="danger" onClose={() => setError('')} dismissible>
+                <Alert variant="danger" onClose={clearError} dismissible>
                   {error}
                 </Alert>
               )}
@@ -211,28 +103,10 @@ const AcceptInvitation = () => {
                   <Button
                     variant="primary"
                     className="w-100 mb-3"
-                    onClick={async () => {
-                      setAccepting(true);
-                      try {
-                        const firebaseUid = auth.currentUser?.uid;
-                        if (!firebaseUid) {
-                          throw new Error('User not authenticated');
-                        }
-                        await invitationApi.acceptInvitation(
-                          token,
-                          firebaseUid,
-                          currentUser.name || name || currentUser.email
-                        );
-                        navigate('/dashboard');
-                      } catch (err) {
-                        const errorMessage = err?.response?.data?.message || err?.message || 'Failed to accept invitation';
-                        setError(errorMessage);
-                        setAccepting(false);
-                      }
-                    }}
-                    disabled={accepting}
+                    onClick={() => handleAcceptSignedIn(token, navigate)}
+                    disabled={isAccepting}
                   >
-                    {accepting ? (
+                    {isAccepting ? (
                       <>
                         <Spinner animation="border" size="sm" className="me-2" />
                         Accepting...
@@ -244,56 +118,52 @@ const AcceptInvitation = () => {
                 </div>
               ) : (
                 <>
-                  <form onSubmit={handleAcceptWithEmail}>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      handleAcceptWithEmail(token, navigate);
+                    }}
+                  >
                     <div className="mb-3">
-                      <label htmlFor="name" className="form-label">
-                        Full Name
-                      </label>
-                      <input
+                      <UniversalInput
+                        label="Full Name"
                         type="text"
-                        className="form-control"
-                        id="name"
                         placeholder="Enter your full name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
+                        value={formData.name}
+                        name="name"
+                        signal={$acceptInvitationForm}
                         required
-                        disabled={accepting}
+                        disabled={isAccepting}
                       />
                     </div>
 
                     {!isSignedIn && (
                       <>
                         <div className="mb-3">
-                          <label htmlFor="password" className="form-label">
-                            Password
-                          </label>
-                          <input
+                          <UniversalInput
+                            label="Password"
                             type="password"
-                            className="form-control"
-                            id="password"
                             placeholder="Create a password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            value={formData.password}
+                            name="password"
+                            signal={$acceptInvitationForm}
                             required
-                            disabled={accepting}
+                            disabled={isAccepting}
                             minLength={6}
                           />
                           <div className="form-text">Must be at least 6 characters</div>
                         </div>
 
                         <div className="mb-3">
-                          <label htmlFor="confirmPassword" className="form-label">
-                            Confirm Password
-                          </label>
-                          <input
+                          <UniversalInput
+                            label="Confirm Password"
                             type="password"
-                            className="form-control"
-                            id="confirmPassword"
                             placeholder="Confirm your password"
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            value={formData.confirmPassword}
+                            name="confirmPassword"
+                            signal={$acceptInvitationForm}
                             required
-                            disabled={accepting}
+                            disabled={isAccepting}
                           />
                         </div>
                       </>
@@ -303,9 +173,9 @@ const AcceptInvitation = () => {
                       variant="primary"
                       type="submit"
                       className="w-100 mb-3"
-                      disabled={accepting}
+                      disabled={isAccepting}
                     >
-                      {accepting ? (
+                      {isAccepting ? (
                         <>
                           <Spinner animation="border" size="sm" className="me-2" />
                           Accepting...
@@ -324,10 +194,10 @@ const AcceptInvitation = () => {
                       <Button
                         variant="outline-primary"
                         className="w-100"
-                        onClick={handleAcceptWithGoogle}
-                        disabled={accepting}
+                        onClick={() => handleAcceptWithGoogle(token, navigate)}
+                        disabled={isAccepting}
                       >
-                        {accepting ? (
+                        {isAccepting ? (
                           <>
                             <Spinner animation="border" size="sm" className="me-2" />
                             Accepting...
@@ -358,4 +228,3 @@ const AcceptInvitation = () => {
 };
 
 export default AcceptInvitation;
-

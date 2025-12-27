@@ -32,8 +32,7 @@ const borrowersApiBase = {
   delete: async (id) => apiClient.delete(`/borrowers/${id}`),
 
   // Generate industry health report
-  generateIndustryReport: async (borrowerId, loanId) => 
-    apiClient.post(`/borrowers/${borrowerId}/generate-industry-report`, { loanId }),
+  generateIndustryReport: async (borrowerId, loanId) => apiClient.post(`/borrowers/${borrowerId}/generate-industry-report`, { loanId }),
 };
 
 // Wrap with debouncing - only debounce read operations that might be called repeatedly

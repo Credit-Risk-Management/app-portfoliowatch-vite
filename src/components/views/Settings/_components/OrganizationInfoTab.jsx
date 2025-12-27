@@ -1,6 +1,6 @@
 /* eslint-disable react/no-unescaped-entities */
 import { useEffect } from 'react';
-import { Card, Form, Button, Spinner, Alert } from 'react-bootstrap';
+import { Form, Button, Spinner, Alert } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSave, faBuilding, faIndustry } from '@fortawesome/free-solid-svg-icons';
 import { $organization, $settingsView, $settingsForm, $user } from '@src/signals';

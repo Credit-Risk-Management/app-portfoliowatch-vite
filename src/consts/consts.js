@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import { Signal } from '@fyclabs/tools-fyc-react/signals';
 
 export const WATCH_SCORE_OPTIONS = {

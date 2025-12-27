@@ -1,4 +1,4 @@
-import { $loans, $loansView, $loansFilter, $loansForm, $reports, $comments, $global } from '@src/signals';
+import { $loans, $loansView, $loansFilter, $loansForm, $comments, $reports } from '@src/signals';
 import loansApi from '@src/api/loans.api';
 import reportsApi from '@src/api/reports.api';
 import commentsApi from '@src/api/comments.api';
@@ -6,8 +6,7 @@ import documentsApi from '@src/api/documents.api';
 import borrowersApi from '@src/api/borrowers.api';
 import { $loan } from '@src/consts/consts';
 import { dangerAlert, successAlert, infoAlert } from '@src/components/global/Alert/_helpers/alert.events';
-import { fetchAndSetLoans } from '@src/components/views/Loans/_helpers/loans.resolvers';
-import { fetchLoanDetail } from '@src/components/views/Loans/_helpers/loans.resolvers';
+import { fetchAndSetLoans, fetchLoanDetail } from '@src/components/views/Loans/_helpers/loans.resolvers';
 import { auth } from '@src/utils/firebase';
 import { uploadMultipleFiles } from './loans.upload';
 import {
@@ -163,18 +162,18 @@ export const handleAddComment = async (loanId) => {
   if (!text) return;
 
   // Get user info from Firebase auth
-  const currentUser = auth.currentUser;
-  
+  const { currentUser } = auth;
+
   // Determine userId and userName - use mock values for development if not authenticated
   let userId;
   let userName;
-  
+
   if (currentUser) {
     userId = currentUser.uid;
     userName = currentUser.displayName || currentUser.email || 'Unknown User';
   } else {
     // Development fallback - use mock user
-    userId = 'dev-user-' + Date.now();
+    userId = `dev-user-${Date.now()}`;
     userName = 'Development User';
     console.warn('No authenticated user found. Using mock user for development.');
   }
@@ -209,38 +208,33 @@ export const handleUploadFinancials = async () => {
   }
 
   // Get user info from Firebase auth
-  const currentUser = auth.currentUser;
-  
+  const { currentUser } = auth;
+
   // Determine userId - use mock values for development if not authenticated
   let userId;
-  
+
   if (currentUser) {
     userId = currentUser.uid;
   } else {
     // Development fallback - use mock user
-    userId = 'dev-user-' + Date.now();
+    userId = `dev-user-${Date.now()}`;
     console.warn('No authenticated user found. Using mock user for development.');
   }
 
   try {
     infoAlert(`Uploading ${files.length} file(s)...`);
-    
+
     // Upload files using the signed URL workflow
     const results = await uploadMultipleFiles(loanId, files, userId);
-    
+
     // Update the financials list with successfully uploaded documents
     if (results.successful.length > 0) {
-      const newDocuments = results.successful.map(result => ({
-        ...result.document,
-        fileName: result.document.documentName,
-      }));
-      
       // Refresh the financials list
       const response = await documentsApi.getAll({
         loanId,
         documentType: 'FINANCIAL',
       });
-      
+
       if (response.success) {
         $loanDetailFinancials.value = response.data.map(doc => ({
           ...doc,
@@ -248,7 +242,7 @@ export const handleUploadFinancials = async () => {
         }));
       }
     }
-    
+
     // Clear the uploader
     $financialsUploader.update({ financialFiles: [] });
   } catch (error) {
@@ -266,7 +260,7 @@ export const handleDeleteFinancial = async (financialId) => {
   try {
     // Delete from backend (will also delete from Firebase Storage)
     const response = await documentsApi.delete(financialId);
-    
+
     if (response.success) {
       // Remove from local state
       $loanDetailFinancials.value = $loanDetailFinancials.value.filter((f) => f.id !== financialId);
@@ -289,13 +283,13 @@ export const handleDownloadFinancial = async (financial) => {
   try {
     // Get signed download URL from backend
     const response = await documentsApi.getDownloadUrl(financial.id);
-    
+
     if (!response.success) {
       throw new Error(response.error || 'Failed to get download URL');
     }
-    
+
     const { downloadUrl, fileName } = response.data;
-    
+
     // Trigger browser download
     const link = document.createElement('a');
     link.href = downloadUrl;
@@ -304,7 +298,7 @@ export const handleDownloadFinancial = async (financial) => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     successAlert(`Downloading ${fileName || financial.fileName}`);
   } catch (error) {
     console.error('Error downloading financial:', error);
@@ -314,7 +308,7 @@ export const handleDownloadFinancial = async (financial) => {
 
 export const handleGenerateIndustryReport = async () => {
   const loan = $loan.value?.loan;
-  
+
   if (!loan?.borrower?.id || !loan?.id) {
     dangerAlert('Loan or borrower information not available');
     return;

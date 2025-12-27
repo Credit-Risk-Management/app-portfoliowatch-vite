@@ -1,3 +1,4 @@
+/* eslint-disable import/prefer-default-export */
 export const TABLE_HEADERS = [
   { key: 'loan_number', value: 'Loan Number', sortKey: 'loan_number' },
   { key: 'current_risk_rating', value: 'LEGO Score', sortKey: 'current_risk_rating' },
@@ -10,4 +11,3 @@ export const TABLE_HEADERS = [
   { key: 'liquidity', value: 'Liquidity', sortKey: 'liquidity' },
   { key: 'relationship_manager', value: 'Relationship Manager' },
 ];
-

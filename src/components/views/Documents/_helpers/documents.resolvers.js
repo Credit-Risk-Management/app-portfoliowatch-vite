@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import { $loans, $documents, $documentsView, $documentsFilter } from '@src/signals';
 import loansApi from '@src/api/loans.api';
 import documentsApi from '@src/api/documents.api';
@@ -35,4 +34,3 @@ export const fetchAndSetDocumentData = async (filters = {}, isShowLoader = true)
     $documentsView.update({ isTableLoading: false });
   }
 };
-

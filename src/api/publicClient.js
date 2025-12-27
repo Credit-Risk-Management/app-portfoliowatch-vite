@@ -16,7 +16,7 @@ publicClient.interceptors.response.use(
   (error) => {
     if (error.response) {
       // Server responded with error
-      const { status, data } = error.response;
+      const { data } = error.response;
       return Promise.reject(data || error.message);
     } if (error.request) {
       // Request made but no response
@@ -30,4 +30,3 @@ publicClient.interceptors.response.use(
 );
 
 export default publicClient;
-

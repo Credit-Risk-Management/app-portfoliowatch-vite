@@ -1,4 +1,3 @@
-/* eslint-disable import/prefer-default-export */
 import { $borrower } from '@src/consts/consts';
 import { $contacts, $documents, $relationshipManagers } from '@src/signals';
 import borrowersApi from '@src/api/borrowers.api';
@@ -6,7 +5,7 @@ import contactsApi from '@src/api/contacts.api';
 import documentsApi from '@src/api/documents.api';
 import relationshipManagersApi from '@src/api/relationshipManagers.api';
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
-import { $borrowerDocumentsFilter, $borrowerDocumentsView } from './borrowerDetail.consts';
+import { $borrowerDocumentsView } from './borrowerDetail.consts';
 
 export const fetchBorrowerDetail = async (borrowerId) => {
   if (!borrowerId) return;
@@ -64,7 +63,7 @@ export const fetchBorrowerDocuments = async (borrowerId) => {
 
     // Remove duplicates based on document ID
     const uniqueDocuments = Array.from(
-      new Map(allDocuments.map((doc) => [doc.id, doc])).values()
+      new Map(allDocuments.map((doc) => [doc.id, doc])).values(),
     );
 
     $documents.update({

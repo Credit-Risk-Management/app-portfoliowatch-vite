@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax */
 import { $loan } from '@src/consts/consts';
 import { $user } from '@src/signals';
 import loanCollateralValueApi from '@src/api/loanCollateralValue.api';
@@ -150,7 +151,7 @@ export const handleFileUpload = async () => {
  */
 export const handleDownloadDocument = () => {
   const { uploadedDocument, documentPreviewUrl } = $collateralModalState.value;
-  
+
   if (!uploadedDocument) return;
 
   // Create a temporary link element and trigger download
@@ -200,7 +201,7 @@ const validateForm = () => {
 
   // Validate all values are numbers
   for (const item of validItems) {
-    if (isNaN(parseFloat(item.value)) || parseFloat(item.value) < 0) {
+    if (Number.isNaN(parseFloat(item.value)) || parseFloat(item.value) < 0) {
       throw new Error(`Invalid value for "${item.description}". Must be a positive number.`);
     }
   }
@@ -300,6 +301,6 @@ export const calculateTotalValue = () => {
   const { collateralItems } = $loanCollateralForm.value;
   return collateralItems.reduce((sum, item) => {
     const value = parseFloat(item.value);
-    return sum + (isNaN(value) ? 0 : value);
+    return sum + (Number.isNaN(value) ? 0 : value);
   }, 0);
 };

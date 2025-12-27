@@ -144,4 +144,3 @@ const TriggersTab = ({ previousFinancial, isLoadingPrevious }) => {
 };
 
 export default TriggersTab;
-

@@ -159,4 +159,3 @@ const LoanTrendChart = ({ loan }) => {
 };
 
 export default LoanTrendChart;
-

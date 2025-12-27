@@ -54,4 +54,3 @@ const InviteUserModal = () => (
 );
 
 export default InviteUserModal;
-

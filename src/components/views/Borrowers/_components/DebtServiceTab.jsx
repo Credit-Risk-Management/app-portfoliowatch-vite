@@ -1,7 +1,8 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect, useMemo } from 'react';
 import { Button, Row, Col, Form, Card, Alert } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faTrash, faEdit, faEye, faDollarSign } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faTrash, faEdit, faDollarSign } from '@fortawesome/free-solid-svg-icons';
 import UniversalModal from '@src/components/global/UniversalModal';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import SignalTable from '@src/components/global/SignalTable';
@@ -11,7 +12,6 @@ import { $borrower } from '@src/consts/consts';
 import debtServiceHistoryApi from '@src/api/debtServiceHistory.api';
 import { successAlert, dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import { formatCurrency } from '@src/utils/formatCurrency';
-import { normalizeCurrencyValue } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
 
 const DebtServiceTab = () => {
   const [isLoading, setIsLoading] = useState(false);

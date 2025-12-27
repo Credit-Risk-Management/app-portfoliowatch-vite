@@ -1,2 +1,3 @@
-export { default } from './Managers';
+import Managers from './Managers';
 
+export default Managers;

@@ -1,4 +1,3 @@
-/* eslint-disable implicit-arrow-linebreak */
 import { $auth } from '@fyclabs/tools-fyc-react/signals';
 import { Container } from 'react-bootstrap';
 import Loader from '@src/components/global/Loader';

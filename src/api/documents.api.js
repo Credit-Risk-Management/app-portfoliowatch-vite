@@ -30,30 +30,22 @@ const documentsApiBase = {
   delete: async (id) => apiClient.delete(`/documents/${id}`),
 
   // Initiate file upload - Get signed upload URL
-  initiateUpload: async (data) => {
-    return apiClient.post('/documents/upload/initiate', data);
-  },
+  initiateUpload: async (data) => apiClient.post('/documents/upload/initiate', data),
 
   // Confirm file upload completion
-  confirmUpload: async (documentId, storageUrl) => {
-    return apiClient.post('/documents/upload/confirm', {
-      documentId,
-      storageUrl,
-    });
-  },
+  confirmUpload: async (documentId, storageUrl) => apiClient.post('/documents/upload/confirm', {
+    documentId,
+    storageUrl,
+  }),
 
   // Mark upload as failed
-  markUploadFailed: async (documentId, error) => {
-    return apiClient.post('/documents/upload/failed', {
-      documentId,
-      error,
-    });
-  },
+  markUploadFailed: async (documentId, error) => apiClient.post('/documents/upload/failed', {
+    documentId,
+    error,
+  }),
 
   // Get signed download URL for a document
-  getDownloadUrl: async (documentId, expiresIn = 3600) => {
-    return apiClient.get(`/documents/${documentId}/download?expiresIn=${expiresIn}`);
-  },
+  getDownloadUrl: async (documentId, expiresIn = 3600) => apiClient.get(`/documents/${documentId}/download?expiresIn=${expiresIn}`),
 };
 
 // Wrap with debouncing - only debounce read operations that might be called repeatedly
@@ -65,4 +57,3 @@ export const documentsApi = wrapApiWithDebounce(documentsApiBase, {
 });
 
 export default documentsApi;
-

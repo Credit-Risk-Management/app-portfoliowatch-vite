@@ -6,7 +6,6 @@ import {
   faUsers,
   faMoneyBillWave,
   faFileAlt,
-  faChartLine,
   faUserTie,
 } from '@fortawesome/free-solid-svg-icons';
 import { $global, $user, $organization } from '@src/signals';
@@ -84,15 +83,6 @@ const Navigation = () => {
             >
               <FontAwesomeIcon icon={faFileAlt} className="me-16 d-none" />
               Documents
-            </Nav.Link>
-            <Nav.Link
-              as={Link}
-              to="/reports"
-              active={isActive('/reports')}
-              className={`px-2 px-md-16 text-info-50 ${isActive('/reports') ? activeClass : 'text-dark'}`}
-            >
-              <FontAwesomeIcon icon={faChartLine} className="me-16 d-none" />
-              Reports
             </Nav.Link>
             <Nav.Link
               as={Link}

@@ -7,4 +7,3 @@ export { default as EditContactModal } from './EditContactModal';
 export { default as DeleteContactModal } from './DeleteContactModal';
 export { default as FinancialHistoryModal } from './FinancialHistoryModal';
 export { default as SubmitFinancialsModal } from './SubmitFinancialsModal';
-

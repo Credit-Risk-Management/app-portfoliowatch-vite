@@ -1,7 +1,7 @@
 import UniversalModal from '@src/components/global/UniversalModal';
 import { $documentsView, $documents } from '@src/signals';
-import { handleDeleteBorrowerDocument } from '../_helpers/borrowerDetail.events';
 import { useParams } from 'react-router-dom';
+import { handleDeleteBorrowerDocument } from '../_helpers/borrowerDetail.events';
 
 const DeleteBorrowerDocumentModal = () => {
   const { borrowerId } = useParams();
@@ -30,4 +30,3 @@ const DeleteBorrowerDocumentModal = () => {
 };
 
 export default DeleteBorrowerDocumentModal;
-

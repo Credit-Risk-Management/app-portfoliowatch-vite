@@ -1,4 +1,3 @@
-/* eslint-disable no-unreachable */
 import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import '@src/scss/style.scss';

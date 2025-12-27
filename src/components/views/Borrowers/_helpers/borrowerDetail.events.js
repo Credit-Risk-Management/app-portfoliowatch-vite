@@ -66,7 +66,7 @@ export const handleEditBorrowerDetail = async () => {
     if (borrowerId) {
       await fetchBorrowerDetail(borrowerId);
     }
-    
+
     successAlert('Borrower updated successfully');
   } catch (error) {
     dangerAlert(error.message || 'Failed to edit borrower');
@@ -78,7 +78,7 @@ export const handleDeleteBorrower = () => {
   console.log('Delete borrower - to be implemented');
 };
 
-export const handleGenerateAnnualReview = async (borrowerId) => {
+export const handleGenerateAnnualReview = async () => {
   const borrower = $borrower.value?.borrower;
 
   if (!borrower?.id) {
@@ -117,19 +117,12 @@ export const handleGenerateAnnualReview = async (borrowerId) => {
         console.error('Failed to download PDF:', pdfError);
         successAlert('Annual review generated successfully! (PDF download failed)');
       }
+    } else if (response.pdfError) {
+      console.error('PDF generation error:', response.pdfError);
+      successAlert('Annual review data generated successfully! (PDF generation failed)');
     } else {
-      if (response.pdfError) {
-        console.error('PDF generation error:', response.pdfError);
-        successAlert('Annual review data generated successfully! (PDF generation failed)');
-      } else {
-        successAlert('Annual review generated successfully!');
-      }
+      successAlert('Annual review generated successfully!');
     }
-
-    // Log the generated data for debugging
-    console.log('Generated annual review data:', response.data);
-    
-    return response.data;
   } catch (error) {
     console.error('Error generating annual review:', error);
     dangerAlert(`Failed to generate annual review: ${error.message}`);
@@ -155,7 +148,7 @@ function downloadBlob(blob, filename) {
   a.download = filename;
   document.body.appendChild(a);
   a.click();
-  
+
   // Cleanup
   setTimeout(() => {
     window.URL.revokeObjectURL(url);
@@ -168,7 +161,7 @@ export const handleDeleteBorrowerDocument = async (documentId, borrowerId) => {
     await documentsApi.delete(documentId);
     $documentsView.update({ showDeleteModal: false });
     successAlert('Document deleted successfully');
-    
+
     // Refresh borrower documents after deletion
     if (borrowerId) {
       await fetchBorrowerDocuments(borrowerId);

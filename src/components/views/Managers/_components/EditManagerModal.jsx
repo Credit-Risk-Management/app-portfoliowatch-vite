@@ -65,8 +65,8 @@ const EditManagerModal = () => {
             <UniversalInput
               label="Position Title"
               type="text"
-              value={$relationshipManagersForm.value.positionTitle}
-              onChange={(e) => $relationshipManagersForm.update({ positionTitle: e.target.value })}
+              value={$relationshipManagersForm.value.position_title}
+              onChange={(e) => $relationshipManagersForm.update({ position_title: e.target.value })}
             />
           </Col>
         </Row>
@@ -75,8 +75,8 @@ const EditManagerModal = () => {
             <UniversalInput
               label="Office Location"
               type="text"
-              value={$relationshipManagersForm.value.officeLocation}
-              onChange={(e) => $relationshipManagersForm.update({ officeLocation: e.target.value })}
+              value={$relationshipManagersForm.value.office_location}
+              onChange={(e) => $relationshipManagersForm.update({ office_location: e.target.value })}
             />
           </Col>
         </Row>
@@ -84,21 +84,21 @@ const EditManagerModal = () => {
           <Col md={6} className="mb-16">
             <Form.Label>Reports To</Form.Label>
             <SelectInput
-              name="managerId"
+              name="manager_id"
               signal={$relationshipManagersForm}
               options={managerOptionsWithNone}
-              value={managerOptionsWithNone.find((opt) => opt.value === $relationshipManagersForm.value.managerId || (opt.value === '' && !$relationshipManagersForm.value.managerId))?.value}
-              onChange={(option) => $relationshipManagersForm.update({ managerId: option?.value || null })}
+              value={managerOptionsWithNone.find((opt) => opt.value === $relationshipManagersForm.value.manager_id || (opt.value === '' && !$relationshipManagersForm.value.manager_id))?.value}
+              onChange={(option) => $relationshipManagersForm.update({ manager_id: option?.value || null })}
             />
           </Col>
           <Col md={6} className="mb-16">
             <Form.Label>Status</Form.Label>
             <SelectInput
-              name="isActive"
+              name="is_active"
               signal={$relationshipManagersForm}
               options={consts.STATUS_OPTIONS}
-              value={consts.STATUS_OPTIONS.find((opt) => opt.value === $relationshipManagersForm.value.isActive)?.value}
-              onChange={(option) => $relationshipManagersForm.update({ isActive: option?.value })}
+              value={consts.STATUS_OPTIONS.find((opt) => opt.value === $relationshipManagersForm.value.is_active)?.value}
+              onChange={(option) => $relationshipManagersForm.update({ is_active: option?.value })}
             />
           </Col>
         </Row>

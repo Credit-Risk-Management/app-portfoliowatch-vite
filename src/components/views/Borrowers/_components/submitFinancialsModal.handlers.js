@@ -263,17 +263,17 @@ export const handleSubmit = async ($modalState, onCloseCallback) => {
       $borrowerFinancialsView.update({
         refreshTrigger: $borrowerFinancialsView.value.refreshTrigger + 1,
       });
-      
+
       // Close the submit modal first
       onCloseCallback();
-      
+
       // Show the watch score results modal with the updated loans
       const updatedLoans = response.data?.updatedLoans || [];
       $modalState.update({
         showWatchScoreResults: true,
         updatedLoans,
       });
-      
+
       const message = isEditMode
         ? 'Financial data updated successfully!'
         : 'Submitted new financials!';
@@ -282,7 +282,6 @@ export const handleSubmit = async ($modalState, onCloseCallback) => {
       $modalState.update({ error: response.error || 'Failed to submit financial data' });
     }
   } catch (err) {
-    // eslint-disable-next-line no-console
     console.error('Error submitting financial data:', err);
     $modalState.update({ error: err.message || 'An error occurred while submitting financial data' });
   } finally {

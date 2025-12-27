@@ -22,8 +22,6 @@ export const TABLE_HEADERS = [
   { key: 'principalAmount', value: 'Principal', sortKey: 'principalAmount' },
   { key: 'paymentAmount', value: 'Payment', sortKey: 'paymentAmount' },
   { key: 'nextPaymentDueDate', value: 'Next Due Date', sortKey: 'nextPaymentDueDate' },
-  { key: 'debtService', value: 'Debt Service', sortKey: 'debtService' },
-  { key: 'currentRatio', value: 'Current Ratio', sortKey: 'currentRatio' },
   { key: 'liquidity', value: 'Liquidity', sortKey: 'liquidity' },
   { key: 'relationshipManager', value: 'Relationship Manager' },
   { key: 'actions', value: 'Actions' },
