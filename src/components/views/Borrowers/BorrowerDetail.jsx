@@ -8,7 +8,7 @@ import UniversalCard from '@src/components/global/UniversalCard';
 import SignalTable from '@src/components/global/SignalTable';
 import ContextMenu from '@src/components/global/ContextMenu';
 import { $borrower, WATCH_SCORE_OPTIONS } from '@src/consts/consts';
-import { $contacts, $borrowerFinancialsView, $borrowerFinancials, $loansView, $loans, $documents, $documentsView } from '@src/signals';
+import { $contacts, $borrowerFinancialsView, $borrowerFinancials, $loansView, $loans, $documents, $documentsView, $relationshipManagers } from '@src/signals';
 import { formatCurrency } from '@src/utils/formatCurrency';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
 import { successAlert } from '@src/components/global/Alert/_helpers/alert.events';
@@ -50,7 +50,7 @@ const BorrowerDetail = () => {
   const [copiedLink, setCopiedLink] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
 
-  // Fetch borrower detail on mount or when borrowerId changes
+  // Fetch borrower detail and relationship managers on mount or when borrowerId changes
   useEffect(() => {
     fetchBorrowerDetail(borrowerId);
   }, [borrowerId]);

@@ -50,7 +50,13 @@ export const handleEditBorrowerDetail = async () => {
       return;
     }
 
-    await borrowersApi.update(formData.id, formData);
+    // Transform snake_case form fields to camelCase for API
+    const apiData = {
+      relationshipManagerId: formData.relationship_manager_id || null,
+      notes: formData.notes || '',
+    };
+
+    await borrowersApi.update(formData.id, apiData);
 
     $borrowerDetailView.update({ showEditBorrowerModal: false });
     $borrowersForm.reset();
@@ -60,6 +66,8 @@ export const handleEditBorrowerDetail = async () => {
     if (borrowerId) {
       await fetchBorrowerDetail(borrowerId);
     }
+    
+    successAlert('Borrower updated successfully');
   } catch (error) {
     dangerAlert(error.message || 'Failed to edit borrower');
   }

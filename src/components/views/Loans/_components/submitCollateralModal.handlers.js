@@ -146,6 +146,23 @@ export const handleFileUpload = async () => {
 };
 
 /**
+ * Handles downloading the uploaded document
+ */
+export const handleDownloadDocument = () => {
+  const { uploadedDocument, documentPreviewUrl } = $collateralModalState.value;
+  
+  if (!uploadedDocument) return;
+
+  // Create a temporary link element and trigger download
+  const link = document.createElement('a');
+  link.href = documentPreviewUrl;
+  link.download = uploadedDocument.fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+/**
  * Handles removing the uploaded document
  */
 export const handleRemoveDocument = () => {

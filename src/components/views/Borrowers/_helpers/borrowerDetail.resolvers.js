@@ -1,9 +1,10 @@
 /* eslint-disable import/prefer-default-export */
 import { $borrower } from '@src/consts/consts';
-import { $contacts, $documents } from '@src/signals';
+import { $contacts, $documents, $relationshipManagers } from '@src/signals';
 import borrowersApi from '@src/api/borrowers.api';
 import contactsApi from '@src/api/contacts.api';
 import documentsApi from '@src/api/documents.api';
+import relationshipManagersApi from '@src/api/relationshipManagers.api';
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import { $borrowerDocumentsFilter, $borrowerDocumentsView } from './borrowerDetail.consts';
 
@@ -13,9 +14,10 @@ export const fetchBorrowerDetail = async (borrowerId) => {
   try {
     $borrower.update({ isLoading: true });
 
-    const [borrowerResponse, contactsResponse] = await Promise.all([
+    const [borrowerResponse, contactsResponse, managersResponse] = await Promise.all([
       borrowersApi.getById(borrowerId),
       contactsApi.getByBorrowerId(borrowerId),
+      relationshipManagersApi.getAll(),
     ]);
 
     // The API client interceptor returns response.data, so extract the borrower object
@@ -23,6 +25,7 @@ export const fetchBorrowerDetail = async (borrowerId) => {
 
     $borrower.update({ borrower: borrowerData, isLoading: false });
     $contacts.update({ list: contactsResponse?.data || contactsResponse || [] });
+    $relationshipManagers.update({ list: managersResponse?.data || [] });
   } catch (error) {
     console.error('Failed to fetch borrower detail:', error);
     $borrower.update({ borrower: null, isLoading: false });

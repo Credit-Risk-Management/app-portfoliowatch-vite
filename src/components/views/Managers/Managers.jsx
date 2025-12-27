@@ -79,7 +79,9 @@ const Managers = () => {
             <Search
               placeholder="Search managers..."
               value={$relationshipManagersFilter.value.searchTerm}
-              onChange={(e) => $relationshipManagersFilter.update({ searchTerm: e.target.value, page: 1 })}
+              signal={$relationshipManagersFilter}
+              name="searchTerm"
+              onChange={() => $relationshipManagersFilter.update({ page: 1 })}
             />
           </Col>
           <Col xs={12} md={3} className="mb-12 mb-md-0">

@@ -26,11 +26,11 @@ const LoanRadarChart = () => {
   // NEW FORMAT: Use categories for W.A.T.C.H. framework
   const isNewFormat = breakdown.categories !== undefined;
 
-  // We'll invert the scores so lower scores (better performance) show larger on the radar
-  // Score range: 1 (best) to 8+ (worst), we'll display as 9 - score so 1 becomes 8 and 8 becomes 1
-  const invertScore = (score) => {
+  // Return the score as-is for the radar chart
+  // Score range: 1 (best) to 8+ (worst), lower scores will show as smaller areas on the chart
+  const getScoreValue = (score) => {
     if (!score) return 0; // Return 0 for null scores (no data available)
-    return Math.max(0, 9 - score); // Invert so higher is better on the chart
+    return score; // Use the score directly
   };
 
   let chartData = [];
@@ -63,7 +63,7 @@ const LoanRadarChart = () => {
       shortMetric: categoryData.letter,
       categoryName: formatCategoryName(categoryName),
       originalCategoryName: categoryName,
-      performance: invertScore(categoryData.score),
+      performance: getScoreValue(categoryData.score),
       score: categoryData.score,
       weight: categoryData.weight,
       justification: categoryData.justification,
@@ -76,7 +76,7 @@ const LoanRadarChart = () => {
     chartData = [
       {
         metric: components.dscr?.label || 'DSCR',
-        performance: invertScore(components.dscr?.score),
+        performance: getScoreValue(components.dscr?.score),
         score: components.dscr?.score,
         value: components.dscr?.value,
         description: components.dscr?.description || 'Debt Service Coverage Ratio',
@@ -85,7 +85,7 @@ const LoanRadarChart = () => {
       },
       {
         metric: components.reEbitda?.label || 'RE/EBITDA',
-        performance: invertScore(components.reEbitda?.score),
+        performance: getScoreValue(components.reEbitda?.score),
         score: components.reEbitda?.score,
         value: components.reEbitda?.value,
         description: components.reEbitda?.description || 'Retained Earnings to EBITDA Ratio',
@@ -94,7 +94,7 @@ const LoanRadarChart = () => {
       },
       {
         metric: components.currentRatio?.label || 'Current Ratio',
-        performance: invertScore(components.currentRatio?.score),
+        performance: getScoreValue(components.currentRatio?.score),
         score: components.currentRatio?.score,
         value: components.currentRatio?.value,
         description: components.currentRatio?.description || 'Current Ratio',
@@ -103,7 +103,7 @@ const LoanRadarChart = () => {
       },
       {
         metric: components.changeInCash?.label || 'Change in Cash',
-        performance: invertScore(components.changeInCash?.score),
+        performance: getScoreValue(components.changeInCash?.score),
         score: components.changeInCash?.score,
         value: components.changeInCash?.value,
         description: components.changeInCash?.description || 'Change in Cash (%)',
@@ -112,7 +112,7 @@ const LoanRadarChart = () => {
       },
       {
         metric: components.liquidity?.label || 'Liquidity',
-        performance: invertScore(components.liquidity?.score),
+        performance: getScoreValue(components.liquidity?.score),
         score: components.liquidity?.score,
         value: components.liquidity?.value,
         description: components.liquidity?.description || 'Liquidity Total',
@@ -121,7 +121,7 @@ const LoanRadarChart = () => {
       },
       {
         metric: components.changeInEbitda?.label || 'Change in EBITDA',
-        performance: invertScore(components.changeInEbitda?.score),
+        performance: getScoreValue(components.changeInEbitda?.score),
         score: components.changeInEbitda?.score,
         value: components.changeInEbitda?.value,
         description: components.changeInEbitda?.description || 'Change in EBITDA (%)',
@@ -171,8 +171,8 @@ const LoanRadarChart = () => {
             <Col md={12} className="text-center mb-12">
               <div className="small" style={{ opacity: 0.9 }}>
                 {isNewFormat
-                  ? 'WATCH Categories (Weighted by importance)'
-                  : 'WATCH Score Metrics (Lower scores indicate better performance)'}
+                  ? 'WATCH Categories (Weighted by importance - larger areas indicate higher risk)'
+                  : 'WATCH Score Metrics (Larger areas indicate higher risk)'}
               </div>
             </Col>
           </Row>

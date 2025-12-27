@@ -16,6 +16,7 @@ import {
   handleUpdateCollateralItem,
   handleFileUpload,
   handleRemoveDocument,
+  handleDownloadDocument,
   calculateTotalValue,
 } from './submitCollateralModal.handlers';
 
@@ -152,16 +153,22 @@ const SubmitCollateralModal = () => {
               onUpload={handleFileUpload}
             />
           ) : (
-            <div className="p-16 bg-light border rounded">
+            <div className="p-16 bg-info-700 border rounded">
               <div className="d-flex justify-content-between align-items-center">
-                <div>
-                  <div className="fw-bold">{uploadedDocument.fileName}</div>
-                  <div className="text-muted small">
-                    {(uploadedDocument.fileSize / 1024).toFixed(2)} KB
-                  </div>
-                </div>
                 <Button
-                  variant="outline-danger"
+                  variant="link"
+                  onClick={handleDownloadDocument}
+                  style={{ cursor: 'pointer', flex: 1, padding: 0, textAlign: 'left' }}
+                  className="text-decoration-none"
+                  title="Click to download"
+                >
+                  <div className="fw-bold text-primary-100">{uploadedDocument.fileName}</div>
+                  <div className="text-info-900 small">
+                    {(uploadedDocument.fileSize / 1024).toFixed(2)} KB • Click to download
+                  </div>
+                </Button>
+                <Button
+                  variant="outline-danger-200"
                   size="sm"
                   onClick={handleRemoveDocument}
                 >
