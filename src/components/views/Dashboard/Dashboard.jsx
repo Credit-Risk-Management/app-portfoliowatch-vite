@@ -18,9 +18,9 @@ const Dashboard = () => {
   }, []);
 
   return (
-    <Container className="py-24">
+    <Container className="py-16 py-md-24">
       <Row>
-        <Col lg={4} md={4} className="mb-16">
+        <Col xs={12} md={4} lg={4} className="mb-12 mb-md-16">
           <MetricCard
             title="Portfolio Value"
             value={formatCurrency($dashboard.value?.metrics?.portfolioValue)}
@@ -29,7 +29,7 @@ const Dashboard = () => {
           />
         </Col>
 
-        <Col lg={4} md={4} className="mb-16">
+        <Col xs={12} md={4} lg={4} className="mb-12 mb-md-16">
           <MetricCard
             title="Total Borrowers"
             value={$dashboard.value?.metrics?.totalBorrowers}
@@ -37,7 +37,7 @@ const Dashboard = () => {
             variant="primary"
           />
         </Col>
-        <Col lg={4} md={4} className="mb-16">
+        <Col xs={12} md={4} lg={4} className="mb-12 mb-md-16">
           <MetricCard
             title="Active Loans"
             value={$dashboard.value?.metrics?.activeLoans}
@@ -48,16 +48,18 @@ const Dashboard = () => {
       </Row>
       <Row style={{ display: 'flex', alignItems: 'stretch' }}>
         <Col
+          xs={12}
           md={6}
           lg={3}
+          className="mb-12 mb-md-16"
         >
           <UniversalCard headerText="Recent Loan Activity">
             <RecentLoansList loans={$dashboard.value?.recentLoans} />
           </UniversalCard>
         </Col>
-        <Col md={6} lg={9}>
+        <Col xs={12} md={6} lg={9}>
           <Row>
-            <Col md={6} lg={6} className="d-flex flex-column">
+            <Col xs={12} md={6} lg={6} className="d-flex flex-column mb-12 mb-md-16">
               <UniversalCard headerText="Loans by WATCH Score (Count)">
                 <ResponsiveContainer width="100%" height={240}>
                   <PieChart>
@@ -83,7 +85,7 @@ const Dashboard = () => {
                 <WatchScoreLegend data={$dashboard.value?.metrics?.watchScoreCountData || []} metric="count" />
               </UniversalCard>
             </Col>
-            <Col md={6} lg={6} className="d-flex flex-column">
+            <Col xs={12} md={6} lg={6} className="d-flex flex-column mb-12 mb-md-16">
               <UniversalCard headerText="Loans by WATCH Score (Principal Amount)" bodyContainer="">
                 <ResponsiveContainer width="100%" height={240}>
                   <PieChart>
@@ -110,8 +112,8 @@ const Dashboard = () => {
               </UniversalCard>
             </Col>
           </Row>
-          <Row className="mt-16">
-            <Col>
+          <Row className="mt-12 mt-md-16">
+            <Col xs={12}>
               <UniversalCard headerText="Recent Comments" bodyContainer="">
                 <RecentCommentsList comments={$comments.value?.list} />
               </UniversalCard>
@@ -132,9 +134,9 @@ const Dashboard2 = () => {
   const { list: comments } = $comments.value;
 
   return (
-    <Container className="py-24">
+    <Container className="py-16 py-md-24">
       <Row>
-        <Col lg={4} md={4} className="mb-16">
+        <Col xs={12} md={4} lg={4} className="mb-12 mb-md-16">
           <MetricCard
             title="Portfolio Value"
             value={formatCurrency(metrics.portfolioValue)}
@@ -143,7 +145,7 @@ const Dashboard2 = () => {
           />
         </Col>
 
-        <Col lg={4} md={4} className="mb-16">
+        <Col xs={12} md={4} lg={4} className="mb-12 mb-md-16">
           <MetricCard
             title="Total Borrowers"
             value={metrics.totalBorrowers}
@@ -151,7 +153,7 @@ const Dashboard2 = () => {
             variant="primary"
           />
         </Col>
-        <Col lg={4} md={4} className="mb-16">
+        <Col xs={12} md={4} lg={4} className="mb-12 mb-md-16">
           <MetricCard
             title="Active Loans"
             value={metrics.activeLoans}
@@ -163,9 +165,10 @@ const Dashboard2 = () => {
 
       <Row style={{ display: 'flex', alignItems: 'stretch' }}>
         <Col
+          xs={12}
           md={6}
           lg={3}
-          className="d-flex flex-column"
+          className="d-flex flex-column mb-12 mb-md-16"
           style={{ display: 'flex', flexDirection: 'column', flexGrow: 1, height: '100%' }}
         >
           <UniversalCard
@@ -177,13 +180,14 @@ const Dashboard2 = () => {
           </UniversalCard>
         </Col>
         <Col
+          xs={12}
           md={6}
           lg={9}
           className="d-flex flex-column flex-grow-1 h-100"
           style={{ display: 'flex', flexDirection: 'column' }}
         >
           <Row>
-            <Col md={6} lg={6} className="d-flex flex-column">
+            <Col xs={12} md={6} lg={6} className="d-flex flex-column mb-12 mb-md-16">
               <UniversalCard headerText="Loans by Risk Rating (Count)" bodyContainer="" className="flex-grow-1 d-flex flex-column h-100">
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
@@ -209,7 +213,7 @@ const Dashboard2 = () => {
                 </ResponsiveContainer>
               </UniversalCard>
             </Col>
-            <Col md={6} lg={6} className="d-flex flex-column">
+            <Col xs={12} md={6} lg={6} className="d-flex flex-column mb-12 mb-md-16">
               <UniversalCard headerText="Loans by Risk Rating (Principal Amount)" bodyContainer="" className="flex-grow-1 d-flex flex-column h-100">
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
@@ -236,8 +240,8 @@ const Dashboard2 = () => {
               </UniversalCard>
             </Col>
           </Row>
-          <Row className="mt-16">
-            <Col>
+          <Row className="mt-12 mt-md-16">
+            <Col xs={12}>
               <UniversalCard headerText="Recent Comments" bodyContainer="">
                 <RecentCommentsList comments={comments} />
               </UniversalCard>

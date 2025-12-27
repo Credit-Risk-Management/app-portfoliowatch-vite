@@ -49,13 +49,13 @@ const Documents = () => {
 
   return (
     <>
-      <Container className="py-24">
+      <Container className="py-16 py-md-24">
         <PageHeader
           title="Documents"
         />
 
-        <Row className="mb-16">
-          <Col md={12}>
+        <Row className="mb-12 mb-md-16">
+          <Col xs={12} md={12}>
             <Search
               placeholder="Search by document name or loan number..."
               value={$documentsFilter.value.searchTerm}
@@ -67,7 +67,7 @@ const Documents = () => {
         </Row>
 
         <Row>
-          <Col>
+          <Col xs={12}>
             <SignalTable
               $filter={$documentsFilter}
               $view={$documentsView}

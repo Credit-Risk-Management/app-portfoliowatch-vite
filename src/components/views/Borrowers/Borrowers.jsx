@@ -83,13 +83,13 @@ const Borrowers = () => {
   }));
 
   return (
-    <Container className="py-24">
+    <Container className="py-16 py-md-24">
       <PageHeader
         title="Borrowers"
       />
 
-      <Row className="mb-16">
-        <Col md={6}>
+      <Row className="mb-12 mb-md-16">
+        <Col xs={12} md={6} className="mb-12 mb-md-0">
           <Search
             placeholder="Search borrowers..."
             value={$borrowersFilter.value.searchTerm}
@@ -98,7 +98,7 @@ const Borrowers = () => {
             name="searchTerm"
           />
         </Col>
-        <Col md={3}>
+        <Col xs={12} md={3} className="mb-12 mb-md-0">
           <SelectInput
             options={[{ value: '', label: 'All Types' }, ...consts.CLIENT_TYPE_OPTIONS]}
             value={$borrowersFilter.value.borrowerType}
@@ -109,7 +109,7 @@ const Borrowers = () => {
             isMulti
           />
         </Col>
-        <Col md={3}>
+        <Col xs={12} md={3} className="mb-12 mb-md-0">
           <SelectInput
             options={[{ value: '', label: 'All Managers' }, ...helpers.getManagerOptions($relationshipManagers.value?.list || [])]}
             value={$borrowersFilter.value.relationshipManager}
@@ -123,7 +123,7 @@ const Borrowers = () => {
       </Row>
 
       <Row>
-        <Col>
+        <Col xs={12}>
           <SignalTable
             $filter={$borrowersFilter}
             $view={$borrowersView}

@@ -50,9 +50,9 @@ const Login = () => {
   // };
 
   return (
-    <Container className="pt-64">
+    <Container className="pt-48 pt-md-64">
       <Row className="w-100">
-        <Col md={6} lg={5} xl={4} className="mx-auto">
+        <Col xs={12} md={6} lg={5} xl={4} className="mx-auto">
           <Card className="border-info rounded">
             <Card.Body className="p-32 bg-gradient-secondary-primary-50">
               <div className="text-center mb-24">

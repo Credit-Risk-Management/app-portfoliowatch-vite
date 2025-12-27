@@ -94,7 +94,7 @@ const Loans = () => {
 
   return (
     <>
-      <Container className="py-24">
+      <Container className="py-16 py-md-24">
         <PageHeader
           title="Loans"
           actionButton
@@ -115,8 +115,8 @@ const Loans = () => {
           )}
         />
 
-        <Row className="mb-24">
-          <Col md={6}>
+        <Row className="mb-16 mb-md-24">
+          <Col xs={12} md={6} className="mb-12 mb-md-0">
             <Search
               placeholder="Search loans..."
               value={$loansFilter.value.searchTerm}
@@ -124,7 +124,7 @@ const Loans = () => {
               name="searchTerm"
             />
           </Col>
-          <Col md={2}>
+          <Col xs={12} md={2} className="mb-12 mb-md-0">
             <SelectInput
               name="interestType"
               signal={$loansFilter}
@@ -138,7 +138,7 @@ const Loans = () => {
               notClearable
             />
           </Col>
-          <Col md={2}>
+          <Col xs={12} md={2} className="mb-12 mb-md-0">
             <SelectInput
               name="watchScore"
               signal={$loansFilter}
@@ -152,7 +152,7 @@ const Loans = () => {
               notClearable
             />
           </Col>
-          <Col md={2}>
+          <Col xs={12} md={2} className="mb-12 mb-md-0">
             <SelectInput
               name="relationshipManager"
               signal={$loansFilter}
@@ -172,7 +172,7 @@ const Loans = () => {
         </Row>
 
         <Row>
-          <Col>
+          <Col xs={12}>
             <SignalTable
               $filter={$loansFilter}
               $view={$loansView}

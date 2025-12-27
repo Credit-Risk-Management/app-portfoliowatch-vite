@@ -73,11 +73,11 @@ const LoanDetail = () => {
   }
 
   return (
-    <Container className="py-24">
+    <Container className="py-16 py-md-24">
       <div className="d-flex justify-content-between align-items-center">
         <Button
           onClick={() => navigate('/loans')}
-          className="btn-sm border-dark text-dark-800 bg-grey-50 mb-16"
+          className="btn-sm border-dark text-dark-800 bg-grey-50 mb-12 mb-md-16"
         >
           <FontAwesomeIcon icon={faArrowLeft} className="me-8" />
           Back to Loans
@@ -87,7 +87,7 @@ const LoanDetail = () => {
             <Button
               variant="outline-primary-100"
               onClick={() => navigate(`/borrowers/${$loan.value?.loan?.borrower?.id}`)}
-              className="me-8"
+              className="me-8 mb-8 mb-md-0"
             >
               <FontAwesomeIcon icon={faUser} className="me-8" />
               View Borrower
@@ -123,7 +123,7 @@ const LoanDetail = () => {
         )}
       />
       <Row>
-        <Col md={3}>
+        <Col xs={12} md={3} className="mb-12 mb-md-16">
           <UniversalCard headerText="Loan Details">
             <div style={{ height: '982px' }}>
               <div className="text-info-100 fw-200 mt-8">Principal Balance</div>
@@ -157,10 +157,10 @@ const LoanDetail = () => {
             </div>
           </UniversalCard>
         </Col>
-        <Col md={6}>
+        <Col xs={12} md={6} className="mb-12 mb-md-16">
           <LoanRadarChart />
         </Col>
-        <Col md={3}>
+        <Col xs={12} md={3} className="mb-12 mb-md-16">
           <UniversalCard headerText="Relationship Manager(s)">
             <div style={{ height: '982px' }}>
               <div className="text-info-100 fw-200 mt-8">Relationship Manager</div>
@@ -259,10 +259,10 @@ const LoanDetail = () => {
         </Col>
       </Row>
       <Row>
-        <Col md={12}>
-          <UniversalCard headerText="Covenants" bodyContainer="container-fluid" className="mt-16">
+        <Col xs={12} md={12}>
+          <UniversalCard headerText="Covenants" bodyContainer="container-fluid" className="mt-12 mt-md-16">
             <Row>
-              <Col md={6}>
+              <Col xs={12} md={6} className="mb-12 mb-md-0">
                 <div className="text-info-100 fw-200 mt-16 mb-4">Debt Service Coverage</div>
                 <div>
                   <span className="text-info-50 fw-500 me-8">Actual:</span>
@@ -277,7 +277,7 @@ const LoanDetail = () => {
                   </span>
                 </div>
               </Col>
-              <Col md={6}>
+              <Col xs={12} md={6} className="mb-12 mb-md-0">
                 <div className="text-info-100 fw-200 mt-16 mb-4">Liquidity Ratio</div>
                 <div>
                   <span className="text-info-50 fw-500 me-8">Actual:</span>
@@ -292,7 +292,7 @@ const LoanDetail = () => {
                   </span>
                 </div>
               </Col>
-              <Col md={6}>
+              <Col xs={12} md={6} className="mb-12 mb-md-0">
                 <div className="text-info-100 fw-200 mt-16 mb-4">Current Ratio</div>
                 <div>
                   <span className="text-info-50 fw-500 me-8">Actual:</span>
@@ -307,7 +307,7 @@ const LoanDetail = () => {
                   </div>
                 </div>
               </Col>
-              <Col md={6}>
+              <Col xs={12} md={6} className="mb-12 mb-md-0">
                 <div className="text-info-100 fw-200 mt-16 mb-4">Liquidity Total</div>
                 <div>
                   <span className="text-info-50 fw-500 me-8">Actual:</span>
@@ -324,9 +324,9 @@ const LoanDetail = () => {
               </Col>
             </Row>
           </UniversalCard>
-          <UniversalCard headerText="Industry Analysis" className="mt-16">
+          <UniversalCard headerText="Industry Analysis" className="mt-12 mt-md-16">
             <Row>
-              <Col md={8}>
+              <Col xs={12} md={8} className="mb-12 mb-md-0">
                 <Button
                   variant="primary-100 mt-16"
                   size="sm"
@@ -354,7 +354,7 @@ const LoanDetail = () => {
                   <span className="fw-bold">{$loan.value?.loan?.naicsDescription || 'N/A'}</span>
                 </div>
               </Col>
-              <Col md={4} className="text-md-end">
+              <Col xs={12} md={4} className="text-md-end">
                 <div className="text-info-100 fw-200">Industry Health Score</div>
                 <div className={`fs-1 fw-bold ${getHealthScoreColor($loan.value?.loan?.borrower?.industryHealthScore)}`}>
                   {$loan.value?.loan?.borrower?.industryHealthScore || '-'}
@@ -363,7 +363,7 @@ const LoanDetail = () => {
               </Col>
             </Row>
             <Row>
-              <Col md={12}>
+              <Col xs={12} md={12}>
                 <div>
                   <div className="text-info-100 fw-200 mt-16 mb-8 fw-semibold">Industry Analysis</div>
                   {$loan.value?.loan?.borrower?.industryHealthReport ? (
@@ -380,7 +380,7 @@ const LoanDetail = () => {
               </Col>
             </Row>
           </UniversalCard>
-          <UniversalCard headerText="Collateral Values" className="mt-16">
+          <UniversalCard headerText="Collateral Values" className="mt-12 mt-md-16">
             {$loanDetailCollateral.value && $loanDetailCollateral.value.length > 0 ? (
               <div>
                 <div className="table-responsive">
@@ -442,7 +442,7 @@ const LoanDetail = () => {
               </div>
             )}
           </UniversalCard>
-          <UniversalCard headerText="Comments" className="mt-16">
+          <UniversalCard headerText="Comments" className="mt-12 mt-md-16">
             <LoanComments loanId={loanId} />
           </UniversalCard>
         </Col>

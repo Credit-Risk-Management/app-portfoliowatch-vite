@@ -216,7 +216,7 @@ const PublicFinancialUpload = () => {
 
   return (
     <ContentWrapper fluid className="min-vh-100 bg-info-900">
-      <Container className="py-24">
+      <Container className="py-16 py-md-24">
         <Card className="bg-info-800">
           <Card.Header className="bg-info-700">
             <h2 className="text-info-100 mb-0">Submit Financial Data</h2>
@@ -231,20 +231,20 @@ const PublicFinancialUpload = () => {
               </div>
             )}
           </Card.Header>
-          <Card.Body className="py-24">
+          <Card.Body className="py-16 py-md-24">
             {error && (
-              <Alert variant="danger" dismissible onClose={() => setError(null)} className="mb-24">
+              <Alert variant="danger" dismissible onClose={() => setError(null)} className="mb-16 mb-md-24">
                 {error}
               </Alert>
             )}
 
             {/* File Upload Section */}
-            <div className="mb-32 p-24 bg-info-700 rounded">
-              <h5 className="text-info-100 mb-16">
+            <div className="mb-24 mb-md-32 p-16 p-md-24 bg-info-700 rounded">
+              <h5 className="text-info-100 mb-12 mb-md-16">
                 <FontAwesomeIcon icon={faFileAlt} className="me-8" />
                 Upload Financial Documents
               </h5>
-              <p className="text-info-200 small mb-16">
+              <p className="text-info-200 small mb-12 mb-md-16">
                 Upload financial statements (PDF, Excel, etc.). Our system will automatically extract financial data.
               </p>
               <FileUploader
@@ -254,7 +254,7 @@ const PublicFinancialUpload = () => {
                 onUpload={handleFileUpload}
               />
               {ocrApplied && (
-                <Alert variant="success" className="mt-16 mb-0">
+                <Alert variant="success" className="mt-12 mt-md-16 mb-0">
                   <FontAwesomeIcon icon={faMagic} className="me-8" />
                   Financial data extracted from documents and populated below. Please review and adjust as needed.
                 </Alert>
@@ -262,9 +262,9 @@ const PublicFinancialUpload = () => {
             </div>
 
             <Form>
-              <h5 className="text-info-100 mb-16 fw-600">Financial Period</h5>
+              <h5 className="text-info-100 mb-12 mb-md-16 fw-600">Financial Period</h5>
               <Row>
-                <Col md={6} className="mb-24">
+                <Col xs={12} md={6} className="mb-16 mb-md-24">
                   <UniversalInput
                     label="As Of Date (Financial Statement Date)"
                     type="date"
@@ -280,11 +280,11 @@ const PublicFinancialUpload = () => {
                 </Col>
               </Row>
 
-              <hr className="my-24 border-info-700" />
+              <hr className="my-16 my-md-24 border-info-700" />
 
-              <h5 className="text-info-100 mb-16 fw-600">Revenue & Income</h5>
+              <h5 className="text-info-100 mb-12 mb-md-16 fw-600">Revenue & Income</h5>
               <Row>
-                <Col md={4} className="mb-16">
+                <Col xs={12} md={4} className="mb-12 mb-md-16">
                   <UniversalInput
                     label="Gross Revenue"
                     type="number"
@@ -294,7 +294,7 @@ const PublicFinancialUpload = () => {
                     signal={$publicFinancialForm}
                   />
                 </Col>
-                <Col md={4} className="mb-16">
+                <Col xs={12} md={4} className="mb-12 mb-md-16">
                   <UniversalInput
                     label="Net Income"
                     type="number"
@@ -304,7 +304,7 @@ const PublicFinancialUpload = () => {
                     signal={$publicFinancialForm}
                   />
                 </Col>
-                <Col md={4} className="mb-16">
+                <Col xs={12} md={4} className="mb-12 mb-md-16">
                   <UniversalInput
                     label="EBITDA"
                     type="number"
@@ -316,11 +316,11 @@ const PublicFinancialUpload = () => {
                 </Col>
               </Row>
 
-              <hr className="my-24 border-info-700" />
+              <hr className="my-16 my-md-24 border-info-700" />
 
-              <h5 className="text-info-100 mb-16 fw-600">Debt Service Coverage</h5>
+              <h5 className="text-info-100 mb-12 mb-md-16 fw-600">Debt Service Coverage</h5>
               <Row>
-                <Col md={6} className="mb-16">
+                <Col xs={12} md={6} className="mb-12 mb-md-16">
                   <UniversalInput
                     label="Debt Service Ratio"
                     type="number"
@@ -331,7 +331,7 @@ const PublicFinancialUpload = () => {
                     signal={$publicFinancialForm}
                   />
                 </Col>
-                <Col md={6} className="mb-16">
+                <Col xs={12} md={6} className="mb-12 mb-md-16">
                   <UniversalInput
                     label="Debt Service Covenant"
                     type="number"
@@ -344,11 +344,11 @@ const PublicFinancialUpload = () => {
                 </Col>
               </Row>
 
-              <hr className="my-24 border-info-700" />
+              <hr className="my-16 my-md-24 border-info-700" />
 
-              <h5 className="text-info-100 mb-16 fw-600">Current Ratio</h5>
+              <h5 className="text-info-100 mb-12 mb-md-16 fw-600">Current Ratio</h5>
               <Row>
-                <Col md={6} className="mb-16">
+                <Col xs={12} md={6} className="mb-12 mb-md-16">
                   <UniversalInput
                     label="Current Ratio"
                     type="number"
@@ -359,7 +359,7 @@ const PublicFinancialUpload = () => {
                     signal={$publicFinancialForm}
                   />
                 </Col>
-                <Col md={6} className="mb-16">
+                <Col xs={12} md={6} className="mb-12 mb-md-16">
                   <UniversalInput
                     label="Current Ratio Covenant"
                     type="number"
@@ -372,11 +372,11 @@ const PublicFinancialUpload = () => {
                 </Col>
               </Row>
 
-              <hr className="my-24 border-info-700" />
+              <hr className="my-16 my-md-24 border-info-700" />
 
-              <h5 className="text-info-100 mb-16 fw-600">Liquidity</h5>
+              <h5 className="text-info-100 mb-12 mb-md-16 fw-600">Liquidity</h5>
               <Row>
-                <Col md={6} className="mb-16">
+                <Col xs={12} md={6} className="mb-12 mb-md-16">
                   <UniversalInput
                     label="Liquidity"
                     type="number"
@@ -386,7 +386,7 @@ const PublicFinancialUpload = () => {
                     signal={$publicFinancialForm}
                   />
                 </Col>
-                <Col md={6} className="mb-16">
+                <Col xs={12} md={6} className="mb-12 mb-md-16">
                   <UniversalInput
                     label="Liquidity Covenant"
                     type="number"
@@ -399,7 +399,7 @@ const PublicFinancialUpload = () => {
               </Row>
 
               <Row>
-                <Col md={6} className="mb-16">
+                <Col xs={12} md={6} className="mb-12 mb-md-16">
                   <UniversalInput
                     label="Liquidity Ratio"
                     type="number"
@@ -410,7 +410,7 @@ const PublicFinancialUpload = () => {
                     signal={$publicFinancialForm}
                   />
                 </Col>
-                <Col md={6} className="mb-16">
+                <Col xs={12} md={6} className="mb-12 mb-md-16">
                   <UniversalInput
                     label="Liquidity Ratio Covenant"
                     type="number"
@@ -423,11 +423,11 @@ const PublicFinancialUpload = () => {
                 </Col>
               </Row>
 
-              <hr className="my-24 border-info-700" />
+              <hr className="my-16 my-md-24 border-info-700" />
 
-              <h5 className="text-info-100 mb-16 fw-600">Other</h5>
+              <h5 className="text-info-100 mb-12 mb-md-16 fw-600">Other</h5>
               <Row>
-                <Col md={6} className="mb-16">
+                <Col xs={12} md={6} className="mb-12 mb-md-16">
                   <UniversalInput
                     label="Retained Earnings"
                     type="number"
@@ -437,7 +437,7 @@ const PublicFinancialUpload = () => {
                     signal={$publicFinancialForm}
                   />
                 </Col>
-                <Col md={6} className="mb-16">
+                <Col xs={12} md={6} className="mb-12 mb-md-16">
                   <UniversalInput
                     label="Notes"
                     type="text"
@@ -449,7 +449,7 @@ const PublicFinancialUpload = () => {
                 </Col>
               </Row>
 
-              <div className="d-flex justify-content-end mt-32">
+              <div className="d-flex justify-content-end mt-24 mt-md-32">
                 <Button
                   variant="primary-100"
                   size="lg"

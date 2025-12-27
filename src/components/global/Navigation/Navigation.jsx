@@ -8,10 +8,6 @@ import {
   faFileAlt,
   faChartLine,
   faUserTie,
-  faUser,
-  faCog,
-  faSignOutAlt,
-  faBuilding,
 } from '@fortawesome/free-solid-svg-icons';
 import { $global, $user, $organization } from '@src/signals';
 import { logoutUser } from '@src/utils/auth.utils';
@@ -39,10 +35,10 @@ const Navigation = () => {
     <Navbar
       variant="light"
       expand="lg"
-      className="bg-gradient-secondary-primary-50 mb-0 position-fixed top-0 start-0 w-100 py-8 px-16 z-index-9999 shadow-sm"
+      className="bg-gradient-secondary-primary-50 mb-0 position-fixed top-0 start-0 w-100 py-8 px-2 px-md-16 z-index-9999 shadow-sm"
     >
       <Container fluid>
-        <Navbar.Brand as={Link} to="/dashboard" className="me-64">
+        <Navbar.Brand as={Link} to="/dashboard" className="me-2 me-md-64">
           <img
             src="/logo_dark.svg"
             alt="Logo"
@@ -57,7 +53,7 @@ const Navigation = () => {
               as={Link}
               to="/dashboard"
               active={isActive('/dashboard')}
-              className={`px-16 ${isActive('/dashboard') ? activeClass : 'text-dark'}`}
+              className={`px-2 px-md-16 ${isActive('/dashboard') ? activeClass : 'text-dark'}`}
             >
               <FontAwesomeIcon icon={faHome} className="me-16 d-none" />
               Dashboard
@@ -66,7 +62,7 @@ const Navigation = () => {
               as={Link}
               to="/borrowers"
               active={isActive('/borrowers')}
-              className={`px-16 text-info-50 ${isActive('/borrowers') ? activeClass : 'text-dark'}`}
+              className={`px-2 px-md-16 text-info-50 ${isActive('/borrowers') ? activeClass : 'text-dark'}`}
             >
               <FontAwesomeIcon icon={faUsers} className="me-16 d-none" />
               Borrowers
@@ -75,7 +71,7 @@ const Navigation = () => {
               as={Link}
               to="/loans"
               active={isActive('/loans')}
-              className={`px-16 text-info-50 ${isActive('/loans') ? activeClass : 'text-dark'}`}
+              className={`px-2 px-md-16 text-info-50 ${isActive('/loans') ? activeClass : 'text-dark'}`}
             >
               <FontAwesomeIcon icon={faMoneyBillWave} className="me-16 d-none" />
               Loans
@@ -84,7 +80,7 @@ const Navigation = () => {
               as={Link}
               to="/documents"
               active={isActive('/documents')}
-              className={`px-16 text-info-50 ${isActive('/documents') ? activeClass : 'text-dark'}`}
+              className={`px-2 px-md-16 text-info-50 ${isActive('/documents') ? activeClass : 'text-dark'}`}
             >
               <FontAwesomeIcon icon={faFileAlt} className="me-16 d-none" />
               Documents
@@ -93,7 +89,7 @@ const Navigation = () => {
               as={Link}
               to="/reports"
               active={isActive('/reports')}
-              className={`px-16 text-info-50 ${isActive('/reports') ? activeClass : 'text-dark'}`}
+              className={`px-2 px-md-16 text-info-50 ${isActive('/reports') ? activeClass : 'text-dark'}`}
             >
               <FontAwesomeIcon icon={faChartLine} className="me-16 d-none" />
               Reports
@@ -102,7 +98,7 @@ const Navigation = () => {
               as={Link}
               to="/relationship-managers"
               active={isActive('/relationship-managers')}
-              className={`px-16 text-info-50 ${isActive('/relationship-managers') ? activeClass : 'text-dark'}`}
+              className={`px-2 px-md-16 text-info-50 ${isActive('/relationship-managers') ? activeClass : 'text-dark'}`}
             >
               <FontAwesomeIcon icon={faUserTie} className="me-16 d-none" />
               Managers
@@ -112,7 +108,6 @@ const Navigation = () => {
             <NavDropdown
               title={(
                 <span className="text-dark">
-                  <FontAwesomeIcon icon={faUser} className="me-8" />
                   {$user.value.name || 'User'}
                 </span>
               )}
@@ -125,23 +120,19 @@ const Navigation = () => {
                 <div className="text-muted small">{$user.value.email}</div>
                 {$organization.value.name && (
                   <div className="text-muted small mt-1">
-                    <FontAwesomeIcon icon={faBuilding} className="me-1" />
                     {$organization.value.name}
                   </div>
                 )}
               </NavDropdown.Header>
               <NavDropdown.Divider />
               <NavDropdown.Item as={Link} to="/profile">
-                <FontAwesomeIcon icon={faUser} className="me-2" />
                 My Profile
               </NavDropdown.Item>
               <NavDropdown.Item as={Link} to="/settings">
-                <FontAwesomeIcon icon={faCog} className="me-2" />
                 Settings
               </NavDropdown.Item>
               <NavDropdown.Divider />
               <NavDropdown.Item onClick={handleLogout}>
-                <FontAwesomeIcon icon={faSignOutAlt} className="me-2" />
                 Logout
               </NavDropdown.Item>
             </NavDropdown>

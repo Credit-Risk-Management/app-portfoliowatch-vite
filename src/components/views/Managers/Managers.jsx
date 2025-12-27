@@ -65,7 +65,7 @@ const Managers = () => {
 
   return (
     <>
-      <Container fluid className="py-24">
+      <Container fluid className="py-16 py-md-24">
         <PageHeader
           title="Relationship Managers"
           actionButton
@@ -74,15 +74,15 @@ const Managers = () => {
           onActionClick={() => $relationshipManagersView.update({ showAddModal: true })}
         />
 
-        <Row className="mb-24">
-          <Col md={6}>
+        <Row className="mb-16 mb-md-24">
+          <Col xs={12} md={6} className="mb-12 mb-md-0">
             <Search
               placeholder="Search managers..."
               value={$relationshipManagersFilter.value.searchTerm}
               onChange={(e) => $relationshipManagersFilter.update({ searchTerm: e.target.value, page: 1 })}
             />
           </Col>
-          <Col md={3}>
+          <Col xs={12} md={3} className="mb-12 mb-md-0">
             <SelectInput
               name="isActive"
               signal={$relationshipManagersFilter}

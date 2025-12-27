@@ -34,11 +34,11 @@ const Reports = () => {
   }));
 
   return (
-    <Container fluid className="py-24">
+    <Container fluid className="py-16 py-md-24">
       <PageHeader title="Reports" />
 
       <Row>
-        <Col md={3}>
+        <Col xs={12} md={3} className="mb-12 mb-md-0">
           <UniversalCard headerText="Saved Reports" bodyContainer="">
             <div className="p-0">
               {reportsList.length === 0 ? (
@@ -81,7 +81,7 @@ const Reports = () => {
           </UniversalCard>
         </Col>
 
-        <Col md={9}>
+        <Col xs={12} md={9}>
           {selectedReport ? (
             <>
               <UniversalCard bodyContainer="" className="mb-24">

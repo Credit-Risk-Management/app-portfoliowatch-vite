@@ -41,13 +41,13 @@ const TriggersTab = ({ previousFinancial, isLoadingPrevious }) => {
         <Card.Body>
           <h6 className="text-info-100 fw-600 mb-16">{title}</h6>
           <Row>
-            <Col xs={6}>
+            <Col xs={12} sm={6} className="mb-12 mb-sm-0">
               <div className="text-info-200 small">Previous</div>
               <div className="text-info-100 fw-600">
                 {isCurrency ? formatCurrency(previousValue) : (previousValue || 'N/A')}
               </div>
             </Col>
-            <Col xs={6}>
+            <Col xs={12} sm={6}>
               <div className="text-info-200 small">Current</div>
               <div className="text-info-100 fw-600">
                 {isCurrency ? formatCurrency(currentValue) : (currentValue || 'N/A')}
@@ -95,7 +95,7 @@ const TriggersTab = ({ previousFinancial, isLoadingPrevious }) => {
         Trigger Analysis - Change from Previous Quarter
       </h5>
       <Row>
-        <Col md={6}>
+        <Col xs={12} md={6} className="mb-12 mb-md-0">
           <TriggerCard
             title="Change in Cash"
             previousValue={previousFinancial.cash || previousFinancial.liquidity}

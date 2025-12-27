@@ -24,12 +24,12 @@ const FileUploader = ({
         multiple
         accept={acceptedTypes}
       />
-      <Col className="p-0 m-0 d-flex align-items-center">
+      <Col xs={12} className="p-0 m-0 d-flex align-items-center">
         <Button
           variant="primary-100"
           className={`
-            ${signal.value?.[name]?.length ? 'mb-16' : ''}
-            ${hideNoFiles ? '' : 'me-64'}
+            ${signal.value?.[name]?.length ? 'mb-12 mb-md-16' : ''}
+            ${hideNoFiles ? '' : 'me-48 me-md-64'}
           `}
           onClick={handleBrowse}
         >

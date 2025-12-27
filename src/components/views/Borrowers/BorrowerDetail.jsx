@@ -206,12 +206,13 @@ const BorrowerDetail = () => {
   const loansTableRows = useMemo(
     () => loans.map((loan) => ({
       ...loan,
-      principalAmount: formatCurrency(loan.principalAmount),
-      paymentAmount: formatCurrency(loan.paymentAmount),
-      nextPaymentDueDate: formatLoanDate(loan.nextPaymentDueDate),
-      debtService: formatRatio(loan.debtService),
-      currentRatio: formatRatio(loan.currentRatio),
-      liquidity: formatCurrency(loan.liquidity),
+      loanId: loan.loanId || loan.loanNumber || loan.id || '-',
+      principalAmount: loan.principalAmount ? formatCurrency(loan.principalAmount) : '-',
+      paymentAmount: loan.paymentAmount ? formatCurrency(loan.paymentAmount) : '-',
+      nextPaymentDueDate: loan.nextPaymentDueDate ? formatLoanDate(loan.nextPaymentDueDate) : '-',
+      debtService: loan.debtService ? formatRatio(loan.debtService) : '-',
+      currentRatio: loan.currentRatio ? formatRatio(loan.currentRatio) : '-',
+      liquidity: loan.liquidity ? formatCurrency(loan.liquidity) : '-',
       watchScore: () => {
         const score = WATCH_SCORE_OPTIONS[loan.watchScore];
         if (!score) {
@@ -219,7 +220,7 @@ const BorrowerDetail = () => {
         }
         return <span className={`text-${score.color}-200 fw-700`}>{score.label}</span>;
       },
-      relationshipManager: loan.relationshipManager ? loan.relationshipManager.name : '-',
+      relationshipManager: loan.relationshipManager ? (loan.relationshipManager.name || '-') : '-',
       actions: () => (
         <ContextMenu
           items={[
@@ -544,7 +545,7 @@ const BorrowerDetail = () => {
           <UniversalCard headerText="Industry Analysis">
             <div>
               <Row>
-                <Col md={8}>
+                <Col xs={12} md={8} className="mb-12 mb-md-0">
                   <Button
                     variant="primary-100"
                     size="sm"
@@ -560,7 +561,7 @@ const BorrowerDetail = () => {
                     </div>
                   )}
                 </Col>
-                <Col md={4} className="text-md-end">
+                <Col xs={12} md={4} className="text-md-end">
                   {borrower.industryHealthScore && (
                     <>
                       <div className="text-info-100 fw-200">Industry Health Score</div>
@@ -573,7 +574,7 @@ const BorrowerDetail = () => {
                 </Col>
               </Row>
               <Row>
-                <Col md={12}>
+                <Col xs={12} md={12}>
                   <div>
                     <div className="text-info-100 fw-200 mt-16 mb-8 fw-semibold">Industry Analysis</div>
                     {borrower.industryHealthReport ? (
@@ -640,11 +641,11 @@ const BorrowerDetail = () => {
   };
 
   return (
-    <Container className="py-24">
-      <div className="d-flex justify-content-between align-items-center">
+    <Container className="py-16 py-md-24">
+      <div className="d-flex justify-content-between align-items-center flex-wrap">
         <Button
           onClick={() => navigate('/borrowers')}
-          className="btn-sm border-dark text-dark-800 bg-grey-50 mb-16"
+          className="btn-sm border-dark text-dark-800 bg-grey-50 mb-12 mb-md-16"
         >
           <FontAwesomeIcon icon={faArrowLeft} className="me-8" />
           Back to Borrowers
@@ -653,7 +654,7 @@ const BorrowerDetail = () => {
           <Button
             onClick={() => $borrowerDetailView.update({ showEditBorrowerModal: true })}
             variant="outline-primary-100"
-            className="me-8"
+            className="me-8 mb-8 mb-md-0"
           >
             <FontAwesomeIcon icon={faEdit} className="me-8" />
             Edit Borrower
@@ -673,7 +674,7 @@ const BorrowerDetail = () => {
         title={`${borrower.name}`}
       />
       <Row>
-        <Col md={2}>
+        <Col xs={12} md={2} className="mb-12 mb-md-0">
           <div className="bg-info-800 border border-info-400 rounded p-16" style={{ minHeight: '500px' }}>
             <div className="lead text-light mb-16">Sections</div>
             {tabs.map((tab) => (
@@ -701,7 +702,7 @@ const BorrowerDetail = () => {
             ))}
           </div>
         </Col>
-        <Col md={9}>
+        <Col xs={12} md={9}>
           {renderTabContent()}
         </Col>
       </Row>

@@ -85,8 +85,8 @@ const SubmitFinancialsModal = () => {
           )}
 
           {/* As Of Date and Tab Navigation */}
-          <Row className="align-items-end my-16">
-            <Col md={3}>
+          <Row className="align-items-end my-12 my-md-16">
+            <Col xs={12} md={3} className="mb-12 mb-md-0">
               <UniversalInput
                 label="As Of Date (Financial Statement Date)"
                 labelClassName="text-info-100"
@@ -98,7 +98,7 @@ const SubmitFinancialsModal = () => {
                 required
               />
             </Col>
-            <Col md={2}>
+            <Col xs={12} md={2} className="mb-12 mb-md-0">
               <Form.Label className="text-info-100">Accountability Score</Form.Label>
               <SelectInput
                 value={$borrowerFinancialsForm.value.accountabilityScore}
@@ -116,7 +116,7 @@ const SubmitFinancialsModal = () => {
                 placeholder="Select Accountability Score"
               />
             </Col>
-            <Col md={7} className="d-flex justify-content-end">
+            <Col xs={12} md={7} className="d-flex justify-content-end">
               <ButtonGroup>
                 <Button
                   variant={activeTab === 'documents' ? 'info' : 'outline-info'}

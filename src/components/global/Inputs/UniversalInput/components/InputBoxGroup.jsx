@@ -60,7 +60,7 @@ const InputBoxGroup = ({ name, signal = $form, variant, className, isValid, isIn
   return (
     <Row className={`${parentContainerClassName} input-box-group-container`}>
       {Array.from({ length }).map((_, index) => (
-        <Col key={index} className="d-flex justify-content-center p-0">
+        <Col xs={3} key={index} className="d-flex justify-content-center p-0">
           <Form.Control
             type="text"
             maxLength={1}

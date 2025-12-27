@@ -5,7 +5,7 @@ function NotFound() {
   return (
     <Container fluid className="d-flex align-items-center justify-content-center vh-100 text-center">
       <Row>
-        <Col>
+        <Col xs={12}>
           <h1>Oops something went wrong!</h1>
           <h3>Page not found</h3>
           <Link to="/" className="fs-5">Go back to Home</Link>

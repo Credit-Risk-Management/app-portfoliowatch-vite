@@ -24,8 +24,8 @@ const PageHeader = ({
         ))}
       </Breadcrumb>
     )}
-    <div className="d-flex justify-content-between align-items-center">
-      <h4 className="mb-0 text-light">{title}</h4>
+    <div className="d-flex flex-column flex-md-row justify-content-md-between align-items-start align-items-md-center">
+      <h4 className="mb-3 mb-md-0 text-light">{title}</h4>
       <div className="d-flex align-items-center gap-8">
         {actionButton && (
           <Button variant="outline-primary-100" onClick={onActionClick}>

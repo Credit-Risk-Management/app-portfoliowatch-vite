@@ -63,8 +63,8 @@ const SubmitCollateralModal = () => {
         )}
 
         {/* As Of Date */}
-        <Row className="mb-16">
-          <Col md={6}>
+        <Row className="mb-12 mb-md-16">
+          <Col xs={12} md={6}>
             <UniversalInput
               label="As Of Date (Valuation Date)"
               labelClassName="text-info-100"
@@ -94,7 +94,7 @@ const SubmitCollateralModal = () => {
 
           {collateralItems.map((item, index) => (
             <Row key={index} className="mb-12 align-items-end">
-              <Col md={6}>
+              <Col xs={12} md={6} className="mb-12 mb-md-0">
                 <UniversalInput
                   label="Description"
                   labelClassName="text-info-100"

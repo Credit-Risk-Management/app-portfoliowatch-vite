@@ -17,13 +17,13 @@ const Profile = () => {
   const { isSaving } = profileView;
 
   return (
-    <Container fluid className="py-24">
+    <Container fluid className="py-16 py-md-24">
       <PageHeader title="My Profile" />
 
-      <Row className="mt-24">
-        <Col lg={8} xl={6} className="mx-auto">
+      <Row className="mt-16 mt-md-24">
+        <Col xs={12}>
           <UniversalCard headerText="Personal Information">
-            <div className="d-flex justify-content-between align-items-center mb-24">
+            <div className="d-flex justify-content-between align-items-center mb-32">
               {!isEditing && (
                 <Button
                   variant="outline-primary-100"
@@ -38,8 +38,8 @@ const Profile = () => {
 
             <Form>
               {/* Name Field */}
-              <Form.Group className="mb-24">
-                <Form.Label className="fw-semibold">
+              <Form.Group className="mb-32">
+                <Form.Label className="fw-semibold mb-8">
                   <FontAwesomeIcon icon={faUser} className="me-8 text-muted" />
                   Full Name
                 </Form.Label>
@@ -50,31 +50,32 @@ const Profile = () => {
                     value={profileForm.name}
                     onChange={(e) => $profileForm.update({ name: e.target.value })}
                     disabled={isSaving}
+                    className="mt-8"
                   />
                 ) : (
-                  <div className="form-control-plaintext fw-normal">{user.name || '-'}</div>
+                  <div className="form-control-plaintext fw-normal mt-8">{user.name || '-'}</div>
                 )}
               </Form.Group>
 
               {/* Email Field (Read-only) */}
-              <Form.Group className="mb-24">
-                <Form.Label className="fw-semibold">
+              <Form.Group className="mb-32">
+                <Form.Label className="fw-semibold mb-8">
                   <FontAwesomeIcon icon={faEnvelope} className="me-8 text-muted" />
                   Email Address
                 </Form.Label>
-                <div className="form-control-plaintext fw-normal">{user.email || '-'}</div>
-                <Form.Text className="text-muted">
+                <div className="form-control-plaintext fw-normal mt-8">{user.email || '-'}</div>
+                <Form.Text className="text-muted mt-8 d-block">
                   Email is managed by your authentication provider and cannot be changed here.
                 </Form.Text>
               </Form.Group>
 
               {/* Role Badge */}
-              <Form.Group className="mb-24">
-                <Form.Label className="fw-semibold">
+              <Form.Group className="mb-32">
+                <Form.Label className="fw-semibold mb-8">
                   <FontAwesomeIcon icon={faShieldAlt} className="me-8 text-muted" />
                   Role
                 </Form.Label>
-                <div>
+                <div className="mt-8">
                   <Badge bg={consts.ROLE_BADGE_VARIANTS[user.role] || 'secondary'}>
                     {consts.ROLE_LABELS[user.role] || user.role || 'User'}
                   </Badge>
@@ -82,16 +83,16 @@ const Profile = () => {
               </Form.Group>
 
               {/* Organization */}
-              <Form.Group className="mb-24">
-                <Form.Label className="fw-semibold">
+              <Form.Group className="mb-32">
+                <Form.Label className="fw-semibold mb-8">
                   <FontAwesomeIcon icon={faBuilding} className="me-8 text-muted" />
                   Organization
                 </Form.Label>
-                <div className="form-control-plaintext fw-normal">
+                <div className="form-control-plaintext fw-normal mt-8">
                   {organization.name || '-'}
                 </div>
                 {organization.industry && (
-                  <Form.Text className="text-muted">
+                  <Form.Text className="text-muted mt-8 d-block">
                     Industry: {organization.industry}
                   </Form.Text>
                 )}
@@ -99,7 +100,7 @@ const Profile = () => {
 
               {/* Action Buttons (shown when editing) */}
               {isEditing && (
-                <div className="d-flex gap-8 mt-32">
+                <div className="d-flex gap-12 mt-40 pt-24 border-top border-info-400">
                   <Button
                     variant="primary"
                     onClick={profileEvents.saveProfile}
