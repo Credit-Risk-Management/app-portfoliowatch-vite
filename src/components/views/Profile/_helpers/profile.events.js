@@ -29,14 +29,21 @@ export const saveProfile = async () => {
 
     $profileView.update({ isSaving: true });
 
-    const response = await usersApi.updateCurrentUser({
+    await usersApi.updateMe({
       name: formData.name.trim(),
     });
 
-    // Update user signal with new data
+    // Fetch fresh user data from backend to ensure it's up to date
+    const userResponse = await usersApi.getMe();
+    const userData = userResponse.data;
+
+    // Update user signal with fresh data
     $user.update({
-      ...$user.value,
-      name: response.data.name,
+      id: userData.id,
+      email: userData.email,
+      name: userData.name,
+      organizationId: userData.organizationId,
+      role: userData.role,
     });
 
     $profileView.update({ isEditing: false, isSaving: false });

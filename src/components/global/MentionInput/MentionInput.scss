@@ -1,0 +1,128 @@
+@import '@src/scss/_vars.scss';
+
+.mention-input-wrapper {
+  position: relative;
+  width: 100%;
+  
+  &.is-loading {
+    cursor: not-allowed;
+    
+    .mention-input {
+      pointer-events: none;
+    }
+  }
+}
+
+.mention-input-loading {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  pointer-events: none;
+  
+  .spinner-border {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15em;
+    color: #86b7fe;
+  }
+}
+
+.mention-input {
+  width: 100%;
+  
+  textarea {
+    width: 100%;
+    min-height: 80px;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--bs-body-color);
+    background-color: var(--bs-body-bg);
+    
+    &::placeholder {
+      color: $info-600;
+      opacity: 1;
+    }
+    
+    &::-webkit-input-placeholder {
+      color: $info-600;
+      opacity: 1;
+    }
+    
+    &::-moz-placeholder {
+      color: $info-600;
+      opacity: 1;
+    }
+    
+    &:-ms-input-placeholder {
+      color: $info-600;
+      opacity: 1;
+    }
+    
+    &:focus {
+      outline: none;
+      border-color: #86b7fe;
+      box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+  }
+}
+
+.mention-suggestion {
+  padding: 4px 8px;
+  cursor: pointer;
+  color: #e9ecef;
+  
+  &:hover {
+    background-color: #2a3647;
+  }
+}
+
+// Override react-mentions default styles
+.mention-input__suggestions {
+  background-color: #1a2332 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  border-radius: 0.25rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.3);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.mention-input__suggestions__list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.mention-input__suggestions__item {
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  color: #e9ecef !important;
+  
+  &:last-child {
+    border-bottom: none;
+  }
+  
+  &--focused {
+    background-color: #2a3647 !important;
+  }
+}
+
+// Override styles for mentions in the text
+.custom-mention {
+  // font-weight: bold !important;
+  // background-color: transparent !important;
+  // padding: 0 !important;
+  // border-radius: 0 !important;
+  color: #2D5256 !important;
+}
+
+.mention-input__highlighter__substring {
+  font-weight: bold !important;
+  background-color: transparent !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+}
+

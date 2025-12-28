@@ -1,0 +1,23 @@
+.notifications-page {
+  .notification-item {
+    padding: 16px;
+    transition: background-color 0.2s;
+    
+    &.unread {
+      background-color: #f0f7ff;
+    }
+    
+    &:hover {
+      background-color: #f8f9fa;
+    }
+    
+    a {
+      color: inherit;
+      
+      &:hover {
+        text-decoration: none;
+      }
+    }
+  }
+}
+

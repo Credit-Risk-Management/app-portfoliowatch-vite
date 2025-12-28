@@ -82,3 +82,42 @@ export const updateMemberRole = async (id, userId, role) => {
     throw error;
   }
 };
+
+/**
+ * Suspend member
+ */
+export const suspendMember = async (id, userId) => {
+  try {
+    const response = await apiClient.put(`/organizations/${id}/members/${userId}/suspend`);
+    return response;
+  } catch (error) {
+    console.error('Suspend member API error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Unsuspend member
+ */
+export const unsuspendMember = async (id, userId) => {
+  try {
+    const response = await apiClient.put(`/organizations/${id}/members/${userId}/unsuspend`);
+    return response;
+  } catch (error) {
+    console.error('Unsuspend member API error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Delete member
+ */
+export const deleteMember = async (id, userId) => {
+  try {
+    const response = await apiClient.delete(`/organizations/${id}/members/${userId}`);
+    return response;
+  } catch (error) {
+    console.error('Delete member API error:', error);
+    throw error;
+  }
+};

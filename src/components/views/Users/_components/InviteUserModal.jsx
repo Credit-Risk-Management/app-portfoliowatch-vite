@@ -43,8 +43,7 @@ const InviteUserModal = () => (
             name="role"
             signal={$usersForm}
             options={ROLE_OPTIONS}
-            value={($usersForm.value.role || 'USER')}
-            onChange={(option) => $usersForm.update({ role: option?.value || 'USER' })}
+            value={$usersForm.value.role}
             notClearable
           />
         </Col>

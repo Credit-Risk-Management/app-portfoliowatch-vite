@@ -33,7 +33,7 @@ const SelectInput = ({
           ? (selectedOption?.map((option) => option.value) || [])
           : (selectedOption?.value || '');
         signal.update({ [name]: selectedValue });
-        onChange();
+        onChange?.(selectedOption);
       }}
       disabled={disabled}
       isMulti={isMulti}

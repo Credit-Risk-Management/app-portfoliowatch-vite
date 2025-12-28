@@ -40,6 +40,7 @@ export const $financialsUploader = Signal({ financialFiles: [] });
 export const $borrowers = signal([]);
 export const $managers = signal([]);
 export const $loanDetailNewComment = signal('');
+export const $loanDetailNewCommentLoading = signal(false);
 export const $loanDetailShowSecondaryContacts = signal(false);
 export const $loanDetailFinancials = signal([]);
 export const $loanDetailCollateral = signal([]);

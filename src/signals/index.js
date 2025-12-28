@@ -395,6 +395,7 @@ export const $usersView = Signal({
 export const $usersForm = Signal({
   email: '',
   role: 'USER',
+  message: '',
 });
 
 export const $profile = Signal({
@@ -425,4 +426,21 @@ export const $settingsView = Signal({
 export const $settingsForm = Signal({
   organizationName: '',
   organizationIndustry: '',
+});
+
+export const $notifications = Signal({
+  list: [],
+  unreadCount: 0,
+  isLoading: false,
+  totalCount: 0,
+});
+
+export const $notificationsView = Signal({
+  showDropdown: false,
+  filter: 'all', // all, unread, read
+});
+
+export const $mentionableUsers = Signal({
+  list: [],
+  isLoading: false,
 });

@@ -1,6 +1,7 @@
 import * as invitationApi from '@src/api/invitation.api';
+import { getCurrentUser } from '@src/api/auth.api';
 import { createUserWithEmailAndPassword, signInWithGoogle, signInWithEmailAndPassword, auth } from '@src/utils/firebase';
-import { $global, $user } from '@src/signals';
+import { $global, $user, $auth, $organization } from '@src/signals';
 import { $acceptInvitationView, $acceptInvitationForm } from './acceptInvitation.consts';
 
 /**
@@ -15,8 +16,13 @@ export const handleAcceptWithEmail = async (token, navigate) => {
   const currentUser = $user.value;
 
   // Validation
-  if (!formData.name.trim()) {
-    $acceptInvitationView.update({ error: 'Name is required' });
+  if (!formData.firstName.trim()) {
+    $acceptInvitationView.update({ error: 'First name is required' });
+    return;
+  }
+
+  if (!formData.lastName.trim()) {
+    $acceptInvitationView.update({ error: 'Last name is required' });
     return;
   }
 
@@ -69,7 +75,45 @@ export const handleAcceptWithEmail = async (token, navigate) => {
     }
 
     // Accept invitation
-    await invitationApi.acceptInvitation(token, firebaseUid, formData.name);
+    const fullName = `${formData.firstName.trim()} ${formData.lastName.trim()}`;
+    await invitationApi.acceptInvitation(token, firebaseUid, fullName);
+
+    // Get Firebase ID token and fetch user data
+    const firebaseToken = await auth.currentUser.getIdToken();
+    const response = await getCurrentUser(firebaseToken);
+
+    const responseData = response?.data || response;
+    if (responseData && (responseData.user || responseData.data?.user)) {
+      const user = responseData.user || responseData.data?.user;
+      const organization = responseData.organization || responseData.data?.organization;
+
+      // Update all auth signals
+      $auth.value = {
+        user: auth.currentUser,
+        token: firebaseToken,
+        isLoading: false,
+      };
+
+      $user.value = {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        organizationId: user.organizationId,
+        role: user.role,
+      };
+
+      $organization.value = {
+        id: organization.id,
+        name: organization.name,
+        industry: organization.industry,
+      };
+
+      $global.value = {
+        ...$global.value,
+        isLoading: false,
+        isSignedIn: true,
+      };
+    }
 
     // Reset form
     $acceptInvitationForm.reset();
@@ -118,6 +162,43 @@ export const handleAcceptWithGoogle = async (token, navigate) => {
       firebaseUser.displayName || firebaseUser.email,
     );
 
+    // Get Firebase ID token and fetch user data
+    const firebaseToken = await auth.currentUser.getIdToken();
+    const response = await getCurrentUser(firebaseToken);
+
+    const responseData = response?.data || response;
+    if (responseData && (responseData.user || responseData.data?.user)) {
+      const user = responseData.user || responseData.data?.user;
+      const organization = responseData.organization || responseData.data?.organization;
+
+      // Update all auth signals
+      $auth.value = {
+        user: auth.currentUser,
+        token: firebaseToken,
+        isLoading: false,
+      };
+
+      $user.value = {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        organizationId: user.organizationId,
+        role: user.role,
+      };
+
+      $organization.value = {
+        id: organization.id,
+        name: organization.name,
+        industry: organization.industry,
+      };
+
+      $global.value = {
+        ...$global.value,
+        isLoading: false,
+        isSignedIn: true,
+      };
+    }
+
     // Reset form
     $acceptInvitationForm.reset();
     $acceptInvitationView.update({ isAccepting: false });
@@ -153,11 +234,50 @@ export const handleAcceptSignedIn = async (token, navigate) => {
       throw new Error('User not authenticated');
     }
 
+    const userName = currentUser.name || `${formData.firstName.trim()} ${formData.lastName.trim()}` || currentUser.email;
+
     await invitationApi.acceptInvitation(
       token,
       firebaseUid,
-      currentUser.name || formData.name || currentUser.email,
+      userName,
     );
+
+    // Get Firebase ID token and fetch user data
+    const firebaseToken = await auth.currentUser.getIdToken();
+    const response = await getCurrentUser(firebaseToken);
+
+    const responseData = response?.data || response;
+    if (responseData && (responseData.user || responseData.data?.user)) {
+      const user = responseData.user || responseData.data?.user;
+      const organization = responseData.organization || responseData.data?.organization;
+
+      // Update all auth signals
+      $auth.value = {
+        user: auth.currentUser,
+        token: firebaseToken,
+        isLoading: false,
+      };
+
+      $user.value = {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        organizationId: user.organizationId,
+        role: user.role,
+      };
+
+      $organization.value = {
+        id: organization.id,
+        name: organization.name,
+        industry: organization.industry,
+      };
+
+      $global.value = {
+        ...$global.value,
+        isLoading: false,
+        isSignedIn: true,
+      };
+    }
 
     // Reset form
     $acceptInvitationForm.reset();

@@ -10,7 +10,7 @@ import UniversalCard from '@src/components/global/UniversalCard';
 import SignalTable from '@src/components/global/SignalTable';
 import ContextMenu from '@src/components/global/ContextMenu';
 import { $borrower, WATCH_SCORE_OPTIONS } from '@src/consts/consts';
-import { $contacts, $borrowerFinancialsView, $borrowerFinancials, $loansView, $loans, $documents, $documentsView } from '@src/signals';
+import { $contacts, $borrowerFinancialsView, $borrowerFinancials, $documents, $documentsView } from '@src/signals';
 import { formatCurrency } from '@src/utils/formatCurrency';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
 import { successAlert } from '@src/components/global/Alert/_helpers/alert.events';
@@ -149,8 +149,8 @@ const BorrowerDetail = () => {
 
   const loans = useMemo(() => borrower?.loans || [], [borrower?.loans]);
 
-  // Filter table headers - remove borrowerName since we're already on borrower page
-  const loansTableHeaders = TABLE_HEADERS.filter((header) => header.key !== 'borrowerName');
+  // Filter table headers - remove borrowerName since we're already on borrower page, and remove actions
+  const loansTableHeaders = TABLE_HEADERS.filter((header) => header.key !== 'borrowerName' && header.key !== 'actions');
 
   // Financials table headers
   const financialsTableHeaders = [
@@ -222,26 +222,6 @@ const BorrowerDetail = () => {
         return <span className={`text-${score.color}-200 fw-700`}>{score.label}</span>;
       },
       relationshipManager: loan.relationshipManager ? (loan.relationshipManager.name || '-') : '-',
-      actions: () => (
-        <ContextMenu
-          items={[
-            { label: 'View Details', icon: faEye, action: 'view' },
-            { label: 'Edit', icon: faEdit, action: 'edit' },
-            { label: 'Delete', icon: faTrash, action: 'delete' },
-          ]}
-          onItemClick={(item) => {
-            if (item.action === 'view') {
-              navigate(`/loans/${loan.id}`);
-            } else if (item.action === 'edit') {
-              $loans.update({ selectedLoan: loan });
-              $loansView.update({ showEditModal: true });
-            } else if (item.action === 'delete') {
-              $loans.update({ selectedLoan: loan });
-              $loansView.update({ showDeleteModal: true });
-            }
-          }}
-        />
-      ),
     })),
     [loans, navigate],
   );

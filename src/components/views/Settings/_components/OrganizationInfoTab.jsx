@@ -1,16 +1,15 @@
-/* eslint-disable react/no-unescaped-entities */
 import { useEffect } from 'react';
 import { Form, Button, Spinner, Alert } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSave, faBuilding, faIndustry } from '@fortawesome/free-solid-svg-icons';
 import { $organization, $settingsView, $settingsForm, $user } from '@src/signals';
 import UniversalCard from '@src/components/global/UniversalCard';
+import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import * as settingsEvents from '../_helpers/settings.events';
 
 const OrganizationInfoTab = () => {
   const organization = $organization.value;
   const settingsView = $settingsView.value;
-  const settingsForm = $settingsForm.value;
   const user = $user.value;
 
   const { isSaving } = settingsView;
@@ -45,35 +44,19 @@ const OrganizationInfoTab = () => {
   return (
     <UniversalCard headerText="Organization Information">
       <Form>
-        <Form.Group className="mb-24">
-          <Form.Label className="fw-semibold">
-            Organization Name <span className="text-danger">*</span>
-          </Form.Label>
-          <Form.Control
+        <div className="mt-8 mb-24">
+          <UniversalInput
+            label="Organization Name"
             type="text"
+            name="organizationName"
+            signal={$settingsForm}
             placeholder="Enter organization name"
-            value={settingsForm.organizationName}
-            onChange={(e) => $settingsForm.update({ organizationName: e.target.value })}
             disabled={isSaving}
+            className="bg-info-900"
           />
-        </Form.Group>
-
-        <Form.Group className="mb-32">
-          <Form.Label className="fw-semibold">Industry</Form.Label>
-          <Form.Control
-            type="text"
-            placeholder="e.g., Banking, Healthcare, Technology"
-            value={settingsForm.organizationIndustry}
-            onChange={(e) => $settingsForm.update({ organizationIndustry: e.target.value })}
-            disabled={isSaving}
-          />
-          <Form.Text className="text-muted">
-            Optional: Specify your organization's primary industry
-          </Form.Text>
-        </Form.Group>
-
+        </div>
         <Button
-          variant="primary"
+          variant="success-300"
           onClick={settingsEvents.saveOrganization}
           disabled={isSaving}
         >

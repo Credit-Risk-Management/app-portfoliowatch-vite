@@ -49,6 +49,19 @@ const InviteUserModal = () => (
           />
         </Col>
       </Row>
+      <Row>
+        <Col md={12} className="mb-16">
+          <Form.Label>Message (Optional)</Form.Label>
+          <Form.Control
+            as="textarea"
+            rows={3}
+            value={$usersForm.value.message || ''}
+            onChange={(e) => $usersForm.update({ message: e.target.value })}
+            placeholder="Add a personal message to the invitation..."
+            name="message"
+          />
+        </Col>
+      </Row>
     </Form>
   </UniversalModal>
 );

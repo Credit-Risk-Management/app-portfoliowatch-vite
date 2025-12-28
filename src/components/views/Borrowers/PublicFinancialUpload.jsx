@@ -5,7 +5,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFileAlt, faMagic, faCheckCircle, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import FileUploader from '@src/components/global/FileUploader';
-import { useSignal } from '@fyclabs/tools-fyc-react/signals';
 import ContentWrapper from '@src/components/global/ContentWrapper';
 import {
   $publicFinancialForm,
@@ -24,17 +23,14 @@ const PublicFinancialUpload = () => {
   const { token } = useParams();
   const navigate = useNavigate();
 
-  // Use signals for reactive state
-  const viewState = useSignal($publicFinancialUploadView);
-  const formData = useSignal($publicFinancialForm);
-
   // Fetch upload link data on mount
   useEffect(() => {
     fetchUploadLinkData(token);
   }, [token]);
 
-  // Destructure view state for easier access
-  const { linkData, isLoading, isSubmitting, error, success, ocrApplied } = viewState;
+  // Destructure signals for easier access
+  const { linkData, isLoading, isSubmitting, error, success, ocrApplied } = $publicFinancialUploadView.value;
+  const formData = $publicFinancialForm.value;
 
   if (isLoading) {
     return (

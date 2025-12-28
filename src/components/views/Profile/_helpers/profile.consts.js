@@ -4,6 +4,6 @@ export const ROLE_LABELS = {
 };
 
 export const ROLE_BADGE_VARIANTS = {
-  ADMIN: 'primary',
-  USER: 'secondary',
+  ADMIN: 'primary-400',
+  USER: 'secondary-100',
 };

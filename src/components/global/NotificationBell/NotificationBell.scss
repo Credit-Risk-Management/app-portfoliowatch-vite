@@ -1,0 +1,81 @@
+@import '@src/scss/_vars.scss';
+
+.notification-bell-dropdown {
+  .notification-bell-toggle {
+    border: none;
+    background: none !important;
+    box-shadow: none !important;
+    
+    &:hover {
+      opacity: 0.8;
+    }
+    
+    &::after {
+      display: none; // Hide dropdown arrow
+    }
+  }
+  
+  .notification-bell-menu {
+    min-width: 380px;
+    max-width: 400px;
+    max-height: 600px;
+    overflow-y: auto;
+    border: 1px solid $info-300;
+    border-radius: 0.5rem;
+    background-color: $info-200;
+    
+    @media (max-width: 576px) {
+      min-width: 320px;
+      max-width: 90vw;
+    }
+    
+    .dropdown-header {
+      background-color: $info-200;
+      color: $info-900;
+      border-bottom: 1px solid $info-300;
+    }
+    
+    .dropdown-divider {
+      border-color: $info-300;
+    }
+    
+    .dropdown-item {
+      color: $info-900;
+      
+      &:hover {
+        background-color: $info-300;
+      }
+    }
+  }
+  
+  .notification-list {
+    max-height: 400px;
+    overflow-y: auto;
+    background-color: $info-200;
+    
+    .notification-item {
+      padding: 12px 16px;
+      border: none;
+      border-bottom: 1px solid $info-300;
+      text-decoration: none;
+      background-color: $info-200;
+      
+      &:last-child {
+        border-bottom: none;
+      }
+      
+      &.unread {
+        background-color: $info-100;
+        
+        &:hover {
+          background-color: lighten($info-100, 2%);
+        }
+      }
+      
+      &:hover {
+        background-color: $info-300;
+      }
+    }
+  }
+}
+

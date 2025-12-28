@@ -12,9 +12,12 @@ import Documents from '@src/components/views/Documents';
 import Reports from '@src/components/views/Reports';
 import Managers from '@src/components/views/Managers';
 import ManagerDetail from '@src/components/views/Managers/ManagerDetail';
+import Notifications from '@src/components/views/Notifications';
 import { Login, AcceptInvitation } from '@src/components/views/Auth';
 import Profile from '@src/components/views/Profile';
 import Settings from '@src/components/views/Settings';
+import OrganizationSettings from '@src/components/views/OrganizationSettings';
+import UsersSettings from '@src/components/views/UsersSettings';
 import PublicFinancialUpload from '@src/components/views/Borrowers/PublicFinancialUpload';
 import PublicRoutes from '@src/components/global/PublicRoutes';
 import PrivateRoutes from '@src/components/global/PrivateRoutes';
@@ -63,8 +66,11 @@ function App() {
               <Route path="/reports" element={<Reports />} />
               <Route path="/relationship-managers" element={<Managers />} />
               <Route path="/relationship-managers/:managerId" element={<ManagerDetail />} />
+              <Route path="/notifications" element={<Notifications />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/organization-settings" element={<OrganizationSettings />} />
+              <Route path="/users-settings" element={<UsersSettings />} />
             </Route>
 
             {/* Public routes */}

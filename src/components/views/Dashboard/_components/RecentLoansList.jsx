@@ -1,7 +1,4 @@
-/* eslint-disable no-unused-vars */
 import { Badge, ListGroup } from 'react-bootstrap';
-import PropTypes from 'prop-types';
-import { formatCurrency } from '@src/utils/formatCurrency';
 import { formatMoneyShorthand } from '@src/utils/currency';
 
 const getScoreColor = (watchScore) => {

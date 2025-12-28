@@ -3,12 +3,13 @@ import apiClient from './client';
 /**
  * Create invitation
  */
-export const createInvitation = async (organizationId, email, role) => {
+export const createInvitation = async (organizationId, email, role, message) => {
   try {
     const response = await apiClient.post('/invitations', {
       organizationId,
       email,
       role,
+      message,
     });
     return response;
   } catch (error) {
@@ -55,6 +56,19 @@ export const acceptInvitation = async (token, firebaseUid, name) => {
     return response;
   } catch (error) {
     console.error('Accept invitation API error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Resend invitation
+ */
+export const resendInvitation = async (invitationId) => {
+  try {
+    const response = await apiClient.post(`/invitations/${invitationId}/resend`);
+    return response;
+  } catch (error) {
+    console.error('Resend invitation API error:', error);
     throw error;
   }
 };

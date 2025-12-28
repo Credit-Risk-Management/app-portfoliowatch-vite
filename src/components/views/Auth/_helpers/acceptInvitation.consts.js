@@ -2,7 +2,8 @@ import { Signal } from '@fyclabs/tools-fyc-react/signals';
 
 // Signal for accept invitation form data
 export const $acceptInvitationForm = Signal({
-  name: '',
+  firstName: '',
+  lastName: '',
   password: '',
   confirmPassword: '',
 });

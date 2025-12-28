@@ -10,6 +10,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { $global, $user, $organization } from '@src/signals';
 import { logoutUser } from '@src/utils/auth.utils';
+import NotificationBell from '@src/components/global/NotificationBell';
 
 const Navigation = () => {
   const location = useLocation();
@@ -94,7 +95,7 @@ const Navigation = () => {
               Managers
             </Nav.Link>
           </Nav>
-          <Nav>
+          <Nav className="align-items-center">
             <NavDropdown
               title={(
                 <span className="text-dark">
@@ -116,16 +117,24 @@ const Navigation = () => {
               </NavDropdown.Header>
               <NavDropdown.Divider />
               <NavDropdown.Item as={Link} to="/profile">
-                My Profile
+                Profile
               </NavDropdown.Item>
-              <NavDropdown.Item as={Link} to="/settings">
-                Settings
-              </NavDropdown.Item>
+              {$user.value.role === 'ADMIN' && (
+                <>
+                  <NavDropdown.Item as={Link} to="/organization-settings">
+                    Organization
+                  </NavDropdown.Item>
+                  <NavDropdown.Item as={Link} to="/users-settings">
+                    Users
+                  </NavDropdown.Item>
+                </>
+              )}
               <NavDropdown.Divider />
               <NavDropdown.Item onClick={handleLogout}>
                 Logout
               </NavDropdown.Item>
             </NavDropdown>
+            <NotificationBell />
           </Nav>
         </Navbar.Collapse>
       </Container>

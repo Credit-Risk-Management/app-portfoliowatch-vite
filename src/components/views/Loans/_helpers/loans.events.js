@@ -12,6 +12,7 @@ import { uploadMultipleFiles } from './loans.upload';
 import {
   $financialsUploader,
   $loanDetailNewComment,
+  $loanDetailNewCommentLoading,
   $loanDetailFinancials,
   $industryReportGenerating,
 } from './loans.consts';
@@ -186,6 +187,7 @@ export const handleAddComment = async (loanId) => {
   };
 
   try {
+    $loanDetailNewCommentLoading.value = true;
     await commentsApi.create(newCommentData);
     const updatedCommentsResponse = await commentsApi.getByLoan(loanId);
     $comments.update({ list: updatedCommentsResponse.data || [] });
@@ -194,6 +196,8 @@ export const handleAddComment = async (loanId) => {
   } catch (error) {
     dangerAlert(`Failed to add comment: ${error.message}`);
     throw error;
+  } finally {
+    $loanDetailNewCommentLoading.value = false;
   }
 };
 

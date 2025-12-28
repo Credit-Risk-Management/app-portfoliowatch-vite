@@ -1,0 +1,25 @@
+.comment-item {
+  position: relative;
+
+  &--unread {
+    background-color: rgba(13, 110, 253, 0.03);
+  }
+
+  &__unread-indicator {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #0d6efd;
+    flex-shrink: 0;
+  }
+
+  // Add padding to the left when showing unread indicator
+  &--unread .flex-grow-1 {
+    padding-left: 20px;
+  }
+}
+
