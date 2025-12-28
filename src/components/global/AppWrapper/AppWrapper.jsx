@@ -17,7 +17,7 @@ const AppWrapper = () => {
           {breakPoint}
         </Badge>
       )}
-      <Loadable signal={$global}>
+      <Loadable signal={$global} template="fullscreen">
         <Outlet />
       </Loadable>
     </Container>

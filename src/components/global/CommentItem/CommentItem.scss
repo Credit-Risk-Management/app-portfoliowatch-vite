@@ -1,5 +1,6 @@
 .comment-item {
   position: relative;
+  transition: background-color 0.2s ease;
 
   &--unread {
     background-color: rgba(13, 110, 253, 0.03);
@@ -20,6 +21,15 @@
   // Add padding to the left when showing unread indicator
   &--unread .flex-grow-1 {
     padding-left: 20px;
+  }
+
+  // Hover effect for clickable comments
+  &--clickable {
+    cursor: pointer;
+    
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
   }
 }
 

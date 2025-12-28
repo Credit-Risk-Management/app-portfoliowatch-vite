@@ -24,6 +24,15 @@ const Loadable = ({ signal, animation, placeholderType, children, template, clas
           <Loader className="d-flex align-items-center justify-content-center" />
         )}
 
+        {template === 'fullscreen' && (
+          <div className="w-100 d-flex justify-content-center text-info-600 vh-100 align-items-center">
+            <div className="text-center">
+              <div className="spinner-border" />
+              <div className="text-info-600 mt-8 lead">Loading...</div>
+            </div>
+          </div>
+        )}
+
         {/* CUSTOM LOADABLES */}
 
         {/* END CUSTOM LOADABLES */}

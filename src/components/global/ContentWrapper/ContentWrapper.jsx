@@ -7,13 +7,11 @@ import { $global } from '@src/signals';
 const ContentWrapper = ({ children, className = '', fluid }) => {
   if ($auth.value?.isLoading) {
     return (
-      <div>
-        <div className="min-vh-100 w-100 d-flex justify-content-center align-items-center flex-grow-1">
-          <Loader
-            message={$auth.value?.isLoadingMessage ?? 'Loading...'}
-            className="text-center"
-          />
-        </div>
+      <div className="min-vh-100 w-100 d-flex justify-content-center align-items-center">
+        <Loader
+          message={$auth.value?.isLoadingMessage ?? 'Loading...'}
+          className="text-center"
+        />
       </div>
     );
   }

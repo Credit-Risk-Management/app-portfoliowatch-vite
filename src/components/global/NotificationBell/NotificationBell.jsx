@@ -54,7 +54,7 @@ const NotificationBell = () => {
         id="notification-dropdown"
         className="notification-bell-toggle text-dark position-relative p-2"
       >
-        <FontAwesomeIcon icon={faBell} size="lg" />
+        <FontAwesomeIcon icon={faBell} />
         {unreadCount > 0 && (
           <Badge
             bg="danger"

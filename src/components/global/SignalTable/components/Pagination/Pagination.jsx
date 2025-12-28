@@ -48,7 +48,7 @@ const Pagination = ({
             <ListGroup.Item key={page} className="bg-transparent border-0">
               <Button
                 variant="transparent"
-                className={`border-0 p-0 ${currentPage === page ? 'fw-bold text-info' : 'fw-normal text-dark'}`}
+                className={`border-0 p-0 ${currentPage === page ? 'fw-bold text-info-100' : 'fw-normal text-info-900'}`}
                 disabled={disabled || currentPage === page}
                 onClick={() => setCurrentPage(page)}
               >

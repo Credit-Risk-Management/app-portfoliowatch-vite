@@ -13,7 +13,6 @@ import {
 } from '@src/components/views/Users/_helpers/users.events';
 import * as consts from '@src/components/views/Users/_helpers/users.consts';
 import * as helpers from '@src/components/views/Users/_helpers/users.helpers';
-import Loader from '@src/components/global/Loader';
 import UniversalCard from '@src/components/global/UniversalCard';
 import UniversalModal from '@src/components/global/UniversalModal';
 
@@ -24,7 +23,6 @@ const UsersInvitationsTab = () => {
 
   const members = $users.value.list || [];
   const invitations = $users.value.invitations || [];
-  const { isLoading } = $users.value;
   const currentUserId = $user.value?.id;
   const confirmModal = $settingsView.value.confirmModal || {
     show: false,
@@ -32,10 +30,6 @@ const UsersInvitationsTab = () => {
     userId: null,
     userName: '',
   };
-
-  if (isLoading) {
-    return <Loader />;
-  }
 
   const handleSuspendClick = (userId, userName) => {
     $settingsView.update({

@@ -12,6 +12,7 @@ const CommentItem = ({
   showReadStatus = false,
   mentionClassName = 'fw-bold text-warning-300 mx-1',
   dateFormat = 'date', // 'date' for MM/DD/YYYY or 'relative' for time ago
+  clickable = false, // whether the item is clickable/hoverable
 }) => {
   const formatDate = (dateString) => {
     if (!dateString) return '-';
@@ -23,7 +24,7 @@ const CommentItem = ({
   };
 
   return (
-    <ListGroup.Item className="comment-item">
+    <ListGroup.Item className={`comment-item ${clickable ? 'comment-item--clickable' : ''}`}>
       <Row>
         <Col className="border-bottom border-info-700 pb-4">
           <div className="fw-bold text-info-100">{userName}</div>
