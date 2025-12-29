@@ -1,5 +1,6 @@
 /* eslint-disable no-unused-vars */
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
+import { useNavigate } from 'react-router-dom';
 import { Container, Row, Col } from 'react-bootstrap';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 import { $dashboard, $comments } from '@src/signals';
@@ -13,6 +14,8 @@ import * as events from './_helpers/dashboard.events';
 import * as resolvers from './_helpers/dashboard.resolvers';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+
   useEffectAsync(async () => {
     await resolvers.loadDashboardData();
   }, []);
@@ -70,7 +73,7 @@ const Dashboard = () => {
                       labelLine={false}
                       fill="#8884d8"
                       dataKey="value"
-                      onClick={(data) => events.handlePieClick(data)}
+                      onClick={(data) => events.handlePieClick(data, navigate)}
                       style={{ cursor: 'pointer' }}
                       stroke="#000"
                       strokeWidth={1}
@@ -96,7 +99,7 @@ const Dashboard = () => {
                       labelLine={false}
                       fill="#8884d8"
                       dataKey="value"
-                      onClick={(data) => events.handlePieClick(data)}
+                      onClick={(data) => events.handlePieClick(data, navigate)}
                       style={{ cursor: 'pointer' }}
                       stroke="#000"
                       strokeWidth={1}
