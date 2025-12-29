@@ -23,6 +23,7 @@ import {
   getHealthScoreColor,
   renderMarkdownLinks,
 } from './_helpers/loans.helpers';
+import { getBorrowerTypeLabel } from '@src/components/views/Borrowers/_helpers/borrowers.helpers';
 import {
   $loanDetailNewComment,
   $loanDetailShowSecondaryContacts,
@@ -213,7 +214,7 @@ const LoanDetail = () => {
                       <div className="text-info-100 fw-200 mt-8">Borrower ID</div>
                       <div className="text-info-50 lead fw-500">{$loan.value?.loan?.borrower.borrowerId || 'Unknown'}</div>
                       <div className="text-info-100 fw-200 mt-8">Borrower Type</div>
-                      <div className="text-info-50 lead fw-500">{$loan.value?.loan?.borrower.borrowerType || 'Unknown'}</div>
+                      <div className="text-info-50 lead fw-500">{getBorrowerTypeLabel($loan.value?.loan?.borrower.borrowerType)}</div>
                       <div className="text-info-100 fw-200 mt-8">Primary Contact</div>
                       <div className="text-info-50 lead fw-500">{$loan.value?.loan?.borrower.primaryContact || 'N/A'}</div>
                       <div className="text-info-100 fw-200 mt-8">Email</div>

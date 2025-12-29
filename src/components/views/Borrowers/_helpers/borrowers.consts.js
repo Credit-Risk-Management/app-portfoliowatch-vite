@@ -1,6 +1,6 @@
 export const CLIENT_TYPE_OPTIONS = [
-  { value: 'Individual', label: 'Individual' },
-  { value: 'Business', label: 'Business' },
+  { value: 'CRE', label: 'CRE' },
+  { value: 'C&I', label: 'C&I' },
 ];
 
 export const RISK_RATING_OPTIONS = [
@@ -20,10 +20,10 @@ export const INDUSTRY_TYPE_OPTIONS = [
 ];
 
 export const TABLE_HEADERS = [
-  { key: 'borrowerId', value: 'Borrower ID', sortKey: 'borrower_id' },
+  { key: 'borrowerId', value: 'Borrower ID', sortKey: 'borrowerId' },
   { key: 'name', value: 'Name', sortKey: 'name' },
   { key: 'email', value: 'Email', sortKey: 'email' },
-  { key: 'borrowerType', value: 'Type', sortKey: 'client_type' },
+  { key: 'borrowerType', value: 'Type', sortKey: 'borrowerType' },
   { key: 'relationshipManager', value: 'Manager' },
   { key: 'loanCount', value: 'Loans' },
   { key: 'totalBalance', value: 'Total Balance' },

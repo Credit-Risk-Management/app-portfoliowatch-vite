@@ -33,6 +33,7 @@ import {
   getHealthScoreColor,
   renderMarkdownLinks,
 } from './_helpers/borrowerDetail.helpers';
+import { getBorrowerTypeLabel } from './_helpers/borrowers.helpers';
 import {
   $borrowerDetailView,
   $borrowerLoansFilter,
@@ -300,7 +301,7 @@ const BorrowerDetail = () => {
           <UniversalCard headerText="Borrower Details">
             <div>
               <div className="text-info-100 fw-200 mt-8">Borrower Type</div>
-              <div className="text-info-50 lead fw-500">{borrower.borrowerType || 'Unknown'}</div>
+              <div className="text-info-50 lead fw-500">{getBorrowerTypeLabel(borrower.borrowerType)}</div>
 
               <div className="text-info-100 fw-200 mt-16">Primary Contact</div>
               <div className="text-info-50 lead fw-500">{borrower.primaryContact || 'N/A'}</div>

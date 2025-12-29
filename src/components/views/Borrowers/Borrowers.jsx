@@ -56,6 +56,7 @@ const Borrowers = () => {
 
   const rows = $borrowers.value.list.map((borrower) => ({
     ...borrower,
+    borrowerType: helpers.getBorrowerTypeLabel(borrower.borrowerType),
     clientRiskRating: () => <StatusBadge status={borrower.clientRiskRating} type="risk" />,
     relationshipManager: helpers.getManagerName(borrower.relationshipManagerId, $relationshipManagers.value.list),
     loanCount: borrower.loanCount || 0,
