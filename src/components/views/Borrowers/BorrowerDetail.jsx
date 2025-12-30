@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Button, ListGroup, Badge } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faArrowRight, faEdit, faMagic, faEnvelope, faPhone, faChartLine, faFileAlt, faCopy, faCheck, faUser, faAddressBook, faMoneyBillWave, faDollarSign, faIndustry, faStickyNote, faEye, faTrash, faFile, faReceipt } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faArrowRight, faEdit, faMagic, faEnvelope, faPhone, faChartLine, faFileAlt, faCopy, faCheck, faUser, faAddressBook, faMoneyBillWave, faDollarSign, faIndustry, faStickyNote, faEye, faTrash, faFile, faReceipt, faShieldAlt, faTable } from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';
 import UniversalCard from '@src/components/global/UniversalCard';
 import SignalTable from '@src/components/global/SignalTable';
@@ -14,7 +14,7 @@ import { $contacts, $borrowerFinancialsView, $borrowerFinancials, $documents, $d
 import { formatCurrency } from '@src/utils/formatCurrency';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
 import { successAlert } from '@src/components/global/Alert/_helpers/alert.events';
-import { formatDate as formatLoanDate } from '@src/components/views/Loans/_helpers/loans.helpers';
+import { formatDate as formatLoanDate, formatRatio, getCovenantStatus } from '@src/components/views/Loans/_helpers/loans.helpers';
 import { TABLE_HEADERS } from '@src/components/views/Loans/_helpers/loans.consts';
 import { EditLoanModal, DeleteLoanModal } from '@src/components/views/Loans/_components';
 import { handleDownloadDocument } from '@src/components/views/Documents/_helpers/documents.events';
@@ -46,12 +46,14 @@ import {
 import { fetchBorrowerDetail, fetchBorrowerDocuments } from './_helpers/borrowerDetail.resolvers';
 import { handleGenerateIndustryReport, handleGenerateAnnualReview } from './_helpers/borrowerDetail.events';
 import DeleteBorrowerDocumentModal from './_components/DeleteBorrowerDocumentModal';
+import FinancialSpreadsheetModal from './_components/FinancialSpreadsheetModal';
 
 const BorrowerDetail = () => {
   const { borrowerId } = useParams();
   const navigate = useNavigate();
   const [copiedLink, setCopiedLink] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
+  const [showSpreadsheetModal, setShowSpreadsheetModal] = useState(false);
 
   // Fetch borrower detail and relationship managers on mount or when borrowerId changes
   useEffect(() => {
@@ -66,9 +68,9 @@ const BorrowerDetail = () => {
     return `${baseUrl}/upload-financials/${borrower.borrowerId}`;
   }, [borrower?.borrowerId]);
 
-  // Fetch financial history when financials tab is active
+  // Fetch financial history when financials or covenants tab is active
   useEffect(() => {
-    if (activeTab === 'financials' && $borrower.value?.borrower?.id) {
+    if ((activeTab === 'financials' || activeTab === 'covenants') && $borrower.value?.borrower?.id) {
       fetchFinancialHistory();
     }
   }, [activeTab, $borrower.value?.borrower?.id, $borrowerFinancialsFilter.value, $borrowerFinancialsView.value.refreshTrigger]);
@@ -161,7 +163,7 @@ const BorrowerDetail = () => {
     { key: 'grossRevenue', value: 'Gross Revenue', sortKey: 'grossRevenue' },
     { key: 'netIncome', value: 'Net Income', sortKey: 'netIncome' },
     { key: 'ebitda', value: 'EBITDA', sortKey: 'ebitda' },
-    { key: 'debtService', value: 'Debt Service', sortKey: 'debtService' },
+    { key: 'debtService', value: 'DSCR', sortKey: 'debtService' },
     { key: 'currentRatio', value: 'Current Ratio', sortKey: 'currentRatio' },
     { key: 'liquidity', value: 'Liquidity', sortKey: 'liquidity' },
     { key: 'submittedBy', value: 'Submitted By', sortKey: 'submittedBy' },
@@ -258,6 +260,77 @@ const BorrowerDetail = () => {
     [$documents.value?.list, loans],
   );
 
+  // Compute covenant data from borrower loans and latest financials
+  const covenantData = useMemo(() => {
+    if (!borrower || !loans || loans.length === 0) {
+      return {
+        debtServiceCovenant: null,
+        liquidityRatioCovenant: null,
+        currentRatioCovenant: null,
+        liquidityCovenant: null,
+        actualDebtService: null,
+        actualLiquidityRatio: null,
+        actualCurrentRatio: null,
+        actualLiquidity: null,
+      };
+    }
+
+    // Get latest financial data (most recent from financials list)
+    const financialsList = $borrowerFinancials.value?.list || [];
+    const latestFinancial = financialsList.length > 0 
+      ? financialsList[0] 
+      : null;
+
+    // Aggregate covenants from all loans - take the most restrictive (lowest) covenant value
+    // For ratios, lower is more restrictive. For liquidity amount, lower is more restrictive.
+    let debtServiceCovenant = null;
+    let liquidityRatioCovenant = null;
+    let currentRatioCovenant = null;
+    let liquidityCovenant = null;
+
+    loans.forEach((loan) => {
+      // Handle debtServiceCovenant
+      if (loan.debtServiceCovenant != null && loan.debtServiceCovenant !== '') {
+        const value = parseFloat(loan.debtServiceCovenant);
+        if (!isNaN(value) && (!debtServiceCovenant || value < debtServiceCovenant)) {
+          debtServiceCovenant = value;
+        }
+      }
+      // Handle liquidityRatioCovenant
+      if (loan.liquidityRatioCovenant != null && loan.liquidityRatioCovenant !== '') {
+        const value = parseFloat(loan.liquidityRatioCovenant);
+        if (!isNaN(value) && (!liquidityRatioCovenant || value < liquidityRatioCovenant)) {
+          liquidityRatioCovenant = value;
+        }
+      }
+      // Handle currentRatioCovenant
+      if (loan.currentRatioCovenant != null && loan.currentRatioCovenant !== '') {
+        const value = parseFloat(loan.currentRatioCovenant);
+        if (!isNaN(value) && (!currentRatioCovenant || value < currentRatioCovenant)) {
+          currentRatioCovenant = value;
+        }
+      }
+      // Handle liquidityCovenant
+      if (loan.liquidityCovenant != null && loan.liquidityCovenant !== '') {
+        const value = parseFloat(loan.liquidityCovenant);
+        if (!isNaN(value) && (!liquidityCovenant || value < liquidityCovenant)) {
+          liquidityCovenant = value;
+        }
+      }
+    });
+
+    return {
+      debtServiceCovenant,
+      liquidityRatioCovenant,
+      currentRatioCovenant,
+      liquidityCovenant,
+      actualDebtService: latestFinancial?.debtService ? parseFloat(latestFinancial.debtService) : null,
+      actualLiquidityRatio: latestFinancial?.liquidityRatio ? parseFloat(latestFinancial.liquidityRatio) : null,
+      actualCurrentRatio: latestFinancial?.currentRatio ? parseFloat(latestFinancial.currentRatio) : null,
+      actualLiquidity: latestFinancial?.liquidity ? parseFloat(latestFinancial.liquidity) : null,
+    };
+  }, [borrower, loans, $borrowerFinancials.value?.list]);
+
   if ($borrower.value?.isLoading) {
     return (
       <Container fluid className="py-24">
@@ -285,9 +358,10 @@ const BorrowerDetail = () => {
 
   const tabs = [
     { key: 'details', title: 'Details', icon: faUser },
-    { key: 'contacts', title: 'Contacts', icon: faAddressBook },
+    // { key: 'contacts', title: 'Contacts', icon: faAddressBook },
     { key: 'loans', title: 'Loans', icon: faMoneyBillWave },
     { key: 'financials', title: 'Financials', icon: faDollarSign },
+    { key: 'covenants', title: 'Covenants', icon: faShieldAlt },
     { key: 'debtService', title: 'Debt Service', icon: faReceipt },
     { key: 'documents', title: 'Documents', icon: faFile },
     { key: 'industry', title: 'Industry Analysis', icon: faIndustry },
@@ -382,48 +456,48 @@ const BorrowerDetail = () => {
           </UniversalCard>
         );
 
-      case 'contacts':
-        return (
-          <UniversalCard headerText="Contacts">
-            <div>
-              {contacts.length === 0 ? (
-                <div className="text-info-100 fw-200">No contacts found for this borrower.</div>
-              ) : (
-                <ListGroup variant="flush">
-                  {contacts.map((contact) => (
-                    <ListGroup.Item key={contact.id} className="px-0">
-                      <div className="d-flex justify-content-between align-items-start">
-                        <div>
-                          <div className="fw-bold text-white">
-                            {getContactName(contact)}
-                            {contact.isPrimary && (
-                              <Badge bg="primary-100" className="ms-8">Primary</Badge>
-                            )}
-                          </div>
-                          {contact.title && (
-                            <div className="small text-info-100">{contact.title}</div>
-                          )}
-                          {contact.email && (
-                            <div className="small text-info-50 mt-4">
-                              <FontAwesomeIcon icon={faEnvelope} className="me-4" />
-                              {contact.email}
-                            </div>
-                          )}
-                          {contact.phone && (
-                            <div className="small text-info-50">
-                              <FontAwesomeIcon icon={faPhone} className="me-4" />
-                              {contact.phone}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </ListGroup.Item>
-                  ))}
-                </ListGroup>
-              )}
-            </div>
-          </UniversalCard>
-        );
+      // case 'contacts':
+      //   return (
+      //     <UniversalCard headerText="Contacts">
+      //       <div>
+      //         {contacts.length === 0 ? (
+      //           <div className="text-info-100 fw-200">No contacts found for this borrower.</div>
+      //         ) : (
+      //           <ListGroup variant="flush">
+      //             {contacts.map((contact) => (
+      //               <ListGroup.Item key={contact.id} className="px-0">
+      //                 <div className="d-flex justify-content-between align-items-start">
+      //                   <div>
+      //                     <div className="fw-bold text-white">
+      //                       {getContactName(contact)}
+      //                       {contact.isPrimary && (
+      //                         <Badge bg="primary-100" className="ms-8">Primary</Badge>
+      //                       )}
+      //                     </div>
+      //                     {contact.title && (
+      //                       <div className="small text-info-100">{contact.title}</div>
+      //                     )}
+      //                     {contact.email && (
+      //                       <div className="small text-info-50 mt-4">
+      //                         <FontAwesomeIcon icon={faEnvelope} className="me-4" />
+      //                         {contact.email}
+      //                       </div>
+      //                     )}
+      //                     {contact.phone && (
+      //                       <div className="small text-info-50">
+      //                         <FontAwesomeIcon icon={faPhone} className="me-4" />
+      //                         {contact.phone}
+      //                       </div>
+      //                     )}
+      //                   </div>
+      //                 </div>
+      //               </ListGroup.Item>
+      //             ))}
+      //           </ListGroup>
+      //         )}
+      //       </div>
+      //     </UniversalCard>
+      //   );
 
       case 'loans':
         return (
@@ -474,6 +548,15 @@ const BorrowerDetail = () => {
                   <FontAwesomeIcon icon={copiedLink ? faCheck : faCopy} className="me-8" />
                   {copiedLink ? 'Copied!' : 'Copy Borrower Link'}
                 </Button>
+                <Button
+                  variant="outline-primary-100"
+                  onClick={() => setShowSpreadsheetModal(true)}
+                  size="sm"
+                  className="ms-8"
+                >
+                  <FontAwesomeIcon icon={faTable} className="me-8" />
+                  Display Spreadsheet
+                </Button>
               </div>
             </div>
 
@@ -517,6 +600,87 @@ const BorrowerDetail = () => {
               );
             })()}
           </div>
+        );
+
+      case 'covenants':
+        return (
+          <UniversalCard headerText="Covenants" bodyContainer="container-fluid">
+            <Row>
+              <Col xs={12} md={6} className="mb-12 mb-md-0">
+                <div className="text-info-100 fw-200 mt-16 mb-4">Debt Service Coverage</div>
+                <div>
+                  <span className="text-info-50 fw-500 me-8">Actual:</span>
+                  <span className={`fs-5 fw-bold text-${getCovenantStatus(covenantData.actualDebtService, covenantData.debtServiceCovenant).variant}`}>
+                    {formatRatio(covenantData.actualDebtService)}
+                  </span>
+                </div>
+                <div className="mb-8">
+                  <span className="text-info-50 fw-500 me-8">Covenant:</span>
+                  <span className="fs-5 fw-bold text-secondary-200">
+                    {formatRatio(covenantData.debtServiceCovenant)}
+                  </span>
+                </div>
+              </Col>
+              <Col xs={12} md={6} className="mb-12 mb-md-0">
+                <div className="text-info-100 fw-200 mt-16 mb-4">Liquidity Ratio</div>
+                <div>
+                  <span className="text-info-50 fw-500 me-8">Actual:</span>
+                  <span className={`fs-5 fw-bold text-${getCovenantStatus(covenantData.actualLiquidityRatio, covenantData.liquidityRatioCovenant).variant}`}>
+                    {formatRatio(covenantData.actualLiquidityRatio)}
+                  </span>
+                </div>
+                <div className="mb-8">
+                  <span className="text-info-50 fw-500 me-8">Covenant:</span>
+                  <span className="fs-5 fw-bold text-secondary-200">
+                    {formatRatio(covenantData.liquidityRatioCovenant)}
+                  </span>
+                </div>
+              </Col>
+              <Col xs={12} md={6} className="mb-12 mb-md-0">
+                <div className="text-info-100 fw-200 mt-16 mb-4">Current Ratio</div>
+                <div>
+                  <span className="text-info-50 fw-500 me-8">Actual:</span>
+                  <span className={`fs-5 fw-bold text-${getCovenantStatus(covenantData.actualCurrentRatio, covenantData.currentRatioCovenant).variant}`}>
+                    {formatRatio(covenantData.actualCurrentRatio)}
+                  </span>
+                </div>
+                <div className="mb-8">
+                  <span className="text-info-50 fw-500 me-8">Covenant:</span>
+                  <span className="fs-5 fw-bold text-secondary-200">
+                    {formatRatio(covenantData.currentRatioCovenant)}
+                  </span>
+                </div>
+              </Col>
+              <Col xs={12} md={6} className="mb-12 mb-md-0">
+                <div className="text-info-100 fw-200 mt-16 mb-4">Liquidity Total</div>
+                <div>
+                  <span className="text-info-50 fw-500 me-8">Actual:</span>
+                  <span className={`fs-5 fw-bold text-${getCovenantStatus(covenantData.actualLiquidity, covenantData.liquidityCovenant).variant}`}>
+                    {formatCurrency(covenantData.actualLiquidity)}
+                  </span>
+                </div>
+                <div className="mb-8">
+                  <span className="text-info-50 fw-500 me-8">Covenant:</span>
+                  <span className="fs-5 fw-bold text-secondary-200">
+                    {formatCurrency(covenantData.liquidityCovenant)}
+                  </span>
+                </div>
+              </Col>
+            </Row>
+            {loans.length === 0 && (
+              <div className="text-info-100 fw-200 mt-16">
+                No loans found for this borrower. Covenants are set at the loan level.
+              </div>
+            )}
+            {loans.length > 0 && !covenantData.debtServiceCovenant && !covenantData.liquidityRatioCovenant && !covenantData.currentRatioCovenant && !covenantData.liquidityCovenant && (
+              <div className="text-info-100 fw-200 mt-16">
+                <div className="mb-8">No covenant thresholds have been set for this borrower's loans.</div>
+                <div className="small text-info-200">
+                  Covenant values are set at the loan level. Once covenants are configured on the borrower's loans, they will appear here.
+                </div>
+              </div>
+            )}
+          </UniversalCard>
         );
 
       case 'debtService':
@@ -701,6 +865,13 @@ const BorrowerDetail = () => {
 
       {/* Document Modals */}
       <DeleteBorrowerDocumentModal />
+
+      {/* Spreadsheet Modal */}
+      <FinancialSpreadsheetModal
+        show={showSpreadsheetModal}
+        onHide={() => setShowSpreadsheetModal(false)}
+        borrowerId={borrowerId}
+      />
     </Container>
   );
 };

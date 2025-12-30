@@ -5,7 +5,7 @@ import { faMagic, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import FileUploader from '@src/components/global/FileUploader';
 import { $borrowerFinancialsForm } from '@src/signals';
-import { normalizeCurrencyValue } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
+import { normalizeCurrencyValue, normalizeCurrencyValueNoCents } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
 
 const DocumentsTab = ({
   pdfUrl,
@@ -256,31 +256,19 @@ const DocumentsTab = ({
             <Row>
               <Col md={12} className="mb-16">
                 <UniversalInput
-                  label="Total Current Assets"
+                  label="Equity"
                   labelClassName="text-info-100"
                   type="currency"
                   placeholder="$ USD"
-                  value={$borrowerFinancialsForm.value.totalCurrentAssets}
-                  name="totalCurrentAssets"
+                  value={$borrowerFinancialsForm.value.equity}
+                  name="equity"
                   signal={$borrowerFinancialsForm}
                   inputFormatCallback={normalizeCurrencyValue}
                 />
               </Col>
               <Col md={12} className="mb-16">
                 <UniversalInput
-                  label="Total Current Liabilities"
-                  labelClassName="text-info-100"
-                  type="currency"
-                  placeholder="$ USD"
-                  value={$borrowerFinancialsForm.value.totalCurrentLiabilities}
-                  name="totalCurrentLiabilities"
-                  signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValue}
-                />
-              </Col>
-              <Col md={12} className="mb-16">
-                <UniversalInput
-                  label="Cash"
+                  label="Cash (Including Cash Equivalents)"
                   labelClassName="text-info-100"
                   type="currency"
                   placeholder="$ USD"
@@ -304,24 +292,36 @@ const DocumentsTab = ({
               </Col>
               <Col md={12} className="mb-16">
                 <UniversalInput
-                  label="Equity"
-                  labelClassName="text-info-100"
-                  type="currency"
-                  placeholder="$ USD"
-                  value={$borrowerFinancialsForm.value.equity}
-                  name="equity"
-                  signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValue}
-                />
-              </Col>
-              <Col md={12} className="mb-16">
-                <UniversalInput
                   label="Accounts Receivable"
                   labelClassName="text-info-100"
                   type="currency"
                   placeholder="$ USD"
                   value={$borrowerFinancialsForm.value.accountsReceivable}
                   name="accountsReceivable"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValue}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Inventory"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.inventory}
+                  name="inventory"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValue}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Total Current Assets"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.totalCurrentAssets}
+                  name="totalCurrentAssets"
                   signal={$borrowerFinancialsForm}
                   inputFormatCallback={normalizeCurrencyValue}
                 />
@@ -340,12 +340,12 @@ const DocumentsTab = ({
               </Col>
               <Col md={12} className="mb-16">
                 <UniversalInput
-                  label="Inventory"
+                  label="Total Current Liabilities"
                   labelClassName="text-info-100"
                   type="currency"
                   placeholder="$ USD"
-                  value={$borrowerFinancialsForm.value.inventory}
-                  name="inventory"
+                  value={$borrowerFinancialsForm.value.totalCurrentLiabilities}
+                  name="totalCurrentLiabilities"
                   signal={$borrowerFinancialsForm}
                   inputFormatCallback={normalizeCurrencyValue}
                 />
@@ -365,7 +365,7 @@ const DocumentsTab = ({
                   value={$borrowerFinancialsForm.value.grossRevenue}
                   name="grossRevenue"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValue}
+                  inputFormatCallback={normalizeCurrencyValueNoCents}
                 />
               </Col>
               <Col md={12} className="mb-16">
@@ -377,7 +377,7 @@ const DocumentsTab = ({
                   value={$borrowerFinancialsForm.value.netIncome}
                   name="netIncome"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValue}
+                  inputFormatCallback={normalizeCurrencyValueNoCents}
                 />
               </Col>
               <Col md={12} className="mb-16">
@@ -389,7 +389,7 @@ const DocumentsTab = ({
                   value={$borrowerFinancialsForm.value.ebitda}
                   name="ebitda"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValue}
+                  inputFormatCallback={normalizeCurrencyValueNoCents}
                 />
               </Col>
               <Col md={12} className="mb-16">
@@ -401,7 +401,7 @@ const DocumentsTab = ({
                   value={$borrowerFinancialsForm.value.rentalExpenses}
                   name="rentalExpenses"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValue}
+                  inputFormatCallback={normalizeCurrencyValueNoCents}
                 />
               </Col>
               <Col md={12} className="mb-16">

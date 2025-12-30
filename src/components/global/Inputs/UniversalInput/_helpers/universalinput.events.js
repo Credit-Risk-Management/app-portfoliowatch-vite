@@ -60,6 +60,34 @@ export const normalizeCurrencyValue = (value) => {
   return `${intPart || '0'}.${decimalPart}`;
 };
 
+// Normalize user input for currency fields without cents (whole numbers only):
+// - Strip non-digits (no decimal points allowed)
+// - Round any decimal values to whole numbers
+// - Avoid leading zeros where possible
+export const normalizeCurrencyValueNoCents = (value) => {
+  if (value === null || value === undefined) return '';
+
+  const stringValue = `${value}`;
+  
+  // If the value contains a decimal point, parse it as a number and round to nearest integer
+  if (stringValue.includes('.')) {
+    const numValue = parseFloat(stringValue);
+    if (!Number.isNaN(numValue)) {
+      return Math.round(numValue).toString();
+    }
+  }
+  
+  // Remove all non-digit characters
+  const cleaned = stringValue.replace(/\D/g, '');
+
+  if (!cleaned) return '';
+
+  // Remove leading zeros but keep at least one zero if that's all there is
+  const normalized = cleaned.replace(/^0+(?=\d)/, '') || '0';
+  
+  return normalized;
+};
+
 // Format a normalized numeric string for display as currency
 export const formatCurrencyDisplay = (value, currency = '$') => {
   if (value === null || value === undefined || value === '') return '';
