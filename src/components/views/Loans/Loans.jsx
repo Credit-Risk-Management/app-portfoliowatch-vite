@@ -19,7 +19,7 @@ import SelectInput from '@src/components/global/Inputs/SelectInput';
 import { WATCH_SCORE_OPTIONS } from '@src/consts/consts';
 import { handleSaveToReports, handleComputeWatchScores } from './_helpers/loans.events';
 import { loadReferenceData, fetchAndSetLoans } from './_helpers/loans.resolvers';
-import { formatDate } from './_helpers/loans.helpers';
+import { formatDate, getRelationshipManagerOptions } from './_helpers/loans.helpers';
 import * as loansConsts from './_helpers/loans.consts';
 
 const Loans = () => {
@@ -158,10 +158,7 @@ const Loans = () => {
               value={$loansFilter.value.relationshipManager}
               options={[
                 { value: '', label: 'All Managers' },
-                ...($relationshipManagers.value?.list || []).map((m) => ({
-                  value: m.id,
-                  label: m.name,
-                })),
+                ...getRelationshipManagerOptions($relationshipManagers.value?.list || []),
               ]}
               onChange={() => $loansFilter.update({ page: 1 })}
               placeholder="All Managers"

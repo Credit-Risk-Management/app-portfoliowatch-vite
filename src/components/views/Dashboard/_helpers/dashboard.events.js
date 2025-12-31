@@ -33,6 +33,9 @@ export const handlePieClick = (data, navigate) => {
   }
 
   // Navigate if we have a valid rating (1-5, not null/undefined)
+  if (rating === null || rating === undefined) {
+    navigate('/loans?watchScore=1');
+  }
   if (rating !== null && rating !== undefined && rating >= 1 && rating <= 5) {
     navigate(`/loans?watchScore=${rating}`);
   }

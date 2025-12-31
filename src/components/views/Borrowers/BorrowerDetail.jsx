@@ -1,21 +1,21 @@
 /* eslint-disable react/no-danger */
 /* eslint-disable react-hooks/exhaustive-deps */
+import axios from 'axios';
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Row, Col, Button, ListGroup, Badge } from 'react-bootstrap';
+import { Container, Row, Col, Button, Badge } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faArrowRight, faEdit, faMagic, faEnvelope, faPhone, faChartLine, faFileAlt, faCopy, faCheck, faUser, faAddressBook, faMoneyBillWave, faDollarSign, faIndustry, faStickyNote, faEye, faTrash, faFile, faReceipt, faShieldAlt, faTable } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faArrowRight, faEdit, faMagic, faChartLine, faFileAlt, faCopy, faCheck, faUser, faMoneyBillWave, faDollarSign, faIndustry, faStickyNote, faEye, faTrash, faFile, faReceipt, faTable } from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';
 import UniversalCard from '@src/components/global/UniversalCard';
 import SignalTable from '@src/components/global/SignalTable';
 import ContextMenu from '@src/components/global/ContextMenu';
-import { $borrower, WATCH_SCORE_OPTIONS } from '@src/consts/consts';
-import { $contacts, $borrowerFinancialsView, $borrowerFinancials, $documents, $documentsView } from '@src/signals';
+import { $borrower } from '@src/consts/consts';
+import { $borrowerFinancialsView, $borrowerFinancials, $documents, $documentsView } from '@src/signals';
 import { formatCurrency } from '@src/utils/formatCurrency';
+import { auth } from '@src/utils/firebase';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
-import { successAlert } from '@src/components/global/Alert/_helpers/alert.events';
-import { formatDate as formatLoanDate, formatRatio, getCovenantStatus } from '@src/components/views/Loans/_helpers/loans.helpers';
-import { TABLE_HEADERS } from '@src/components/views/Loans/_helpers/loans.consts';
+import { dangerAlert, successAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import { EditLoanModal, DeleteLoanModal } from '@src/components/views/Loans/_components';
 import { handleDownloadDocument } from '@src/components/views/Documents/_helpers/documents.events';
 import { formatFileSize, formatUploadDate, getLoanNumber } from '@src/components/views/Documents/_helpers/documents.helpers';
@@ -23,21 +23,16 @@ import { TABLE_HEADERS as DOCUMENTS_TABLE_HEADERS } from '@src/components/views/
 import SubmitFinancialsModal from './_components/SubmitFinancialsModal';
 import EditBorrowerDetailModal from './_components/EditBorrowerDetailModal';
 import DebtServiceTab from './_components/DebtServiceTab';
-import { handleOpenEditMode } from './_components/submitFinancialsModal.handlers';
 import {
   formatDate,
   formatAddress,
   formatPhoneNumber,
   formatEmail,
-  getContactName,
   getHealthScoreColor,
   renderMarkdownLinks,
 } from './_helpers/borrowerDetail.helpers';
-import { getBorrowerTypeLabel } from './_helpers/borrowers.helpers';
 import {
   $borrowerDetailView,
-  $borrowerLoansFilter,
-  $borrowerLoansView,
   $borrowerFinancialsFilter,
   $borrowerFinancialsTableView,
   $borrowerDocumentsFilter,
@@ -46,14 +41,13 @@ import {
 import { fetchBorrowerDetail, fetchBorrowerDocuments } from './_helpers/borrowerDetail.resolvers';
 import { handleGenerateIndustryReport, handleGenerateAnnualReview } from './_helpers/borrowerDetail.events';
 import DeleteBorrowerDocumentModal from './_components/DeleteBorrowerDocumentModal';
-import FinancialSpreadsheetModal from './_components/FinancialSpreadsheetModal';
 
 const BorrowerDetail = () => {
   const { borrowerId } = useParams();
   const navigate = useNavigate();
   const [copiedLink, setCopiedLink] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
-  const [showSpreadsheetModal, setShowSpreadsheetModal] = useState(false);
+  const [isExportingExcel, setIsExportingExcel] = useState(false);
 
   // Fetch borrower detail and relationship managers on mount or when borrowerId changes
   useEffect(() => {
@@ -68,9 +62,9 @@ const BorrowerDetail = () => {
     return `${baseUrl}/upload-financials/${borrower.borrowerId}`;
   }, [borrower?.borrowerId]);
 
-  // Fetch financial history when financials or covenants tab is active
+  // Fetch financial history when financials tab is active
   useEffect(() => {
-    if ((activeTab === 'financials' || activeTab === 'covenants') && $borrower.value?.borrower?.id) {
+    if (activeTab === 'financials' && $borrower.value?.borrower?.id) {
       fetchFinancialHistory();
     }
   }, [activeTab, $borrower.value?.borrower?.id, $borrowerFinancialsFilter.value, $borrowerFinancialsView.value.refreshTrigger]);
@@ -145,15 +139,58 @@ const BorrowerDetail = () => {
     }
   };
 
+  const handleExportExcel = async () => {
+    if (!borrowerId) return;
+
+    try {
+      setIsExportingExcel(true);
+
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3333';
+
+      const user = auth.currentUser;
+      let token = '';
+      if (user) {
+        token = await user.getIdToken();
+      }
+
+      const response = await axios.get(`${API_BASE_URL}/borrowers/${borrowerId}/financials/spreadsheet/excel`, {
+        responseType: 'blob',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response && response.data) {
+        const blob = new Blob([response.data], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `financial-spreadsheet-${borrowerId}-${new Date().toISOString().split('T')[0]}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        successAlert('Excel file exported successfully!');
+      } else {
+        throw new Error('Invalid response from server');
+      }
+    } catch (error) {
+      console.error('Error exporting Excel:', error);
+      dangerAlert('Failed to export Excel file');
+    } finally {
+      setIsExportingExcel(false);
+    }
+  };
+
   // Reset component state when the borrower changes
   useEffect(() => {
     // Component state reset if needed
   }, [borrowerId]);
 
   const loans = useMemo(() => borrower?.loans || [], [borrower?.loans]);
-
-  // Filter table headers - remove borrowerName since we're already on borrower page, and remove actions
-  const loansTableHeaders = TABLE_HEADERS.filter((header) => header.key !== 'borrowerName' && header.key !== 'actions');
 
   // Financials table headers
   const financialsTableHeaders = [
@@ -207,28 +244,6 @@ const BorrowerDetail = () => {
     [$borrowerFinancials.value?.list],
   );
 
-  // Transform loans into table rows
-  const loansTableRows = useMemo(
-    () => loans.map((loan) => ({
-      ...loan,
-      loanId: loan.loanId || loan.loanNumber || loan.id || '-',
-      borrowerName: loan.borrowerName || '-',
-      principalAmount: loan.principalAmount ? formatCurrency(loan.principalAmount) : '-',
-      paymentAmount: loan.paymentAmount ? formatCurrency(loan.paymentAmount) : '-',
-      nextPaymentDueDate: loan.nextPaymentDueDate ? formatLoanDate(loan.nextPaymentDueDate) : '-',
-      liquidity: loan.liquidity ? formatCurrency(loan.liquidity) : '-',
-      watchScore: () => {
-        const score = WATCH_SCORE_OPTIONS[loan.watchScore];
-        if (!score) {
-          return <span className="text-info-100 fw-700">-</span>;
-        }
-        return <span className={`text-${score.color}-200 fw-700`}>{score.label}</span>;
-      },
-      relationshipManager: loan.relationshipManager ? (loan.relationshipManager.name || '-') : '-',
-    })),
-    [loans, navigate],
-  );
-
   // Transform documents into table rows
   const documentsTableRows = useMemo(
     () => {
@@ -260,77 +275,6 @@ const BorrowerDetail = () => {
     [$documents.value?.list, loans],
   );
 
-  // Compute covenant data from borrower loans and latest financials
-  const covenantData = useMemo(() => {
-    if (!borrower || !loans || loans.length === 0) {
-      return {
-        debtServiceCovenant: null,
-        liquidityRatioCovenant: null,
-        currentRatioCovenant: null,
-        liquidityCovenant: null,
-        actualDebtService: null,
-        actualLiquidityRatio: null,
-        actualCurrentRatio: null,
-        actualLiquidity: null,
-      };
-    }
-
-    // Get latest financial data (most recent from financials list)
-    const financialsList = $borrowerFinancials.value?.list || [];
-    const latestFinancial = financialsList.length > 0 
-      ? financialsList[0] 
-      : null;
-
-    // Aggregate covenants from all loans - take the most restrictive (lowest) covenant value
-    // For ratios, lower is more restrictive. For liquidity amount, lower is more restrictive.
-    let debtServiceCovenant = null;
-    let liquidityRatioCovenant = null;
-    let currentRatioCovenant = null;
-    let liquidityCovenant = null;
-
-    loans.forEach((loan) => {
-      // Handle debtServiceCovenant
-      if (loan.debtServiceCovenant != null && loan.debtServiceCovenant !== '') {
-        const value = parseFloat(loan.debtServiceCovenant);
-        if (!isNaN(value) && (!debtServiceCovenant || value < debtServiceCovenant)) {
-          debtServiceCovenant = value;
-        }
-      }
-      // Handle liquidityRatioCovenant
-      if (loan.liquidityRatioCovenant != null && loan.liquidityRatioCovenant !== '') {
-        const value = parseFloat(loan.liquidityRatioCovenant);
-        if (!isNaN(value) && (!liquidityRatioCovenant || value < liquidityRatioCovenant)) {
-          liquidityRatioCovenant = value;
-        }
-      }
-      // Handle currentRatioCovenant
-      if (loan.currentRatioCovenant != null && loan.currentRatioCovenant !== '') {
-        const value = parseFloat(loan.currentRatioCovenant);
-        if (!isNaN(value) && (!currentRatioCovenant || value < currentRatioCovenant)) {
-          currentRatioCovenant = value;
-        }
-      }
-      // Handle liquidityCovenant
-      if (loan.liquidityCovenant != null && loan.liquidityCovenant !== '') {
-        const value = parseFloat(loan.liquidityCovenant);
-        if (!isNaN(value) && (!liquidityCovenant || value < liquidityCovenant)) {
-          liquidityCovenant = value;
-        }
-      }
-    });
-
-    return {
-      debtServiceCovenant,
-      liquidityRatioCovenant,
-      currentRatioCovenant,
-      liquidityCovenant,
-      actualDebtService: latestFinancial?.debtService ? parseFloat(latestFinancial.debtService) : null,
-      actualLiquidityRatio: latestFinancial?.liquidityRatio ? parseFloat(latestFinancial.liquidityRatio) : null,
-      actualCurrentRatio: latestFinancial?.currentRatio ? parseFloat(latestFinancial.currentRatio) : null,
-      actualLiquidity: latestFinancial?.liquidity ? parseFloat(latestFinancial.liquidity) : null,
-    };
-  }, [borrower, loans, $borrowerFinancials.value?.list]);
-
   if ($borrower.value?.isLoading) {
     return (
       <Container fluid className="py-24">
@@ -354,14 +298,12 @@ const BorrowerDetail = () => {
     );
   }
 
-  const contacts = $contacts.value?.list || [];
-
   const tabs = [
     { key: 'details', title: 'Details', icon: faUser },
     // { key: 'contacts', title: 'Contacts', icon: faAddressBook },
     { key: 'loans', title: 'Loans', icon: faMoneyBillWave },
     { key: 'financials', title: 'Financials', icon: faDollarSign },
-    { key: 'covenants', title: 'Covenants', icon: faShieldAlt },
+    // { key: 'covenants', title: 'Covenants', icon: faShieldAlt },
     { key: 'debtService', title: 'Debt Service', icon: faReceipt },
     { key: 'documents', title: 'Documents', icon: faFile },
     { key: 'industry', title: 'Industry Analysis', icon: faIndustry },
@@ -375,7 +317,7 @@ const BorrowerDetail = () => {
           <UniversalCard headerText="Borrower Details">
             <div>
               <div className="text-info-100 fw-200 mt-8">Borrower Type</div>
-              <div className="text-info-50 lead fw-500">{getBorrowerTypeLabel(borrower.borrowerType)}</div>
+              <div className="text-info-50 lead fw-500">{borrower.borrowerType || 'N/A'}</div>
 
               <div className="text-info-100 fw-200 mt-16">Primary Contact</div>
               <div className="text-info-50 lead fw-500">{borrower.primaryContact || 'N/A'}</div>
@@ -456,65 +398,43 @@ const BorrowerDetail = () => {
           </UniversalCard>
         );
 
-      // case 'contacts':
-      //   return (
-      //     <UniversalCard headerText="Contacts">
-      //       <div>
-      //         {contacts.length === 0 ? (
-      //           <div className="text-info-100 fw-200">No contacts found for this borrower.</div>
-      //         ) : (
-      //           <ListGroup variant="flush">
-      //             {contacts.map((contact) => (
-      //               <ListGroup.Item key={contact.id} className="px-0">
-      //                 <div className="d-flex justify-content-between align-items-start">
-      //                   <div>
-      //                     <div className="fw-bold text-white">
-      //                       {getContactName(contact)}
-      //                       {contact.isPrimary && (
-      //                         <Badge bg="primary-100" className="ms-8">Primary</Badge>
-      //                       )}
-      //                     </div>
-      //                     {contact.title && (
-      //                       <div className="small text-info-100">{contact.title}</div>
-      //                     )}
-      //                     {contact.email && (
-      //                       <div className="small text-info-50 mt-4">
-      //                         <FontAwesomeIcon icon={faEnvelope} className="me-4" />
-      //                         {contact.email}
-      //                       </div>
-      //                     )}
-      //                     {contact.phone && (
-      //                       <div className="small text-info-50">
-      //                         <FontAwesomeIcon icon={faPhone} className="me-4" />
-      //                         {contact.phone}
-      //                       </div>
-      //                     )}
-      //                   </div>
-      //                 </div>
-      //               </ListGroup.Item>
-      //             ))}
-      //           </ListGroup>
-      //         )}
-      //       </div>
-      //     </UniversalCard>
-      //   );
-
       case 'loans':
         return (
           <div>
             {loans.length === 0 ? (
               <div className="text-info-100 fw-200">No loans found for this borrower.</div>
             ) : (
-              <SignalTable
-                $filter={$borrowerLoansFilter}
-                $view={$borrowerLoansView}
-                headers={loansTableHeaders}
-                rows={loansTableRows}
-                totalCount={loans.length}
-                currentPage={$borrowerLoansFilter.value.page}
-                itemsPerPageAmount={10}
-                onRowClick={(loan) => navigate(`/loans/${loan.id}`)}
-              />
+              <div>
+                {loans.map((loan) => (
+                  <UniversalCard key={loan.id} headerText={`Loan: ${loan.loanId || loan.loanNumber || loan.id || 'N/A'}`}>
+                    <div>
+                      <div className="text-info-100 fw-200 mt-8">Principal Amount</div>
+                      <div className="text-info-50 lead fw-500">{loan.principalAmount ? formatCurrency(loan.principalAmount) : 'N/A'}</div>
+
+                      <div className="text-info-100 fw-200 mt-16">Payment Amount</div>
+                      <div className="text-info-50 lead fw-500">{loan.paymentAmount ? formatCurrency(loan.paymentAmount) : 'N/A'}</div>
+
+                      {loan.nextPaymentDueDate && (
+                        <>
+                          <div className="text-info-100 fw-200 mt-16">Next Payment Due Date</div>
+                          <div className="text-info-50 lead fw-500">{formatDate(loan.nextPaymentDueDate)}</div>
+                        </>
+                      )}
+
+                      <div className="mt-16">
+                        <Button
+                          variant="outline-primary-100"
+                          size="sm"
+                          onClick={() => navigate(`/loans/${loan.id}`)}
+                        >
+                          View Loan Details
+                          <FontAwesomeIcon icon={faArrowRight} className="ms-8" />
+                        </Button>
+                      </div>
+                    </div>
+                  </UniversalCard>
+                ))}
+              </div>
             )}
           </div>
         );
@@ -550,12 +470,13 @@ const BorrowerDetail = () => {
                 </Button>
                 <Button
                   variant="outline-primary-100"
-                  onClick={() => setShowSpreadsheetModal(true)}
+                  onClick={handleExportExcel}
+                  disabled={isExportingExcel}
                   size="sm"
                   className="ms-8"
                 >
                   <FontAwesomeIcon icon={faTable} className="me-8" />
-                  Display Spreadsheet
+                  {isExportingExcel ? 'Exporting...' : 'Export Spreadsheet'}
                 </Button>
               </div>
             </div>
@@ -588,99 +509,16 @@ const BorrowerDetail = () => {
                   currentPage={$borrowerFinancialsFilter.value.page}
                   itemsPerPageAmount={10}
                   onRowClick={(financial) => {
-                    // Get the original financial data from the list (not the formatted table row)
-                    const originalFinancial = $borrowerFinancials.value?.list?.find(
-                      (f) => f.id === financial.id,
-                    );
-                    if (originalFinancial) {
-                      handleOpenEditMode(originalFinancial);
-                    }
+                    $borrowerFinancialsView.update({
+                      showSubmitModal: true,
+                      currentBorrowerId: borrower.id,
+                      editingFinancialId: financial.id,
+                    });
                   }}
                 />
               );
             })()}
           </div>
-        );
-
-      case 'covenants':
-        return (
-          <UniversalCard headerText="Covenants" bodyContainer="container-fluid">
-            <Row>
-              <Col xs={12} md={6} className="mb-12 mb-md-0">
-                <div className="text-info-100 fw-200 mt-16 mb-4">Debt Service Coverage</div>
-                <div>
-                  <span className="text-info-50 fw-500 me-8">Actual:</span>
-                  <span className={`fs-5 fw-bold text-${getCovenantStatus(covenantData.actualDebtService, covenantData.debtServiceCovenant).variant}`}>
-                    {formatRatio(covenantData.actualDebtService)}
-                  </span>
-                </div>
-                <div className="mb-8">
-                  <span className="text-info-50 fw-500 me-8">Covenant:</span>
-                  <span className="fs-5 fw-bold text-secondary-200">
-                    {formatRatio(covenantData.debtServiceCovenant)}
-                  </span>
-                </div>
-              </Col>
-              <Col xs={12} md={6} className="mb-12 mb-md-0">
-                <div className="text-info-100 fw-200 mt-16 mb-4">Liquidity Ratio</div>
-                <div>
-                  <span className="text-info-50 fw-500 me-8">Actual:</span>
-                  <span className={`fs-5 fw-bold text-${getCovenantStatus(covenantData.actualLiquidityRatio, covenantData.liquidityRatioCovenant).variant}`}>
-                    {formatRatio(covenantData.actualLiquidityRatio)}
-                  </span>
-                </div>
-                <div className="mb-8">
-                  <span className="text-info-50 fw-500 me-8">Covenant:</span>
-                  <span className="fs-5 fw-bold text-secondary-200">
-                    {formatRatio(covenantData.liquidityRatioCovenant)}
-                  </span>
-                </div>
-              </Col>
-              <Col xs={12} md={6} className="mb-12 mb-md-0">
-                <div className="text-info-100 fw-200 mt-16 mb-4">Current Ratio</div>
-                <div>
-                  <span className="text-info-50 fw-500 me-8">Actual:</span>
-                  <span className={`fs-5 fw-bold text-${getCovenantStatus(covenantData.actualCurrentRatio, covenantData.currentRatioCovenant).variant}`}>
-                    {formatRatio(covenantData.actualCurrentRatio)}
-                  </span>
-                </div>
-                <div className="mb-8">
-                  <span className="text-info-50 fw-500 me-8">Covenant:</span>
-                  <span className="fs-5 fw-bold text-secondary-200">
-                    {formatRatio(covenantData.currentRatioCovenant)}
-                  </span>
-                </div>
-              </Col>
-              <Col xs={12} md={6} className="mb-12 mb-md-0">
-                <div className="text-info-100 fw-200 mt-16 mb-4">Liquidity Total</div>
-                <div>
-                  <span className="text-info-50 fw-500 me-8">Actual:</span>
-                  <span className={`fs-5 fw-bold text-${getCovenantStatus(covenantData.actualLiquidity, covenantData.liquidityCovenant).variant}`}>
-                    {formatCurrency(covenantData.actualLiquidity)}
-                  </span>
-                </div>
-                <div className="mb-8">
-                  <span className="text-info-50 fw-500 me-8">Covenant:</span>
-                  <span className="fs-5 fw-bold text-secondary-200">
-                    {formatCurrency(covenantData.liquidityCovenant)}
-                  </span>
-                </div>
-              </Col>
-            </Row>
-            {loans.length === 0 && (
-              <div className="text-info-100 fw-200 mt-16">
-                No loans found for this borrower. Covenants are set at the loan level.
-              </div>
-            )}
-            {loans.length > 0 && !covenantData.debtServiceCovenant && !covenantData.liquidityRatioCovenant && !covenantData.currentRatioCovenant && !covenantData.liquidityCovenant && (
-              <div className="text-info-100 fw-200 mt-16">
-                <div className="mb-8">No covenant thresholds have been set for this borrower's loans.</div>
-                <div className="small text-info-200">
-                  Covenant values are set at the loan level. Once covenants are configured on the borrower's loans, they will appear here.
-                </div>
-              </div>
-            )}
-          </UniversalCard>
         );
 
       case 'debtService':
@@ -836,8 +674,7 @@ const BorrowerDetail = () => {
                 }}
                 className={`d-flex align-items-center p-8 mb-8 rounded cursor-pointer ${activeTab === tab.key
                   ? 'bg-info-100 text-info-900 fw-bold'
-                  : 'text-info-100 hover-bg-info-700'
-                }`}
+                  : 'text-info-100 hover-bg-info-700'}`}
                 style={{
                   transition: 'background-color 0.2s ease',
                 }}
@@ -865,13 +702,6 @@ const BorrowerDetail = () => {
 
       {/* Document Modals */}
       <DeleteBorrowerDocumentModal />
-
-      {/* Spreadsheet Modal */}
-      <FinancialSpreadsheetModal
-        show={showSpreadsheetModal}
-        onHide={() => setShowSpreadsheetModal(false)}
-        borrowerId={borrowerId}
-      />
     </Container>
   );
 };

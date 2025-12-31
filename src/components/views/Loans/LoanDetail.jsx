@@ -23,7 +23,6 @@ import {
   getHealthScoreColor,
   renderMarkdownLinks,
 } from './_helpers/loans.helpers';
-import { getBorrowerTypeLabel } from '@src/components/views/Borrowers/_helpers/borrowers.helpers';
 import {
   $loanDetailNewComment,
   $loanDetailShowSecondaryContacts,
@@ -214,7 +213,7 @@ const LoanDetail = () => {
                       <div className="text-info-100 fw-200 mt-8">Borrower ID</div>
                       <div className="text-info-50 lead fw-500">{$loan.value?.loan?.borrower.borrowerId || 'Unknown'}</div>
                       <div className="text-info-100 fw-200 mt-8">Borrower Type</div>
-                      <div className="text-info-50 lead fw-500">{getBorrowerTypeLabel($loan.value?.loan?.borrower.borrowerType)}</div>
+                      <div className="text-info-50 lead fw-500">{$loan.value?.loan?.borrower.borrowerType || 'N/A'}</div>
                       <div className="text-info-100 fw-200 mt-8">Primary Contact</div>
                       <div className="text-info-50 lead fw-500">{$loan.value?.loan?.borrower.primaryContact || 'N/A'}</div>
                       <div className="text-info-100 fw-200 mt-8">Email</div>
@@ -438,7 +437,7 @@ const LoanDetail = () => {
                   </div>
                   <div className="mt-16 pt-16 border-top">
                     <div className="d-flex justify-content-between align-items-center">
-                      <div className="text-info-100 fw-bold">Latest Total Collateral Value:</div>
+                      <div className="text-info-100 fw-bold">Latest Net Collateral Value:</div>
                       <div className="text-success-500 fs-5 fw-bold">
                         {formatCurrency(
                           $loanDetailCollateral.value.length > 0

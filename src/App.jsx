@@ -8,7 +8,6 @@ import Borrowers from '@src/components/views/Borrowers';
 import BorrowerDetail from '@src/components/views/Borrowers/BorrowerDetail';
 import Loans from '@src/components/views/Loans';
 import LoanDetail from '@src/components/views/Loans/LoanDetail';
-import Documents from '@src/components/views/Documents';
 import Reports from '@src/components/views/Reports';
 import Managers from '@src/components/views/Managers';
 import ManagerDetail from '@src/components/views/Managers/ManagerDetail';
@@ -62,7 +61,7 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/borrowers" element={<Borrowers />} />
               <Route path="/borrowers/:borrowerId" element={<BorrowerDetail />} />
-              <Route path="/documents" element={<Documents />} />
+              {/* <Route path="/documents" element={<Documents />} /> */}
               <Route path="/reports" element={<Reports />} />
               <Route path="/relationship-managers" element={<Managers />} />
               <Route path="/relationship-managers/:managerId" element={<ManagerDetail />} />
