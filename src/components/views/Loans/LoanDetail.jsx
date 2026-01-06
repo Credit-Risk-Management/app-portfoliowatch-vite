@@ -173,38 +173,8 @@ const LoanDetail = () => {
             <LoanRadarChart />
           </Col>
           <Col xs={12} md={3} className="mb-12 mb-md-16">
-            <UniversalCard headerText="Relationship Manager(s)">
+            <UniversalCard headerText="Borrower Details">
               <div style={{ height: '982px' }}>
-                <div className="text-info-100 fw-200 mt-8">Relationship Manager</div>
-                <div className="text-info-50 lead fw-500">
-                  {$loan.value?.loan?.relationshipManager ? (
-                    <Button
-                      variant="link"
-                      className="p-0 text-secondary-100 lead fw-500 text-start text-decoration-none"
-                      onClick={() => navigate(`/relationship-managers/${$loan.value?.loan?.relationshipManager.id}`)}
-                    >
-                      {$loan.value?.loan?.relationshipManager.name}
-                      <FontAwesomeIcon icon={faArrowRight} className="ms-4" size="xs" />
-                    </Button>
-                  ) : (
-                    'Unknown'
-                  )}
-                </div>
-                {$loan.value?.loan?.relationshipManager && (
-                  <>
-                    <div className="text-info-100 fw-200 mt-8">Position</div>
-                    <div className="text-info-50 lead fw-500">{$loan.value?.loan?.relationshipManager.positionTitle}</div>
-                    <div className="text-info-100 fw-200 mt-8">Email</div>
-                    <div className="text-info-50 lead fw-500">
-                      {$loan.value?.loan?.relationshipManager.email}
-                    </div>
-                    <div className="text-info-100 fw-200 mt-8">Phone</div>
-                    <div className="text-info-50 lead fw-500">
-                      {$loan.value?.loan?.relationshipManager.phone}
-                    </div>
-                  </>
-                )}
-                <div className="mt-16 lead">Borrower Details</div>
                 <div>
                   {$loan.value?.loan?.borrower ? (
                     <>
@@ -227,7 +197,7 @@ const LoanDetail = () => {
                           : 'N/A'}
                       </div>
                       <div className="text-info-100 fw-200 mt-8">Borrower Fiscal Year End</div>
-                      <div className="text-info-50 lead fw-500">12/31/2025</div>
+                      <div className="text-info-50 lead fw-500">12/31/XXXX</div>
                     </>
                   ) : (
                     <div className="text-info-50">Borrower information not available</div>
@@ -263,6 +233,37 @@ const LoanDetail = () => {
                           ))}
                         </div>
                       </Collapse>
+                    </>
+                  )}
+                </div>
+                <div className="mt-16">
+                  <div className="text-info-100 fw-200 mt-8">Relationship Manager</div>
+                  <div className="text-info-50 lead fw-500">
+                    {$loan.value?.loan?.relationshipManager ? (
+                      <Button
+                        variant="link"
+                        className="p-0 text-secondary-100 lead fw-500 text-start text-decoration-none"
+                        onClick={() => navigate(`/relationship-managers/${$loan.value?.loan?.relationshipManager.id}`)}
+                      >
+                        {$loan.value?.loan?.relationshipManager.name}
+                        <FontAwesomeIcon icon={faArrowRight} className="ms-4" size="xs" />
+                      </Button>
+                    ) : (
+                      'Unknown'
+                    )}
+                  </div>
+                  {$loan.value?.loan?.relationshipManager && (
+                    <>
+                      <div className="text-info-100 fw-200 mt-8">Position</div>
+                      <div className="text-info-50 lead fw-500">{$loan.value?.loan?.relationshipManager.positionTitle}</div>
+                      <div className="text-info-100 fw-200 mt-8">Email</div>
+                      <div className="text-info-50 lead fw-500">
+                        {$loan.value?.loan?.relationshipManager.email}
+                      </div>
+                      <div className="text-info-100 fw-200 mt-8">Phone</div>
+                      <div className="text-info-50 lead fw-500">
+                        {$loan.value?.loan?.relationshipManager.phone}
+                      </div>
                     </>
                   )}
                 </div>
@@ -396,56 +397,77 @@ const LoanDetail = () => {
               {$loanDetailCollateral.value && $loanDetailCollateral.value.length > 0 ? (
                 <div>
                   <div className="table-responsive">
-                    <table className="table table-hover">
-                      <thead>
+                    <table className="table table-hover" style={{ backgroundColor: 'transparent' }}>
+                      <thead className="bg-info-700">
                         <tr>
-                          <th className="text-info-100">As Of Date</th>
-                          <th className="text-info-100">Items</th>
-                          <th className="text-info-100 text-end">Total Value</th>
-                          <th className="text-info-100">Submitted By</th>
-                          <th className="text-info-100">Date Submitted</th>
+                          <th className="bg-info-700 text-info-50 fw-500">As of Date</th>
+                          <th className="bg-info-700 text-info-50 fw-500">Item</th>
+                          <th className="bg-info-700 text-info-50 fw-500 text-end">Value</th>
+                          <th className="bg-info-700 text-info-50 fw-500 text-end">Previous Liens</th>
+                          <th className="bg-info-700 text-info-50 fw-500 text-end">Net Value</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {$loanDetailCollateral.value.map((entry) => (
-                          <tr key={entry.id}>
-                            <td className="text-info-50">{formatDate(entry.asOfDate)}</td>
-                            <td className="text-info-50">
-                              <div className="small">
-                                {Array.isArray(entry.collateralItems) && entry.collateralItems.length > 0 ? (
-                                  <ul className="mb-0 ps-16">
-                                    {entry.collateralItems.map((item, idx) => (
-                                      <li key={idx}>
-                                        {item.description}: {formatCurrency(item.value)}
-                                      </li>
-                                    ))}
-                                  </ul>
-                                ) : (
-                                  <span className="text-muted">No items</span>
+                        {$loanDetailCollateral.value.map((entry) => {
+                          const collateralItems = Array.isArray(entry.collateralItems) ? entry.collateralItems : [];
+                          if (collateralItems.length === 0) {
+                            return (
+                              <tr key={entry.id}>
+                                <td className="text-info-50">{formatDate(entry.asOfDate)}</td>
+                                <td colSpan="4" className="text-info-50 text-center">No items</td>
+                              </tr>
+                            );
+                          }
+                          return collateralItems.map((item, idx) => {
+                            const previousLiens = item.previousLiens || 0;
+                            const netValue = (item.value || 0) - previousLiens;
+                            const isFirstItem = idx === 0;
+                            return (
+                              <tr key={`${entry.id}-${idx}`}>
+                                {isFirstItem && (
+                                  <td rowSpan={collateralItems.length} className="text-info-50 align-middle">
+                                    {formatDate(entry.asOfDate)}
+                                  </td>
                                 )}
-                              </div>
-                            </td>
-                            <td className="text-info-50 text-end fw-bold">
-                              {formatCurrency(entry.totalValue || 0)}
-                            </td>
-                            <td className="text-info-50">{entry.submittedBy || 'Unknown'}</td>
-                            <td className="text-info-50">{formatDate(entry.createdAt)}</td>
-                          </tr>
-                        ))}
+                                <td className="text-info-50">{item.description || 'N/A'}</td>
+                                <td className="text-info-50 text-end">{formatCurrency(item.value || 0)}</td>
+                                <td className="text-info-50 text-end">{formatCurrency(previousLiens)}</td>
+                                <td className="text-info-50 text-end fw-bold">{formatCurrency(netValue)}</td>
+                              </tr>
+                            );
+                          });
+                        })}
                       </tbody>
                     </table>
                   </div>
                   <div className="mt-16 pt-16 border-top">
-                    <div className="d-flex justify-content-between align-items-center">
-                      <div className="text-info-100 fw-bold">Latest Net Collateral Value:</div>
-                      <div className="text-success-500 fs-5 fw-bold">
-                        {formatCurrency(
-                          $loanDetailCollateral.value.length > 0
-                            ? ($loanDetailCollateral.value[0]?.totalValue || 0)
-                            : 0,
-                        )}
-                      </div>
-                    </div>
+                    {$loanDetailCollateral.value.length > 0 && (() => {
+                      const latestEntry = $loanDetailCollateral.value[0];
+                      const collateralItems = Array.isArray(latestEntry.collateralItems) ? latestEntry.collateralItems : [];
+                      const totalNetValue = collateralItems.reduce((sum, item) => {
+                        const previousLiens = item.previousLiens || 0;
+                        const netValue = (item.value || 0) - previousLiens;
+                        return sum + netValue;
+                      }, 0);
+                      const principalBalance = $loan.value?.loan?.principalAmount || 0;
+                      const collateralCoverage = principalBalance > 0 ? totalNetValue / principalBalance : 0;
+                      return (
+                        <>
+                          <div className="d-flex justify-content-between align-items-center mb-12">
+                            <div className="text-info-100 fw-bold">Net Value:</div>
+                            <div className="text-success-500 fs-5 fw-bold">
+                              {formatCurrency(totalNetValue)}
+                            </div>
+                          </div>
+                          <div className="d-flex justify-content-between align-items-center">
+                            <div className="text-info-100 fw-bold">Collateral Coverage:</div>
+                            <div className="text-info-50 fs-5 fw-bold">
+                              {formatRatio(collateralCoverage)}
+                            </div>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               ) : (
