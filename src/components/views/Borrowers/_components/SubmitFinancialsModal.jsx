@@ -16,6 +16,7 @@ import {
   handleSubmit as handleSubmitHelper,
   handleRemoveDocument as handleRemoveDocumentHelper,
   handleSwitchDocument as handleSwitchDocumentHelper,
+  handleOpenEditMode as handleOpenEditModeHelper,
 } from './submitFinancialsModal.handlers';
 import { $financialDocsUploader, $modalState } from './submitFinancialsModal.signals';
 
@@ -31,6 +32,22 @@ const SubmitFinancialsModal = () => {
     previousFinancial,
     isLoadingPrevious,
   } = $modalState.value;
+
+  // Load financial data when opening in edit mode
+  useEffectAsync(async () => {
+    const { showSubmitModal, isEditMode, editingFinancialId } = $borrowerFinancialsView.value;
+    if (showSubmitModal && isEditMode && editingFinancialId) {
+      try {
+        const response = await borrowerFinancialsApi.getById(editingFinancialId);
+        if (response.success && response.data) {
+          await handleOpenEditModeHelper(response.data, $modalState);
+        }
+      } catch (err) {
+        console.error('Error loading financial data for editing:', err);
+        $modalState.update({ error: 'Failed to load financial data for editing' });
+      }
+    }
+  }, [$borrowerFinancialsView.value.showSubmitModal, $borrowerFinancialsView.value.isEditMode, $borrowerFinancialsView.value.editingFinancialId]);
 
   // Fetch previous quarter financial data when Triggers tab is activated
   useEffectAsync(async () => {

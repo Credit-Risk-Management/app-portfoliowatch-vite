@@ -1,6 +1,6 @@
 import { $borrowerFinancialsView, $borrowerFinancialsForm, $user } from '@src/signals';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
-import { successAlert } from '@src/components/global/Alert/_helpers/alert.events';
+import { successAlert, dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import generateMockFinancialData from '../_helpers/financials.helpers';
 
 /**
@@ -212,39 +212,77 @@ export const handleSubmit = async ($modalState, onCloseCallback) => {
       error: null,
     });
 
+    // Validate required fields
+    const borrowerId = $borrowerFinancialsView.value.currentBorrowerId;
+    const asOfDate = $borrowerFinancialsForm.value.asOfDate;
+    const organizationId = $user.value.organizationId;
+
+    if (!borrowerId) {
+      $modalState.update({ 
+        error: 'Borrower ID is required. Please select a borrower.',
+        isSubmitting: false,
+      });
+      return;
+    }
+
+    if (!asOfDate) {
+      $modalState.update({ 
+        error: 'As of Date is required. Please select a date.',
+        isSubmitting: false,
+      });
+      return;
+    }
+
+    if (!organizationId) {
+      $modalState.update({ 
+        error: 'Organization ID is required. Please ensure you are logged in.',
+        isSubmitting: false,
+      });
+      return;
+    }
+
+    // Helper to convert string values to numbers (or null if empty)
+    const toNumberOrNull = (value) => {
+      if (!value || value === '' || value === null || value === undefined) return null;
+      const num = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.-]/g, '')) : Number(value);
+      return Number.isNaN(num) ? null : num;
+    };
+
     const financialData = {
-      borrowerId: $borrowerFinancialsView.value.currentBorrowerId,
-      asOfDate: $borrowerFinancialsForm.value.asOfDate,
-      accountabilityScore: $borrowerFinancialsForm.value.accountabilityScore || null,
+      borrowerId,
+      asOfDate,
+      accountabilityScore: toNumberOrNull($borrowerFinancialsForm.value.accountabilityScore),
       // Income Statement
-      grossRevenue: $borrowerFinancialsForm.value.grossRevenue || null,
-      netIncome: $borrowerFinancialsForm.value.netIncome || null,
-      ebitda: $borrowerFinancialsForm.value.ebitda || null,
-      rentalExpenses: $borrowerFinancialsForm.value.rentalExpenses || null,
-      profitMargin: $borrowerFinancialsForm.value.profitMargin || null,
+      grossRevenue: toNumberOrNull($borrowerFinancialsForm.value.grossRevenue),
+      netIncome: toNumberOrNull($borrowerFinancialsForm.value.netIncome),
+      ebitda: toNumberOrNull($borrowerFinancialsForm.value.ebitda),
+      rentalExpenses: toNumberOrNull($borrowerFinancialsForm.value.rentalExpenses),
+      profitMargin: toNumberOrNull($borrowerFinancialsForm.value.profitMargin),
       // Balance Sheet
-      totalCurrentAssets: $borrowerFinancialsForm.value.totalCurrentAssets || null,
-      totalCurrentLiabilities: $borrowerFinancialsForm.value.totalCurrentLiabilities || null,
-      cash: $borrowerFinancialsForm.value.cash || null,
-      cashEquivalents: $borrowerFinancialsForm.value.cashEquivalents || null,
-      equity: $borrowerFinancialsForm.value.equity || null,
-      accountsReceivable: $borrowerFinancialsForm.value.accountsReceivable || null,
-      accountsPayable: $borrowerFinancialsForm.value.accountsPayable || null,
-      inventory: $borrowerFinancialsForm.value.inventory || null,
+      totalCurrentAssets: toNumberOrNull($borrowerFinancialsForm.value.totalCurrentAssets),
+      totalCurrentLiabilities: toNumberOrNull($borrowerFinancialsForm.value.totalCurrentLiabilities),
+      cash: toNumberOrNull($borrowerFinancialsForm.value.cash),
+      cashEquivalents: toNumberOrNull($borrowerFinancialsForm.value.cashEquivalents),
+      equity: toNumberOrNull($borrowerFinancialsForm.value.equity),
+      accountsReceivable: toNumberOrNull($borrowerFinancialsForm.value.accountsReceivable),
+      accountsPayable: toNumberOrNull($borrowerFinancialsForm.value.accountsPayable),
+      inventory: toNumberOrNull($borrowerFinancialsForm.value.inventory),
       // Debt Service (actual value, not covenant)
-      debtService: $borrowerFinancialsForm.value.debtService || null,
+      debtService: toNumberOrNull($borrowerFinancialsForm.value.debtService),
       // Current Ratio (actual value, not covenant)
-      currentRatio: $borrowerFinancialsForm.value.currentRatio || null,
+      currentRatio: toNumberOrNull($borrowerFinancialsForm.value.currentRatio),
       // Liquidity (actual values, not covenants)
-      liquidity: $borrowerFinancialsForm.value.liquidity || null,
-      liquidityRatio: $borrowerFinancialsForm.value.liquidityRatio || null,
-      retainedEarnings: $borrowerFinancialsForm.value.retainedEarnings || null,
+      liquidity: toNumberOrNull($borrowerFinancialsForm.value.liquidity),
+      liquidityRatio: toNumberOrNull($borrowerFinancialsForm.value.liquidityRatio),
+      retainedEarnings: toNumberOrNull($borrowerFinancialsForm.value.retainedEarnings),
       notes: $borrowerFinancialsForm.value.notes || null,
       submittedBy: $user.value.email || $user.value.name || 'Unknown User',
-      organizationId: $user.value.organizationId,
+      organizationId,
       documentIds: [], // In a real implementation, this would include uploaded document IDs
       // TODO: Add document upload implementation - for now we're tracking in documentsByType
     };
+
+    console.log('Submitting financial data:', financialData);
 
     let response;
     const { isEditMode } = $borrowerFinancialsView.value;
@@ -258,7 +296,27 @@ export const handleSubmit = async ($modalState, onCloseCallback) => {
       response = await borrowerFinancialsApi.create(financialData);
     }
 
-    if (response.success) {
+    console.log('API Response:', response);
+
+    // API returns { success: true, data: ... } or { success: false, error: ... }
+    if (response && response.success) {
+      // Extract financial ID - response.data might be the financial object directly or wrapped
+      const financialId = response.data?.id || response.data?.data?.id || editingId;
+      
+      console.log('Financial ID for document storage:', financialId);
+      console.log('Documents to save:', $modalState.value.documentsByType);
+      
+      // Save documents to localStorage for persistence
+      if (financialId && $modalState.value.documentsByType) {
+        const hasDocuments = Object.values($modalState.value.documentsByType).some(
+          (docs) => docs && docs.length > 0
+        );
+        if (hasDocuments) {
+          saveDocumentsToStorage(financialId, $modalState.value.documentsByType);
+          console.log('Documents saved to localStorage for financial ID:', financialId);
+        }
+      }
+
       // Trigger a refresh of the financials list
       $borrowerFinancialsView.update({
         refreshTrigger: $borrowerFinancialsView.value.refreshTrigger + 1,
@@ -274,27 +332,97 @@ export const handleSubmit = async ($modalState, onCloseCallback) => {
         updatedLoans,
       });
 
-      const message = isEditMode
-        ? 'Financial data updated successfully!'
-        : 'Submitted new financials!';
-      successAlert(message, 'toast');
-    } else {
-      $modalState.update({ error: response.error || 'Failed to submit financial data' });
-    }
+        const message = isEditMode
+          ? 'Financial data updated successfully!'
+          : 'Submitted new financials!';
+        successAlert(message, 'toast');
+      } else {
+        // API returned { success: false, error: ... }
+        const errorMessage = response?.error || response?.message || 'Failed to submit financial data';
+        console.error('API returned error:', errorMessage, response);
+        $modalState.update({ error: errorMessage });
+      }
   } catch (err) {
     console.error('Error submitting financial data:', err);
-    $modalState.update({ error: err.message || 'An error occurred while submitting financial data' });
+    
+    // Handle different error formats
+    let errorMessage = 'An error occurred while submitting financial data';
+    
+    if (err?.error) {
+      // API returned { success: false, error: ... } and was rejected
+      errorMessage = err.error;
+    } else if (err?.response?.data?.error) {
+      // Axios error with response data
+      errorMessage = err.response.data.error;
+    } else if (err?.response?.data?.message) {
+      errorMessage = err.response.data.message;
+    } else if (err?.message) {
+      errorMessage = err.message;
+    }
+    
+    $modalState.update({ error: errorMessage });
   } finally {
     $modalState.update({ isSubmitting: false });
   }
 };
 
 /**
+ * Loads documents from localStorage for a financial record
+ * @param {string} financialId - The financial record ID
+ * @returns {Object} - Documents organized by type
+ */
+const loadDocumentsFromStorage = (financialId) => {
+  try {
+    const storageKey = `borrowerFinancials_documents_${financialId}`;
+    const stored = localStorage.getItem(storageKey);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (error) {
+    console.error('Error loading documents from storage:', error);
+  }
+  return {
+    balanceSheet: [],
+    incomeStatement: [],
+    debtServiceWorksheet: [],
+  };
+};
+
+/**
+ * Saves documents to localStorage for a financial record
+ * @param {string} financialId - The financial record ID
+ * @param {Object} documentsByType - Documents organized by type
+ */
+const saveDocumentsToStorage = (financialId, documentsByType) => {
+  try {
+    const storageKey = `borrowerFinancials_documents_${financialId}`;
+    // Only save metadata, not File objects (they can't be serialized)
+    const serializableDocs = {};
+    Object.keys(documentsByType).forEach((type) => {
+      serializableDocs[type] = documentsByType[type].map((doc) => ({
+        id: doc.id,
+        fileName: doc.fileName,
+        fileSize: doc.fileSize,
+        mimeType: doc.mimeType,
+        documentType: doc.documentType,
+        uploadedAt: doc.uploadedAt,
+        storageUrl: doc.storageUrl,
+        // Don't save File objects or previewUrl (they're temporary)
+      }));
+    });
+    localStorage.setItem(storageKey, JSON.stringify(serializableDocs));
+  } catch (error) {
+    console.error('Error saving documents to storage:', error);
+  }
+};
+
+/**
  * Opens the modal in edit mode with existing financial data
  * @param {Object} financial - The financial record to edit
+ * @param {Object} $modalState - Signal for modal state
  * @returns {Promise<void>}
  */
-export const handleOpenEditMode = async (financial) => {
+export const handleOpenEditMode = async (financial, $modalState) => {
   // Format the asOfDate to YYYY-MM-DD for the date input
   const formatDateForInput = (dateString) => {
     if (!dateString) return '';
@@ -302,10 +430,41 @@ export const handleOpenEditMode = async (financial) => {
     return date.toISOString().split('T')[0];
   };
 
+  // Load documents from storage first
+  const storedDocuments = loadDocumentsFromStorage(financial.id);
+  console.log('Loading documents for financial ID:', financial.id);
+  console.log('Stored documents:', storedDocuments);
+  
+  // Convert stored documents back to format
+  // Note: File objects can't be restored from localStorage, but we can show document metadata
+  const documentsByType = {
+    balanceSheet: [],
+    incomeStatement: [],
+    debtServiceWorksheet: [],
+  };
+  
+  Object.keys(storedDocuments).forEach((type) => {
+    if (storedDocuments[type] && Array.isArray(storedDocuments[type])) {
+      documentsByType[type] = storedDocuments[type].map((doc) => ({
+        ...doc,
+        // Mark as stored document (File object won't be available)
+        isStored: true,
+        // Use storageUrl as previewUrl for stored documents
+        previewUrl: doc.storageUrl || null,
+      }));
+    }
+  });
+  
+  console.log('Converted documentsByType:', documentsByType);
+
+  // Set the first document as the current one if available
+  const firstDocType = Object.keys(documentsByType).find((type) => documentsByType[type].length > 0);
+  const firstDoc = firstDocType ? documentsByType[firstDocType][0] : null;
+
   // Populate the form with the existing financial data
   $borrowerFinancialsForm.update({
     activeTab: 'documents',
-    documentType: 'balanceSheet',
+    documentType: firstDocType || 'balanceSheet', // Set to first doc type if available
     asOfDate: formatDateForInput(financial.asOfDate),
     accountabilityScore: financial.accountabilityScore?.toString() || '',
     // Income Statement fields
@@ -349,5 +508,17 @@ export const handleOpenEditMode = async (financial) => {
     isEditMode: true,
     editingFinancialId: financial.id,
     currentBorrowerId: financial.borrowerId,
+  });
+
+  // Update modal state with loaded documents
+  $modalState.update({
+    documentsByType,
+    pdfUrl: firstDoc?.previewUrl || firstDoc?.storageUrl || null, // Use previewUrl or storageUrl for preview
+    currentDocumentIndex: {
+      balanceSheet: 0,
+      incomeStatement: 0,
+      debtServiceWorksheet: 0,
+      ...(firstDocType ? { [firstDocType]: 0 } : {}),
+    },
   });
 };

@@ -1,7 +1,8 @@
-import { Form, Row, Col, Alert, Button } from 'react-bootstrap';
-import { useRef } from 'react';
+import { Form, Row, Col, Alert, Button, Table } from 'react-bootstrap';
+import { useRef, useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMagic, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
+import ExcelJS from 'exceljs';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import FileUploader from '@src/components/global/FileUploader';
 import { $borrowerFinancialsForm } from '@src/signals';
@@ -25,6 +26,8 @@ const DocumentsTab = ({
   const currentIndex = currentDocumentIndex[documentType] || 0;
   const currentDoc = currentDocs[currentIndex];
   const hasMultipleDocs = currentDocs.length > 1;
+  const [excelData, setExcelData] = useState(null);
+  const [isLoadingExcel, setIsLoadingExcel] = useState(false);
 
   const handleDocumentTypeChange = (e) => {
     const newType = e.target.value;
@@ -33,9 +36,12 @@ const DocumentsTab = ({
     // Switch to the first document of the new type if available, or clear the view
     const newTypeDocs = documentsByType[newType] || [];
     if (newTypeDocs.length > 0) {
+      const firstDoc = newTypeDocs[0];
+      // Use storageUrl if previewUrl is not available (for stored documents)
+      const docUrl = firstDoc.previewUrl || firstDoc.storageUrl || null;
       // Update the modal state to show the first document of the new type
       $modalState.update({
-        pdfUrl: newTypeDocs[0].previewUrl,
+        pdfUrl: docUrl,
         currentDocumentIndex: {
           ...$modalState.value.currentDocumentIndex,
           [newType]: 0,
@@ -75,6 +81,90 @@ const DocumentsTab = ({
     return doc.mimeType === 'application/pdf' || doc.fileName?.toLowerCase().endsWith('.pdf');
   };
 
+  const isExcelFile = (doc) => {
+    if (!doc) return false;
+    const mimeType = doc.mimeType || '';
+    const fileName = doc.fileName || '';
+    return mimeType.includes('spreadsheet') 
+      || fileName.match(/\.(xlsx?|xls)$/i)
+      || mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      || mimeType === 'application/vnd.ms-excel';
+  };
+
+  // Parse Excel file and extract data
+  useEffect(() => {
+    const parseExcelFile = async () => {
+      if (!currentDoc || !isExcelFile(currentDoc)) {
+        setExcelData(null);
+        return;
+      }
+
+      // If document is stored without File object, we can't parse it
+      if (currentDoc.isStored && !currentDoc.file) {
+        setExcelData(null);
+        return;
+      }
+
+      const file = currentDoc.file;
+      if (!file) {
+        setExcelData(null);
+        return;
+      }
+
+      setIsLoadingExcel(true);
+      try {
+        const workbook = new ExcelJS.Workbook();
+        const buffer = await file.arrayBuffer();
+        await workbook.xlsx.load(buffer);
+
+        // Get the first worksheet
+        const worksheet = workbook.worksheets[0];
+        if (!worksheet) {
+          setExcelData(null);
+          setIsLoadingExcel(false);
+          return;
+        }
+
+        // Convert worksheet to array of rows
+        const rows = [];
+        worksheet.eachRow((row, rowNumber) => {
+          const rowData = [];
+          row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+            let value = cell.value;
+            // Handle different cell value types
+            if (value === null || value === undefined) {
+              value = '';
+            } else if (typeof value === 'object') {
+              // Handle formulas, rich text, etc.
+              if (value.text !== undefined) {
+                value = value.text;
+              } else if (value.result !== undefined) {
+                value = value.result;
+              } else {
+                value = String(value);
+              }
+            }
+            rowData.push(value);
+          });
+          rows.push(rowData);
+        });
+
+        setExcelData({
+          worksheetName: worksheet.name,
+          rows,
+          columnCount: worksheet.columnCount,
+        });
+      } catch (error) {
+        console.error('Error parsing Excel file:', error);
+        setExcelData(null);
+      } finally {
+        setIsLoadingExcel(false);
+      }
+    };
+
+    parseExcelFile();
+  }, [currentDoc, pdfUrl]);
+
   const getFileIcon = (doc) => {
     if (!doc) return 'file';
     const mimeType = doc.mimeType || '';
@@ -87,12 +177,35 @@ const DocumentsTab = ({
   };
 
   const renderDocumentPreview = () => {
-    if (!pdfUrl) {
+    // Check if current document is stored but doesn't have a File object
+    const isStoredWithoutFile = currentDoc?.isStored && !currentDoc?.file && !currentDoc?.previewUrl;
+    // Check if we have a storageUrl that can be used for preview
+    const hasStorageUrl = currentDoc?.storageUrl || pdfUrl;
+
+    // If we have a stored document with storageUrl, use it for preview
+    if (isStoredWithoutFile && hasStorageUrl && !pdfUrl) {
+      // Update pdfUrl to use storageUrl for preview
+      $modalState.update({ pdfUrl: currentDoc.storageUrl });
+      return null; // Will re-render with pdfUrl
+    }
+
+    if (!pdfUrl && !hasStorageUrl) {
       return (
         <div>
-          <p className="text-info-200 small mb-16">
-            Upload financial statements (PDF, Excel, etc.). Our system will automatically extract financial data.
-          </p>
+          {isStoredWithoutFile ? (
+            <div className="mb-16">
+              <div className="alert alert-info">
+                <strong>{currentDoc?.fileName || 'Document'}</strong> was previously uploaded.
+                <div className="mt-8 text-info-200">
+                  Re-upload the file to preview it in the browser.
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-info-200 small mb-16">
+              Upload financial statements (PDF, Excel, etc.). Our system will automatically extract financial data.
+            </p>
+          )}
           <FileUploader
             name="financialDocs"
             signal={$financialDocsUploader}
@@ -119,6 +232,76 @@ const DocumentsTab = ({
             instead.
           </p>
         </object>
+      );
+    }
+
+    if (isExcelFile(currentDoc)) {
+      if (isLoadingExcel) {
+        return (
+          <div className="text-center py-5 border border-info-600 rounded" style={{ height: '65vh' }}>
+            <div className="d-flex flex-column align-items-center justify-content-center h-100">
+              <div className="spinner-border text-info-300 mb-3" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+              <p className="text-info-300">Loading Excel file...</p>
+            </div>
+          </div>
+        );
+      }
+
+      if (excelData && excelData.rows.length > 0) {
+        return (
+          <div style={{ height: '65vh', overflow: 'auto', border: '1px solid #41696C', borderRadius: '8px' }}>
+            <div className="p-16 bg-info-700 border-bottom border-info-600">
+              <h6 className="text-info-50 mb-0">
+                {excelData.worksheetName} - {currentDoc?.fileName || 'Spreadsheet'}
+              </h6>
+            </div>
+            <Table striped bordered hover responsive className="mb-0" style={{ backgroundColor: 'transparent' }}>
+              <tbody>
+                {excelData.rows.map((row, rowIndex) => (
+                  <tr key={rowIndex}>
+                    {row.map((cell, cellIndex) => (
+                      <td
+                        key={cellIndex}
+                        className="text-info-50"
+                        style={{
+                          minWidth: '100px',
+                          whiteSpace: 'nowrap',
+                          padding: '8px',
+                        }}
+                      >
+                        {cell !== null && cell !== undefined ? String(cell) : ''}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
+        );
+      }
+
+      // Excel file but couldn't parse it
+      return (
+        <div className="text-center py-5 border border-info-600 rounded" style={{ height: '65vh' }}>
+          <div className="d-flex flex-column align-items-center justify-content-center h-100">
+            <div className="mb-3">
+              <i className={`fas fa-${getFileIcon(currentDoc)} fa-5x text-info-300`} />
+            </div>
+            <h5 className="text-info-100 mb-2">{currentDoc?.fileName || 'Document'}</h5>
+            <p className="text-info-300 mb-3">
+              Unable to preview this Excel file. Please download to view.
+            </p>
+            <a
+              href={pdfUrl}
+              download={currentDoc?.fileName}
+              className="btn btn-primary-100"
+            >
+              Download File
+            </a>
+          </div>
+        </div>
       );
     }
 
