@@ -511,6 +511,7 @@ const BorrowerDetail = () => {
                   onRowClick={(financial) => {
                     $borrowerFinancialsView.update({
                       showSubmitModal: true,
+                      isEditMode: true,
                       currentBorrowerId: borrower.id,
                       editingFinancialId: financial.id,
                     });

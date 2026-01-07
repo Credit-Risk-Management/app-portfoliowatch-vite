@@ -1,5 +1,6 @@
 import { $borrowerFinancialsView, $borrowerFinancialsForm, $user } from '@src/signals';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
+import borrowerFinancialDocumentsApi from '@src/api/borrowerFinancialDocuments.api';
 import { successAlert, dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import generateMockFinancialData from '../_helpers/financials.helpers';
 
@@ -76,13 +77,15 @@ export const handleFileUpload = ($financialDocsUploader, $modalState, ocrApplied
   const { documentType } = $borrowerFinancialsForm.value;
 
   // Create a document object with preview URL
+  const previewUrl = URL.createObjectURL(file);
+
   const newDoc = {
     id: `temp-${Date.now()}`,
     file,
     fileName: file.name,
     fileSize: file.size,
     mimeType: file.type,
-    previewUrl: URL.createObjectURL(file),
+    previewUrl,
     documentType,
     uploadedAt: new Date(),
   };
@@ -214,6 +217,11 @@ export const handleSubmit = async ($modalState, onCloseCallback) => {
     const asOfDate = $borrowerFinancialsForm.value.asOfDate;
     const organizationId = $user.value.organizationId;
 
+    console.log('Form values before submit:', $borrowerFinancialsForm.value);
+    console.log('Borrower ID:', borrowerId);
+    console.log('As Of Date:', asOfDate);
+    console.log('Organization ID:', organizationId);
+
     if (!borrowerId) {
       $modalState.update({ 
         error: 'Borrower ID is required. Please select a borrower.',
@@ -280,17 +288,23 @@ export const handleSubmit = async ($modalState, onCloseCallback) => {
     };
 
 
+    console.log('Submitting financial data:', financialData);
+
     let response;
     const { isEditMode } = $borrowerFinancialsView.value;
     const editingId = $borrowerFinancialsView.value.editingFinancialId;
 
     if (isEditMode && editingId) {
       // Update existing record
+      console.log('Updating financial:', editingId);
       response = await borrowerFinancialsApi.update(editingId, financialData);
     } else {
       // Create new record
+      console.log('Creating new financial');
       response = await borrowerFinancialsApi.create(financialData);
     }
+
+    console.log('Financial API response:', response);
 
 
     // API returns { success: true, data: ... } or { success: false, error: ... }
@@ -299,13 +313,38 @@ export const handleSubmit = async ($modalState, onCloseCallback) => {
       const financialId = response.data?.id || response.data?.data?.id || editingId;
       
       
-      // Save documents to localStorage for persistence
+      // Upload documents to backend storage
       if (financialId && $modalState.value.documentsByType) {
-        const hasDocuments = Object.values($modalState.value.documentsByType).some(
-          (docs) => docs && docs.length > 0
-        );
-        if (hasDocuments) {
-          saveDocumentsToStorage(financialId, $modalState.value.documentsByType);
+        const uploadPromises = [];
+        
+        Object.keys($modalState.value.documentsByType).forEach((docType) => {
+          const docs = $modalState.value.documentsByType[docType] || [];
+          
+          docs.forEach((doc) => {
+            // Only upload new documents that have a File object and aren't already stored
+            if (doc.file && !doc.isStored) {
+              const uploadPromise = borrowerFinancialDocumentsApi.uploadFile({
+                borrowerFinancialId: financialId,
+                file: doc.file,
+                documentType: docType,
+                uploadedBy: $user.value.email || $user.value.name || 'Unknown User',
+              }).catch((error) => {
+                console.error(`Error uploading document ${doc.fileName}:`, error);
+                // Don't throw - continue with other uploads
+                return null;
+              });
+              
+              uploadPromises.push(uploadPromise);
+            }
+          });
+        });
+        
+        // Wait for all uploads to complete (in background, don't block success message)
+        if (uploadPromises.length > 0) {
+          Promise.all(uploadPromises).then((results) => {
+            const successCount = results.filter((r) => r !== null).length;
+            console.log(`Uploaded ${successCount} of ${uploadPromises.length} documents`);
+          });
         }
       }
 
@@ -356,53 +395,57 @@ export const handleSubmit = async ($modalState, onCloseCallback) => {
 };
 
 /**
- * Loads documents from localStorage for a financial record
+ * Loads documents from backend for a financial record
  * @param {string} financialId - The financial record ID
- * @returns {Object} - Documents organized by type
+ * @returns {Promise<Object>} - Documents organized by type
  */
-const loadDocumentsFromStorage = (financialId) => {
+const loadDocumentsFromBackend = async (financialId) => {
   try {
-    const storageKey = `borrowerFinancials_documents_${financialId}`;
-    const stored = localStorage.getItem(storageKey);
-    if (stored) {
-      return JSON.parse(stored);
+    const response = await borrowerFinancialDocumentsApi.getByBorrowerFinancial(financialId);
+    
+    // The response structure is { success: true, data: [...], count: ... }
+    const documents = response?.success && response?.data ? response.data : [];
+    
+    if (documents && documents.length > 0) {
+      // Organize documents by type
+      const documentsByType = {
+        balanceSheet: [],
+        incomeStatement: [],
+        debtServiceWorksheet: [],
+      };
+      
+      // Use the storageUrl directly from the document record
+      // (it's already a permanent Firebase Storage download URL)
+      documents.forEach((doc) => {
+        const type = doc.documentType;
+        if (documentsByType[type]) {
+          documentsByType[type].push({
+            id: doc.id,
+            fileName: doc.fileName,
+            fileSize: doc.fileSize,
+            mimeType: doc.mimeType,
+            documentType: doc.documentType,
+            uploadedAt: doc.uploadedAt,
+            storagePath: doc.storagePath, // Firebase Storage path (for SDK downloads)
+            storageUrl: doc.storageUrl, // Firebase Storage URL
+            isStored: true,
+            previewUrl: doc.storageUrl, // For PDF rendering
+          });
+        }
+      });
+      
+      return documentsByType;
     }
   } catch (error) {
-    // Error loading documents from storage
+    console.error('Error loading documents from backend:', error);
   }
+  
+  // Return empty structure if no documents or error
   return {
     balanceSheet: [],
     incomeStatement: [],
     debtServiceWorksheet: [],
   };
-};
-
-/**
- * Saves documents to localStorage for a financial record
- * @param {string} financialId - The financial record ID
- * @param {Object} documentsByType - Documents organized by type
- */
-const saveDocumentsToStorage = (financialId, documentsByType) => {
-  try {
-    const storageKey = `borrowerFinancials_documents_${financialId}`;
-    // Only save metadata, not File objects (they can't be serialized)
-    const serializableDocs = {};
-    Object.keys(documentsByType).forEach((type) => {
-      serializableDocs[type] = documentsByType[type].map((doc) => ({
-        id: doc.id,
-        fileName: doc.fileName,
-        fileSize: doc.fileSize,
-        mimeType: doc.mimeType,
-        documentType: doc.documentType,
-        uploadedAt: doc.uploadedAt,
-        storageUrl: doc.storageUrl,
-        // Don't save File objects or previewUrl (they're temporary)
-      }));
-    });
-    localStorage.setItem(storageKey, JSON.stringify(serializableDocs));
-  } catch (error) {
-    // Error saving documents to storage
-  }
 };
 
 /**
@@ -419,29 +462,8 @@ export const handleOpenEditMode = async (financial, $modalState) => {
     return date.toISOString().split('T')[0];
   };
 
-  // Load documents from storage first
-  const storedDocuments = loadDocumentsFromStorage(financial.id);
-  
-  // Convert stored documents back to format
-  // Note: File objects can't be restored from localStorage, but we can show document metadata
-  const documentsByType = {
-    balanceSheet: [],
-    incomeStatement: [],
-    debtServiceWorksheet: [],
-  };
-  
-  Object.keys(storedDocuments).forEach((type) => {
-    if (storedDocuments[type] && Array.isArray(storedDocuments[type])) {
-      documentsByType[type] = storedDocuments[type].map((doc) => ({
-        ...doc,
-        // Mark as stored document (File object won't be available)
-        isStored: true,
-        // Use storageUrl as previewUrl for stored documents
-        previewUrl: doc.storageUrl || null,
-      }));
-    }
-  });
-  
+  // Load documents from backend
+  const documentsByType = await loadDocumentsFromBackend(financial.id);
 
   // Set the first document as the current one if available
   const firstDocType = Object.keys(documentsByType).find((type) => documentsByType[type].length > 0);

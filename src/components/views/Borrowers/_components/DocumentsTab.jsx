@@ -1,12 +1,19 @@
 import { Form, Row, Col, Alert, Button, Table } from 'react-bootstrap';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMagic, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faMagic, faTrash, faPlus, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import ExcelJS from 'exceljs';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import FileUploader from '@src/components/global/FileUploader';
 import { $borrowerFinancialsForm } from '@src/signals';
 import { normalizeCurrencyValue, normalizeCurrencyValueNoCents } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
+import { auth } from '@src/utils/firebase';
+
+// Configure PDF.js worker - using jsdelivr CDN which has proper CORS headers
+pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 const DocumentsTab = ({
   pdfUrl,
@@ -28,6 +35,17 @@ const DocumentsTab = ({
   const hasMultipleDocs = currentDocs.length > 1;
   const [excelData, setExcelData] = useState(null);
   const [isLoadingExcel, setIsLoadingExcel] = useState(false);
+  const [pdfNumPages, setPdfNumPages] = useState(null);
+  const [pdfPageNumber, setPdfPageNumber] = useState(1);
+  const [pdfLoadError, setPdfLoadError] = useState(false);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
+
+  // Memoize PDF options to prevent unnecessary re-renders (must be at component level, not inside conditionals)
+  const pdfOptions = useMemo(() => ({
+    cMapUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/cmaps/`,
+    cMapPacked: true,
+    standardFontDataUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/standard_fonts/`,
+  }), []);
 
   const handleDocumentTypeChange = (e) => {
     const newType = e.target.value;
@@ -78,7 +96,14 @@ const DocumentsTab = ({
 
   const isPdfFile = (doc) => {
     if (!doc) return false;
-    return doc.mimeType === 'application/pdf' || doc.fileName?.toLowerCase().endsWith('.pdf');
+    const mimeType = doc.mimeType || '';
+    const fileName = doc.fileName || '';
+    // Check for PDF MIME type (with common variations) or file extension
+    return mimeType === 'application/pdf'
+      || mimeType === 'application/x-pdf'
+      || mimeType === 'application/x-bzpdf'
+      || mimeType === 'application/x-gzpdf'
+      || fileName.match(/\.pdf$/i);
   };
 
   const isExcelFile = (doc) => {
@@ -99,22 +124,30 @@ const DocumentsTab = ({
         return;
       }
 
-      // If document is stored without File object, we can't parse it
-      if (currentDoc.isStored && !currentDoc.file) {
-        setExcelData(null);
-        return;
-      }
-
-      const file = currentDoc.file;
-      if (!file) {
-        setExcelData(null);
-        return;
-      }
-
       setIsLoadingExcel(true);
       try {
         const workbook = new ExcelJS.Workbook();
-        const buffer = await file.arrayBuffer();
+        let buffer;
+
+        // For stored documents, download via backend proxy
+        if (currentDoc.isStored && currentDoc.id) {
+          const proxyUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3333'}/borrower-financial-documents/${currentDoc.id}/proxy`;
+          const response = await fetch(proxyUrl, {
+            headers: {
+              'Authorization': `Bearer ${await auth.currentUser?.getIdToken()}`,
+            },
+          });
+          const blob = await response.blob();
+          buffer = await blob.arrayBuffer();
+        } else if (currentDoc.file) {
+          // For newly uploaded files, use the File object
+          buffer = await currentDoc.file.arrayBuffer();
+        } else {
+          setExcelData(null);
+          setIsLoadingExcel(false);
+          return;
+        }
+
         await workbook.xlsx.load(buffer);
 
         // Get the first worksheet
@@ -165,6 +198,65 @@ const DocumentsTab = ({
     parseExcelFile();
   }, [currentDoc, pdfUrl]);
 
+  // Fetch PDF/Excel from Firebase Storage and create blob URL
+  useEffect(() => {
+    const fetchBlob = async () => {
+      if (!currentDoc) {
+        setPdfBlobUrl(null);
+        return;
+      }
+
+      // For newly uploaded files with File object
+      if (currentDoc.file) {
+        const blobUrl = URL.createObjectURL(currentDoc.file);
+        setPdfBlobUrl(blobUrl);
+        return;
+      }
+
+      // For stored documents, download via backend proxy (bypasses CORS!)
+      if (currentDoc.isStored && currentDoc.id) {
+        try {
+          const proxyUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3333'}/borrower-financial-documents/${currentDoc.id}/proxy`;
+          const response = await fetch(proxyUrl, {
+            headers: {
+              'Authorization': `Bearer ${await auth.currentUser?.getIdToken()}`,
+            },
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Failed to fetch: ${response.statusText}`);
+          }
+          
+          const blob = await response.blob();
+          const blobUrl = URL.createObjectURL(blob);
+          setPdfBlobUrl(blobUrl);
+          setPdfLoadError(false);
+        } catch (error) {
+          console.error('Error downloading document:', error);
+          setPdfLoadError(true);
+        }
+      } else {
+        setPdfBlobUrl(null);
+      }
+    };
+
+    fetchBlob();
+
+    // Cleanup blob URL on unmount
+    return () => {
+      if (pdfBlobUrl) {
+        URL.revokeObjectURL(pdfBlobUrl);
+      }
+    };
+  }, [currentDoc]);
+
+  // Reset PDF state when URL changes
+  useEffect(() => {
+    setPdfLoadError(false);
+    setPdfPageNumber(1);
+    setPdfNumPages(null);
+  }, [pdfUrl, pdfBlobUrl]);
+
   const getFileIcon = (doc) => {
     if (!doc) return 'file';
     const mimeType = doc.mimeType || '';
@@ -178,12 +270,12 @@ const DocumentsTab = ({
 
   const renderDocumentPreview = () => {
     // Check if current document is stored but doesn't have a File object
-    const isStoredWithoutFile = currentDoc?.isStored && !currentDoc?.file && !currentDoc?.previewUrl;
+    const isStoredWithoutFile = currentDoc?.isStored && !currentDoc?.file;
     // Check if we have a storageUrl that can be used for preview
-    const hasStorageUrl = currentDoc?.storageUrl || pdfUrl;
+    const hasStorageUrl = currentDoc?.storageUrl;
 
-    // If we have a stored document with storageUrl, use it for preview
-    if (isStoredWithoutFile && hasStorageUrl && !pdfUrl) {
+    // If we have a stored document with storageUrl, update pdfUrl if needed
+    if (isStoredWithoutFile && hasStorageUrl && pdfUrl !== currentDoc.storageUrl) {
       // Update pdfUrl to use storageUrl for preview
       $modalState.update({ pdfUrl: currentDoc.storageUrl });
       return null; // Will re-render with pdfUrl
@@ -217,21 +309,123 @@ const DocumentsTab = ({
     }
 
     if (isPdfFile(currentDoc)) {
+      // If PDF failed to load, show fallback
+      if (pdfLoadError) {
+        return (
+          <div className="text-center py-5 border border-info-600 rounded" style={{ height: '65vh' }}>
+            <div className="d-flex flex-column align-items-center justify-content-center h-100">
+              <div className="mb-3">
+                <i className="fas fa-file-pdf fa-5x text-info-300" />
+              </div>
+              <h5 className="text-info-100 mb-2">{currentDoc?.fileName || 'PDF Document'}</h5>
+              <p className="text-info-300 mb-3">
+                Unable to load this PDF. Please open it in a new tab or download it.
+              </p>
+              <div className="d-flex gap-2">
+                <a
+                  href={currentDoc?.storageUrl || pdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-primary-100"
+                >
+                  Open in New Tab
+                </a>
+                <a
+                  href={currentDoc?.storageUrl || pdfUrl}
+                  download={currentDoc?.fileName}
+                  className="btn btn-outline-primary-100"
+                >
+                  Download PDF
+                </a>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
       return (
-        <object
-          data={pdfUrl}
-          type="application/pdf"
-          width="100%"
-          style={{ height: '65vh' }}
-        >
-          <p>
-            Cannot display document.{' '}
-            <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
-              Download
-            </a>{' '}
-            instead.
-          </p>
-        </object>
+        <div style={{ height: '65vh', width: '100%', position: 'relative' }}>
+          <div
+            style={{
+              height: '100%',
+              width: '100%',
+              overflow: 'auto',
+              border: '1px solid #41696C',
+              borderRadius: '8px',
+              backgroundColor: '#525252',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <Document
+              file={pdfBlobUrl || pdfUrl}
+              onLoadSuccess={({ numPages }) => {
+                setPdfNumPages(numPages);
+                setPdfLoadError(false);
+              }}
+              onLoadError={(error) => {
+                console.error('Error loading PDF:', error);
+                setPdfLoadError(true);
+              }}
+              loading={
+                <div className="d-flex justify-content-center align-items-center" style={{ height: '65vh' }}>
+                  <div className="text-center">
+                    <div className="spinner-border text-info-300 mb-3" role="status">
+                      <span className="visually-hidden">Loading PDF...</span>
+                    </div>
+                    <p className="text-info-100">Loading PDF...</p>
+                  </div>
+                </div>
+              }
+              options={pdfOptions}
+            >
+              <div style={{ padding: '16px', textAlign: 'center' }}>
+                <Page
+                  pageNumber={pdfPageNumber}
+                  width={Math.min(window.innerWidth * 0.4, 800)}
+                  renderTextLayer={true}
+                  renderAnnotationLayer={true}
+                />
+              </div>
+            </Document>
+          </div>
+
+          {/* PDF Navigation Controls */}
+          {pdfNumPages && pdfNumPages > 1 && (
+            <div
+              className="d-flex justify-content-between align-items-center px-3 py-2"
+              style={{
+                position: 'absolute',
+                bottom: '0',
+                left: '0',
+                right: '0',
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                borderBottomLeftRadius: '8px',
+                borderBottomRightRadius: '8px',
+              }}
+            >
+              <Button
+                variant="outline-light"
+                size="sm"
+                onClick={() => setPdfPageNumber((prev) => Math.max(1, prev - 1))}
+                disabled={pdfPageNumber <= 1}
+              >
+                <FontAwesomeIcon icon={faChevronLeft} />
+              </Button>
+              <span className="text-light">
+                Page {pdfPageNumber} of {pdfNumPages}
+              </span>
+              <Button
+                variant="outline-light"
+                size="sm"
+                onClick={() => setPdfPageNumber((prev) => Math.min(pdfNumPages, prev + 1))}
+                disabled={pdfPageNumber >= pdfNumPages}
+              >
+                <FontAwesomeIcon icon={faChevronRight} />
+              </Button>
+            </div>
+          )}
+        </div>
       );
     }
 
