@@ -115,9 +115,6 @@ export const handleFileUpload = ($financialDocsUploader, $modalState, ocrApplied
 
     // Log everything we "extracted" from the PDF for debugging/POC visibility
     // In a real implementation this would be the raw OCR/financial extraction payload
-    console.log('Uploaded files for OCR:', files);
-    console.log(`Uploaded filename: ${file.name}`);
-    console.log(`Mock extracted financial data from ${documentType}:`, mockData);
 
     $borrowerFinancialsForm.update(mockData);
     $modalState.update({
@@ -282,7 +279,6 @@ export const handleSubmit = async ($modalState, onCloseCallback) => {
       // TODO: Add document upload implementation - for now we're tracking in documentsByType
     };
 
-    console.log('Submitting financial data:', financialData);
 
     let response;
     const { isEditMode } = $borrowerFinancialsView.value;
@@ -296,15 +292,12 @@ export const handleSubmit = async ($modalState, onCloseCallback) => {
       response = await borrowerFinancialsApi.create(financialData);
     }
 
-    console.log('API Response:', response);
 
     // API returns { success: true, data: ... } or { success: false, error: ... }
     if (response && response.success) {
       // Extract financial ID - response.data might be the financial object directly or wrapped
       const financialId = response.data?.id || response.data?.data?.id || editingId;
       
-      console.log('Financial ID for document storage:', financialId);
-      console.log('Documents to save:', $modalState.value.documentsByType);
       
       // Save documents to localStorage for persistence
       if (financialId && $modalState.value.documentsByType) {
@@ -313,7 +306,6 @@ export const handleSubmit = async ($modalState, onCloseCallback) => {
         );
         if (hasDocuments) {
           saveDocumentsToStorage(financialId, $modalState.value.documentsByType);
-          console.log('Documents saved to localStorage for financial ID:', financialId);
         }
       }
 
@@ -339,12 +331,9 @@ export const handleSubmit = async ($modalState, onCloseCallback) => {
       } else {
         // API returned { success: false, error: ... }
         const errorMessage = response?.error || response?.message || 'Failed to submit financial data';
-        console.error('API returned error:', errorMessage, response);
         $modalState.update({ error: errorMessage });
       }
   } catch (err) {
-    console.error('Error submitting financial data:', err);
-    
     // Handle different error formats
     let errorMessage = 'An error occurred while submitting financial data';
     
@@ -379,7 +368,7 @@ const loadDocumentsFromStorage = (financialId) => {
       return JSON.parse(stored);
     }
   } catch (error) {
-    console.error('Error loading documents from storage:', error);
+    // Error loading documents from storage
   }
   return {
     balanceSheet: [],
@@ -412,7 +401,7 @@ const saveDocumentsToStorage = (financialId, documentsByType) => {
     });
     localStorage.setItem(storageKey, JSON.stringify(serializableDocs));
   } catch (error) {
-    console.error('Error saving documents to storage:', error);
+    // Error saving documents to storage
   }
 };
 
@@ -432,8 +421,6 @@ export const handleOpenEditMode = async (financial, $modalState) => {
 
   // Load documents from storage first
   const storedDocuments = loadDocumentsFromStorage(financial.id);
-  console.log('Loading documents for financial ID:', financial.id);
-  console.log('Stored documents:', storedDocuments);
   
   // Convert stored documents back to format
   // Note: File objects can't be restored from localStorage, but we can show document metadata
@@ -455,7 +442,6 @@ export const handleOpenEditMode = async (financial, $modalState) => {
     }
   });
   
-  console.log('Converted documentsByType:', documentsByType);
 
   // Set the first document as the current one if available
   const firstDocType = Object.keys(documentsByType).find((type) => documentsByType[type].length > 0);
