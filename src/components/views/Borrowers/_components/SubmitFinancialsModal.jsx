@@ -35,7 +35,7 @@ const SubmitFinancialsModal = () => {
 
   // Load financial data when opening in edit mode
   useEffectAsync(async () => {
-    const { showSubmitModal, isEditMode, editingFinancialId } = $borrowerFinancialsView.value;
+    const { showSubmitModal, editingFinancialId } = $borrowerFinancialsView.value;
     if (showSubmitModal && isEditMode && editingFinancialId) {
       try {
         const response = await borrowerFinancialsApi.getById(editingFinancialId);
