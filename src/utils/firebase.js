@@ -30,6 +30,7 @@ const getAuthForTenant = (tenantId) => {
 };
 
 const firestore = firebase.firestore();
+const storage = firebase.storage();
 const googleProvider = new firebase.auth.GoogleAuthProvider();
 const analytics = firebase.analytics();
 const now = firebase.firestore.Timestamp.now();
@@ -88,6 +89,7 @@ export const onAuthStateChanged = (callback) => auth.onAuthStateChanged(callback
 export {
   auth,
   firestore,
+  storage,
   googleProvider,
   now,
   getLocalStorage,

@@ -38,8 +38,6 @@ const getMockCreditMemoKeyFromFilename = (filename) => {
   // Remove file extension and normalize
   const nameWithoutExt = filename.replace(/\.[^/.]+$/, '');
 
-  console.log('Checking filename:', filename, 'Without extension:', nameWithoutExt);
-
   // Check if the filename matches any of our known patterns
   const knownKeys = Object.keys(MOCK_CREDIT_MEMO_DATA);
   const matchedKey = knownKeys.find((key) => {
@@ -48,10 +46,6 @@ const getMockCreditMemoKeyFromFilename = (filename) => {
     const matches = nameWithoutExt.includes(withSpaces) ||
       nameWithoutExt.includes(key) ||
       nameWithoutExt === key;
-
-    if (matches) {
-      console.log(`Matched key: ${key} with pattern:`, nameWithoutExt);
-    }
 
     return matches;
   });
@@ -71,14 +65,12 @@ const generateMockCreditMemoData = (filename = null) => {
   if (filename) {
     const mockKey = getMockCreditMemoKeyFromFilename(filename);
     if (mockKey && MOCK_CREDIT_MEMO_DATA[mockKey]) {
-      console.log(`Using mock credit memo data for: ${mockKey}`);
       return MOCK_CREDIT_MEMO_DATA[mockKey];
     }
     return MOCK_CREDIT_MEMO_DATA.Credit_Memo_Q1;
   }
 
   // No mock data found - return null to indicate no auto-population
-  console.log('No mock data found for filename:', filename);
   return null;
 };
 
