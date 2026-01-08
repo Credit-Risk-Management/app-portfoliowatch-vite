@@ -75,7 +75,6 @@ export const handleEditBorrowerDetail = async () => {
 
 export const handleDeleteBorrower = () => {
   // This will be implemented when the delete modal is ready
-  console.log('Delete borrower - to be implemented');
 };
 
 export const handleGenerateAnnualReview = async () => {

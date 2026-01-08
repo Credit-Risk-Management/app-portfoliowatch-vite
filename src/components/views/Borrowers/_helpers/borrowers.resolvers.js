@@ -16,9 +16,10 @@ export const fetchAndSetBorrowerData = async (filters = {}, isShowLoader = true)
     const paginationAndSortParams = {
       page: $borrowersFilter.value?.page || 1,
       limit: 10,
-      sortKey: $borrowersFilter.value?.sortKey,
-      sortDirection: $borrowersFilter.value?.sortDirection,
+      sortKey: $borrowersFilter.value?.sortKey || 'name',
+      sortDirection: $borrowersFilter.value?.sortDirection || 'asc',
     };
+
     const response = await borrowersApi.getAll({ ...filters, ...paginationAndSortParams });
     $borrowers.update({
       list: response.data || [],

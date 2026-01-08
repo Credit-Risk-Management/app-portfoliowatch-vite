@@ -92,7 +92,6 @@ const generateMockFinancialData = (documentType = 'all', filename = null) => {
   if (filename) {
     const mockKey = getMockDataKeyFromFilename(filename);
     if (mockKey && MOCK_DATA_BY_FILENAME[mockKey]) {
-      console.log(`Using mock data for: ${mockKey}`);
       return MOCK_DATA_BY_FILENAME[mockKey];
     }
   }

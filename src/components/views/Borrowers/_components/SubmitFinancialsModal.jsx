@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Alert, ButtonGroup, Button, Row, Col, Form } from 'react-bootstrap';
 import UniversalModal from '@src/components/global/UniversalModal';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
@@ -16,12 +17,13 @@ import {
   handleSubmit as handleSubmitHelper,
   handleRemoveDocument as handleRemoveDocumentHelper,
   handleSwitchDocument as handleSwitchDocumentHelper,
+  handleOpenEditMode as handleOpenEditModeHelper,
 } from './submitFinancialsModal.handlers';
 import { $financialDocsUploader, $modalState } from './submitFinancialsModal.signals';
 
 const SubmitFinancialsModal = () => {
   const { activeTab } = $borrowerFinancialsForm.value;
-  const { isEditMode } = $borrowerFinancialsView.value;
+  const { isEditMode, showSubmitModal, editingFinancialId } = $borrowerFinancialsView.value;
   const {
     ocrApplied,
     isSubmitting,
@@ -31,6 +33,25 @@ const SubmitFinancialsModal = () => {
     previousFinancial,
     isLoadingPrevious,
   } = $modalState.value;
+
+  // Load financial data when opening in edit mode
+  useEffect(() => {
+    if (showSubmitModal && isEditMode && editingFinancialId) {
+      const loadData = async () => {
+        try {
+          const response = await borrowerFinancialsApi.getById(editingFinancialId);
+          if (response.success && response.data) {
+            await handleOpenEditModeHelper(response.data, $modalState);
+          }
+        } catch (err) {
+          console.error('Error loading financial data for editing:', err);
+          $modalState.update({ error: 'Failed to load financial data for editing' });
+        }
+      };
+
+      loadData();
+    }
+  }, [showSubmitModal, isEditMode, editingFinancialId]);
 
   // Fetch previous quarter financial data when Triggers tab is activated
   useEffectAsync(async () => {

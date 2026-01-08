@@ -61,8 +61,6 @@ export const handleBorrowerFilterChange = async () => {
       ? $borrowersFilter.value.relationshipManager.filter((manager) => manager !== '').join(',')
       : $borrowersFilter.value.relationshipManager;
 
-    console.log('relationshipManagerValue', relationshipManagerValue);
-
     const filters = {
       searchTerm: $borrowersFilter.value.searchTerm,
       borrowerType: borrowerTypeValue,

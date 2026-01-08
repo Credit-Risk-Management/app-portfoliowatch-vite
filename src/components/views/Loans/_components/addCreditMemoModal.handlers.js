@@ -93,18 +93,13 @@ export const handleFileUpload = () => {
   // Mock OCR: Auto-populate form with mock data based on filename
   setTimeout(() => {
     const mockData = generateMockCreditMemoData(file.name);
-    console.log('Mock data:', mockData);
 
     if (mockData) {
-      console.log('Uploaded file for OCR:', file.name);
-      console.log('Mock extracted credit memo data:', mockData);
-
       $creditMemoForm.update(mockData);
       $creditMemoModalState.update({
         ocrApplied: true,
       });
     } else {
-      console.log('No mock data found for filename:', file.name);
       $creditMemoModalState.update({
         ocrApplied: false,
       });

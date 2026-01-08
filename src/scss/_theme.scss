@@ -55,6 +55,9 @@ small {
 .z-index-9999 {
   z-index: 9999 !important;
 }
+.z-index-10000 {
+  z-index: 10000 !important;
+}
 @each $color-name, $color-value in $theme-colors {
   .notification-#{$color-name} {
     background-color: lighten($color-value, 30%) !important;

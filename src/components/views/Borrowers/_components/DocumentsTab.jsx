@@ -1,11 +1,17 @@
-import { Form, Row, Col, Alert, Button } from 'react-bootstrap';
-import { useRef } from 'react';
+import { Form, Row, Col, Alert, Button, Table } from 'react-bootstrap';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMagic, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faMagic, faTrash, faPlus, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import ExcelJS from 'exceljs';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import FileUploader from '@src/components/global/FileUploader';
 import { $borrowerFinancialsForm } from '@src/signals';
-import { normalizeCurrencyValue } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
+import { normalizeCurrencyValue, normalizeCurrencyValueNoCents } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
+// Configure PDF.js worker - using jsdelivr CDN which has proper CORS headers
+pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 const DocumentsTab = ({
   pdfUrl,
@@ -25,6 +31,19 @@ const DocumentsTab = ({
   const currentIndex = currentDocumentIndex[documentType] || 0;
   const currentDoc = currentDocs[currentIndex];
   const hasMultipleDocs = currentDocs.length > 1;
+  const [excelData, setExcelData] = useState(null);
+  const [isLoadingExcel, setIsLoadingExcel] = useState(false);
+  const [pdfNumPages, setPdfNumPages] = useState(null);
+  const [pdfPageNumber, setPdfPageNumber] = useState(1);
+  const [pdfLoadError, setPdfLoadError] = useState(false);
+  const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
+
+  // Memoize PDF options to prevent unnecessary re-renders (must be at component level, not inside conditionals)
+  const pdfOptions = useMemo(() => ({
+    cMapUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/cmaps/`,
+    cMapPacked: true,
+    standardFontDataUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/standard_fonts/`,
+  }), []);
 
   const handleDocumentTypeChange = (e) => {
     const newType = e.target.value;
@@ -33,9 +52,12 @@ const DocumentsTab = ({
     // Switch to the first document of the new type if available, or clear the view
     const newTypeDocs = documentsByType[newType] || [];
     if (newTypeDocs.length > 0) {
+      const firstDoc = newTypeDocs[0];
+      // Use storageUrl if previewUrl is not available (for stored documents)
+      const docUrl = firstDoc.previewUrl || firstDoc.storageUrl || null;
       // Update the modal state to show the first document of the new type
       $modalState.update({
-        pdfUrl: newTypeDocs[0].previewUrl,
+        pdfUrl: docUrl,
         currentDocumentIndex: {
           ...$modalState.value.currentDocumentIndex,
           [newType]: 0,
@@ -72,8 +94,129 @@ const DocumentsTab = ({
 
   const isPdfFile = (doc) => {
     if (!doc) return false;
-    return doc.mimeType === 'application/pdf' || doc.fileName?.toLowerCase().endsWith('.pdf');
+    const mimeType = doc.mimeType || '';
+    const fileName = doc.fileName || '';
+    // Check for PDF MIME type (with common variations) or file extension
+    return mimeType === 'application/pdf'
+      || mimeType === 'application/x-pdf'
+      || mimeType === 'application/x-bzpdf'
+      || mimeType === 'application/x-gzpdf'
+      || fileName.match(/\.pdf$/i);
   };
+
+  const isExcelFile = (doc) => {
+    if (!doc) return false;
+    const mimeType = doc.mimeType || '';
+    const fileName = doc.fileName || '';
+    return mimeType.includes('spreadsheet')
+      || fileName.match(/\.(xlsx?|xls)$/i)
+      || mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      || mimeType === 'application/vnd.ms-excel';
+  };
+
+  // Parse Excel file and extract data
+  useEffect(() => {
+    const parseExcelFile = async () => {
+      if (!currentDoc || !isExcelFile(currentDoc)) {
+        setExcelData(null);
+        return;
+      }
+
+      setIsLoadingExcel(true);
+      try {
+        const workbook = new ExcelJS.Workbook();
+        let buffer;
+
+        // For stored documents, download directly from Firebase Storage
+        if (currentDoc.isStored && currentDoc.storageUrl) {
+          const response = await fetch(currentDoc.storageUrl);
+          const blob = await response.blob();
+          buffer = await blob.arrayBuffer();
+        } else if (currentDoc.file) {
+          // For newly uploaded files, use the File object
+          buffer = await currentDoc.file.arrayBuffer();
+        } else {
+          setExcelData(null);
+          setIsLoadingExcel(false);
+          return;
+        }
+
+        await workbook.xlsx.load(buffer);
+
+        // Get the first worksheet
+        const worksheet = workbook.worksheets[0];
+        if (!worksheet) {
+          setExcelData(null);
+          setIsLoadingExcel(false);
+          return;
+        }
+
+        // Convert worksheet to array of rows
+        const rows = [];
+        worksheet.eachRow((row) => {
+          const rowData = [];
+          row.eachCell({ includeEmpty: true }, (cell) => {
+            let { value } = cell;
+            // Handle different cell value types
+            if (value === null || value === undefined) {
+              value = '';
+            } else if (typeof value === 'object') {
+              // Handle formulas, rich text, etc.
+              if (value.text !== undefined) {
+                value = value.text;
+              } else if (value.result !== undefined) {
+                value = value.result;
+              } else {
+                value = String(value);
+              }
+            }
+            rowData.push(value);
+          });
+          rows.push(rowData);
+        });
+
+        setExcelData({
+          worksheetName: worksheet.name,
+          rows,
+          columnCount: worksheet.columnCount,
+        });
+      } catch (error) {
+        console.error('Error parsing Excel file:', error);
+        setExcelData(null);
+      } finally {
+        setIsLoadingExcel(false);
+      }
+    };
+
+    parseExcelFile();
+  }, [currentDoc, pdfUrl]);
+
+  // Create blob URL for newly uploaded files (stored files use storageUrl directly)
+  useEffect(() => {
+    // For newly uploaded files with File object, create a blob URL
+    if (currentDoc?.file) {
+      const blobUrl = URL.createObjectURL(currentDoc.file);
+      setPdfBlobUrl(blobUrl);
+      setPdfLoadError(false);
+
+      // Cleanup blob URL on unmount
+      return () => {
+        URL.revokeObjectURL(blobUrl);
+      };
+    }
+
+    // For stored documents, we'll use storageUrl directly (no blob URL needed)
+    setPdfBlobUrl(null);
+    setPdfLoadError(false);
+    return undefined;
+  }, [currentDoc]);
+
+  // Reset PDF state when URL changes
+  useEffect(() => {
+    setPdfLoadError(false);
+    setPdfPageNumber(1);
+    setPdfNumPages(null);
+  }, [pdfUrl, pdfBlobUrl]);
 
   const getFileIcon = (doc) => {
     if (!doc) return 'file';
@@ -87,12 +230,35 @@ const DocumentsTab = ({
   };
 
   const renderDocumentPreview = () => {
-    if (!pdfUrl) {
+    // Check if current document is stored but doesn't have a File object
+    const isStoredWithoutFile = currentDoc?.isStored && !currentDoc?.file;
+    // Check if we have a storageUrl that can be used for preview
+    const hasStorageUrl = currentDoc?.storageUrl;
+
+    // If we have a stored document with storageUrl, update pdfUrl if needed
+    if (isStoredWithoutFile && hasStorageUrl && pdfUrl !== currentDoc.storageUrl) {
+      // Update pdfUrl to use storageUrl for preview
+      $modalState.update({ pdfUrl: currentDoc.storageUrl });
+      return null; // Will re-render with pdfUrl
+    }
+
+    if (!pdfUrl && !hasStorageUrl) {
       return (
         <div>
-          <p className="text-info-200 small mb-16">
-            Upload financial statements (PDF, Excel, etc.). Our system will automatically extract financial data.
-          </p>
+          {isStoredWithoutFile ? (
+            <div className="mb-16">
+              <div className="alert alert-info">
+                <strong>{currentDoc?.fileName || 'Document'}</strong> was previously uploaded.
+                <div className="mt-8 text-info-200">
+                  Re-upload the file to preview it in the browser.
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-info-200 small mb-16">
+              Upload financial statements (PDF, Excel, etc.). Our system will automatically extract financial data.
+            </p>
+          )}
           <FileUploader
             name="financialDocs"
             signal={$financialDocsUploader}
@@ -104,21 +270,193 @@ const DocumentsTab = ({
     }
 
     if (isPdfFile(currentDoc)) {
+      // If PDF failed to load, show fallback
+      if (pdfLoadError) {
+        return (
+          <div className="text-center py-5 border border-info-600 rounded" style={{ height: '65vh' }}>
+            <div className="d-flex flex-column align-items-center justify-content-center h-100">
+              <div className="mb-3">
+                <i className="fas fa-file-pdf fa-5x text-info-300" />
+              </div>
+              <h5 className="text-info-100 mb-2">{currentDoc?.fileName || 'PDF Document'}</h5>
+              <p className="text-info-300 mb-3">
+                Unable to load this PDF. Please open it in a new tab or download it.
+              </p>
+              <div className="d-flex gap-2">
+                <a
+                  href={currentDoc?.storageUrl || pdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-primary-100"
+                >
+                  Open in New Tab
+                </a>
+                <a
+                  href={currentDoc?.storageUrl || pdfUrl}
+                  download={currentDoc?.fileName}
+                  className="btn btn-outline-primary-100"
+                >
+                  Download PDF
+                </a>
+              </div>
+            </div>
+          </div>
+        );
+      }
+
       return (
-        <object
-          data={pdfUrl}
-          type="application/pdf"
-          width="100%"
-          style={{ height: '65vh' }}
-        >
-          <p>
-            Cannot display document.{' '}
-            <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
-              Download
-            </a>{' '}
-            instead.
-          </p>
-        </object>
+        <div style={{ height: '65vh', width: '100%', position: 'relative' }}>
+          <div
+            style={{
+              height: '100%',
+              width: '100%',
+              overflow: 'auto',
+              border: '1px solid #41696C',
+              borderRadius: '8px',
+              backgroundColor: '#525252',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <Document
+              file={pdfBlobUrl || currentDoc?.storageUrl || pdfUrl}
+              onLoadSuccess={({ numPages }) => {
+                setPdfNumPages(numPages);
+                setPdfLoadError(false);
+              }}
+              onLoadError={(error) => {
+                console.error('Error loading PDF:', error);
+                setPdfLoadError(true);
+              }}
+              loading={(
+                <div className="d-flex justify-content-center align-items-center" style={{ height: '65vh' }}>
+                  <div className="text-center">
+                    <div className="spinner-border text-info-300 mb-3" role="status">
+                      <span className="visually-hidden">Loading PDF...</span>
+                    </div>
+                    <p className="text-info-100">Loading PDF...</p>
+                  </div>
+                </div>
+              )}
+              options={pdfOptions}
+            >
+              <div style={{ padding: '16px', textAlign: 'center' }}>
+                <Page
+                  pageNumber={pdfPageNumber}
+                  width={Math.min(window.innerWidth * 0.4, 800)}
+                  renderTextLayer
+                  renderAnnotationLayer
+                />
+              </div>
+            </Document>
+          </div>
+
+          {/* PDF Navigation Controls */}
+          {pdfNumPages && pdfNumPages > 1 && (
+            <div
+              className="d-flex justify-content-between align-items-center px-3 py-2"
+              style={{
+                position: 'absolute',
+                bottom: '0',
+                left: '0',
+                right: '0',
+                backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                borderBottomLeftRadius: '8px',
+                borderBottomRightRadius: '8px',
+              }}
+            >
+              <Button
+                variant="outline-light"
+                size="sm"
+                onClick={() => setPdfPageNumber((prev) => Math.max(1, prev - 1))}
+                disabled={pdfPageNumber <= 1}
+              >
+                <FontAwesomeIcon icon={faChevronLeft} />
+              </Button>
+              <span className="text-light">
+                Page {pdfPageNumber} of {pdfNumPages}
+              </span>
+              <Button
+                variant="outline-light"
+                size="sm"
+                onClick={() => setPdfPageNumber((prev) => Math.min(pdfNumPages, prev + 1))}
+                disabled={pdfPageNumber >= pdfNumPages}
+              >
+                <FontAwesomeIcon icon={faChevronRight} />
+              </Button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    if (isExcelFile(currentDoc)) {
+      if (isLoadingExcel) {
+        return (
+          <div className="text-center py-5 border border-info-600 rounded" style={{ height: '65vh' }}>
+            <div className="d-flex flex-column align-items-center justify-content-center h-100">
+              <div className="spinner-border text-info-300 mb-3" role="status">
+                <span className="visually-hidden">Loading...</span>
+              </div>
+              <p className="text-info-300">Loading Excel file...</p>
+            </div>
+          </div>
+        );
+      }
+
+      if (excelData && excelData.rows.length > 0) {
+        return (
+          <div style={{ height: '65vh', overflow: 'auto', border: '1px solid #41696C', borderRadius: '8px' }}>
+            <div className="p-16 bg-info-700 border-bottom border-info-600">
+              <h6 className="text-info-50 mb-0">
+                {excelData.worksheetName} - {currentDoc?.fileName || 'Spreadsheet'}
+              </h6>
+            </div>
+            <Table striped bordered hover responsive className="mb-0" style={{ backgroundColor: 'transparent' }}>
+              <tbody>
+                {excelData.rows.map((row, rowIndex) => (
+                  <tr key={rowIndex}>
+                    {row.map((cell, cellIndex) => (
+                      <td
+                        key={cellIndex}
+                        className="text-info-50"
+                        style={{
+                          minWidth: '100px',
+                          whiteSpace: 'nowrap',
+                          padding: '8px',
+                        }}
+                      >
+                        {cell !== null && cell !== undefined ? String(cell) : ''}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
+        );
+      }
+
+      // Excel file but couldn't parse it
+      return (
+        <div className="text-center py-5 border border-info-600 rounded" style={{ height: '65vh' }}>
+          <div className="d-flex flex-column align-items-center justify-content-center h-100">
+            <div className="mb-3">
+              <i className={`fas fa-${getFileIcon(currentDoc)} fa-5x text-info-300`} />
+            </div>
+            <h5 className="text-info-100 mb-2">{currentDoc?.fileName || 'Document'}</h5>
+            <p className="text-info-300 mb-3">
+              Unable to preview this Excel file. Please download to view.
+            </p>
+            <a
+              href={pdfUrl}
+              download={currentDoc?.fileName}
+              className="btn btn-primary-100"
+            >
+              Download File
+            </a>
+          </div>
+        </div>
       );
     }
 
@@ -256,31 +594,19 @@ const DocumentsTab = ({
             <Row>
               <Col md={12} className="mb-16">
                 <UniversalInput
-                  label="Total Current Assets"
+                  label="Equity"
                   labelClassName="text-info-100"
                   type="currency"
                   placeholder="$ USD"
-                  value={$borrowerFinancialsForm.value.totalCurrentAssets}
-                  name="totalCurrentAssets"
+                  value={$borrowerFinancialsForm.value.equity}
+                  name="equity"
                   signal={$borrowerFinancialsForm}
                   inputFormatCallback={normalizeCurrencyValue}
                 />
               </Col>
               <Col md={12} className="mb-16">
                 <UniversalInput
-                  label="Total Current Liabilities"
-                  labelClassName="text-info-100"
-                  type="currency"
-                  placeholder="$ USD"
-                  value={$borrowerFinancialsForm.value.totalCurrentLiabilities}
-                  name="totalCurrentLiabilities"
-                  signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValue}
-                />
-              </Col>
-              <Col md={12} className="mb-16">
-                <UniversalInput
-                  label="Cash"
+                  label="Cash (Including Cash Equivalents)"
                   labelClassName="text-info-100"
                   type="currency"
                   placeholder="$ USD"
@@ -304,24 +630,36 @@ const DocumentsTab = ({
               </Col>
               <Col md={12} className="mb-16">
                 <UniversalInput
-                  label="Equity"
-                  labelClassName="text-info-100"
-                  type="currency"
-                  placeholder="$ USD"
-                  value={$borrowerFinancialsForm.value.equity}
-                  name="equity"
-                  signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValue}
-                />
-              </Col>
-              <Col md={12} className="mb-16">
-                <UniversalInput
                   label="Accounts Receivable"
                   labelClassName="text-info-100"
                   type="currency"
                   placeholder="$ USD"
                   value={$borrowerFinancialsForm.value.accountsReceivable}
                   name="accountsReceivable"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValue}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Inventory"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.inventory}
+                  name="inventory"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValue}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Total Current Assets"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.totalCurrentAssets}
+                  name="totalCurrentAssets"
                   signal={$borrowerFinancialsForm}
                   inputFormatCallback={normalizeCurrencyValue}
                 />
@@ -340,12 +678,12 @@ const DocumentsTab = ({
               </Col>
               <Col md={12} className="mb-16">
                 <UniversalInput
-                  label="Inventory"
+                  label="Total Current Liabilities"
                   labelClassName="text-info-100"
                   type="currency"
                   placeholder="$ USD"
-                  value={$borrowerFinancialsForm.value.inventory}
-                  name="inventory"
+                  value={$borrowerFinancialsForm.value.totalCurrentLiabilities}
+                  name="totalCurrentLiabilities"
                   signal={$borrowerFinancialsForm}
                   inputFormatCallback={normalizeCurrencyValue}
                 />
@@ -365,7 +703,7 @@ const DocumentsTab = ({
                   value={$borrowerFinancialsForm.value.grossRevenue}
                   name="grossRevenue"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValue}
+                  inputFormatCallback={normalizeCurrencyValueNoCents}
                 />
               </Col>
               <Col md={12} className="mb-16">
@@ -377,7 +715,7 @@ const DocumentsTab = ({
                   value={$borrowerFinancialsForm.value.netIncome}
                   name="netIncome"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValue}
+                  inputFormatCallback={normalizeCurrencyValueNoCents}
                 />
               </Col>
               <Col md={12} className="mb-16">
@@ -389,7 +727,7 @@ const DocumentsTab = ({
                   value={$borrowerFinancialsForm.value.ebitda}
                   name="ebitda"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValue}
+                  inputFormatCallback={normalizeCurrencyValueNoCents}
                 />
               </Col>
               <Col md={12} className="mb-16">
@@ -401,7 +739,7 @@ const DocumentsTab = ({
                   value={$borrowerFinancialsForm.value.rentalExpenses}
                   name="rentalExpenses"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValue}
+                  inputFormatCallback={normalizeCurrencyValueNoCents}
                 />
               </Col>
               <Col md={12} className="mb-16">

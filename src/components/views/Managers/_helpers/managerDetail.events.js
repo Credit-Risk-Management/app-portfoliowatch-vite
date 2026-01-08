@@ -1,8 +1,26 @@
 import { $relationshipManagers, $relationshipManagersView, $relationshipManagersForm, $managerDetail } from '@src/signals';
 
 export const handlePieClick = (data, navigate) => {
-  if (data && data.rating) {
-    navigate(`/loans?watchScore=${data.rating}`);
+  if (!data || !navigate) return;
+
+  // Recharts passes data in payload property
+  const payload = data.payload || data;
+  let rating = payload.rating !== undefined && payload.rating !== null
+    ? payload.rating
+    : null;
+
+  // If rating is null, try to extract it from the name field (e.g., "WATCH 1" -> 1)
+  if (rating === null || rating === undefined) {
+    const name = payload.name || '';
+    const watchMatch = name.match(/WATCH\s+(\d+)/i);
+    if (watchMatch) {
+      rating = parseInt(watchMatch[1], 10);
+    }
+  }
+
+  // Navigate if we have a valid rating (1-5, not null/undefined)
+  if (rating !== null && rating !== undefined && rating >= 1 && rating <= 5) {
+    navigate(`/loans?watchScore=${rating}`);
   }
 };
 

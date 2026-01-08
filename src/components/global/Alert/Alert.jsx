@@ -6,7 +6,7 @@ import Toast from '@src/components/global/Alert/Toast';
 import AlertModal from '@src/components/global/Alert/AlertModal';
 
 const ToastContainer = ({ onRemoveNotification }) => (
-  <div className="z-index-9999 container-fliud fixed-top">
+  <div className="z-index-10000 container-fliud fixed-top">
     {$alert.value.notificationArray.map(notification => (
       <Toast notification={notification} key={notification.id} onRemoveNotification={onRemoveNotification} />
     ))}

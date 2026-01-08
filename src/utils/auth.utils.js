@@ -61,7 +61,6 @@ export const initAuthListener = () => {
         } else {
           // Backend call succeeded but response structure is unexpected
           // Still set isSignedIn to true since user is authenticated with Firebase
-          console.warn('Unexpected response structure from getCurrentUser:', responseData);
           $auth.value = {
             user: firebaseUser,
             token,

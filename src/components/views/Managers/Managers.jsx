@@ -36,7 +36,6 @@ const Managers = () => {
 
   const rows = managers.map((manager) => ({
     ...manager,
-    manager: helpers.getManagerName(manager.managerId, managers),
     reports_count: helpers.getReportsCount(manager.id, managers),
     loans_count: helpers.getLoansCount(manager.id, managers, loans, true),
     status: () => (

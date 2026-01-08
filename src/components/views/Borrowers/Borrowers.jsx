@@ -56,8 +56,9 @@ const Borrowers = () => {
 
   const rows = $borrowers.value.list.map((borrower) => ({
     ...borrower,
+    borrowerType: borrower.borrowerType || '-',
     clientRiskRating: () => <StatusBadge status={borrower.clientRiskRating} type="risk" />,
-    relationshipManager: helpers.getManagerName(borrower.relationshipManagerId, $relationshipManagers.value.list),
+    relationshipManager: borrower.relationshipManager?.name || '-',
     loanCount: borrower.loanCount || 0,
     totalBalance: formatCurrency(borrower.totalBalance),
     actions: () => (

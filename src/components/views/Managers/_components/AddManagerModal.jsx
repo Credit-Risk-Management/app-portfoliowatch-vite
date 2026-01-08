@@ -25,8 +25,8 @@ const AddManagerModal = () => (
           <UniversalInput
             label="Name"
             type="text"
-            value={$relationshipManagersForm.value.name || ''}
-            onChange={(e) => $relationshipManagersForm.update({ name: e.target.value })}
+            name="name"
+            signal={$relationshipManagersForm}
             placeholder="Enter manager name"
           />
         </Col>
@@ -36,17 +36,17 @@ const AddManagerModal = () => (
           <UniversalInput
             label="Email"
             type="email"
-            value={$relationshipManagersForm.value.email || ''}
-            onChange={(e) => $relationshipManagersForm.update({ email: e.target.value })}
+            name="email"
+            signal={$relationshipManagersForm}
             placeholder="manager@lendingbank.com"
           />
         </Col>
         <Col md={6} className="mb-16">
           <UniversalInput
             label="Phone"
-            type="text"
-            value={$relationshipManagersForm.value.phone || ''}
-            onChange={(e) => $relationshipManagersForm.update({ phone: e.target.value })}
+            type="phone"
+            name="phone"
+            signal={$relationshipManagersForm}
             placeholder="555-100-0000"
           />
         </Col>
@@ -56,8 +56,8 @@ const AddManagerModal = () => (
           <UniversalInput
             label="Position Title"
             type="text"
-            value={$relationshipManagersForm.value.position_title || ''}
-            onChange={(e) => $relationshipManagersForm.update({ position_title: e.target.value })}
+            name="position_title"
+            signal={$relationshipManagersForm}
             placeholder="e.g., Senior Relationship Manager"
           />
         </Col>
@@ -67,8 +67,8 @@ const AddManagerModal = () => (
           <UniversalInput
             label="Office Location"
             type="text"
-            value={$relationshipManagersForm.value.office_location || ''}
-            onChange={(e) => $relationshipManagersForm.update({ office_location: e.target.value })}
+            name="office_location"
+            signal={$relationshipManagersForm}
             placeholder="e.g., New York Office"
           />
         </Col>

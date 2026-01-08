@@ -11,11 +11,6 @@ import { dangerAlert, successAlert } from '@src/components/global/Alert/_helpers
  */
 export const uploadToFirebase = async (file, signedUrl) => {
   try {
-    console.log('Uploading to Firebase Storage...');
-    console.log('Signed URL:', signedUrl);
-    console.log('File type:', file.type);
-    console.log('File size:', file.size);
-
     const response = await fetch(signedUrl, {
       method: 'PUT',
       body: file,
@@ -24,23 +19,13 @@ export const uploadToFirebase = async (file, signedUrl) => {
       },
     });
 
-    console.log('Upload response status:', response.status);
-    console.log('Upload response ok:', response.ok);
-
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Upload error response:', errorText);
       throw new Error(`Upload failed with status: ${response.status} - ${errorText}`);
     }
 
     return true;
   } catch (error) {
-    console.error('Error uploading to Firebase:', error);
-    console.error('Error details:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
-    });
     throw error;
   }
 };

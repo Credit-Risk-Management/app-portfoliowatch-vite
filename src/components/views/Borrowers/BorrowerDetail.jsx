@@ -1,21 +1,21 @@
 /* eslint-disable react/no-danger */
 /* eslint-disable react-hooks/exhaustive-deps */
+import axios from 'axios';
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Row, Col, Button, ListGroup, Badge } from 'react-bootstrap';
+import { Container, Row, Col, Button, Badge } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faArrowRight, faEdit, faMagic, faEnvelope, faPhone, faChartLine, faFileAlt, faCopy, faCheck, faUser, faAddressBook, faMoneyBillWave, faDollarSign, faIndustry, faStickyNote, faEye, faTrash, faFile, faReceipt } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faArrowRight, faEdit, faMagic, faChartLine, faFileAlt, faCopy, faCheck, faUser, faMoneyBillWave, faDollarSign, faIndustry, faStickyNote, faEye, faTrash, faFile, faReceipt, faTable } from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';
 import UniversalCard from '@src/components/global/UniversalCard';
 import SignalTable from '@src/components/global/SignalTable';
 import ContextMenu from '@src/components/global/ContextMenu';
-import { $borrower, WATCH_SCORE_OPTIONS } from '@src/consts/consts';
-import { $contacts, $borrowerFinancialsView, $borrowerFinancials, $documents, $documentsView } from '@src/signals';
+import { $borrower } from '@src/consts/consts';
+import { $borrowerFinancialsView, $borrowerFinancials, $documents, $documentsView } from '@src/signals';
 import { formatCurrency } from '@src/utils/formatCurrency';
+import { auth } from '@src/utils/firebase';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
-import { successAlert } from '@src/components/global/Alert/_helpers/alert.events';
-import { formatDate as formatLoanDate } from '@src/components/views/Loans/_helpers/loans.helpers';
-import { TABLE_HEADERS } from '@src/components/views/Loans/_helpers/loans.consts';
+import { dangerAlert, successAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import { EditLoanModal, DeleteLoanModal } from '@src/components/views/Loans/_components';
 import { handleDownloadDocument } from '@src/components/views/Documents/_helpers/documents.events';
 import { formatFileSize, formatUploadDate, getLoanNumber } from '@src/components/views/Documents/_helpers/documents.helpers';
@@ -23,20 +23,16 @@ import { TABLE_HEADERS as DOCUMENTS_TABLE_HEADERS } from '@src/components/views/
 import SubmitFinancialsModal from './_components/SubmitFinancialsModal';
 import EditBorrowerDetailModal from './_components/EditBorrowerDetailModal';
 import DebtServiceTab from './_components/DebtServiceTab';
-import { handleOpenEditMode } from './_components/submitFinancialsModal.handlers';
 import {
   formatDate,
   formatAddress,
   formatPhoneNumber,
   formatEmail,
-  getContactName,
   getHealthScoreColor,
   renderMarkdownLinks,
 } from './_helpers/borrowerDetail.helpers';
 import {
   $borrowerDetailView,
-  $borrowerLoansFilter,
-  $borrowerLoansView,
   $borrowerFinancialsFilter,
   $borrowerFinancialsTableView,
   $borrowerDocumentsFilter,
@@ -51,6 +47,7 @@ const BorrowerDetail = () => {
   const navigate = useNavigate();
   const [copiedLink, setCopiedLink] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
+  const [isExportingExcel, setIsExportingExcel] = useState(false);
 
   // Fetch borrower detail and relationship managers on mount or when borrowerId changes
   useEffect(() => {
@@ -142,15 +139,58 @@ const BorrowerDetail = () => {
     }
   };
 
+  const handleExportExcel = async () => {
+    if (!borrowerId) return;
+
+    try {
+      setIsExportingExcel(true);
+
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3333';
+
+      const user = auth.currentUser;
+      let token = '';
+      if (user) {
+        token = await user.getIdToken();
+      }
+
+      const response = await axios.get(`${API_BASE_URL}/borrowers/${borrowerId}/financials/spreadsheet/excel`, {
+        responseType: 'blob',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response && response.data) {
+        const blob = new Blob([response.data], {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `financial-spreadsheet-${borrowerId}-${new Date().toISOString().split('T')[0]}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        successAlert('Excel file exported successfully!');
+      } else {
+        throw new Error('Invalid response from server');
+      }
+    } catch (error) {
+      console.error('Error exporting Excel:', error);
+      dangerAlert('Failed to export Excel file');
+    } finally {
+      setIsExportingExcel(false);
+    }
+  };
+
   // Reset component state when the borrower changes
   useEffect(() => {
     // Component state reset if needed
   }, [borrowerId]);
 
   const loans = useMemo(() => borrower?.loans || [], [borrower?.loans]);
-
-  // Filter table headers - remove borrowerName since we're already on borrower page, and remove actions
-  const loansTableHeaders = TABLE_HEADERS.filter((header) => header.key !== 'borrowerName' && header.key !== 'actions');
 
   // Financials table headers
   const financialsTableHeaders = [
@@ -160,7 +200,7 @@ const BorrowerDetail = () => {
     { key: 'grossRevenue', value: 'Gross Revenue', sortKey: 'grossRevenue' },
     { key: 'netIncome', value: 'Net Income', sortKey: 'netIncome' },
     { key: 'ebitda', value: 'EBITDA', sortKey: 'ebitda' },
-    { key: 'debtService', value: 'Debt Service', sortKey: 'debtService' },
+    { key: 'debtService', value: 'DSCR', sortKey: 'debtService' },
     { key: 'currentRatio', value: 'Current Ratio', sortKey: 'currentRatio' },
     { key: 'liquidity', value: 'Liquidity', sortKey: 'liquidity' },
     { key: 'submittedBy', value: 'Submitted By', sortKey: 'submittedBy' },
@@ -202,28 +242,6 @@ const BorrowerDetail = () => {
       }));
     },
     [$borrowerFinancials.value?.list],
-  );
-
-  // Transform loans into table rows
-  const loansTableRows = useMemo(
-    () => loans.map((loan) => ({
-      ...loan,
-      loanId: loan.loanId || loan.loanNumber || loan.id || '-',
-      borrowerName: loan.borrowerName || '-',
-      principalAmount: loan.principalAmount ? formatCurrency(loan.principalAmount) : '-',
-      paymentAmount: loan.paymentAmount ? formatCurrency(loan.paymentAmount) : '-',
-      nextPaymentDueDate: loan.nextPaymentDueDate ? formatLoanDate(loan.nextPaymentDueDate) : '-',
-      liquidity: loan.liquidity ? formatCurrency(loan.liquidity) : '-',
-      watchScore: () => {
-        const score = WATCH_SCORE_OPTIONS[loan.watchScore];
-        if (!score) {
-          return <span className="text-info-100 fw-700">-</span>;
-        }
-        return <span className={`text-${score.color}-200 fw-700`}>{score.label}</span>;
-      },
-      relationshipManager: loan.relationshipManager ? (loan.relationshipManager.name || '-') : '-',
-    })),
-    [loans, navigate],
   );
 
   // Transform documents into table rows
@@ -280,13 +298,12 @@ const BorrowerDetail = () => {
     );
   }
 
-  const contacts = $contacts.value?.list || [];
-
   const tabs = [
     { key: 'details', title: 'Details', icon: faUser },
-    { key: 'contacts', title: 'Contacts', icon: faAddressBook },
+    // { key: 'contacts', title: 'Contacts', icon: faAddressBook },
     { key: 'loans', title: 'Loans', icon: faMoneyBillWave },
     { key: 'financials', title: 'Financials', icon: faDollarSign },
+    // { key: 'covenants', title: 'Covenants', icon: faShieldAlt },
     { key: 'debtService', title: 'Debt Service', icon: faReceipt },
     { key: 'documents', title: 'Documents', icon: faFile },
     { key: 'industry', title: 'Industry Analysis', icon: faIndustry },
@@ -300,7 +317,7 @@ const BorrowerDetail = () => {
           <UniversalCard headerText="Borrower Details">
             <div>
               <div className="text-info-100 fw-200 mt-8">Borrower Type</div>
-              <div className="text-info-50 lead fw-500">{borrower.borrowerType || 'Unknown'}</div>
+              <div className="text-info-50 lead fw-500">{borrower.borrowerType || 'N/A'}</div>
 
               <div className="text-info-100 fw-200 mt-16">Primary Contact</div>
               <div className="text-info-50 lead fw-500">{borrower.primaryContact || 'N/A'}</div>
@@ -381,65 +398,43 @@ const BorrowerDetail = () => {
           </UniversalCard>
         );
 
-      case 'contacts':
-        return (
-          <UniversalCard headerText="Contacts">
-            <div>
-              {contacts.length === 0 ? (
-                <div className="text-info-100 fw-200">No contacts found for this borrower.</div>
-              ) : (
-                <ListGroup variant="flush">
-                  {contacts.map((contact) => (
-                    <ListGroup.Item key={contact.id} className="px-0">
-                      <div className="d-flex justify-content-between align-items-start">
-                        <div>
-                          <div className="fw-bold text-white">
-                            {getContactName(contact)}
-                            {contact.isPrimary && (
-                              <Badge bg="primary-100" className="ms-8">Primary</Badge>
-                            )}
-                          </div>
-                          {contact.title && (
-                            <div className="small text-info-100">{contact.title}</div>
-                          )}
-                          {contact.email && (
-                            <div className="small text-info-50 mt-4">
-                              <FontAwesomeIcon icon={faEnvelope} className="me-4" />
-                              {contact.email}
-                            </div>
-                          )}
-                          {contact.phone && (
-                            <div className="small text-info-50">
-                              <FontAwesomeIcon icon={faPhone} className="me-4" />
-                              {contact.phone}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </ListGroup.Item>
-                  ))}
-                </ListGroup>
-              )}
-            </div>
-          </UniversalCard>
-        );
-
       case 'loans':
         return (
           <div>
             {loans.length === 0 ? (
               <div className="text-info-100 fw-200">No loans found for this borrower.</div>
             ) : (
-              <SignalTable
-                $filter={$borrowerLoansFilter}
-                $view={$borrowerLoansView}
-                headers={loansTableHeaders}
-                rows={loansTableRows}
-                totalCount={loans.length}
-                currentPage={$borrowerLoansFilter.value.page}
-                itemsPerPageAmount={10}
-                onRowClick={(loan) => navigate(`/loans/${loan.id}`)}
-              />
+              <div>
+                {loans.map((loan) => (
+                  <UniversalCard key={loan.id} headerText={`Loan: ${loan.loanId || loan.loanNumber || loan.id || 'N/A'}`}>
+                    <div>
+                      <div className="text-info-100 fw-200 mt-8">Principal Amount</div>
+                      <div className="text-info-50 lead fw-500">{loan.principalAmount ? formatCurrency(loan.principalAmount) : 'N/A'}</div>
+
+                      <div className="text-info-100 fw-200 mt-16">Payment Amount</div>
+                      <div className="text-info-50 lead fw-500">{loan.paymentAmount ? formatCurrency(loan.paymentAmount) : 'N/A'}</div>
+
+                      {loan.nextPaymentDueDate && (
+                        <>
+                          <div className="text-info-100 fw-200 mt-16">Next Payment Due Date</div>
+                          <div className="text-info-50 lead fw-500">{formatDate(loan.nextPaymentDueDate)}</div>
+                        </>
+                      )}
+
+                      <div className="mt-16">
+                        <Button
+                          variant="outline-primary-100"
+                          size="sm"
+                          onClick={() => navigate(`/loans/${loan.id}`)}
+                        >
+                          View Loan Details
+                          <FontAwesomeIcon icon={faArrowRight} className="ms-8" />
+                        </Button>
+                      </div>
+                    </div>
+                  </UniversalCard>
+                ))}
+              </div>
             )}
           </div>
         );
@@ -473,6 +468,16 @@ const BorrowerDetail = () => {
                   <FontAwesomeIcon icon={copiedLink ? faCheck : faCopy} className="me-8" />
                   {copiedLink ? 'Copied!' : 'Copy Borrower Link'}
                 </Button>
+                <Button
+                  variant="outline-primary-100"
+                  onClick={handleExportExcel}
+                  disabled={isExportingExcel}
+                  size="sm"
+                  className="ms-8"
+                >
+                  <FontAwesomeIcon icon={faTable} className="me-8" />
+                  {isExportingExcel ? 'Exporting...' : 'Export Spreadsheet'}
+                </Button>
               </div>
             </div>
 
@@ -504,13 +509,12 @@ const BorrowerDetail = () => {
                   currentPage={$borrowerFinancialsFilter.value.page}
                   itemsPerPageAmount={10}
                   onRowClick={(financial) => {
-                    // Get the original financial data from the list (not the formatted table row)
-                    const originalFinancial = $borrowerFinancials.value?.list?.find(
-                      (f) => f.id === financial.id,
-                    );
-                    if (originalFinancial) {
-                      handleOpenEditMode(originalFinancial);
-                    }
+                    $borrowerFinancialsView.update({
+                      showSubmitModal: true,
+                      isEditMode: true,
+                      currentBorrowerId: borrower.id,
+                      editingFinancialId: financial.id,
+                    });
                   }}
                 />
               );
@@ -671,8 +675,7 @@ const BorrowerDetail = () => {
                 }}
                 className={`d-flex align-items-center p-8 mb-8 rounded cursor-pointer ${activeTab === tab.key
                   ? 'bg-info-100 text-info-900 fw-bold'
-                  : 'text-info-100 hover-bg-info-700'
-                }`}
+                  : 'text-info-100 hover-bg-info-700'}`}
                 style={{
                   transition: 'background-color 0.2s ease',
                 }}
