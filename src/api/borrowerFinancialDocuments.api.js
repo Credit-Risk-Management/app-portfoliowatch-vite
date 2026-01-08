@@ -1,5 +1,5 @@
-import apiClient from './client';
 import { storage } from '@src/utils/firebase';
+import apiClient from './client';
 
 const borrowerFinancialDocumentsApi = {
   /**
@@ -57,7 +57,7 @@ const borrowerFinancialDocumentsApi = {
       // apiClient already unwraps response.data via interceptor
       // So response is already { success: true, data: [...], count: ... }
       const response = await apiClient.get(`/borrower-financial-documents/borrower-financial/${borrowerFinancialId}`);
-      return response;  // Return the whole response, not response.data
+      return response; // Return the whole response, not response.data
     } catch (error) {
       console.error('Error fetching documents:', error);
       throw error;
@@ -96,4 +96,3 @@ const borrowerFinancialDocumentsApi = {
 };
 
 export default borrowerFinancialDocumentsApi;
-
