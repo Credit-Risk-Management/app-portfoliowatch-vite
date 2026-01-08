@@ -3,88 +3,6 @@ import { storage } from '@src/utils/firebase';
 
 const borrowerFinancialDocumentsApi = {
   /**
-   * Initiate file upload - get signed URL
-   * @param {Object} data - Upload initiation data
-   * @returns {Promise<Object>} Upload URL and document ID
-   */
-  initiateUpload: async (data) => {
-    try {
-      const response = await apiClient.post('/borrower-financial-documents/upload/initiate', data);
-      return response.data;
-    } catch (error) {
-      console.error('Error initiating document upload:', error);
-      throw error;
-    }
-  },
-
-  /**
-   * Upload file directly to storage using signed URL
-   * @param {string} uploadUrl - Signed upload URL
-   * @param {File} file - File to upload
-   * @param {string} contentType - File content type
-   * @returns {Promise<string>} Storage URL
-   */
-  uploadToStorage: async (uploadUrl, file, contentType) => {
-    try {
-      // Upload directly to storage (Firebase/S3) using fetch
-      const response = await fetch(uploadUrl, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': contentType,
-        },
-        body: file,
-      });
-
-      if (!response.ok) {
-        throw new Error(`Upload failed with status: ${response.status}`);
-      }
-
-      // Extract storage URL from upload URL (remove query parameters)
-      const storageUrl = uploadUrl.split('?')[0];
-      return storageUrl;
-    } catch (error) {
-      console.error('Error uploading file to storage:', error);
-      throw error;
-    }
-  },
-
-  /**
-   * Confirm upload completion
-   * @param {string} documentId - Document ID
-   * @param {string} storageUrl - Storage URL
-   * @returns {Promise<Object>} Updated document
-   */
-  confirmUpload: async (documentId, storageUrl) => {
-    try {
-      const response = await apiClient.post('/borrower-financial-documents/upload/confirm', {
-        documentId,
-        storageUrl,
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error confirming document upload:', error);
-      throw error;
-    }
-  },
-
-  /**
-   * Mark upload as failed
-   * @param {string} documentId - Document ID
-   * @returns {Promise<Object>} Updated document
-   */
-  markUploadFailed: async (documentId) => {
-    try {
-      const response = await apiClient.post('/borrower-financial-documents/upload/failed', {
-        documentId,
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error marking upload as failed:', error);
-      throw error;
-    }
-  },
-
-  /**
    * Complete file upload process (upload to Firebase + save metadata)
    * @param {Object} params - Upload parameters
    * @param {string} params.borrowerFinancialId - Borrower financial ID
@@ -157,22 +75,6 @@ const borrowerFinancialDocumentsApi = {
       return response.data;
     } catch (error) {
       console.error('Error fetching document:', error);
-      throw error;
-    }
-  },
-
-  /**
-   * Get download URL for a document
-   * @param {string} id - Document ID
-   * @param {number} expiresIn - Expiration time in seconds
-   * @returns {Promise<Object>} Download URL
-   */
-  getDownloadUrl: async (id, expiresIn = 3600) => {
-    try {
-      const response = await apiClient.get(`/borrower-financial-documents/${id}/download?expiresIn=${expiresIn}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error getting download URL:', error);
       throw error;
     }
   },
