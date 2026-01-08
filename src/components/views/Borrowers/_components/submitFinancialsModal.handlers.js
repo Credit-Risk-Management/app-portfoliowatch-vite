@@ -1,7 +1,7 @@
 import { $borrowerFinancialsView, $borrowerFinancialsForm, $user } from '@src/signals';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
 import borrowerFinancialDocumentsApi from '@src/api/borrowerFinancialDocuments.api';
-import { successAlert, dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
+import { successAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import generateMockFinancialData from '../_helpers/financials.helpers';
 
 /**
@@ -214,16 +214,11 @@ export const handleSubmit = async ($modalState, onCloseCallback) => {
 
     // Validate required fields
     const borrowerId = $borrowerFinancialsView.value.currentBorrowerId;
-    const asOfDate = $borrowerFinancialsForm.value.asOfDate;
-    const organizationId = $user.value.organizationId;
-
-    console.log('Form values before submit:', $borrowerFinancialsForm.value);
-    console.log('Borrower ID:', borrowerId);
-    console.log('As Of Date:', asOfDate);
-    console.log('Organization ID:', organizationId);
+    const { asOfDate } = $borrowerFinancialsForm.value;
+    const { organizationId } = $user.value;
 
     if (!borrowerId) {
-      $modalState.update({ 
+      $modalState.update({
         error: 'Borrower ID is required. Please select a borrower.',
         isSubmitting: false,
       });
@@ -231,7 +226,7 @@ export const handleSubmit = async ($modalState, onCloseCallback) => {
     }
 
     if (!asOfDate) {
-      $modalState.update({ 
+      $modalState.update({
         error: 'As of Date is required. Please select a date.',
         isSubmitting: false,
       });
@@ -239,7 +234,7 @@ export const handleSubmit = async ($modalState, onCloseCallback) => {
     }
 
     if (!organizationId) {
-      $modalState.update({ 
+      $modalState.update({
         error: 'Organization ID is required. Please ensure you are logged in.',
         isSubmitting: false,
       });
@@ -287,39 +282,30 @@ export const handleSubmit = async ($modalState, onCloseCallback) => {
       // TODO: Add document upload implementation - for now we're tracking in documentsByType
     };
 
-
-    console.log('Submitting financial data:', financialData);
-
     let response;
     const { isEditMode } = $borrowerFinancialsView.value;
     const editingId = $borrowerFinancialsView.value.editingFinancialId;
 
     if (isEditMode && editingId) {
       // Update existing record
-      console.log('Updating financial:', editingId);
       response = await borrowerFinancialsApi.update(editingId, financialData);
     } else {
       // Create new record
-      console.log('Creating new financial');
       response = await borrowerFinancialsApi.create(financialData);
     }
-
-    console.log('Financial API response:', response);
-
 
     // API returns { success: true, data: ... } or { success: false, error: ... }
     if (response && response.success) {
       // Extract financial ID - response.data might be the financial object directly or wrapped
       const financialId = response.data?.id || response.data?.data?.id || editingId;
-      
-      
+
       // Upload documents to backend storage
       if (financialId && $modalState.value.documentsByType) {
         const uploadPromises = [];
-        
+
         Object.keys($modalState.value.documentsByType).forEach((docType) => {
           const docs = $modalState.value.documentsByType[docType] || [];
-          
+
           docs.forEach((doc) => {
             // Only upload new documents that have a File object and aren't already stored
             if (doc.file && !doc.isStored) {
@@ -333,17 +319,17 @@ export const handleSubmit = async ($modalState, onCloseCallback) => {
                 // Don't throw - continue with other uploads
                 return null;
               });
-              
+
               uploadPromises.push(uploadPromise);
             }
           });
         });
-        
+
         // Wait for all uploads to complete (in background, don't block success message)
         if (uploadPromises.length > 0) {
           Promise.all(uploadPromises).then((results) => {
             const successCount = results.filter((r) => r !== null).length;
-            console.log(`Uploaded ${successCount} of ${uploadPromises.length} documents`);
+            console.info(`Uploaded ${successCount} of ${uploadPromises.length} documents`);
           });
         }
       }
@@ -363,19 +349,19 @@ export const handleSubmit = async ($modalState, onCloseCallback) => {
         updatedLoans,
       });
 
-        const message = isEditMode
-          ? 'Financial data updated successfully!'
-          : 'Submitted new financials!';
-        successAlert(message, 'toast');
-      } else {
-        // API returned { success: false, error: ... }
-        const errorMessage = response?.error || response?.message || 'Failed to submit financial data';
-        $modalState.update({ error: errorMessage });
-      }
+      const message = isEditMode
+        ? 'Financial data updated successfully!'
+        : 'Submitted new financials!';
+      successAlert(message, 'toast');
+    } else {
+      // API returned { success: false, error: ... }
+      const errorMessage = response?.error || response?.message || 'Failed to submit financial data';
+      $modalState.update({ error: errorMessage });
+    }
   } catch (err) {
     // Handle different error formats
     let errorMessage = 'An error occurred while submitting financial data';
-    
+
     if (err?.error) {
       // API returned { success: false, error: ... } and was rejected
       errorMessage = err.error;
@@ -387,7 +373,7 @@ export const handleSubmit = async ($modalState, onCloseCallback) => {
     } else if (err?.message) {
       errorMessage = err.message;
     }
-    
+
     $modalState.update({ error: errorMessage });
   } finally {
     $modalState.update({ isSubmitting: false });
@@ -402,10 +388,10 @@ export const handleSubmit = async ($modalState, onCloseCallback) => {
 const loadDocumentsFromBackend = async (financialId) => {
   try {
     const response = await borrowerFinancialDocumentsApi.getByBorrowerFinancial(financialId);
-    
+
     // The response structure is { success: true, data: [...], count: ... }
     const documents = response?.success && response?.data ? response.data : [];
-    
+
     if (documents && documents.length > 0) {
       // Organize documents by type
       const documentsByType = {
@@ -413,7 +399,7 @@ const loadDocumentsFromBackend = async (financialId) => {
         incomeStatement: [],
         debtServiceWorksheet: [],
       };
-      
+
       // Use the storageUrl directly from the document record
       // (it's already a permanent Firebase Storage download URL)
       documents.forEach((doc) => {
@@ -433,13 +419,13 @@ const loadDocumentsFromBackend = async (financialId) => {
           });
         }
       });
-      
+
       return documentsByType;
     }
   } catch (error) {
     console.error('Error loading documents from backend:', error);
   }
-  
+
   // Return empty structure if no documents or error
   return {
     balanceSheet: [],

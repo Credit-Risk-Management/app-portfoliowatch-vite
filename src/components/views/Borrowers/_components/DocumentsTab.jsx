@@ -10,8 +10,6 @@ import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import FileUploader from '@src/components/global/FileUploader';
 import { $borrowerFinancialsForm } from '@src/signals';
 import { normalizeCurrencyValue, normalizeCurrencyValueNoCents } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
-import { auth } from '@src/utils/firebase';
-
 // Configure PDF.js worker - using jsdelivr CDN which has proper CORS headers
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
@@ -110,7 +108,7 @@ const DocumentsTab = ({
     if (!doc) return false;
     const mimeType = doc.mimeType || '';
     const fileName = doc.fileName || '';
-    return mimeType.includes('spreadsheet') 
+    return mimeType.includes('spreadsheet')
       || fileName.match(/\.(xlsx?|xls)$/i)
       || mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
       || mimeType === 'application/vnd.ms-excel';
@@ -129,14 +127,9 @@ const DocumentsTab = ({
         const workbook = new ExcelJS.Workbook();
         let buffer;
 
-        // For stored documents, download via backend proxy
-        if (currentDoc.isStored && currentDoc.id) {
-          const proxyUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3333'}/borrower-financial-documents/${currentDoc.id}/proxy`;
-          const response = await fetch(proxyUrl, {
-            headers: {
-              'Authorization': `Bearer ${await auth.currentUser?.getIdToken()}`,
-            },
-          });
+        // For stored documents, download directly from Firebase Storage
+        if (currentDoc.isStored && currentDoc.storageUrl) {
+          const response = await fetch(currentDoc.storageUrl);
           const blob = await response.blob();
           buffer = await blob.arrayBuffer();
         } else if (currentDoc.file) {
@@ -160,10 +153,10 @@ const DocumentsTab = ({
 
         // Convert worksheet to array of rows
         const rows = [];
-        worksheet.eachRow((row, rowNumber) => {
+        worksheet.eachRow((row) => {
           const rowData = [];
-          row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-            let value = cell.value;
+          row.eachCell({ includeEmpty: true }, (cell) => {
+            let { value } = cell;
             // Handle different cell value types
             if (value === null || value === undefined) {
               value = '';
@@ -198,56 +191,24 @@ const DocumentsTab = ({
     parseExcelFile();
   }, [currentDoc, pdfUrl]);
 
-  // Fetch PDF/Excel from Firebase Storage and create blob URL
+  // Create blob URL for newly uploaded files (stored files use storageUrl directly)
   useEffect(() => {
-    const fetchBlob = async () => {
-      if (!currentDoc) {
-        setPdfBlobUrl(null);
-        return;
-      }
+    // For newly uploaded files with File object, create a blob URL
+    if (currentDoc?.file) {
+      const blobUrl = URL.createObjectURL(currentDoc.file);
+      setPdfBlobUrl(blobUrl);
+      setPdfLoadError(false);
 
-      // For newly uploaded files with File object
-      if (currentDoc.file) {
-        const blobUrl = URL.createObjectURL(currentDoc.file);
-        setPdfBlobUrl(blobUrl);
-        return;
-      }
+      // Cleanup blob URL on unmount
+      return () => {
+        URL.revokeObjectURL(blobUrl);
+      };
+    }
 
-      // For stored documents, download via backend proxy (bypasses CORS!)
-      if (currentDoc.isStored && currentDoc.id) {
-        try {
-          const proxyUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3333'}/borrower-financial-documents/${currentDoc.id}/proxy`;
-          const response = await fetch(proxyUrl, {
-            headers: {
-              'Authorization': `Bearer ${await auth.currentUser?.getIdToken()}`,
-            },
-          });
-          
-          if (!response.ok) {
-            throw new Error(`Failed to fetch: ${response.statusText}`);
-          }
-          
-          const blob = await response.blob();
-          const blobUrl = URL.createObjectURL(blob);
-          setPdfBlobUrl(blobUrl);
-          setPdfLoadError(false);
-        } catch (error) {
-          console.error('Error downloading document:', error);
-          setPdfLoadError(true);
-        }
-      } else {
-        setPdfBlobUrl(null);
-      }
-    };
-
-    fetchBlob();
-
-    // Cleanup blob URL on unmount
-    return () => {
-      if (pdfBlobUrl) {
-        URL.revokeObjectURL(pdfBlobUrl);
-      }
-    };
+    // For stored documents, we'll use storageUrl directly (no blob URL needed)
+    setPdfBlobUrl(null);
+    setPdfLoadError(false);
+    return undefined;
   }, [currentDoc]);
 
   // Reset PDF state when URL changes
@@ -358,7 +319,7 @@ const DocumentsTab = ({
             }}
           >
             <Document
-              file={pdfBlobUrl || pdfUrl}
+              file={pdfBlobUrl || currentDoc?.storageUrl || pdfUrl}
               onLoadSuccess={({ numPages }) => {
                 setPdfNumPages(numPages);
                 setPdfLoadError(false);
@@ -367,7 +328,7 @@ const DocumentsTab = ({
                 console.error('Error loading PDF:', error);
                 setPdfLoadError(true);
               }}
-              loading={
+              loading={(
                 <div className="d-flex justify-content-center align-items-center" style={{ height: '65vh' }}>
                   <div className="text-center">
                     <div className="spinner-border text-info-300 mb-3" role="status">
@@ -376,15 +337,15 @@ const DocumentsTab = ({
                     <p className="text-info-100">Loading PDF...</p>
                   </div>
                 </div>
-              }
+              )}
               options={pdfOptions}
             >
               <div style={{ padding: '16px', textAlign: 'center' }}>
                 <Page
                   pageNumber={pdfPageNumber}
                   width={Math.min(window.innerWidth * 0.4, 800)}
-                  renderTextLayer={true}
-                  renderAnnotationLayer={true}
+                  renderTextLayer
+                  renderAnnotationLayer
                 />
               </div>
             </Document>

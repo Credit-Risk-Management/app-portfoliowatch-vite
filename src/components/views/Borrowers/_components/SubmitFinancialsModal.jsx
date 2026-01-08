@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Alert, ButtonGroup, Button, Row, Col, Form } from 'react-bootstrap';
 import UniversalModal from '@src/components/global/UniversalModal';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
@@ -22,7 +23,7 @@ import { $financialDocsUploader, $modalState } from './submitFinancialsModal.sig
 
 const SubmitFinancialsModal = () => {
   const { activeTab } = $borrowerFinancialsForm.value;
-  const { isEditMode } = $borrowerFinancialsView.value;
+  const { isEditMode, showSubmitModal, editingFinancialId } = $borrowerFinancialsView.value;
   const {
     ocrApplied,
     isSubmitting,
@@ -34,20 +35,23 @@ const SubmitFinancialsModal = () => {
   } = $modalState.value;
 
   // Load financial data when opening in edit mode
-  useEffectAsync(async () => {
-    const { showSubmitModal, editingFinancialId } = $borrowerFinancialsView.value;
+  useEffect(() => {
     if (showSubmitModal && isEditMode && editingFinancialId) {
-      try {
-        const response = await borrowerFinancialsApi.getById(editingFinancialId);
-        if (response.success && response.data) {
-          await handleOpenEditModeHelper(response.data, $modalState);
+      const loadData = async () => {
+        try {
+          const response = await borrowerFinancialsApi.getById(editingFinancialId);
+          if (response.success && response.data) {
+            await handleOpenEditModeHelper(response.data, $modalState);
+          }
+        } catch (err) {
+          console.error('Error loading financial data for editing:', err);
+          $modalState.update({ error: 'Failed to load financial data for editing' });
         }
-      } catch (err) {
-        console.error('Error loading financial data for editing:', err);
-        $modalState.update({ error: 'Failed to load financial data for editing' });
-      }
+      };
+
+      loadData();
     }
-  }, [$borrowerFinancialsView.value.showSubmitModal, $borrowerFinancialsView.value.isEditMode, $borrowerFinancialsView.value.editingFinancialId]);
+  }, [showSubmitModal, isEditMode, editingFinancialId]);
 
   // Fetch previous quarter financial data when Triggers tab is activated
   useEffectAsync(async () => {
