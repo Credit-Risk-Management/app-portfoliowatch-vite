@@ -235,6 +235,7 @@ export const $managerDetail = Signal({
   comments: [],
   recentLoans: [],
   allManagers: [],
+  isLoading: false,
   metrics: {
     portfolioValue: 0,
     totalBorrowers: 0,
