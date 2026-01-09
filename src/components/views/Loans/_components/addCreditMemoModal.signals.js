@@ -28,5 +28,6 @@ export const $creditMemoModalState = Signal({
   error: null,
   pdfUrl: null,
   uploadedDocument: null,
+  refreshKey: 0, // Used to force component re-render
 });
 
