@@ -19,7 +19,9 @@ export const fetchManagers = async () => {
       const term = searchTerm.toLowerCase();
       filteredManagers = managers.filter((manager) => manager.name?.toLowerCase().includes(term)
         || manager.email?.toLowerCase().includes(term)
+        || manager.positionTitle?.toLowerCase().includes(term)
         || manager.position_title?.toLowerCase().includes(term)
+        || manager.officeLocation?.toLowerCase().includes(term)
         || manager.office_location?.toLowerCase().includes(term));
     }
 
@@ -29,6 +31,7 @@ export const fetchManagers = async () => {
       isTableLoading: false,
     });
   } catch (error) {
+    console.error('Failed to fetch managers:', error);
     $relationshipManagers.update({ isTableLoading: false });
   }
 };
