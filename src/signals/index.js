@@ -38,8 +38,8 @@ export const $borrowers = Signal({
 
 export const $borrowersFilter = Signal({
   page: 1,
-  sortKey: undefined,
-  sortDirection: undefined,
+  sortKey: 'name',
+  sortDirection: 'asc',
   searchTerm: '',
   borrowerType: [],
   riskRating: '',
@@ -60,7 +60,7 @@ export const $borrowersForm = Signal({
   id: '',
   client_id: '',
   name: '',
-  client_type: 'Individual',
+  client_type: 'CRE',
   primary_contact: '',
   email: '',
   phone_number: '',
@@ -235,6 +235,7 @@ export const $managerDetail = Signal({
   comments: [],
   recentLoans: [],
   allManagers: [],
+  isLoading: false,
   metrics: {
     portfolioValue: 0,
     totalBorrowers: 0,

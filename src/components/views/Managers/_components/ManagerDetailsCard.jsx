@@ -15,7 +15,7 @@ const ManagerDetailsCard = () => {
   const { manager, allManagers } = $managerDetail.value;
 
   const getDirectReports = useMemo(
-    () => (id) => allManagers.filter((m) => m.manager_id === id),
+    () => (id) => allManagers.filter((m) => (m.managerId || m.manager_id) === id),
     [allManagers],
   );
 
@@ -25,8 +25,9 @@ const ManagerDetailsCard = () => {
   }, [manager, getDirectReports]);
 
   const supervisorManager = useMemo(() => {
-    if (!manager || !manager.manager_id) return null;
-    return allManagers.find((m) => m.id === manager.manager_id);
+    const managerId = manager?.managerId || manager?.manager_id;
+    if (!manager || !managerId) return null;
+    return allManagers.find((m) => m.id === managerId);
   }, [manager, allManagers]);
 
   return (
@@ -45,7 +46,7 @@ const ManagerDetailsCard = () => {
             </Row>
             <Row className="mb-16">
               <Col sm={4} className="text-info-100 fw-200">Position</Col>
-              <Col sm={8} className="text-info-50 lead fw-500">{manager.position_title}</Col>
+              <Col sm={8} className="text-info-50 lead fw-500">{manager.positionTitle || manager.position_title}</Col>
             </Row>
             <Row className="mb-16">
               <Col sm={4} className="text-info-100 fw-200">
@@ -67,19 +68,19 @@ const ManagerDetailsCard = () => {
               <Col sm={4} className="text-info-100 fw-200">
                 Office
               </Col>
-              <Col sm={8} className="text-info-50 lead fw-500">{manager.office_location}</Col>
+              <Col sm={8} className="text-info-50 lead fw-500">{manager.officeLocation || manager.office_location}</Col>
             </Row>
             <Row className="mb-16">
               <Col sm={4} className="text-info-100 fw-200">Status</Col>
               <Col sm={8}>
-                <Badge bg={manager.is_active ? 'success' : 'secondary'}>
-                  {manager.is_active ? 'Active' : 'Inactive'}
+                <Badge bg={manager.isActive ? 'success' : 'secondary'}>
+                  {manager.isActive ? 'Active' : 'Inactive'}
                 </Badge>
               </Col>
             </Row>
             <Row className="mb-0">
               <Col sm={4} className="text-info-100 fw-200">Member Since</Col>
-              <Col sm={8} className="text-info-50 lead fw-500">{formatDate(manager.created_at)}</Col>
+              <Col sm={8} className="text-info-50 lead fw-500">{formatDate(manager.createdAt || manager.created_at)}</Col>
             </Row>
           </div>
 
@@ -92,7 +93,7 @@ const ManagerDetailsCard = () => {
                   <div className="d-flex justify-content-between align-items-center">
                     <div>
                       <div className="text-info-50 lead fw-500">{supervisorManager.name}</div>
-                      <div className="text-info-100 fw-200 small">{supervisorManager.position_title}</div>
+                      <div className="text-info-100 fw-200 small">{supervisorManager.positionTitle || supervisorManager.position_title}</div>
                     </div>
                     <Button
                       variant="link"
@@ -124,7 +125,7 @@ const ManagerDetailsCard = () => {
                         <div>
                           <div className="text-info-50 lead fw-500">{report.name}</div>
                           <div className="text-info-100 fw-200 small">
-                            {report.position_title}
+                            {report.positionTitle || report.position_title}
                             {reportSubordinates.length > 0 && (
                               <span className="ms-8">
                                 • {reportSubordinates.length} report{reportSubordinates.length !== 1 ? 's' : ''}

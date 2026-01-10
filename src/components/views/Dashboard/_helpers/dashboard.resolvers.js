@@ -33,13 +33,21 @@ export const loadDashboardData = async () => {
 
     // Transform backend metrics to frontend format
     const watchScoreMetrics = loanMetrics.watchScoreMetrics || [];
-    const watchScoreCountData = watchScoreMetrics.map((metric) => ({
+
+    // Sort by rating to ensure consistent order (nulls last)
+    const sortedMetrics = [...watchScoreMetrics].sort((a, b) => {
+      if (a.watchScore === null || a.watchScore === undefined) return 1;
+      if (b.watchScore === null || b.watchScore === undefined) return -1;
+      return a.watchScore - b.watchScore;
+    });
+
+    const watchScoreCountData = sortedMetrics.map((metric) => ({
       name: metric.watchScore !== null ? `WATCH ${metric.watchScore}` : 'No Score',
       value: metric.count,
       rating: metric.watchScore,
     }));
 
-    const watchScoreAmountData = watchScoreMetrics.map((metric) => ({
+    const watchScoreAmountData = sortedMetrics.map((metric) => ({
       name: metric.watchScore !== null ? `WATCH ${metric.watchScore}` : 'No Score',
       value: metric.totalAmount,
       rating: metric.watchScore,

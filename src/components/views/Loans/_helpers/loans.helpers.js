@@ -27,7 +27,7 @@ export const formatDate = (dateString) => {
  */
 export const getRelationshipManagerOptions = (managers) => managers.map((m) => ({
   value: m.id,
-  label: m.name,
+  label: m.name || m.relationshipManager?.name || 'Unknown',
 }));
 
 /**

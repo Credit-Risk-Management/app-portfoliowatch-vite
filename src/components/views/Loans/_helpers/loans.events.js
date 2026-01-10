@@ -176,7 +176,6 @@ export const handleAddComment = async (loanId) => {
     // Development fallback - use mock user
     userId = `dev-user-${Date.now()}`;
     userName = 'Development User';
-    console.warn('No authenticated user found. Using mock user for development.');
   }
 
   const newCommentData = {
@@ -222,7 +221,6 @@ export const handleUploadFinancials = async () => {
   } else {
     // Development fallback - use mock user
     userId = `dev-user-${Date.now()}`;
-    console.warn('No authenticated user found. Using mock user for development.');
   }
 
   try {

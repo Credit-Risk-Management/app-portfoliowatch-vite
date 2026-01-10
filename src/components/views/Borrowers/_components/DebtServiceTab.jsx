@@ -1,25 +1,33 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useState, useEffect, useMemo } from 'react';
-import { Button, Row, Col, Form, Card, Alert } from 'react-bootstrap';
+import { Button, Row, Col, Form, Card, Alert, Table, Badge } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faTrash, faEdit, faDollarSign } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faTrash, faEdit, faDollarSign, faEye } from '@fortawesome/free-solid-svg-icons';
 import UniversalModal from '@src/components/global/UniversalModal';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import SignalTable from '@src/components/global/SignalTable';
 import ContextMenu from '@src/components/global/ContextMenu';
+import UniversalCard from '@src/components/global/UniversalCard';
 import { $debtServiceHistory, $debtServiceHistoryView, $debtServiceHistoryForm } from '@src/signals';
 import { $borrower } from '@src/consts/consts';
 import debtServiceHistoryApi from '@src/api/debtServiceHistory.api';
+import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
 import { successAlert, dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import { formatCurrency } from '@src/utils/formatCurrency';
 
 const DebtServiceTab = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [latestFinancial, setLatestFinancial] = useState(null);
+  const [latestDebtService, setLatestDebtService] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedRecordForDetails, setSelectedRecordForDetails] = useState(null);
 
   // Fetch debt service history when tab loads
   useEffect(() => {
     if ($borrower.value?.borrower?.id) {
       fetchDebtServiceHistory();
+      fetchLatestFinancial();
+      fetchLatestDebtService();
     }
   }, [$borrower.value?.borrower?.id, $debtServiceHistoryView.value.refreshTrigger]);
 
@@ -42,6 +50,34 @@ const DebtServiceTab = () => {
       dangerAlert('Failed to load debt service history', 'toast');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchLatestFinancial = async () => {
+    if (!$borrower.value?.borrower?.id) return;
+
+    try {
+      const response = await borrowerFinancialsApi.getLatestByBorrowerId($borrower.value.borrower.id);
+      if (response.success) {
+        setLatestFinancial(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching latest financial:', error);
+      // Fail silently - not critical
+    }
+  };
+
+  const fetchLatestDebtService = async () => {
+    if (!$borrower.value?.borrower?.id) return;
+
+    try {
+      const response = await debtServiceHistoryApi.getLatestByBorrowerId($borrower.value.borrower.id);
+      if (response.success) {
+        setLatestDebtService(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching latest debt service:', error);
+      // Fail silently - not critical
     }
   };
 
@@ -86,10 +122,47 @@ const DebtServiceTab = () => {
     $debtServiceHistoryView.update({ showDeleteModal: true });
   };
 
+  const handleViewDetails = (record) => {
+    setSelectedRecordForDetails(record);
+    setShowDetailsModal(true);
+  };
+
   const handleCloseModal = () => {
     $debtServiceHistoryView.update({ showAddModal: false, showEditModal: false, isEditMode: false });
     $debtServiceHistory.update({ selectedRecord: null });
   };
+
+  // Calculate summary metrics
+  const summaryMetrics = useMemo(() => {
+    const ebitda = latestFinancial?.ebitda ? parseFloat(latestFinancial.ebitda) : null;
+    const totalDebtService = latestDebtService?.totalMonthlyPayment ? parseFloat(latestDebtService.totalMonthlyPayment) : null;
+    
+    // Calculate Current DSCR: EBITDA / (Total Monthly Payment * 12)
+    let currentDSCR = null;
+    if (ebitda && totalDebtService && totalDebtService > 0) {
+      const annualDebtService = totalDebtService * 12;
+      currentDSCR = ebitda / annualDebtService;
+    }
+
+    // Get Covenant DSCR from loans (most restrictive)
+    const loans = $borrower.value?.borrower?.loans || [];
+    let covenantDSCR = null;
+    loans.forEach((loan) => {
+      if (loan.debtServiceCovenant != null && loan.debtServiceCovenant !== '') {
+        const value = parseFloat(loan.debtServiceCovenant);
+        if (!isNaN(value) && (!covenantDSCR || value < covenantDSCR)) {
+          covenantDSCR = value;
+        }
+      }
+    });
+
+    return {
+      ebitda,
+      totalDebtService,
+      currentDSCR,
+      covenantDSCR,
+    };
+  }, [latestFinancial, latestDebtService, $borrower.value?.borrower?.loans]);
 
   // Table headers
   const tableHeaders = [
@@ -114,16 +187,27 @@ const DebtServiceTab = () => {
         }),
         totalCurrentBalance: <span className="text-danger-500 fw-500">{formatCurrency(record.totalCurrentBalance)}</span>,
         totalMonthlyPayment: <span className="text-warning-500 fw-500">{formatCurrency(record.totalMonthlyPayment)}</span>,
-        debtCount: record.debtLineItems?.length || 0,
+        debtCount: (
+          <Button
+            variant="link"
+            className="p-0 text-info-100 text-decoration-underline"
+            onClick={() => handleViewDetails(record)}
+          >
+            {record.debtLineItems?.length || 0}
+          </Button>
+        ),
         submittedBy: record.submittedBy || '-',
         actions: () => (
           <ContextMenu
             items={[
-              { label: 'View/Edit', icon: faEdit, action: 'edit' },
+              { label: 'View Details', icon: faEye, action: 'view' },
+              { label: 'Edit', icon: faEdit, action: 'edit' },
               { label: 'Delete', icon: faTrash, action: 'delete' },
             ]}
             onItemClick={(item) => {
-              if (item.action === 'edit') {
+              if (item.action === 'view') {
+                handleViewDetails(record);
+              } else if (item.action === 'edit') {
                 handleEdit(record);
               } else if (item.action === 'delete') {
                 handleDelete(record);
@@ -146,6 +230,36 @@ const DebtServiceTab = () => {
 
   return (
     <div>
+      {/* Summary Metrics */}
+      <UniversalCard headerText="Debt Service Summary" className="mb-16">
+        <Row>
+          <Col xs={12} md={3} className="mb-12 mb-md-0">
+            <div className="text-info-100 fw-200 mb-4">EBITDA</div>
+            <div className="text-success-500 fs-4 fw-bold">
+              {summaryMetrics.ebitda !== null ? formatCurrency(summaryMetrics.ebitda) : '-'}
+            </div>
+          </Col>
+          <Col xs={12} md={3} className="mb-12 mb-md-0">
+            <div className="text-info-100 fw-200 mb-4">Total Debt Service</div>
+            <div className="text-warning-500 fs-4 fw-bold">
+              {summaryMetrics.totalDebtService !== null ? formatCurrency(summaryMetrics.totalDebtService) : '-'}
+            </div>
+          </Col>
+          <Col xs={12} md={3} className="mb-12 mb-md-0">
+            <div className="text-info-100 fw-200 mb-4">Current DSCR</div>
+            <div className={`fs-4 fw-bold ${summaryMetrics.currentDSCR !== null && summaryMetrics.covenantDSCR !== null && summaryMetrics.currentDSCR >= summaryMetrics.covenantDSCR ? 'text-success-500' : summaryMetrics.currentDSCR !== null ? 'text-danger-500' : 'text-info-100'}`}>
+              {summaryMetrics.currentDSCR !== null ? summaryMetrics.currentDSCR.toFixed(2) : '-'}
+            </div>
+          </Col>
+          <Col xs={12} md={3} className="mb-12 mb-md-0">
+            <div className="text-info-100 fw-200 mb-4">Covenant DSCR</div>
+            <div className="text-secondary-200 fs-4 fw-bold">
+              {summaryMetrics.covenantDSCR !== null ? summaryMetrics.covenantDSCR.toFixed(2) : '-'}
+            </div>
+          </Col>
+        </Row>
+      </UniversalCard>
+
       <div className="d-flex justify-content-between align-items-center mb-16">
         <h4 className="text-info-50">Debt Service History</h4>
         <Button variant="primary-100" size="sm" onClick={handleAddNew}>
@@ -183,6 +297,16 @@ const DebtServiceTab = () => {
 
       {/* Delete Modal */}
       <DeleteDebtServiceModal />
+
+      {/* View Details Modal */}
+      <ViewDebtDetailsModal
+        show={showDetailsModal}
+        onHide={() => {
+          setShowDetailsModal(false);
+          setSelectedRecordForDetails(null);
+        }}
+        record={selectedRecordForDetails}
+      />
     </div>
   );
 };
@@ -522,6 +646,95 @@ const DebtServiceModal = ({ show, onHide }) => {
           />
         </Col>
       </Row>
+    </UniversalModal>
+  );
+};
+
+// View Debt Details Modal Component
+const ViewDebtDetailsModal = ({ show, onHide, record }) => {
+  if (!record) return null;
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const debtLineItems = record.debtLineItems || [];
+
+  return (
+    <UniversalModal
+      show={show}
+      onHide={onHide}
+      headerText={`Debt Obligations - ${formatDate(record.asOfDate)}`}
+      leftBtnText="Close"
+      rightBtnText={null}
+      footerClass="justify-content-start"
+      size="xl"
+      closeButton
+    >
+      <div>
+        <div className="mb-16">
+          <Badge bg="secondary-100" className="me-8 text-secondary-900">
+            Total Obligations: {debtLineItems.length}
+          </Badge>
+          <Badge bg="info-100" className="me-8">
+            Total Balance: {formatCurrency(record.totalCurrentBalance)}
+          </Badge>
+          <Badge bg="warning-500">
+            Total Monthly Payment: {formatCurrency(record.totalMonthlyPayment)}
+          </Badge>
+        </div>
+
+        {debtLineItems.length === 0 ? (
+          <div className="text-center py-32">
+            <p className="text-info-100">No debt obligations found for this record.</p>
+          </div>
+        ) : (
+          <Table striped bordered hover responsive className="text-info-100">
+            <thead className="bg-info-800">
+              <tr>
+                <th className="bg-info-700 text-info-50 fw-500">Creditor Name</th>
+                <th className="bg-info-700 text-info-50 fw-500">Loan Status</th>
+                <th className="bg-info-700 text-info-50 fw-500">Current Balance</th>
+                <th className="bg-info-700 text-info-50 fw-500">Monthly Payment</th>
+                <th className="bg-info-700 text-info-50 fw-500">Interest Rate</th>
+                <th className="bg-info-700 text-info-50 fw-500">Original Amount</th>
+                <th className="bg-info-700 text-info-50 fw-500">LOC Limit</th>
+                <th className="bg-info-700 text-info-50 fw-500">Maturity Date</th>
+                <th className="bg-info-700 text-info-50 fw-500">Collateral</th>
+              </tr>
+            </thead>
+            <tbody>
+              {debtLineItems.map((item, index) => (
+                <tr key={index}>
+                  <td className="fw-bold text-info-50">{item.creditorName || '-'}</td>
+                  <td>
+                    <Badge bg={item.loanStatus === 'current' ? 'success-500' : 'danger-500'}>
+                      {item.loanStatus || 'current'}
+                    </Badge>
+                  </td>
+                  <td className="text-danger-500 fw-500">
+                    {item.currentBalance ? formatCurrency(item.currentBalance) : '-'}
+                  </td>
+                  <td className="text-warning-500 fw-500">
+                    {item.monthlyPayment ? formatCurrency(item.monthlyPayment) : '-'}
+                  </td>
+                  <td>{item.interestRate ? `${parseFloat(item.interestRate).toFixed(2)}%` : '-'}</td>
+                  <td>{item.originalAmountFinanced ? formatCurrency(item.originalAmountFinanced) : '-'}</td>
+                  <td>{item.lineOfCreditLimit ? formatCurrency(item.lineOfCreditLimit) : '-'}</td>
+                  <td>{formatDate(item.maturityDate)}</td>
+                  <td className="text-info-200">{item.collateralDescription || '-'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        )}
+      </div>
     </UniversalModal>
   );
 };

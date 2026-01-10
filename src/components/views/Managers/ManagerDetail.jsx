@@ -22,11 +22,22 @@ const ManagerDetail = () => {
   const { managerId } = useParams();
   const navigate = useNavigate();
 
-  const { manager, metrics, recentLoans } = $managerDetail.value;
+  const { manager, metrics, recentLoans, isLoading } = $managerDetail.value;
 
   useEffectAsync(async () => {
     await resolvers.loadManagerDetailData(managerId);
   }, [managerId]);
+
+  if (isLoading) {
+    return (
+      <Container fluid className="py-24 text-center">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+        <p className="text-info-100 mt-3">Loading manager details...</p>
+      </Container>
+    );
+  }
 
   if (!manager) {
     return (
@@ -57,7 +68,7 @@ const ManagerDetail = () => {
 
         <PageHeader
           title={manager.name}
-          subtitle={manager.position_title}
+          subtitle={manager.positionTitle || manager.position_title}
           actionButton
           actionButtonText="Edit Manager"
           actionButtonIcon={faEdit}

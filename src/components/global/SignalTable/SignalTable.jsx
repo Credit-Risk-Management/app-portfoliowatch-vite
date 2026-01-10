@@ -97,7 +97,7 @@ const SignalTable = ({
             {headers.map(({ key, value, sortKey, isHidden }, idx) => (!isHidden ? (
               <td
                 key={key}
-                className={`border-0 fw-800 text-nowrap py-16 ${idx === headers.length - 1 ? 'text-right' : ''}`}
+                className="border-0 fw-800 text-nowrap py-16"
                 role="button"
                 tabIndex={idx}
                 onClick={() => {
@@ -115,7 +115,7 @@ const SignalTable = ({
                   onHeaderClick({ key, value, sortKey }, idx);
                 }}
               >
-                <b className="d-flex justify-content-center align-items-center">
+                <b className="d-flex justify-content-start align-items-center">
                   <span className={`${sortKey ? 'me-8' : ''}`}>{value}</span>
                   {sortKey && (
                     <FontAwesomeIcon
@@ -193,7 +193,7 @@ const SignalTable = ({
               )}
               {headers.map(({ key, isHidden }, idx) => (
                 !isHidden ? (
-                  <td key={idx} className={`border-0 ${idx === headers.length - 1 ? 'text-right' : ''}`}>
+                  <td key={idx} className="border-0">
                     {typeof row?.[key] === 'function' ? row[key]() : row[key]}
                   </td>
                 ) : null

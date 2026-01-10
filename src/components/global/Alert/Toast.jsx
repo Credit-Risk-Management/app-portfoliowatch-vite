@@ -23,7 +23,7 @@ const Toast = ({ notification, onRemoveNotification }) => {
   }, []);
 
   return (
-    <Row className={`z-index-9999 mx-auto slide mt-12 mt-md-16 d-flex justify-content-center ${isExiting ? 'slide-out' : 'slide-in'}`}>
+    <Row className={`z-index-10000 mx-auto slide mt-12 mt-md-16 d-flex justify-content-center ${isExiting ? 'slide-out' : 'slide-in'}`}>
       <Col xs={12} sm={10} md={8} lg={6} xl={4} className={`notification notification-${variant} shadow-sm rounded-4 p-12 p-md-16`}>
         <div className="d-flex justify-content-center align-items-center">
           <div className="text-center">
