@@ -15,6 +15,7 @@ import { $borrowerFinancialsView, $borrowerFinancials, $documents, $documentsVie
 import { formatCurrency } from '@src/utils/formatCurrency';
 import { auth } from '@src/utils/firebase';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
+import { getPermanentUploadLink } from '@src/api/borrowerFinancialUploadLink.api';
 import { dangerAlert, successAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import { EditLoanModal, DeleteLoanModal } from '@src/components/views/Loans/_components';
 import { handleDownloadDocument } from '@src/components/views/Documents/_helpers/documents.events';
@@ -48,6 +49,7 @@ const BorrowerDetail = () => {
   const [copiedLink, setCopiedLink] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
   const [isExportingExcel, setIsExportingExcel] = useState(false);
+  const [permanentUploadLink, setPermanentUploadLink] = useState(null);
 
   // Fetch borrower detail and relationship managers on mount or when borrowerId changes
   useEffect(() => {
@@ -56,11 +58,30 @@ const BorrowerDetail = () => {
 
   // Get upload link URL from borrower
   const borrower = $borrower.value?.borrower;
+
+  // Fetch permanent upload link when borrower is loaded
+  useEffect(() => {
+    const fetchPermanentLink = async () => {
+      if (borrower?.id) {
+        try {
+          const response = await getPermanentUploadLink(borrower.id);
+          if (response.status === 'success') {
+            setPermanentUploadLink(response.data);
+          }
+        } catch (error) {
+          console.error('Error fetching permanent upload link:', error);
+        }
+      }
+    };
+
+    fetchPermanentLink();
+  }, [borrower?.id]);
+
   const getUploadLinkUrl = useMemo(() => {
-    if (!borrower?.borrowerId) return null;
+    if (!permanentUploadLink?.token) return null;
     const baseUrl = window.location.origin;
-    return `${baseUrl}/upload-financials/${borrower.borrowerId}`;
-  }, [borrower?.borrowerId]);
+    return `${baseUrl}/upload-financials/${permanentUploadLink.token}`;
+  }, [permanentUploadLink?.token]);
 
   // Fetch financial history when financials tab is active
   useEffect(() => {

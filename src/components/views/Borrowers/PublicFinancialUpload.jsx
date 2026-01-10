@@ -85,8 +85,8 @@ const PublicFinancialUpload = () => {
   return (
     <ContentWrapper fluid className="min-vh-100 bg-info-900">
       <Container className="py-16 py-md-24">
-        <Card className="bg-info-800">
-          <Card.Header className="bg-info-700">
+        <Card className="bg-info-900">
+          <Card.Header className="bg-info-800">
             <h2 className="text-info-100 mb-0">Submit Financial Data</h2>
             {linkData && (
               <div className="mt-8">
