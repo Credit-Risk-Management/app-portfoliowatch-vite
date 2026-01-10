@@ -1,5 +1,7 @@
 import { $loan } from '@src/consts/consts';
+import { $user, $organization } from '@src/signals';
 import loansApi from '@src/api/loans.api';
+import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
 import { successAlert, dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import { $creditMemoView, $creditMemoForm, $creditMemoDocsUploader, $creditMemoModalState } from './addCreditMemoModal.signals';
 import generateMockCreditMemoData from '../_helpers/creditMemo.helpers';
@@ -62,52 +64,58 @@ export const handleClose = () => {
  * Handles file upload and OCR processing (mock)
  */
 export const handleFileUpload = () => {
-  const files = $creditMemoDocsUploader.value.creditMemoDocs || [];
-
-  if (!files.length) return;
-
-  const [file] = files;
-
-  // Create a document object with preview URL
-  const newDoc = {
-    id: `temp-${Date.now()}`,
-    file,
-    fileName: file.name,
-    fileSize: file.size,
-    mimeType: file.type,
-    previewUrl: URL.createObjectURL(file),
-    uploadedAt: new Date(),
-  };
-
-  // Update modal state with the PDF URL
-  const previousPdfUrl = $creditMemoModalState.value.pdfUrl;
-  if (previousPdfUrl) {
-    URL.revokeObjectURL(previousPdfUrl);
-  }
-
-  $creditMemoModalState.update({
-    pdfUrl: newDoc.previewUrl,
-    uploadedDocument: newDoc,
-  });
-
-  // Mock OCR: Auto-populate form with mock data based on filename
+  // Use setTimeout to ensure signal has been updated
   setTimeout(() => {
-    const mockData = generateMockCreditMemoData(file.name);
+    const files = $creditMemoDocsUploader.value.creditMemoDocs || [];
 
-    if (mockData) {
-      $creditMemoForm.update(mockData);
-      $creditMemoModalState.update({
-        ocrApplied: true,
-      });
-    } else {
-      $creditMemoModalState.update({
-        ocrApplied: false,
-      });
+    if (!files.length) {
+      return;
     }
-  }, 500);
 
-  // Clear the uploader
-  $creditMemoDocsUploader.update({ creditMemoDocs: [] });
+    const [file] = files;
+
+    // Create a document object with preview URL
+    const newDoc = {
+      id: `temp-${Date.now()}`,
+      file,
+      fileName: file.name,
+      fileSize: file.size,
+      mimeType: file.type,
+      previewUrl: URL.createObjectURL(file),
+      uploadedAt: new Date(),
+    };
+
+    // Update modal state with the PDF URL
+    const previousPdfUrl = $creditMemoModalState.value.pdfUrl;
+    if (previousPdfUrl) {
+      URL.revokeObjectURL(previousPdfUrl);
+    }
+
+    $creditMemoModalState.update({
+      pdfUrl: newDoc.previewUrl,
+      uploadedDocument: newDoc,
+      refreshKey: ($creditMemoModalState.value.refreshKey || 0) + 1,
+    });
+
+    // Mock OCR: Auto-populate form with mock data based on filename
+    setTimeout(() => {
+      const mockData = generateMockCreditMemoData(file.name);
+
+      if (mockData) {
+        $creditMemoForm.update(mockData);
+        $creditMemoModalState.update({
+          ocrApplied: true,
+        });
+      } else {
+        $creditMemoModalState.update({
+          ocrApplied: false,
+        });
+      }
+    }, 500);
+
+    // Clear the uploader
+    $creditMemoDocsUploader.update({ creditMemoDocs: [] });
+  }, 0);
 };
 
 /**
@@ -158,6 +166,9 @@ export const handleSubmit = async () => {
 
     const formData = $creditMemoForm.value;
     const loanId = $creditMemoView.value.currentLoanId;
+    const currentLoan = $loan.value?.loan;
+    const currentUser = $user.value;
+    const currentOrg = $organization.value;
 
     // Validation
     if (!formData.asOfDate) {
@@ -168,21 +179,35 @@ export const handleSubmit = async () => {
       return;
     }
 
-    // Prepare update data - only update covenant actual values
-    const updateData = {
+    if (!currentLoan?.borrowerId) {
+      $creditMemoModalState.update({
+        error: 'Loan borrower information not available',
+        isSubmitting: false,
+      });
+      return;
+    }
+
+    // Prepare borrower financial data
+    // Financial metrics (debtService, currentRatio, liquidity, liquidityRatio) belong to BorrowerFinancial, not Loan
+    const financialData = {
+      borrowerId: currentLoan.borrowerId,
+      organizationId: currentOrg?.id || currentUser?.organizationId,
+      asOfDate: formData.asOfDate,
       debtService: formData.debtService ? parseFloat(formData.debtService) : null,
       currentRatio: formData.currentRatio ? parseFloat(formData.currentRatio) : null,
       liquidity: formData.liquidity ? parseFloat(formData.liquidity) : null,
       liquidityRatio: formData.liquidityRatio ? parseFloat(formData.liquidityRatio) : null,
+      submittedBy: currentUser?.name || currentUser?.email || 'Unknown User',
+      notes: formData.notes || 'Credit Memo Submission',
     };
 
-    // Update the loan
-    const response = await loansApi.update(loanId, updateData);
+    // Create a new borrower financial record
+    const response = await borrowerFinancialsApi.create(financialData);
 
     if (response.success) {
       successAlert('Credit memo data applied successfully!', 'toast');
 
-      // Refresh the loan data
+      // Refresh the loan data to get updated financials and watch score
       if ($loan.value?.loan) {
         const refreshResponse = await loansApi.getById(loanId);
         if (refreshResponse.success) {
@@ -197,7 +222,7 @@ export const handleSubmit = async () => {
       handleClose();
     } else {
       $creditMemoModalState.update({
-        error: response.error || 'Failed to update loan with credit memo data',
+        error: response.error || 'Failed to submit credit memo data',
         isSubmitting: false,
       });
     }

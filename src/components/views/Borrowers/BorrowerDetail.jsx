@@ -15,6 +15,7 @@ import { $borrowerFinancialsView, $borrowerFinancials, $documents, $documentsVie
 import { formatCurrency } from '@src/utils/formatCurrency';
 import { auth } from '@src/utils/firebase';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
+import { getPermanentUploadLink } from '@src/api/borrowerFinancialUploadLink.api';
 import { dangerAlert, successAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import { EditLoanModal, DeleteLoanModal } from '@src/components/views/Loans/_components';
 import { handleDownloadDocument } from '@src/components/views/Documents/_helpers/documents.events';
@@ -23,6 +24,7 @@ import { TABLE_HEADERS as DOCUMENTS_TABLE_HEADERS } from '@src/components/views/
 import SubmitFinancialsModal from './_components/SubmitFinancialsModal';
 import EditBorrowerDetailModal from './_components/EditBorrowerDetailModal';
 import DebtServiceTab from './_components/DebtServiceTab';
+import LoanCard from './_components/LoanCard';
 import {
   formatDate,
   formatAddress,
@@ -38,7 +40,8 @@ import {
   $borrowerDocumentsFilter,
   $borrowerDocumentsView,
 } from './_helpers/borrowerDetail.consts';
-import { fetchBorrowerDetail, fetchBorrowerDocuments } from './_helpers/borrowerDetail.resolvers';
+import { $loanWatchScoreBreakdowns } from './_helpers/loanCard.consts';
+import { fetchBorrowerDetail, fetchBorrowerDocuments, fetchLoanWatchScoreBreakdowns } from './_helpers/borrowerDetail.resolvers';
 import { handleGenerateIndustryReport, handleGenerateAnnualReview } from './_helpers/borrowerDetail.events';
 import DeleteBorrowerDocumentModal from './_components/DeleteBorrowerDocumentModal';
 
@@ -48,6 +51,7 @@ const BorrowerDetail = () => {
   const [copiedLink, setCopiedLink] = useState(false);
   const [activeTab, setActiveTab] = useState('details');
   const [isExportingExcel, setIsExportingExcel] = useState(false);
+  const [permanentUploadLink, setPermanentUploadLink] = useState(null);
 
   // Fetch borrower detail and relationship managers on mount or when borrowerId changes
   useEffect(() => {
@@ -56,11 +60,33 @@ const BorrowerDetail = () => {
 
   // Get upload link URL from borrower
   const borrower = $borrower.value?.borrower;
+
+  // Fetch permanent upload link when borrower is loaded
+  useEffect(() => {
+    const fetchPermanentLink = async () => {
+      if (borrower?.id) {
+        try {
+          const response = await getPermanentUploadLink(borrower.id);
+          if (response.status === 'success') {
+            setPermanentUploadLink(response.data);
+          }
+        } catch (error) {
+          console.error('Error fetching permanent upload link:', error);
+        }
+      }
+    };
+
+    fetchPermanentLink();
+  }, [borrower?.id]);
+
   const getUploadLinkUrl = useMemo(() => {
-    if (!borrower?.borrowerId) return null;
+    if (!permanentUploadLink?.token) return null;
     const baseUrl = window.location.origin;
-    return `${baseUrl}/upload-financials/${borrower.borrowerId}`;
-  }, [borrower?.borrowerId]);
+    return `${baseUrl}/upload-financials/${permanentUploadLink.token}`;
+  }, [permanentUploadLink?.token]);
+
+  // Get loans from borrower
+  const loans = useMemo(() => borrower?.loans || [], [borrower?.loans]);
 
   // Fetch financial history when financials tab is active
   useEffect(() => {
@@ -75,6 +101,13 @@ const BorrowerDetail = () => {
       fetchBorrowerDocuments(borrowerId);
     }
   }, [activeTab, borrowerId]);
+
+  // Fetch Watch Score breakdowns when loans tab is active
+  useEffect(() => {
+    if (activeTab === 'loans' && loans.length > 0) {
+      fetchLoanWatchScoreBreakdowns(loans);
+    }
+  }, [activeTab, loans]);
 
   const fetchFinancialHistory = async () => {
     if (!$borrower.value?.borrower?.id) return;
@@ -189,8 +222,6 @@ const BorrowerDetail = () => {
   useEffect(() => {
     // Component state reset if needed
   }, [borrowerId]);
-
-  const loans = useMemo(() => borrower?.loans || [], [borrower?.loans]);
 
   // Financials table headers
   const financialsTableHeaders = [
@@ -404,37 +435,16 @@ const BorrowerDetail = () => {
             {loans.length === 0 ? (
               <div className="text-info-100 fw-200">No loans found for this borrower.</div>
             ) : (
-              <div>
-                {loans.map((loan) => (
-                  <UniversalCard key={loan.id} headerText={`Loan: ${loan.loanId || loan.loanNumber || loan.id || 'N/A'}`}>
-                    <div>
-                      <div className="text-info-100 fw-200 mt-8">Principal Amount</div>
-                      <div className="text-info-50 lead fw-500">{loan.principalAmount ? formatCurrency(loan.principalAmount) : 'N/A'}</div>
-
-                      <div className="text-info-100 fw-200 mt-16">Payment Amount</div>
-                      <div className="text-info-50 lead fw-500">{loan.paymentAmount ? formatCurrency(loan.paymentAmount) : 'N/A'}</div>
-
-                      {loan.nextPaymentDueDate && (
-                        <>
-                          <div className="text-info-100 fw-200 mt-16">Next Payment Due Date</div>
-                          <div className="text-info-50 lead fw-500">{formatDate(loan.nextPaymentDueDate)}</div>
-                        </>
-                      )}
-
-                      <div className="mt-16">
-                        <Button
-                          variant="outline-primary-100"
-                          size="sm"
-                          onClick={() => navigate(`/loans/${loan.id}`)}
-                        >
-                          View Loan Details
-                          <FontAwesomeIcon icon={faArrowRight} className="ms-8" />
-                        </Button>
-                      </div>
-                    </div>
-                  </UniversalCard>
-                ))}
-              </div>
+              <Row className="g-4">
+                {loans.map((loan) => {
+                  const breakdown = $loanWatchScoreBreakdowns.value?.breakdowns[loan.id] || null;
+                  return (
+                    <Col key={loan.id} xs={12} lg={6} className="mb-3">
+                      <LoanCard loan={loan} breakdown={breakdown} />
+                    </Col>
+                  );
+                })}
+              </Row>
             )}
           </div>
         );

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Alert, Button, Row, Col } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faTrash, faDollarSign } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faTrash, faDollarSign, faCalculator } from '@fortawesome/free-solid-svg-icons';
 import UniversalModal from '@src/components/global/UniversalModal';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import FileUploader from '@src/components/global/FileUploader/FileUploader';
@@ -83,14 +83,34 @@ const SubmitCollateralModal = () => {
         <div className="mb-16">
           <div className="d-flex justify-content-between align-items-center mb-12">
             <h5 className="mb-0">Collateral Items</h5>
-            <Button
-              variant="outline-primary"
-              size="sm"
-              onClick={handleAddCollateralItem}
-            >
-              <FontAwesomeIcon icon={faPlus} className="me-8" />
-              Add Item
-            </Button>
+            <div className="d-flex gap-2">
+              {/* TODO: Automated Valuation Feature
+                  When enabled, this button will:
+                  - Use Zillow API for residential property
+                  - Use Machinery Trader for equipment
+                  - Use GPT for general collateral
+                  - Use Commercial RE service for commercial property
+                  - Pre-populate collateral values for user review/adjustment
+                  - Run quarterly to match financial statement submissions
+              */}
+              <Button
+                variant="outline-info"
+                size="sm"
+                className="me-8"
+                disabled
+              >
+                <FontAwesomeIcon icon={faCalculator} className="me-8" />
+                Estimated Value (Coming soon...)
+              </Button>
+              <Button
+                variant="outline-primary"
+                size="sm"
+                onClick={handleAddCollateralItem}
+              >
+                <FontAwesomeIcon icon={faPlus} className="me-8" />
+                Add Item
+              </Button>
+            </div>
           </div>
 
           {collateralItems.map((item, index) => (

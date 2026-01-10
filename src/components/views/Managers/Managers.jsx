@@ -9,14 +9,12 @@ import {
   $relationshipManagers,
   $relationshipManagersFilter,
   $relationshipManagersView,
-  $loans,
 } from '@src/signals';
 import SelectInput from '@src/components/global/Inputs/SelectInput';
 import { fetchManagers } from './_helpers/managers.events';
 import AddManagerModal from './_components/AddManagerModal';
 import EditManagerModal from './_components/EditManagerModal';
 import * as consts from './_helpers/managers.consts';
-import * as helpers from './_helpers/managers.helpers';
 
 const Managers = () => {
   const navigate = useNavigate();
@@ -32,12 +30,21 @@ const Managers = () => {
   ]);
 
   const managers = $relationshipManagers.value.list || [];
-  const loans = $loans.value?.list || [];
+
+  const formatCurrency = (value) => {
+    if (!value && value !== 0) return '$0';
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(value);
+  };
 
   const rows = managers.map((manager) => ({
     ...manager,
-    reports_count: helpers.getReportsCount(manager.id, managers),
-    loans_count: helpers.getLoansCount(manager.id, managers, loans, true),
+    portfolio_value: formatCurrency(manager.portfolioValue || 0),
+    loans_count: manager.loansCount || 0,
     status: () => (
       <Badge bg={manager.isActive ? 'success' : 'secondary'}>
         {manager.isActive ? 'Active' : 'Inactive'}

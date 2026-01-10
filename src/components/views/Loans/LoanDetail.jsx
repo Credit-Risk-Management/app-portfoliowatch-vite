@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Button, Collapse, Spinner } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faArrowRight, faMagic, faUser, faLandmark, faFileAlt } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faArrowRight, faMagic, faUser, faLandmark, faFileAlt, faSync } from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';
 import UniversalCard from '@src/components/global/UniversalCard';
 import { $loan, WATCH_SCORE_OPTIONS } from '@src/consts/consts';
@@ -464,6 +464,17 @@ const LoanDetail = () => {
                             <div className="text-info-50 fs-5 fw-bold">
                               {formatRatio(collateralCoverage)}
                             </div>
+                          </div>
+                          <div className="mt-16 pt-16 border-top d-flex justify-content-center">
+                            <Button
+                              variant="info"
+                              size="sm"
+                              disabled
+                              style={{ opacity: 0.7 }}
+                            >
+                              <FontAwesomeIcon icon={faSync} className="me-8" />
+                              Update Collateral (Coming soon...)
+                            </Button>
                           </div>
                         </>
                       );

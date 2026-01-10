@@ -8,6 +8,8 @@ import { $managerDetail } from '@src/signals';
 
 export const loadManagerDetailData = async (managerId) => {
   try {
+    $managerDetail.update({ isLoading: true });
+    
     // Fetch manager-specific data
     const [managerResponse, loansResponse, borrowersResponse, commentsResponse, managersResponse] = await Promise.all([
       relationshipManagersApi.getById(managerId),
@@ -25,7 +27,7 @@ export const loadManagerDetailData = async (managerId) => {
 
     // Filter borrowers for this manager
     const managerBorrowers = borrowers.filter(
-      (borrower) => borrower.relationship_manager_id === managerId,
+      (borrower) => (borrower.relationshipManagerId || borrower.relationship_manager_id) === managerId,
     );
 
     // Get loan IDs for this manager
@@ -42,10 +44,10 @@ export const loadManagerDetailData = async (managerId) => {
       .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
       .slice(0, 8);
 
-    // Calculate metrics
-    const portfolioValue = loans.reduce((sum, loan) => sum + (loan.principal_amount || 0), 0);
+    // Use metrics from the manager object (calculated by backend with team data)
+    const portfolioValue = manager.portfolioValue || 0;
     const totalBorrowers = managerBorrowers.length;
-    const activeLoans = loans.length;
+    const activeLoans = manager.loansCount || 0;
 
     // Calculate WATCH score distribution
     const watchScoreCounts = {};
@@ -55,7 +57,8 @@ export const loadManagerDetailData = async (managerId) => {
       const score = loan.watchScore;
       if (score !== null && score !== undefined) {
         watchScoreCounts[score] = (watchScoreCounts[score] || 0) + 1;
-        watchScoreAmounts[score] = (watchScoreAmounts[score] || 0) + parseFloat(loan.principalAmount || 0);
+        const principalAmount = loan.principalAmount || loan.principal_amount || 0;
+        watchScoreAmounts[score] = (watchScoreAmounts[score] || 0) + parseFloat(principalAmount);
       }
     });
 
@@ -83,6 +86,7 @@ export const loadManagerDetailData = async (managerId) => {
       comments: managerComments,
       recentLoans,
       allManagers,
+      isLoading: false,
       metrics: {
         portfolioValue,
         totalBorrowers,
@@ -92,6 +96,7 @@ export const loadManagerDetailData = async (managerId) => {
       },
     };
   } catch (error) {
+    $managerDetail.update({ isLoading: false });
     dangerAlert(error.message || 'Failed to load manager detail data');
     throw error;
   }
