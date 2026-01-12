@@ -13,22 +13,18 @@ const LoanMiniRadarChart = ({ breakdown }) => {
   let chartData = [];
 
   if (isNewFormat) {
+    // New format with W.A.T.C.H. categories
     const categories = breakdown.categories || {};
 
-    chartData = Object.entries(categories).map(([categoryName, categoryData]) => ({
+    // Build chart data from categories - includes ALL categories (W, A, T, C, H including Headwinds)
+    // Use Object.entries directly to preserve the API order (matches LoanRadarChart)
+    chartData = Object.entries(categories).map(([, categoryData]) => ({
       shortMetric: categoryData.letter,
       performance: getScoreValue(categoryData.score),
       score: categoryData.score,
       fullMark: 8,
       hasData: categoryData.score !== null,
     }));
-
-    chartData.sort((a, b) => {
-      const order = ['W', 'A', 'T', 'C', 'H'];
-      const iA = order.indexOf(a.shortMetric);
-      const iB = order.indexOf(b.shortMetric);
-      return (iA === -1 ? 99 : iA) - (iB === -1 ? 99 : iB);
-    });
   } else {
     const components = breakdown.components || {};
     chartData = [
@@ -71,7 +67,8 @@ const LoanMiniRadarChart = ({ breakdown }) => {
     ];
   }
 
-  const finalScore = breakdown?.finalScore || breakdown?.watchScore;
+  // Get the overall WATCH score color for the radar chart
+  const finalScore = breakdown.finalScore || breakdown.watchScore;
   const radarColor = getWatchScoreColor(finalScore);
 
   if (!hasData || chartData.length === 0) {

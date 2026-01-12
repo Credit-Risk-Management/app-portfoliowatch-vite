@@ -211,9 +211,9 @@ const Dashboard2 = () => {
                       ))}
                     </Pie>
                     <Tooltip content={<ChartTooltip />} />
-                    <Legend onClick={(data) => events.handlePieClick(data.payload)} wrapperStyle={{ cursor: 'pointer' }} />
                   </PieChart>
                 </ResponsiveContainer>
+                <WatchScoreLegend data={metrics.riskRatingCountData || []} metric="count" />
               </UniversalCard>
             </Col>
             <Col xs={12} md={6} lg={6} className="d-flex flex-column mb-12 mb-md-16">
@@ -237,9 +237,9 @@ const Dashboard2 = () => {
                       ))}
                     </Pie>
                     <Tooltip content={<ChartTooltip />} />
-                    <Legend onClick={(data) => events.handlePieClick(data.payload)} wrapperStyle={{ cursor: 'pointer' }} />
                   </PieChart>
                 </ResponsiveContainer>
+                <WatchScoreLegend data={metrics.riskRatingAmountData || []} metric="totalAmount" />
               </UniversalCard>
             </Col>
           </Row>
