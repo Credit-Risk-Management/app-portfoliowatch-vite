@@ -5,43 +5,33 @@ import * as consts from '../_helpers/dashboard.consts';
 
 const WatchScoreLegend = ({ data = [], metric = 'totalAmount' }) => {
   const navigate = useNavigate();
-  const overallAmount = data.reduce((sum, entry) => sum + entry.value, 0);
-  const uniqueRatings = [...new Set(data.map(entry => entry.rating))]
-    .sort((a, b) => Number(a) - Number(b));
-  const totalCount = data.length;
+  const overallAmount = data.reduce((sum, entry) => sum + (entry.value || 0), 0);
+  
+  // Always show all 5 scores (1-5) in order
+  const ratings = [1, 2, 3, 4, 5];
 
   return (
     <div className="pt-8 border-top border-info-400 w-100">
-      {uniqueRatings.map((rating, idx) => {
-        if (idx > 4) return null;
-
-        // Find the data entry that matches this rating to ensure colors align
+      {ratings.map((rating) => {
+        // Find the data entry that matches this rating
         const dataEntry = data.find(entry => entry.rating === rating);
-        if (!dataEntry) return null;
+        const value = dataEntry?.value || 0;
+        
+        // Calculate percentage, handling division by zero
+        const percent = overallAmount > 0 ? ((value / overallAmount) * 100).toFixed(0) : '0';
 
-        const percent = totalCount > 0 ? ((dataEntry.value / overallAmount) * 100).toFixed(0) : '0';
-
-        const labelMap = {
-          1: WATCH_SCORE_OPTIONS[1].label,
-          2: WATCH_SCORE_OPTIONS[2].label,
-          3: WATCH_SCORE_OPTIONS[3].label,
-          4: WATCH_SCORE_OPTIONS[4].label,
-          5: WATCH_SCORE_OPTIONS[5].label,
-        };
-
-        // Use idx+1 for navigation to match the displayed label (1-5)
-        const displayRating = idx + 1;
+        const label = WATCH_SCORE_OPTIONS[rating]?.label || `${rating} - Unknown`;
+        
         const handleClick = () => {
-          // Navigate using the displayed rating (1-5), not the actual data rating
-          if (displayRating >= 1 && displayRating <= 5) {
-            navigate(`/loans?watchScore=${displayRating}`);
+          if (rating >= 1 && rating <= 5) {
+            navigate(`/loans?watchScore=${rating}`);
           }
         };
 
         return (
           <div
             className="d-flex align-items-center justify-content-between mb-4"
-            key={rating || 'null'}
+            key={rating}
             onClick={handleClick}
             style={{ cursor: 'pointer' }}
             role="button"
@@ -62,10 +52,15 @@ const WatchScoreLegend = ({ data = [], metric = 'totalAmount' }) => {
                   backgroundColor: consts.getWatchScoreColor(rating),
                 }}
               />
-              {labelMap[idx + 1]} - Risk
+              {label}
             </div>
-            <div>
-              <span className="me-8 fw-600">{metric === 'totalAmount' ? formatMoneyShorthand(dataEntry.value) : dataEntry.value}</span> {percent}%
+            <div className="d-flex align-items-center" style={{ minWidth: '120px', justifyContent: 'flex-end' }}>
+              <span className="fw-600" style={{ textAlign: 'right', minWidth: '60px', display: 'inline-block' }}>
+                {metric === 'totalAmount' ? formatMoneyShorthand(value) : value}
+              </span>
+              <span style={{ textAlign: 'right', minWidth: '45px', display: 'inline-block', marginLeft: '8px' }}>
+                {percent}%
+              </span>
             </div>
           </div>
         );

@@ -83,6 +83,12 @@ const Borrowers = () => {
     ),
   }));
 
+  // Get relationship managers list - ensure we're using relationship managers, not borrowers
+  const relationshipManagersList = Array.isArray($relationshipManagers.value?.list)
+    ? $relationshipManagers.value.list
+    : [];
+  const relationshipManagerOptions = helpers.getManagerOptions(relationshipManagersList);
+
   return (
     <Container className="py-16 py-md-24">
       <PageHeader
@@ -112,7 +118,7 @@ const Borrowers = () => {
         </Col>
         <Col xs={12} md={3} className="mb-12 mb-md-0">
           <SelectInput
-            options={[{ value: '', label: 'All Managers' }, ...helpers.getManagerOptions($relationshipManagers.value?.list || [])]}
+            options={[{ value: '', label: 'All Managers' }, ...relationshipManagerOptions]}
             value={$borrowersFilter.value.relationshipManager}
             onChange={handleBorrowerFilterChange}
             placeholder="Relationship Manager"

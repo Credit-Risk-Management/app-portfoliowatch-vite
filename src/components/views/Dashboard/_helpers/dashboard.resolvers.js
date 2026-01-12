@@ -4,6 +4,7 @@ import borrowersApi from '@src/api/borrowers.api';
 import loansApi from '@src/api/loans.api';
 import commentsApi from '@src/api/comments.api';
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
+import { WATCH_SCORE_OPTIONS } from '@src/consts/consts';
 
 export const loadDashboardData = async () => {
   $dashboard.update({ isLoading: true });
@@ -34,31 +35,49 @@ export const loadDashboardData = async () => {
     // Transform backend metrics to frontend format
     const watchScoreMetrics = loanMetrics.watchScoreMetrics || [];
 
-    // Sort by rating to ensure consistent order (nulls last)
-    const sortedMetrics = [...watchScoreMetrics].sort((a, b) => {
-      if (a.watchScore === null || a.watchScore === undefined) return 1;
-      if (b.watchScore === null || b.watchScore === undefined) return -1;
-      return a.watchScore - b.watchScore;
+    // Create a map of existing metrics by watchScore for quick lookup
+    // Convert watchScore to number to ensure type consistency
+    const metricsMap = new Map();
+    watchScoreMetrics.forEach((metric) => {
+      if (metric.watchScore !== null && metric.watchScore !== undefined) {
+        const score = Number(metric.watchScore);
+        if (!Number.isNaN(score)) {
+          metricsMap.set(score, metric);
+        }
+      }
     });
 
-    const watchScoreCountData = sortedMetrics.map((metric) => ({
-      name: metric.watchScore !== null ? `WATCH ${metric.watchScore}` : 'No Score',
-      value: metric.count,
-      rating: metric.watchScore,
-    }));
+    // Always include all 5 risk scores (1-5) with 0 values for missing scores
+    const watchScoreCountData = [];
+    const watchScoreAmountData = [];
 
-    const watchScoreAmountData = sortedMetrics.map((metric) => ({
-      name: metric.watchScore !== null ? `WATCH ${metric.watchScore}` : 'No Score',
-      value: metric.totalAmount,
-      rating: metric.watchScore,
-    }));
+    for (let score = 1; score <= 5; score++) {
+      const metric = metricsMap.get(score);
+      const label = WATCH_SCORE_OPTIONS[score]?.label || `${score} - Unknown`;
+      
+      watchScoreCountData.push({
+        name: label,
+        value: metric?.count || 0,
+        rating: score,
+      });
 
+      watchScoreAmountData.push({
+        name: label,
+        value: metric?.totalAmount || 0,
+        rating: score,
+      });
+    }
+
+    // riskRatingCountData and riskRatingAmountData are aliases for watchScoreCountData/watchScoreAmountData
+    // Always include all 5 scores (1-5) with proper labels
     $dashboard.update({
       metrics: {
         totalClients: borrowersResponse.count || 0,
         portfolioValue: loanMetrics.totalPortfolioValue || 0,
         watchScoreCountData: watchScoreCountData || [],
         watchScoreAmountData: watchScoreAmountData || [],
+        riskRatingCountData: watchScoreCountData || [],
+        riskRatingAmountData: watchScoreAmountData || [],
         activeLoans: loanMetrics.totalActiveLoans || 0,
         totalBorrowers: borrowersResponse.count || 0,
       },
