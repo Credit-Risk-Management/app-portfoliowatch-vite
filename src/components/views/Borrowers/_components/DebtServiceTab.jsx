@@ -8,7 +8,7 @@ import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import SignalTable from '@src/components/global/SignalTable';
 import ContextMenu from '@src/components/global/ContextMenu';
 import UniversalCard from '@src/components/global/UniversalCard';
-import { $debtServiceHistory, $debtServiceHistoryView, $debtServiceHistoryForm } from '@src/signals';
+import { $debtServiceHistory, $debtServiceHistoryView, $debtServiceHistoryForm, $borrowerFinancials } from '@src/signals';
 import { $borrower } from '@src/consts/consts';
 import debtServiceHistoryApi from '@src/api/debtServiceHistory.api';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
@@ -17,17 +17,17 @@ import { formatCurrency } from '@src/utils/formatCurrency';
 
 const DebtServiceTab = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [latestFinancial, setLatestFinancial] = useState(null);
   const [latestDebtService, setLatestDebtService] = useState(null);
+  const [latestFinancial, setLatestFinancial] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedRecordForDetails, setSelectedRecordForDetails] = useState(null);
 
-  // Fetch debt service history when tab loads
+  // Fetch debt service history and financials when tab loads
   useEffect(() => {
     if ($borrower.value?.borrower?.id) {
       fetchDebtServiceHistory();
-      fetchLatestFinancial();
       fetchLatestDebtService();
+      fetchFinancialHistory();
     }
   }, [$borrower.value?.borrower?.id, $debtServiceHistoryView.value.refreshTrigger]);
 
@@ -53,20 +53,6 @@ const DebtServiceTab = () => {
     }
   };
 
-  const fetchLatestFinancial = async () => {
-    if (!$borrower.value?.borrower?.id) return;
-
-    try {
-      const response = await borrowerFinancialsApi.getLatestByBorrowerId($borrower.value.borrower.id);
-      if (response.success) {
-        setLatestFinancial(response.data);
-      }
-    } catch (error) {
-      console.error('Error fetching latest financial:', error);
-      // Fail silently - not critical
-    }
-  };
-
   const fetchLatestDebtService = async () => {
     if (!$borrower.value?.borrower?.id) return;
 
@@ -77,6 +63,42 @@ const DebtServiceTab = () => {
       }
     } catch (error) {
       console.error('Error fetching latest debt service:', error);
+      // Fail silently - not critical
+    }
+  };
+
+  const fetchFinancialHistory = async () => {
+    if (!$borrower.value?.borrower?.id) return;
+
+    try {
+      // Check if financials are already loaded in the signal
+      const existingFinancials = $borrowerFinancials.value?.list || [];
+      if (existingFinancials.length > 0) {
+        // Use existing financials - sort and get latest
+        const sorted = [...existingFinancials].sort((a, b) => {
+          const dateA = new Date(a.asOfDate);
+          const dateB = new Date(b.asOfDate);
+          return dateB - dateA;
+        });
+        setLatestFinancial(sorted[0] || null);
+        return;
+      }
+
+      // If not loaded, fetch just the latest one without updating the shared signal
+      const response = await borrowerFinancialsApi.getByBorrowerId(
+        $borrower.value.borrower.id,
+        {
+          sortKey: 'asOfDate',
+          sortDirection: 'desc',
+          limit: 1,
+        },
+      );
+
+      if (response.success && response.data && response.data.length > 0) {
+        setLatestFinancial(response.data[0]);
+      }
+    } catch (error) {
+      console.error('Error fetching financial history:', error);
       // Fail silently - not critical
     }
   };
@@ -134,14 +156,31 @@ const DebtServiceTab = () => {
 
   // Calculate summary metrics
   const summaryMetrics = useMemo(() => {
-    const ebitda = latestFinancial?.ebitda ? parseFloat(latestFinancial.ebitda) : null;
-    const totalDebtService = latestDebtService?.totalMonthlyPayment ? parseFloat(latestDebtService.totalMonthlyPayment) : null;
-    
-    // Calculate Current DSCR: EBITDA / (Total Monthly Payment * 12)
+    // Use latestFinancial from state, or try to get from $borrowerFinancials if available
+    const financialsList = $borrowerFinancials.value?.list || [];
+    let financialToUse = latestFinancial;
+
+    // If we don't have latestFinancial in state but have financials in signal, use that
+    if (!financialToUse && financialsList.length > 0) {
+      const sortedFinancials = [...financialsList].sort((a, b) => {
+        const dateA = new Date(a.asOfDate);
+        const dateB = new Date(b.asOfDate);
+        return dateB - dateA;
+      });
+      financialToUse = sortedFinancials[0] || null;
+    }
+
+    // Get EBITDA from latest financial - use same approach as Financials tab
+    const ebitda = financialToUse?.ebitda != null ? Number(financialToUse.ebitda) : null;
+
+    const totalDebtServiceMonthly = latestDebtService?.totalMonthlyPayment != null ? parseFloat(latestDebtService.totalMonthlyPayment) : null;
+    // Convert monthly to annual (multiply by 12)
+    const totalDebtService = totalDebtServiceMonthly != null && !Number.isNaN(totalDebtServiceMonthly) ? totalDebtServiceMonthly * 12 : null;
+
+    // Calculate Current DSCR: EBITDA / Annual Debt Service
     let currentDSCR = null;
-    if (ebitda && totalDebtService && totalDebtService > 0) {
-      const annualDebtService = totalDebtService * 12;
-      currentDSCR = ebitda / annualDebtService;
+    if (ebitda != null && totalDebtService != null && totalDebtService > 0) {
+      currentDSCR = ebitda / totalDebtService;
     }
 
     // Get Covenant DSCR from loans (most restrictive)
@@ -150,25 +189,34 @@ const DebtServiceTab = () => {
     loans.forEach((loan) => {
       if (loan.debtServiceCovenant != null && loan.debtServiceCovenant !== '') {
         const value = parseFloat(loan.debtServiceCovenant);
-        if (!isNaN(value) && (!covenantDSCR || value < covenantDSCR)) {
+        if (!Number.isNaN(value) && (!covenantDSCR || value < covenantDSCR)) {
           covenantDSCR = value;
         }
       }
     });
+
+    // Determine DSCR color class
+    let dscrColorClass = 'text-info-100';
+    if (currentDSCR !== null && covenantDSCR !== null && currentDSCR >= covenantDSCR) {
+      dscrColorClass = 'text-success-500';
+    } else if (currentDSCR !== null) {
+      dscrColorClass = 'text-danger-500';
+    }
 
     return {
       ebitda,
       totalDebtService,
       currentDSCR,
       covenantDSCR,
+      dscrColorClass,
     };
-  }, [latestFinancial, latestDebtService, $borrower.value?.borrower?.loans]);
+  }, [latestFinancial, $borrowerFinancials.value?.list, latestDebtService, $borrower.value?.borrower?.loans]);
 
   // Table headers
   const tableHeaders = [
     { key: 'asOfDate', value: 'As Of Date', sortKey: 'asOfDate' },
     { key: 'totalCurrentBalance', value: 'Total Balance', sortKey: 'totalCurrentBalance' },
-    { key: 'totalMonthlyPayment', value: 'Total Monthly Payment', sortKey: 'totalMonthlyPayment' },
+    { key: 'totalMonthlyPayment', value: 'Total Annual Payment', sortKey: 'totalMonthlyPayment' },
     { key: 'debtCount', value: '# of Debts' },
     { key: 'submittedBy', value: 'Submitted By', sortKey: 'submittedBy' },
     { key: 'actions', value: 'Actions' },
@@ -186,7 +234,7 @@ const DebtServiceTab = () => {
           day: 'numeric',
         }),
         totalCurrentBalance: <span className="text-danger-500 fw-500">{formatCurrency(record.totalCurrentBalance)}</span>,
-        totalMonthlyPayment: <span className="text-warning-500 fw-500">{formatCurrency(record.totalMonthlyPayment)}</span>,
+        totalMonthlyPayment: <span className="text-warning-500 fw-500">{formatCurrency((record.totalMonthlyPayment || 0) * 12)}</span>,
         debtCount: (
           <Button
             variant="link"
@@ -247,7 +295,7 @@ const DebtServiceTab = () => {
           </Col>
           <Col xs={12} md={3} className="mb-12 mb-md-0">
             <div className="text-info-100 fw-200 mb-4">Current DSCR</div>
-            <div className={`fs-4 fw-bold ${summaryMetrics.currentDSCR !== null && summaryMetrics.covenantDSCR !== null && summaryMetrics.currentDSCR >= summaryMetrics.covenantDSCR ? 'text-success-500' : summaryMetrics.currentDSCR !== null ? 'text-danger-500' : 'text-info-100'}`}>
+            <div className={`fs-4 fw-bold ${summaryMetrics.dscrColorClass}`}>
               {summaryMetrics.currentDSCR !== null ? summaryMetrics.currentDSCR.toFixed(2) : '-'}
             </div>
           </Col>
@@ -686,7 +734,7 @@ const ViewDebtDetailsModal = ({ show, onHide, record }) => {
             Total Balance: {formatCurrency(record.totalCurrentBalance)}
           </Badge>
           <Badge bg="warning-500">
-            Total Monthly Payment: {formatCurrency(record.totalMonthlyPayment)}
+            Total Annual Payment: {formatCurrency((record.totalMonthlyPayment || 0) * 12)}
           </Badge>
         </div>
 
@@ -701,7 +749,7 @@ const ViewDebtDetailsModal = ({ show, onHide, record }) => {
                 <th className="bg-info-700 text-info-50 fw-500">Creditor Name</th>
                 <th className="bg-info-700 text-info-50 fw-500">Loan Status</th>
                 <th className="bg-info-700 text-info-50 fw-500">Current Balance</th>
-                <th className="bg-info-700 text-info-50 fw-500">Monthly Payment</th>
+                <th className="bg-info-700 text-info-50 fw-500">Monthly Payment (per item)</th>
                 <th className="bg-info-700 text-info-50 fw-500">Interest Rate</th>
                 <th className="bg-info-700 text-info-50 fw-500">Original Amount</th>
                 <th className="bg-info-700 text-info-50 fw-500">LOC Limit</th>
