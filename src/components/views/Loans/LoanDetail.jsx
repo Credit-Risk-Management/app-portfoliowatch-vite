@@ -103,7 +103,19 @@ const LoanDetail = () => {
               className="me-8 mb-8 mb-md-0"
             >
               <FontAwesomeIcon icon={faFileAlt} className="me-8" />
-              Add Credit Memo
+              {(() => {
+                const loan = $loan.value?.loan;
+                // Check if there are any credit memo values (debtService, currentRatio, liquidity, liquidityRatio)
+                const hasCreditMemoValues = loan && (
+                  loan.debtService != null ||
+                  loan.currentRatio != null ||
+                  loan.liquidity != null ||
+                  loan.liquidityRatio != null
+                );
+                // Also check if there are documents
+                const hasDocuments = $loanDetailFinancials.value && $loanDetailFinancials.value.length > 0;
+                return (hasCreditMemoValues || hasDocuments) ? 'Update Credit Memo' : 'Add Credit Memo';
+              })()}
             </Button>
             <Button
               variant="outline-success-100"

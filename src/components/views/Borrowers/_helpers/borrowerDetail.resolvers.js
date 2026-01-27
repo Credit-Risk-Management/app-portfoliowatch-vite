@@ -3,6 +3,8 @@ import { $contacts, $documents, $relationshipManagers } from '@src/signals';
 import borrowersApi from '@src/api/borrowers.api';
 import contactsApi from '@src/api/contacts.api';
 import documentsApi from '@src/api/documents.api';
+import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
+import borrowerFinancialDocumentsApi from '@src/api/borrowerFinancialDocuments.api';
 import relationshipManagersApi from '@src/api/relationshipManagers.api';
 import loansApi from '@src/api/loans.api';
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
@@ -38,30 +40,95 @@ export const fetchBorrowerDocuments = async (borrowerId) => {
   if (!borrowerId) return;
 
   const borrower = $borrower.value?.borrower;
-  if (!borrower?.loans || borrower.loans.length === 0) {
-    $documents.update({
-      list: [],
-      totalCount: 0,
-      isLoading: false,
-    });
-    return;
-  }
-
+  
   try {
     $borrowerDocumentsView.update({ isTableLoading: true });
 
-    // Get all loan IDs for this borrower
-    const loanIds = borrower.loans.map((loan) => loan.id);
+    const allDocuments = [];
 
-    // Fetch documents for each loan and combine them
-    const documentPromises = loanIds.map((loanId) => documentsApi.getByLoan(loanId));
-    const documentResponses = await Promise.all(documentPromises);
+    // 1. Fetch loan documents (if borrower has loans)
+    if (borrower?.loans && borrower.loans.length > 0) {
+      const loanIds = borrower.loans.map((loan) => loan.id);
 
-    // Combine all documents from all loans
-    const allDocuments = documentResponses.flatMap((response) => {
-      const data = response?.data || response || [];
-      return Array.isArray(data) ? data : [];
-    });
+      // Fetch documents for each loan using getAll (fetch ALL document types, not filtered)
+      const loanDocumentPromises = loanIds.map((loanId) => documentsApi.getAll({ loanId }));
+      const loanDocumentResponses = await Promise.all(loanDocumentPromises);
+
+      // Process loan documents
+      const loanDocuments = loanDocumentResponses.flatMap((response) => {
+        if (response?.success && Array.isArray(response.data)) {
+          // Map loan documents to match the expected format
+          return response.data.map((doc) => ({
+            ...doc,
+            documentName: doc.documentName || doc.fileName,
+            source: 'loan', // Mark as loan document
+          }));
+        }
+        if (Array.isArray(response)) {
+          return response.map((doc) => ({
+            ...doc,
+            documentName: doc.documentName || doc.fileName,
+            source: 'loan',
+          }));
+        }
+        if (response?.data && Array.isArray(response.data)) {
+          return response.data.map((doc) => ({
+            ...doc,
+            documentName: doc.documentName || doc.fileName,
+            source: 'loan',
+          }));
+        }
+        return [];
+      });
+
+      allDocuments.push(...loanDocuments);
+    }
+
+    // 2. Fetch borrower financial documents
+    try {
+      const financialsResponse = await borrowerFinancialsApi.getByBorrowerId(borrowerId, {
+        limit: 100, // Get all financial records
+      });
+
+      if (financialsResponse?.success && financialsResponse.data) {
+        const financials = financialsResponse.data;
+
+        // Fetch documents for each financial record
+        const financialDocumentPromises = financials.map((financial) =>
+          borrowerFinancialDocumentsApi.getByBorrowerFinancial(financial.id).catch(() => {
+            return { success: true, data: [] };
+          }),
+        );
+
+        const financialDocumentResponses = await Promise.all(financialDocumentPromises);
+
+        // Process borrower financial documents
+        const financialDocuments = financialDocumentResponses.flatMap((response) => {
+          if (response?.success && Array.isArray(response.data)) {
+            return response.data.map((doc) => ({
+              ...doc,
+              documentName: doc.fileName, // Borrower financial docs use fileName
+              loanId: null, // These aren't linked to loans
+              source: 'borrowerFinancial', // Mark as borrower financial document
+            }));
+          }
+          if (Array.isArray(response)) {
+            return response.map((doc) => ({
+              ...doc,
+              documentName: doc.fileName,
+              loanId: null,
+              source: 'borrowerFinancial',
+            }));
+          }
+          return [];
+        });
+
+        allDocuments.push(...financialDocuments);
+      }
+    } catch (financialError) {
+      console.error('Error fetching borrower financial documents:', financialError);
+      // Continue even if financial documents fail
+    }
 
     // Remove duplicates based on document ID
     const uniqueDocuments = Array.from(

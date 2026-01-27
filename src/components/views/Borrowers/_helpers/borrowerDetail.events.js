@@ -93,32 +93,40 @@ export const handleGenerateAnnualReview = async () => {
   }
 
   try {
-    infoAlert('Generating annual review with AI narratives and PDF...');
+    infoAlert('Generating annual review with AI narratives and Word document...');
 
-    // Generate report data with AI narratives and PDF
+    // Generate report data with AI narratives and Word document
     const response = await annualReviewsApi.generateForLoan(firstLoan.id, {
       generateNarratives: true,
       includeFinancials: true,
-      generatePdf: true,
+      generateWord: true,
     });
 
     if (!response.success) {
       throw new Error(response.error || 'Failed to generate annual review');
     }
 
-    // Download the PDF if included in response
-    if (response.pdf && response.pdf.buffer) {
+    // Download the Word document if included in response
+    // Support both 'word' and 'pdf' keys for backward compatibility
+    const wordData = response.word || response.pdf;
+    const wordError = response.wordError || response.pdfError;
+
+    if (wordData && wordData.buffer) {
       try {
-        const pdfBlob = base64ToBlob(response.pdf.buffer, 'application/pdf');
-        downloadBlob(pdfBlob, response.pdf.filename);
-        successAlert('Annual review and PDF generated successfully!');
-      } catch (pdfError) {
-        console.error('Failed to download PDF:', pdfError);
-        successAlert('Annual review generated successfully! (PDF download failed)');
+        const wordBlob = base64ToBlob(wordData.buffer, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        // Ensure filename has .docx extension
+        const filename = wordData.filename?.endsWith('.docx') 
+          ? wordData.filename 
+          : wordData.filename?.replace(/\.pdf$/, '.docx') || 'annual-review.docx';
+        downloadBlob(wordBlob, filename);
+        successAlert('Annual review and Word document generated successfully!');
+      } catch (downloadError) {
+        console.error('Failed to download Word document:', downloadError);
+        successAlert('Annual review generated successfully! (Word document download failed)');
       }
-    } else if (response.pdfError) {
-      console.error('PDF generation error:', response.pdfError);
-      successAlert('Annual review data generated successfully! (PDF generation failed)');
+    } else if (wordError) {
+      console.error('Word document generation error:', wordError);
+      successAlert('Annual review data generated successfully! (Word document generation failed)');
     } else {
       successAlert('Annual review generated successfully!');
     }

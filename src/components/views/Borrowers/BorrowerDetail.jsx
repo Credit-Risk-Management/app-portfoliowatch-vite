@@ -279,12 +279,12 @@ const BorrowerDetail = () => {
   const documentsTableRows = useMemo(
     () => {
       const documentsList = $documents.value?.list || [];
-      return documentsList.map((document) => ({
-        ...document,
-        documentName: document.documentName,
-        loanNumber: getLoanNumber(document.loanId, loans),
-        uploadedAt: formatUploadDate(document.uploadedAt),
-        fileSize: formatFileSize(Number(document.fileSize)),
+      return documentsList.map((doc) => ({
+        ...doc,
+        documentName: doc.documentName,
+        loanNumber: getLoanNumber(doc.loanId, loans),
+        uploadedAt: formatUploadDate(doc.uploadedAt),
+        fileSize: formatFileSize(Number(doc.fileSize)),
         actions: () => (
           <ContextMenu
             items={[
@@ -293,9 +293,22 @@ const BorrowerDetail = () => {
             ]}
             onItemClick={(item) => {
               if (item.action === 'download') {
-                handleDownloadDocument(document.id, document.documentName);
+                // Check if this is a borrower financial document (has storageUrl) or loan document
+                if (doc.source === 'borrowerFinancial' || doc.storageUrl) {
+                  // Borrower financial documents already have a storageUrl we can use directly
+                  const link = document.createElement('a');
+                  link.href = doc.storageUrl;
+                  link.download = doc.documentName || doc.fileName || 'document';
+                  link.target = '_blank';
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                } else {
+                  // Loan documents need to get a signed download URL
+                  handleDownloadDocument(doc.id, doc.documentName);
+                }
               } else if (item.action === 'delete') {
-                $documents.update({ selectedDocument: document });
+                $documents.update({ selectedDocument: doc });
                 $documentsView.update({ showDeleteModal: true });
               }
             }}

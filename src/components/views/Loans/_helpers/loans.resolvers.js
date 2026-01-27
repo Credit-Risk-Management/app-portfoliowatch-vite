@@ -68,7 +68,7 @@ export const fetchLoanDetail = async (loanId) => {
       loansApi.getById(loanId),
       commentsApi.getByLoan(loanId),
       loansApi.getWatchScoreBreakdown(loanId),
-      documentsApi.getAll({ loanId, documentType: 'FINANCIAL' }),
+      documentsApi.getAll({ loanId, documentType: 'Financial Statement' }),
       loanCollateralValueApi.getHistoryByLoanId(loanId).catch(() => ({ data: [] })), // Fail silently if no collateral
     ]);
 

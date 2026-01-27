@@ -65,7 +65,10 @@ const annualReviewsApiBase = {
     if (options.includeFinancials !== undefined) {
       params.append('includeFinancials', options.includeFinancials);
     }
-    if (options.generatePdf !== undefined) {
+    // Support both generateWord and generatePdf for backward compatibility
+    if (options.generateWord !== undefined) {
+      params.append('generateWord', options.generateWord);
+    } else if (options.generatePdf !== undefined) {
       params.append('generatePdf', options.generatePdf);
     }
 
@@ -80,7 +83,15 @@ const annualReviewsApiBase = {
   // Export annual review as JSON
   exportToJSON: async (id) => apiClient.get(`/annual-reviews/${id}/export/json`),
 
-  // Export annual review as PDF
+  // Export annual review as Word document
+  exportToWord: async (id) => {
+    const response = await apiClient.get(`/annual-reviews/${id}/export/word`, {
+      responseType: 'blob',
+    });
+    return response;
+  },
+
+  // Export annual review as PDF (legacy - now returns Word document)
   exportToPDF: async (id) => {
     const response = await apiClient.get(`/annual-reviews/${id}/export/pdf`, {
       responseType: 'blob',
