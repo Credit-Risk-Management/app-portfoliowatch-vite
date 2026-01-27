@@ -173,9 +173,9 @@ const DebtServiceTab = () => {
     // Get EBITDA from latest financial - use same approach as Financials tab
     const ebitda = financialToUse?.ebitda != null ? Number(financialToUse.ebitda) : null;
 
-    const totalDebtServiceMonthly = latestDebtService?.totalMonthlyPayment != null ? parseFloat(latestDebtService.totalMonthlyPayment) : null;
     // Convert monthly to annual (multiply by 12)
-    const totalDebtService = totalDebtServiceMonthly != null && !Number.isNaN(totalDebtServiceMonthly) ? totalDebtServiceMonthly * 12 : null;
+    const totalDebtServiceValue = latestDebtService?.totalMonthlyPayment != null ? parseFloat(latestDebtService.totalMonthlyPayment) : null;
+    const totalDebtService = totalDebtServiceValue != null && !Number.isNaN(totalDebtServiceValue) ? totalDebtServiceValue * 12 : null;
 
     // Calculate Current DSCR: EBITDA / Annual Debt Service
     let currentDSCR = null;
@@ -226,44 +226,49 @@ const DebtServiceTab = () => {
   const tableRows = useMemo(
     () => {
       const list = $debtServiceHistory.value?.list || [];
-      return list.map((record) => ({
-        ...record,
-        asOfDate: new Date(record.asOfDate).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-        }),
-        totalCurrentBalance: <span className="text-danger-500 fw-500">{formatCurrency(record.totalCurrentBalance)}</span>,
-        totalMonthlyPayment: <span className="text-warning-500 fw-500">{formatCurrency((record.totalMonthlyPayment || 0) * 12)}</span>,
-        debtCount: (
-          <Button
-            variant="link"
-            className="p-0 text-info-100 text-decoration-underline"
-            onClick={() => handleViewDetails(record)}
-          >
-            {record.debtLineItems?.length || 0}
-          </Button>
-        ),
-        submittedBy: record.submittedBy || '-',
-        actions: () => (
-          <ContextMenu
-            items={[
-              { label: 'View Details', icon: faEye, action: 'view' },
-              { label: 'Edit', icon: faEdit, action: 'edit' },
-              { label: 'Delete', icon: faTrash, action: 'delete' },
-            ]}
-            onItemClick={(item) => {
-              if (item.action === 'view') {
-                handleViewDetails(record);
-              } else if (item.action === 'edit') {
-                handleEdit(record);
-              } else if (item.action === 'delete') {
-                handleDelete(record);
-              }
-            }}
-          />
-        ),
-      }));
+      return list.map((record) => {
+        const monthlyPayment = record.totalMonthlyPayment != null ? Number(record.totalMonthlyPayment) : null;
+        const annualPayment = monthlyPayment != null ? monthlyPayment * 12 : null;
+
+        return {
+          ...record,
+          asOfDate: new Date(record.asOfDate).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+          }),
+          totalCurrentBalance: <span className="text-danger-500 fw-500">{formatCurrency(record.totalCurrentBalance)}</span>,
+          totalMonthlyPayment: <span className="text-warning-500 fw-500">{formatCurrency(annualPayment)}</span>,
+          debtCount: (
+            <Button
+              variant="link"
+              className="p-0 text-info-100 text-decoration-underline"
+              onClick={() => handleViewDetails(record)}
+            >
+              {record.debtLineItems?.length || 0}
+            </Button>
+          ),
+          submittedBy: record.submittedBy || '-',
+          actions: () => (
+            <ContextMenu
+              items={[
+                { label: 'View Details', icon: faEye, action: 'view' },
+                { label: 'Edit', icon: faEdit, action: 'edit' },
+                { label: 'Delete', icon: faTrash, action: 'delete' },
+              ]}
+              onItemClick={(item) => {
+                if (item.action === 'view') {
+                  handleViewDetails(record);
+                } else if (item.action === 'edit') {
+                  handleEdit(record);
+                } else if (item.action === 'delete') {
+                  handleDelete(record);
+                }
+              }}
+            />
+          ),
+        };
+      });
     },
     [$debtServiceHistory.value?.list],
   );
@@ -734,7 +739,7 @@ const ViewDebtDetailsModal = ({ show, onHide, record }) => {
             Total Balance: {formatCurrency(record.totalCurrentBalance)}
           </Badge>
           <Badge bg="warning-500">
-            Total Annual Payment: {formatCurrency((record.totalMonthlyPayment || 0) * 12)}
+            Total Annual Payment: {formatCurrency(record.totalMonthlyPayment != null ? record.totalMonthlyPayment * 12 : null)}
           </Badge>
         </div>
 
@@ -749,7 +754,7 @@ const ViewDebtDetailsModal = ({ show, onHide, record }) => {
                 <th className="bg-info-700 text-info-50 fw-500">Creditor Name</th>
                 <th className="bg-info-700 text-info-50 fw-500">Loan Status</th>
                 <th className="bg-info-700 text-info-50 fw-500">Current Balance</th>
-                <th className="bg-info-700 text-info-50 fw-500">Monthly Payment (per item)</th>
+                <th className="bg-info-700 text-info-50 fw-500">Monthly Payment</th>
                 <th className="bg-info-700 text-info-50 fw-500">Interest Rate</th>
                 <th className="bg-info-700 text-info-50 fw-500">Original Amount</th>
                 <th className="bg-info-700 text-info-50 fw-500">LOC Limit</th>

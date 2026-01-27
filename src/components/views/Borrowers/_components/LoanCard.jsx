@@ -4,7 +4,7 @@ import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 import { formatCurrency } from '@src/utils/formatCurrency';
 import LoanMiniRadarChart from './LoanMiniRadarChart';
-import { getWatchScoreDisplay, formatCategoryBreakdown, hasWatchScoreData } from '../_helpers/loanCard.helpers';
+import { getWatchScoreDisplay, formatCategoryBreakdown, hasWatchScoreData, getCategoryTextColor } from '../_helpers/loanCard.helpers';
 import { formatDate } from '../_helpers/borrowerDetail.helpers';
 
 const LoanCard = ({ loan, breakdown }) => {
@@ -74,26 +74,33 @@ const LoanCard = ({ loan, breakdown }) => {
                 {categories.map((category) => (
                   <div
                     key={category.letter}
-                    className="d-flex align-items-center mb-8"
+                    className="d-flex align-items-center justify-content-between mb-8"
                   >
-                    <Badge
-                      bg={category.color}
-                      className="d-flex align-items-center justify-content-center me-12"
-                      style={{
-                        width: '24px',
-                        height: '24px',
-                        fontSize: '13px',
-                        fontWeight: 'bold',
-                        borderRadius: '4px',
-                        padding: 0,
-                      }}
-                      title={`Score: ${category.score != null ? category.score.toFixed(2) : 'N/A'}`}
-                    >
-                      {category.letter}
-                    </Badge>
-                    <span className="text-info-50" style={{ fontSize: '14px' }}>
-                      {category.name}
-                    </span>
+                    <div className="d-flex align-items-center">
+                      <Badge
+                        bg={category.color}
+                        className="d-flex align-items-center justify-content-center me-12"
+                        style={{
+                          width: '24px',
+                          height: '24px',
+                          fontSize: '13px',
+                          fontWeight: 'bold',
+                          borderRadius: '4px',
+                          padding: 0,
+                        }}
+                        title={`Score: ${category.score != null ? category.score.toFixed(2) : 'N/A'}`}
+                      >
+                        {category.letter}
+                      </Badge>
+                      <span className="text-info-50" style={{ fontSize: '14px' }}>
+                        {category.name}
+                      </span>
+                    </div>
+                    {category.hasData && (
+                      <span className={`${getCategoryTextColor(category.color)} fw-600`} style={{ fontSize: '14px' }}>
+                        {category.score != null ? category.score.toFixed(2) : 'N/A'}
+                      </span>
+                    )}
                   </div>
                 ))}
               </div>

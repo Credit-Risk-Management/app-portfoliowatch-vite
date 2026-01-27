@@ -18,6 +18,17 @@ export const getCategoryColor = (score) => {
   return 'danger';
 };
 
+export const getCategoryTextColor = (color) => {
+  const colorMap = {
+    success: 'text-success-500',
+    info: 'text-info-500',
+    warning: 'text-warning-500',
+    danger: 'text-danger-500',
+    secondary: 'text-secondary-200',
+  };
+  return colorMap[color] || 'text-info-50';
+};
+
 export const formatCategoryBreakdown = (breakdown) => {
   if (!breakdown || !breakdown.categories) {
     return [];
