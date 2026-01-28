@@ -309,8 +309,7 @@ export const $borrowerFinancials = Signal({
 });
 
 export const $borrowerFinancialsView = Signal({
-  showHistoryModal: false,
-  showSubmitModal: false,
+  activeModalKey: null,
   currentBorrowerId: null,
   isEditMode: false,
   editingFinancialId: null,

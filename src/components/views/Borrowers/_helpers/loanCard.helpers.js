@@ -34,8 +34,8 @@ export const formatCategoryBreakdown = (breakdown) => {
     return [];
   }
 
-  const categories = breakdown.categories;
-  
+  const { categories } = breakdown;
+
   const categoryArray = Object.entries(categories).map(([categoryName, categoryData]) => ({
     letter: categoryData.letter,
     name: formatCategoryName(categoryName),
@@ -58,10 +58,10 @@ export const formatCategoryBreakdown = (breakdown) => {
 const formatCategoryName = (name) => {
   const nameMap = {
     'Weighted Exposure': 'Weighted Exposure',
-    'AccountabilityScore': 'Accountability',
-    'Triggers': 'Triggers',
-    'Collateral': 'Collateral',
-    'Headwinds': 'Headwinds',
+    AccountabilityScore: 'Accountability',
+    Triggers: 'Triggers',
+    Collateral: 'Collateral',
+    Headwinds: 'Headwinds',
   };
 
   if (nameMap[name]) {
@@ -75,6 +75,4 @@ const formatCategoryName = (name) => {
     .replace(/Score$/, '');
 };
 
-export const hasWatchScoreData = (loan) => {
-  return loan?.currentWatchScore != null;
-};
+export const hasWatchScoreData = (loan) => loan?.currentWatchScore != null;

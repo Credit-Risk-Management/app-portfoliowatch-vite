@@ -3,9 +3,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 import { formatCurrency } from '@src/utils/formatCurrency';
+import { formatDate } from '@src/utils/formatDate';
 import LoanMiniRadarChart from './LoanMiniRadarChart';
 import { getWatchScoreDisplay, formatCategoryBreakdown, hasWatchScoreData, getCategoryTextColor } from '../_helpers/loanCard.helpers';
-import { formatDate } from '../_helpers/borrowerDetail.helpers';
 
 const LoanCard = ({ loan, breakdown }) => {
   const navigate = useNavigate();

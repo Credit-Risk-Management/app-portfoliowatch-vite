@@ -9,7 +9,7 @@ import relationshipManagersApi from '@src/api/relationshipManagers.api';
 import loansApi from '@src/api/loans.api';
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import { $borrowerDocumentsView } from './borrowerDetail.consts';
-import { $loanWatchScoreBreakdowns } from './loanCard.consts';
+import { $loanWatchScoreBreakdowns } from '../../../../_helpers/loanCard.consts';
 
 export const fetchBorrowerDetail = async (borrowerId) => {
   if (!borrowerId) return;
@@ -40,7 +40,7 @@ export const fetchBorrowerDocuments = async (borrowerId) => {
   if (!borrowerId) return;
 
   const borrower = $borrower.value?.borrower;
-  
+
   try {
     $borrowerDocumentsView.update({ isTableLoading: true });
 
@@ -94,11 +94,7 @@ export const fetchBorrowerDocuments = async (borrowerId) => {
         const financials = financialsResponse.data;
 
         // Fetch documents for each financial record
-        const financialDocumentPromises = financials.map((financial) =>
-          borrowerFinancialDocumentsApi.getByBorrowerFinancial(financial.id).catch(() => {
-            return { success: true, data: [] };
-          }),
-        );
+        const financialDocumentPromises = financials.map((financial) => borrowerFinancialDocumentsApi.getByBorrowerFinancial(financial.id).catch(() => ({ success: true, data: [] })));
 
         const financialDocumentResponses = await Promise.all(financialDocumentPromises);
 
@@ -161,12 +157,10 @@ export const fetchLoanWatchScoreBreakdowns = async (loans) => {
   try {
     $loanWatchScoreBreakdowns.update({ isLoading: true });
 
-    const breakdownPromises = loans.map((loan) =>
-      loansApi.getWatchScoreBreakdown(loan.id).catch((error) => {
-        console.warn(`Failed to fetch Watch Score breakdown for loan ${loan.id}:`, error);
-        return null;
-      }),
-    );
+    const breakdownPromises = loans.map((loan) => loansApi.getWatchScoreBreakdown(loan.id).catch((error) => {
+      console.warn(`Failed to fetch Watch Score breakdown for loan ${loan.id}:`, error);
+      return null;
+    }));
 
     const breakdownResponses = await Promise.all(breakdownPromises);
 
