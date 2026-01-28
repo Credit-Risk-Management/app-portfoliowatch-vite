@@ -6,7 +6,6 @@ import { $borrowerFinancialsView, $borrowerFinancialsForm } from '@src/signals';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import SelectInput from '@src/components/global/Inputs/SelectInput';
-import DocumentsTab from '../../DocumentsContainer/DocumentsTab';
 import TriggersTab from '../../../TriggersTab';
 import DebtServiceContainer from '../../DebtServiceContainer';
 import WatchScoreResultsModal from '../../../WatchScoreResultsModal';
@@ -20,6 +19,7 @@ import {
   handleOpenEditMode as handleOpenEditModeHelper,
 } from './submitFinancialsModal.handlers';
 import { $financialDocsUploader, $modalState } from './submitFinancialsModal.signals';
+import DocumentsContainer from '../../DocumentsContainer/DocumentsContainer';
 
 const SubmitFinancialsModal = () => {
   const { activeTab } = $borrowerFinancialsForm.value;
@@ -166,7 +166,7 @@ const SubmitFinancialsModal = () => {
           <div className="px-32 border-top border-info-100 pt-8">
             {/* Documents Tab */}
             {activeTab === 'documents' && (
-              <DocumentsTab
+              <DocumentsContainer
                 pdfUrl={pdfUrl}
                 ocrApplied={ocrApplied}
                 handleFileUpload={() => handleFileUploadHelper($financialDocsUploader, $modalState, ocrApplied, pdfUrl)}

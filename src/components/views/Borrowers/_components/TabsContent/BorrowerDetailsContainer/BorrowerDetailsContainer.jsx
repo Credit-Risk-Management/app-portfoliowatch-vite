@@ -25,9 +25,6 @@ import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import SubmitFinancialsModal from './_components/SubmitFinancialsModal';
 import EditBorrowerDetailModal from '../../EditBorrowerDetailModal';
 import DebtServiceContainer from '../DebtServiceContainer/DebtServiceContainer';
-import LoanCard from '../../LoanCard';
-import { $loanWatchScoreBreakdowns } from '../../../_helpers/loanCard.consts';
-
 import {
   formatDate,
   formatAddress,
@@ -46,6 +43,7 @@ import {
 import { fetchBorrowerDetail, fetchBorrowerDocuments, fetchLoanWatchScoreBreakdowns } from './_helpers/borrowerDetail.resolvers';
 import { handleGenerateIndustryReport, handleGenerateAnnualReview } from './_helpers/borrowerDetail.events';
 import DeleteBorrowerDocumentModal from '../../DeleteBorrowerDocumentModal';
+import LoansContainer from '../LoansContainer/LoansContainer';
 
 const BorrowerDetailsContainer = () => {
   const { borrowerId } = useParams();
@@ -438,22 +436,7 @@ const BorrowerDetailsContainer = () => {
 
       case 'loans':
         return (
-          <div>
-            {loans.length === 0 ? (
-              <div className="text-info-100 fw-200">No loans found for this borrower.</div>
-            ) : (
-              <Row className="g-4">
-                {loans.map((loan) => {
-                  const breakdown = $loanWatchScoreBreakdowns.value?.breakdowns[loan.id] || null;
-                  return (
-                    <Col key={loan.id} xs={12} lg={6} className="mb-3">
-                      <LoanCard loan={loan} breakdown={breakdown} />
-                    </Col>
-                  );
-                })}
-              </Row>
-            )}
-          </div>
+          <LoansContainer />
         );
 
       case 'financials':

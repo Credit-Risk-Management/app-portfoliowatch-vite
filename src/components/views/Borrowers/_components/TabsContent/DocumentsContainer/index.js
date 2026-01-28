@@ -1,3 +1,3 @@
-import DocumentsTab from './DocumentsTab';
+import DocumentsContainer from './DocumentsContainer';
 
-export default DocumentsTab;
+export default DocumentsContainer;
