@@ -1,0 +1,3 @@
+import BorrowerDetailsManagementContainer from './BorrowerDetailsManagementContainer';
+
+export default BorrowerDetailsManagementContainer;
