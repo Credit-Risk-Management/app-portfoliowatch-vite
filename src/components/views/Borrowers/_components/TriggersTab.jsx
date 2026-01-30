@@ -1,9 +1,6 @@
 import { Row, Col, Alert, Card } from 'react-bootstrap';
-import { $borrowerFinancialsForm } from '@src/signals';
 
-const TriggersTab = ({ previousFinancial, isLoadingPrevious }) => {
-  const currentForm = $borrowerFinancialsForm.value;
-
+const TriggersTab = ({ previousFinancial, currentForm, isLoadingPrevious }) => {
   const calculateChange = (current, previous) => {
     if (!previous || previous === 0) return null;
     const currentVal = parseFloat(current) || 0;

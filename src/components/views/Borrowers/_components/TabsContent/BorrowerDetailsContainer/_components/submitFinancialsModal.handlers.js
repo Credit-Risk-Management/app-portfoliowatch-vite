@@ -441,6 +441,7 @@ const loadDocumentsFromBackend = async (financialId) => {
  * @returns {Promise<void>}
  */
 export const handleOpenEditMode = async (financial, $modalState) => {
+  console.log('financial', financial);
   // Format the asOfDate to YYYY-MM-DD for the date input
   const formatDateForInput = (dateString) => {
     if (!dateString) return '';
