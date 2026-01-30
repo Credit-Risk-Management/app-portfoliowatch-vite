@@ -1,8 +1,7 @@
 import { Form, Row, Col, Alert, Button, Table } from 'react-bootstrap';
-import { useRef, useState, useEffect, useMemo } from 'react';
+import { useRef, useEffect, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMagic, faTrash, faPlus, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import ExcelJS from 'exceljs';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -10,10 +9,15 @@ import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import FileUploader from '@src/components/global/FileUploader';
 import { $borrowerFinancialsForm } from '@src/signals';
 import { normalizeCurrencyValue, normalizeCurrencyValueNoCents } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
+import { $documentsContainerView } from './_helpers/documents.consts';
+import * as events from './_helpers/documents.events';
+import * as helpers from './_helpers/documents.helpers';
+import * as resolvers from './_helpers/documents.resolvers';
+
 // Configure PDF.js worker - using jsdelivr CDN which has proper CORS headers
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
-const DocumentsTab = ({
+const DocumentsContainer = ({
   pdfUrl,
   ocrApplied,
   handleFileUpload,
@@ -31,12 +35,7 @@ const DocumentsTab = ({
   const currentIndex = currentDocumentIndex[documentType] || 0;
   const currentDoc = currentDocs[currentIndex];
   const hasMultipleDocs = currentDocs.length > 1;
-  const [excelData, setExcelData] = useState(null);
-  const [isLoadingExcel, setIsLoadingExcel] = useState(false);
-  const [pdfNumPages, setPdfNumPages] = useState(null);
-  const [pdfPageNumber, setPdfPageNumber] = useState(1);
-  const [pdfLoadError, setPdfLoadError] = useState(false);
-  const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
+  const { excelData, isLoadingExcel, pdfNumPages, pdfPageNumber, pdfLoadError, pdfBlobUrl } = $documentsContainerView.value;
 
   // Memoize PDF options to prevent unnecessary re-renders (must be at component level, not inside conditionals)
   const pdfOptions = useMemo(() => ({
@@ -45,189 +44,37 @@ const DocumentsTab = ({
     standardFontDataUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/standard_fonts/`,
   }), []);
 
-  const handleDocumentTypeChange = (e) => {
-    const newType = e.target.value;
-    $borrowerFinancialsForm.update({ documentType: newType });
-
-    // Switch to the first document of the new type if available, or clear the view
-    const newTypeDocs = documentsByType[newType] || [];
-    if (newTypeDocs.length > 0) {
-      const firstDoc = newTypeDocs[0];
-      // Use storageUrl if previewUrl is not available (for stored documents)
-      const docUrl = firstDoc.previewUrl || firstDoc.storageUrl || null;
-      // Update the modal state to show the first document of the new type
-      $modalState.update({
-        pdfUrl: docUrl,
-        currentDocumentIndex: {
-          ...$modalState.value.currentDocumentIndex,
-          [newType]: 0,
-        },
-      });
-    } else {
-      // No documents for this type, clear the PDF view
-      $modalState.update({
-        pdfUrl: null,
-        currentDocumentIndex: {
-          ...$modalState.value.currentDocumentIndex,
-          [newType]: 0,
-        },
-      });
-    }
-  };
-
-  const handleDocumentSelectChange = (e) => {
-    const newIndex = parseInt(e.target.value, 10);
-    if (!Number.isNaN(newIndex)) {
-      handleSwitchDocument($modalState, newIndex);
-    }
-  };
-
-  const handleRemove = () => {
-    if (currentDoc) {
-      handleRemoveDocument($modalState, currentDoc.id);
-    }
-  };
-
-  const handleAddFileClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const isPdfFile = (doc) => {
-    if (!doc) return false;
-    const mimeType = doc.mimeType || '';
-    const fileName = doc.fileName || '';
-    // Check for PDF MIME type (with common variations) or file extension
-    return mimeType === 'application/pdf'
-      || mimeType === 'application/x-pdf'
-      || mimeType === 'application/x-bzpdf'
-      || mimeType === 'application/x-gzpdf'
-      || fileName.match(/\.pdf$/i);
-  };
-
-  const isExcelFile = (doc) => {
-    if (!doc) return false;
-    const mimeType = doc.mimeType || '';
-    const fileName = doc.fileName || '';
-    return mimeType.includes('spreadsheet')
-      || fileName.match(/\.(xlsx?|xls)$/i)
-      || mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-      || mimeType === 'application/vnd.ms-excel';
-  };
-
   // Parse Excel file and extract data
   useEffect(() => {
-    const parseExcelFile = async () => {
-      if (!currentDoc || !isExcelFile(currentDoc)) {
-        setExcelData(null);
-        return;
-      }
-
-      setIsLoadingExcel(true);
-      try {
-        const workbook = new ExcelJS.Workbook();
-        let buffer;
-
-        // For stored documents, download directly from Firebase Storage
-        if (currentDoc.isStored && currentDoc.storageUrl) {
-          const response = await fetch(currentDoc.storageUrl);
-          const blob = await response.blob();
-          buffer = await blob.arrayBuffer();
-        } else if (currentDoc.file) {
-          // For newly uploaded files, use the File object
-          buffer = await currentDoc.file.arrayBuffer();
-        } else {
-          setExcelData(null);
-          setIsLoadingExcel(false);
-          return;
-        }
-
-        await workbook.xlsx.load(buffer);
-
-        // Get the first worksheet
-        const worksheet = workbook.worksheets[0];
-        if (!worksheet) {
-          setExcelData(null);
-          setIsLoadingExcel(false);
-          return;
-        }
-
-        // Convert worksheet to array of rows
-        const rows = [];
-        worksheet.eachRow((row) => {
-          const rowData = [];
-          row.eachCell({ includeEmpty: true }, (cell) => {
-            let { value } = cell;
-            // Handle different cell value types
-            if (value === null || value === undefined) {
-              value = '';
-            } else if (typeof value === 'object') {
-              // Handle formulas, rich text, etc.
-              if (value.text !== undefined) {
-                value = value.text;
-              } else if (value.result !== undefined) {
-                value = value.result;
-              } else {
-                value = String(value);
-              }
-            }
-            rowData.push(value);
-          });
-          rows.push(rowData);
-        });
-
-        setExcelData({
-          worksheetName: worksheet.name,
-          rows,
-          columnCount: worksheet.columnCount,
-        });
-      } catch (error) {
-        console.error('Error parsing Excel file:', error);
-        setExcelData(null);
-      } finally {
-        setIsLoadingExcel(false);
-      }
-    };
-
-    parseExcelFile();
+    if (!currentDoc || !helpers.isExcelFile(currentDoc)) {
+      resolvers.parseExcelFile(null);
+      return;
+    }
+    resolvers.parseExcelFile(currentDoc);
   }, [currentDoc, pdfUrl]);
 
   // Create blob URL for newly uploaded files (stored files use storageUrl directly)
   useEffect(() => {
     // For newly uploaded files with File object, create a blob URL
     if (currentDoc?.file) {
-      const blobUrl = URL.createObjectURL(currentDoc.file);
-      setPdfBlobUrl(blobUrl);
-      setPdfLoadError(false);
-
+      const blobUrl = resolvers.createPdfBlobUrl(currentDoc);
       // Cleanup blob URL on unmount
       return () => {
-        URL.revokeObjectURL(blobUrl);
+        if (blobUrl) {
+          URL.revokeObjectURL(blobUrl);
+        }
       };
     }
 
     // For stored documents, we'll use storageUrl directly (no blob URL needed)
-    setPdfBlobUrl(null);
-    setPdfLoadError(false);
+    resolvers.createPdfBlobUrl(currentDoc);
     return undefined;
   }, [currentDoc]);
 
   // Reset PDF state when URL changes
   useEffect(() => {
-    setPdfLoadError(false);
-    setPdfPageNumber(1);
-    setPdfNumPages(null);
+    resolvers.resetPdfState();
   }, [pdfUrl, pdfBlobUrl]);
-
-  const getFileIcon = (doc) => {
-    if (!doc) return 'file';
-    const mimeType = doc.mimeType || '';
-    const fileName = doc.fileName || '';
-
-    if (mimeType === 'application/pdf' || fileName.endsWith('.pdf')) return 'file-pdf';
-    if (mimeType.includes('spreadsheet') || fileName.match(/\.(xlsx?|csv)$/i)) return 'file-excel';
-    if (mimeType.includes('word') || fileName.match(/\.docx?$/i)) return 'file-word';
-    return 'file';
-  };
 
   const renderDocumentPreview = () => {
     // Check if current document is stored but doesn't have a File object
@@ -269,7 +116,7 @@ const DocumentsTab = ({
       );
     }
 
-    if (isPdfFile(currentDoc)) {
+    if (helpers.isPdfFile(currentDoc)) {
       // If PDF failed to load, show fallback
       if (pdfLoadError) {
         return (
@@ -320,14 +167,8 @@ const DocumentsTab = ({
           >
             <Document
               file={pdfBlobUrl || currentDoc?.storageUrl || pdfUrl}
-              onLoadSuccess={({ numPages }) => {
-                setPdfNumPages(numPages);
-                setPdfLoadError(false);
-              }}
-              onLoadError={(error) => {
-                console.error('Error loading PDF:', error);
-                setPdfLoadError(true);
-              }}
+              onLoadSuccess={({ numPages }) => resolvers.handlePdfLoadSuccess(numPages)}
+              onLoadError={resolvers.handlePdfLoadError}
               loading={(
                 <div className="d-flex justify-content-center align-items-center" style={{ height: '65vh' }}>
                   <div className="text-center">
@@ -368,7 +209,7 @@ const DocumentsTab = ({
               <Button
                 variant="outline-light"
                 size="sm"
-                onClick={() => setPdfPageNumber((prev) => Math.max(1, prev - 1))}
+                onClick={events.goToPreviousPage}
                 disabled={pdfPageNumber <= 1}
               >
                 <FontAwesomeIcon icon={faChevronLeft} />
@@ -379,7 +220,7 @@ const DocumentsTab = ({
               <Button
                 variant="outline-light"
                 size="sm"
-                onClick={() => setPdfPageNumber((prev) => Math.min(pdfNumPages, prev + 1))}
+                onClick={events.goToNextPage}
                 disabled={pdfPageNumber >= pdfNumPages}
               >
                 <FontAwesomeIcon icon={faChevronRight} />
@@ -390,7 +231,7 @@ const DocumentsTab = ({
       );
     }
 
-    if (isExcelFile(currentDoc)) {
+    if (helpers.isExcelFile(currentDoc)) {
       if (isLoadingExcel) {
         return (
           <div className="text-center py-5 border border-info-600 rounded" style={{ height: '65vh' }}>
@@ -442,7 +283,7 @@ const DocumentsTab = ({
         <div className="text-center py-5 border border-info-600 rounded" style={{ height: '65vh' }}>
           <div className="d-flex flex-column align-items-center justify-content-center h-100">
             <div className="mb-3">
-              <i className={`fas fa-${getFileIcon(currentDoc)} fa-5x text-info-300`} />
+              <i className={`fas fa-${helpers.getFileIcon(currentDoc)} fa-5x text-info-300`} />
             </div>
             <h5 className="text-info-100 mb-2">{currentDoc?.fileName || 'Document'}</h5>
             <p className="text-info-300 mb-3">
@@ -464,7 +305,7 @@ const DocumentsTab = ({
       <div className="text-center py-5 border border-info-600 rounded" style={{ height: '65vh' }}>
         <div className="d-flex flex-column align-items-center justify-content-center h-100">
           <div className="mb-3">
-            <i className={`fas fa-${getFileIcon(currentDoc)} fa-5x text-info-300`} />
+            <i className={`fas fa-${helpers.getFileIcon(currentDoc)} fa-5x text-info-300`} />
           </div>
           <h5 className="text-info-100 mb-2">{currentDoc?.fileName || 'Document'}</h5>
           <p className="text-info-300 mb-3">
@@ -496,7 +337,7 @@ const DocumentsTab = ({
                 <Form.Select
                   size="sm"
                   value={currentIndex}
-                  onChange={handleDocumentSelectChange}
+                  onChange={(e) => events.handleDocumentSelectChange(e, handleSwitchDocument, $modalState)}
                   className="bg-info-800 text-info-100 border-info-600 me-4 rounded-pill"
                   style={{ width: 'auto', minWidth: '150px' }}
                 >
@@ -510,7 +351,7 @@ const DocumentsTab = ({
               <Button
                 variant="outline-danger-300"
                 size="sm"
-                onClick={handleRemove}
+                onClick={() => events.handleRemove(currentDoc, handleRemoveDocument, $modalState)}
                 className="me-4"
               >
                 <FontAwesomeIcon icon={faTrash} className="me-4" />
@@ -519,7 +360,7 @@ const DocumentsTab = ({
               <Button
                 variant="outline-success-300"
                 size="sm"
-                onClick={handleAddFileClick}
+                onClick={() => events.handleAddFileClick(fileInputRef)}
               >
                 <FontAwesomeIcon icon={faPlus} className="me-4" />
                 Add File
@@ -534,15 +375,7 @@ const DocumentsTab = ({
           type="file"
           style={{ display: 'none' }}
           accept=".pdf,.xlsx,.xls,.doc,.docx,.csv"
-          onChange={(e) => {
-            const files = Array.from(e.target.files || []);
-            if (files.length > 0) {
-              $financialDocsUploader.update({ financialDocs: files });
-              handleFileUpload();
-              // Reset the input so the same file can be selected again
-              e.target.value = '';
-            }
-          }}
+          onChange={(e) => events.handleFileInputChange(e, $financialDocsUploader, handleFileUpload)}
         />
 
         {renderDocumentPreview()}
@@ -558,7 +391,7 @@ const DocumentsTab = ({
           <h5 className="text-info-100 mb-16 fw-600">Document Type</h5>
           <Form.Select
             value={documentType}
-            onChange={handleDocumentTypeChange}
+            onChange={(e) => events.handleDocumentTypeChange(e, documentsByType, $modalState)}
             className="bg-info-800 text-info-100 border-info-600"
           >
             <option value="balanceSheet">
@@ -798,4 +631,4 @@ const DocumentsTab = ({
   );
 };
 
-export default DocumentsTab;
+export default DocumentsContainer;

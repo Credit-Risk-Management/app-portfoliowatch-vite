@@ -9,8 +9,8 @@ import {
   $relationshipManagers,
 } from '@src/signals';
 import SelectInput from '@src/components/global/Inputs/SelectInput';
-import { handleEditBorrower } from '../_helpers/borrowers.events';
-import * as helpers from '../_helpers/borrowers.helpers';
+import { handleEditBorrower } from '../../../../_helpers/borrowers.events';
+import * as helpers from '../../../../_helpers/borrowers.helpers';
 
 const EditClientModal = () => {
   useEffect(() => {

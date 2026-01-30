@@ -1,6 +1,6 @@
 import UniversalModal from '@src/components/global/UniversalModal';
 import { $borrowersView, $borrowers } from '@src/signals';
-import { handleDeleteBorrower } from '../_helpers/borrowers.events';
+import { handleDeleteBorrower } from '../../../../_helpers/borrowers.events';
 
 const DeleteBorrowerModal = () => (
   <UniversalModal

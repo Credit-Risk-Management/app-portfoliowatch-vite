@@ -6,11 +6,11 @@ import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events'
 export const loadReferenceData = async () => {
   try {
     const managersResponse = await relationshipManagersApi.getAll();
-    
+
     // The API client interceptor returns response.data, so managersResponse is already { success, data, count }
     // Extract the actual managers array
     let managers = managersResponse?.data || managersResponse || [];
-    
+
     // WORKAROUND: If API returned borrowers instead of managers, extract managers from borrowers
     // This handles a backend issue where /relationship-managers endpoint returns borrowers
     if (Array.isArray(managers) && managers.length > 0 && managers[0]?.borrowerId) {
@@ -25,10 +25,10 @@ export const loadReferenceData = async () => {
           }
         }
       });
-      
+
       managers = Array.from(managerMap.values());
     }
-    
+
     $relationshipManagers.update({ list: managers });
   } catch (error) {
     console.error('Error loading relationship managers:', error);

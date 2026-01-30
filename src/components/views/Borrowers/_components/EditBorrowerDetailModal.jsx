@@ -5,8 +5,8 @@ import UniversalModal from '@src/components/global/UniversalModal';
 import SelectInput from '@src/components/global/Inputs/SelectInput';
 import { $borrower } from '@src/consts/consts';
 import { $borrowersForm, $relationshipManagers } from '@src/signals';
-import { $borrowerDetailView } from '../_helpers/borrowerDetail.consts';
-import { handleEditBorrowerDetail } from '../_helpers/borrowerDetail.events';
+import { $borrowerDetailView } from './TabsContent/BorrowerDetailsContainer/_helpers/borrowerDetail.consts';
+import { handleEditBorrowerDetail } from './TabsContent/BorrowerDetailsContainer/_helpers/borrowerDetail.events';
 import * as helpers from '../_helpers/borrowers.helpers';
 
 const EditBorrowerDetailModal = () => {

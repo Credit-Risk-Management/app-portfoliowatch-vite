@@ -5,7 +5,7 @@ import NotFound from '@src/components/views/NotFound';
 import Home from '@src/components/views/Home';
 import Dashboard from '@src/components/views/Dashboard';
 import Borrowers from '@src/components/views/Borrowers';
-import BorrowerDetail from '@src/components/views/Borrowers/BorrowerDetail';
+import BorrowerDetailsContainer from '@src/components/views/Borrowers/_components/TabsContent/BorrowerDetailsContainer';
 import Loans from '@src/components/views/Loans';
 import LoanDetail from '@src/components/views/Loans/LoanDetail';
 import Reports from '@src/components/views/Reports';
@@ -60,7 +60,7 @@ function App() {
               <Route path="/loans/:loanId" element={<LoanDetail />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/borrowers" element={<Borrowers />} />
-              <Route path="/borrowers/:borrowerId" element={<BorrowerDetail />} />
+              <Route path="/borrowers/:borrowerId" element={<BorrowerDetailsContainer />} />
               {/* <Route path="/documents" element={<Documents />} /> */}
               <Route path="/reports" element={<Reports />} />
               <Route path="/relationship-managers" element={<Managers />} />

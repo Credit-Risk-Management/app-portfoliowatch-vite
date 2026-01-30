@@ -2,7 +2,7 @@ import { $borrowerFinancialsView, $borrowerFinancialsForm, $user } from '@src/si
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
 import borrowerFinancialDocumentsApi from '@src/api/borrowerFinancialDocuments.api';
 import { successAlert } from '@src/components/global/Alert/_helpers/alert.events';
-import generateMockFinancialData from '../_helpers/financials.helpers';
+import generateMockFinancialData from '../../../../_helpers/financials.helpers';
 
 /**
  * Handles closing the submit financials modal and resetting all state
@@ -12,7 +12,7 @@ import generateMockFinancialData from '../_helpers/financials.helpers';
  */
 export const handleClose = ($financialDocsUploader, $modalState, pdfUrl) => {
   $borrowerFinancialsView.update({
-    showSubmitModal: false,
+    activeModalKey: null,
     isEditMode: false,
     editingFinancialId: null,
   });
@@ -498,7 +498,7 @@ export const handleOpenEditMode = async (financial, $modalState) => {
 
   // Open the modal in edit mode
   $borrowerFinancialsView.update({
-    showSubmitModal: true,
+    activeModalKey: 'submitFinancials',
     isEditMode: true,
     editingFinancialId: financial.id,
     currentBorrowerId: financial.borrowerId,

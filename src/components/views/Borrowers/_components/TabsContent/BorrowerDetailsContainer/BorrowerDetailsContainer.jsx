@@ -21,10 +21,10 @@ import { EditLoanModal, DeleteLoanModal } from '@src/components/views/Loans/_com
 import { handleDownloadDocument } from '@src/components/views/Documents/_helpers/documents.events';
 import { formatFileSize, formatUploadDate, getLoanNumber } from '@src/components/views/Documents/_helpers/documents.helpers';
 import { TABLE_HEADERS as DOCUMENTS_TABLE_HEADERS } from '@src/components/views/Documents/_helpers/documents.consts';
+import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import SubmitFinancialsModal from './_components/SubmitFinancialsModal';
-import EditBorrowerDetailModal from './_components/EditBorrowerDetailModal';
-import DebtServiceTab from './_components/DebtServiceTab';
-import LoanCard from './_components/LoanCard';
+import EditBorrowerDetailModal from '../../EditBorrowerDetailModal';
+import DebtServiceContainer from '../DebtServiceContainer/DebtServiceContainer';
 import {
   formatDate,
   formatAddress,
@@ -40,12 +40,12 @@ import {
   $borrowerDocumentsFilter,
   $borrowerDocumentsView,
 } from './_helpers/borrowerDetail.consts';
-import { $loanWatchScoreBreakdowns } from './_helpers/loanCard.consts';
 import { fetchBorrowerDetail, fetchBorrowerDocuments, fetchLoanWatchScoreBreakdowns } from './_helpers/borrowerDetail.resolvers';
 import { handleGenerateIndustryReport, handleGenerateAnnualReview } from './_helpers/borrowerDetail.events';
-import DeleteBorrowerDocumentModal from './_components/DeleteBorrowerDocumentModal';
+import DeleteBorrowerDocumentModal from '../../DeleteBorrowerDocumentModal';
+import LoansContainer from '../LoansContainer/LoansContainer';
 
-const BorrowerDetail = () => {
+const BorrowerDetailsContainer = () => {
   const { borrowerId } = useParams();
   const navigate = useNavigate();
   const [copiedLink, setCopiedLink] = useState(false);
@@ -54,29 +54,21 @@ const BorrowerDetail = () => {
   const [permanentUploadLink, setPermanentUploadLink] = useState(null);
 
   // Fetch borrower detail and relationship managers on mount or when borrowerId changes
-  useEffect(() => {
-    fetchBorrowerDetail(borrowerId);
+  useEffectAsync(async () => {
+    await fetchBorrowerDetail(borrowerId);
   }, [borrowerId]);
 
   // Get upload link URL from borrower
   const borrower = $borrower.value?.borrower;
 
   // Fetch permanent upload link when borrower is loaded
-  useEffect(() => {
-    const fetchPermanentLink = async () => {
-      if (borrower?.id) {
-        try {
-          const response = await getPermanentUploadLink(borrower.id);
-          if (response.status === 'success') {
-            setPermanentUploadLink(response.data);
-          }
-        } catch (error) {
-          console.error('Error fetching permanent upload link:', error);
-        }
+  useEffectAsync(async () => {
+    if (borrower?.id) {
+      const response = await getPermanentUploadLink(borrower.id);
+      if (response.status === 'success') {
+        setPermanentUploadLink(response.data);
       }
-    };
-
-    fetchPermanentLink();
+    }
   }, [borrower?.id]);
 
   const getUploadLinkUrl = useMemo(() => {
@@ -444,22 +436,7 @@ const BorrowerDetail = () => {
 
       case 'loans':
         return (
-          <div>
-            {loans.length === 0 ? (
-              <div className="text-info-100 fw-200">No loans found for this borrower.</div>
-            ) : (
-              <Row className="g-4">
-                {loans.map((loan) => {
-                  const breakdown = $loanWatchScoreBreakdowns.value?.breakdowns[loan.id] || null;
-                  return (
-                    <Col key={loan.id} xs={12} lg={6} className="mb-3">
-                      <LoanCard loan={loan} breakdown={breakdown} />
-                    </Col>
-                  );
-                })}
-              </Row>
-            )}
-          </div>
+          <LoansContainer />
         );
 
       case 'financials':
@@ -474,7 +451,7 @@ const BorrowerDetail = () => {
                   size="sm"
                   onClick={() => {
                     $borrowerFinancialsView.update({
-                      showSubmitModal: true,
+                      activeModalKey: 'submitFinancials',
                       currentBorrowerId: borrower.id,
                     });
                   }}
@@ -533,7 +510,7 @@ const BorrowerDetail = () => {
                   itemsPerPageAmount={10}
                   onRowClick={(financial) => {
                     $borrowerFinancialsView.update({
-                      showSubmitModal: true,
+                      activeModalKey: 'submitFinancials',
                       isEditMode: true,
                       currentBorrowerId: borrower.id,
                       editingFinancialId: financial.id,
@@ -546,7 +523,7 @@ const BorrowerDetail = () => {
         );
 
       case 'debtService':
-        return <DebtServiceTab />;
+        return <DebtServiceContainer />;
 
       case 'industry':
         return (
@@ -730,4 +707,4 @@ const BorrowerDetail = () => {
   );
 };
 
-export default BorrowerDetail;
+export default BorrowerDetailsContainer;

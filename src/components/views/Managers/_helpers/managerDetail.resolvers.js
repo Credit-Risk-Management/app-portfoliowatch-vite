@@ -9,7 +9,7 @@ import { $managerDetail } from '@src/signals';
 export const loadManagerDetailData = async (managerId) => {
   try {
     $managerDetail.update({ isLoading: true });
-    
+
     // Fetch manager-specific data
     const [managerResponse, loansResponse, borrowersResponse, commentsResponse, managersResponse] = await Promise.all([
       relationshipManagersApi.getById(managerId),

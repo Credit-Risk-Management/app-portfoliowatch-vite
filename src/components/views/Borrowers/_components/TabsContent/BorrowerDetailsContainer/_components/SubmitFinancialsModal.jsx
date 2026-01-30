@@ -6,10 +6,9 @@ import { $borrowerFinancialsView, $borrowerFinancialsForm } from '@src/signals';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import SelectInput from '@src/components/global/Inputs/SelectInput';
-import DocumentsTab from './DocumentsTab';
-import TriggersTab from './TriggersTab';
-import DebtServiceTab from './DebtServiceTab';
-import WatchScoreResultsModal from './WatchScoreResultsModal';
+import TriggersTab from '../../../TriggersTab';
+import DebtServiceContainer from '../../DebtServiceContainer';
+import WatchScoreResultsModal from '../../../WatchScoreResultsModal';
 import {
   handleClose as handleCloseHelper,
   setActiveTab as setActiveTabHelper,
@@ -20,10 +19,11 @@ import {
   handleOpenEditMode as handleOpenEditModeHelper,
 } from './submitFinancialsModal.handlers';
 import { $financialDocsUploader, $modalState } from './submitFinancialsModal.signals';
+import DocumentsContainer from '../../DocumentsContainer/DocumentsContainer';
 
 const SubmitFinancialsModal = () => {
   const { activeTab } = $borrowerFinancialsForm.value;
-  const { isEditMode, showSubmitModal, editingFinancialId } = $borrowerFinancialsView.value;
+  const { isEditMode, activeModalKey, editingFinancialId } = $borrowerFinancialsView.value;
   const {
     ocrApplied,
     isSubmitting,
@@ -36,7 +36,7 @@ const SubmitFinancialsModal = () => {
 
   // Load financial data when opening in edit mode
   useEffect(() => {
-    if (showSubmitModal && isEditMode && editingFinancialId) {
+    if (activeModalKey === 'submitFinancials' && isEditMode && editingFinancialId) {
       const loadData = async () => {
         try {
           const response = await borrowerFinancialsApi.getById(editingFinancialId);
@@ -51,7 +51,7 @@ const SubmitFinancialsModal = () => {
 
       loadData();
     }
-  }, [showSubmitModal, isEditMode, editingFinancialId]);
+  }, [activeModalKey, isEditMode, editingFinancialId]);
 
   // Fetch previous quarter financial data when Triggers tab is activated
   useEffectAsync(async () => {
@@ -88,7 +88,7 @@ const SubmitFinancialsModal = () => {
   return (
     <>
       <UniversalModal
-        show={$borrowerFinancialsView.value.showSubmitModal}
+        show={activeModalKey === 'submitFinancials'}
         onHide={() => handleCloseHelper($financialDocsUploader, $modalState, pdfUrl)}
         headerText={modalTitle}
         leftBtnText="Cancel"
@@ -166,7 +166,7 @@ const SubmitFinancialsModal = () => {
           <div className="px-32 border-top border-info-100 pt-8">
             {/* Documents Tab */}
             {activeTab === 'documents' && (
-              <DocumentsTab
+              <DocumentsContainer
                 pdfUrl={pdfUrl}
                 ocrApplied={ocrApplied}
                 handleFileUpload={() => handleFileUploadHelper($financialDocsUploader, $modalState, ocrApplied, pdfUrl)}
@@ -187,7 +187,7 @@ const SubmitFinancialsModal = () => {
             )}
 
             {/* Debt Service Tab */}
-            {activeTab === 'debtService' && <DebtServiceTab />}
+            {activeTab === 'debtService' && <DebtServiceContainer />}
           </div>
         </div>
       </UniversalModal>
