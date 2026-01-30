@@ -12,6 +12,8 @@ export const $modalState = Signal({
   error: null,
   refreshKey: 0,
   pdfUrl: null,
+  isLoading: false,
+  isLoadingInputData: false,
   previousFinancial: null,
   isLoadingPrevious: false,
   // Document management - track documents by type

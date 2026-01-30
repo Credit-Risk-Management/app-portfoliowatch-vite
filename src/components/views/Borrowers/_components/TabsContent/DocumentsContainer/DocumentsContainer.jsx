@@ -1,7 +1,7 @@
 import { Form, Row, Col, Alert, Button, Table } from 'react-bootstrap';
 import { useRef, useEffect, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMagic, faTrash, faPlus, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faMagic, faTrash, faPlus, faChevronLeft, faChevronRight, faSpinner } from '@fortawesome/free-solid-svg-icons';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -414,10 +414,16 @@ const DocumentsContainer = ({
           )}
         </Form.Group>
 
-        {ocrApplied && pdfUrl && (
+        {ocrApplied && pdfUrl && !$modalState.value.isLoadingInputData && (
           <Alert variant="success" className="mb-16">
             <FontAwesomeIcon icon={faMagic} className="me-8" />
             Financial data extracted from documents and populated below. Please review and adjust as needed.
+          </Alert>
+        )}
+        {$modalState.value.isLoadingInputData && (
+          <Alert variant="success" className="mb-16">
+            <FontAwesomeIcon icon={faSpinner} className="me-8" spin />
+            Loading financial data...
           </Alert>
         )}
 

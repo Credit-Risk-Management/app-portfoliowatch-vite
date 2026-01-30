@@ -1,8 +1,15 @@
 import { $borrowerFinancialsView, $borrowerFinancialsForm, $user } from '@src/signals';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
 import borrowerFinancialDocumentsApi from '@src/api/borrowerFinancialDocuments.api';
-import { successAlert } from '@src/components/global/Alert/_helpers/alert.events';
-import generateMockFinancialData from '../../../../_helpers/financials.helpers';
+import { dangerAlert, successAlert } from '@src/components/global/Alert/_helpers/alert.events';
+import postToSensibleApi, { initiateUploadToSensibleApi } from '@src/api/sensible.api';
+import { storage } from '@src/utils/firebase';
+import { extractIncomeStatementFromApiResponse, extractBalanceSheetFromApiResponse } from '../../../../_helpers/financials.helpers';
+/** Map form documentType to Sensible API documentType / configurationName */
+const SENSIBLE_DOCUMENT_TYPES = {
+  incomeStatement: 'income_statement',
+  balanceSheet: 'balance_sheet',
+};
 
 /**
  * Handles closing the submit financials modal and resetting all state
@@ -67,67 +74,121 @@ export const setActiveTab = (tab) => {
  * @param {boolean} ocrApplied - Whether OCR has already been applied
  * @param {string} pdfUrl - Current PDF URL
  */
-export const handleFileUpload = ($financialDocsUploader, $modalState, ocrApplied, pdfUrl) => {
+export const handleFileUpload = async ($financialDocsUploader, $modalState, ocrApplied, pdfUrl) => {
   // Get files from the signal
-  const files = $financialDocsUploader.value.financialDocs || [];
+  $modalState.update({ isLoading: true });
+  try {
+    const files = $financialDocsUploader.value.financialDocs || [];
 
-  if (!files.length) return;
+    if (!files.length) return;
 
-  const [file] = files;
-  const { documentType } = $borrowerFinancialsForm.value;
+    const [file] = files;
+    const { documentType } = $borrowerFinancialsForm.value;
 
-  // Create a document object with preview URL
-  const previewUrl = URL.createObjectURL(file);
+    // Create a document object with preview URL
+    const previewUrl = URL.createObjectURL(file);
 
-  const newDoc = {
-    id: `temp-${Date.now()}`,
-    file,
-    fileName: file.name,
-    fileSize: file.size,
-    mimeType: file.type,
-    previewUrl,
-    documentType,
-    uploadedAt: new Date(),
-  };
+    const newDoc = {
+      id: `temp-${Date.now()}`,
+      file,
+      fileName: file.name,
+      fileSize: file.size,
+      mimeType: file.type,
+      previewUrl,
+      documentType,
+      uploadedAt: new Date(),
+    };
 
-  // Add to documents by type
-  const { documentsByType } = $modalState.value;
-  const updatedDocs = {
-    ...documentsByType,
-    [documentType]: [...documentsByType[documentType], newDoc],
-  };
+    // Add to documents by type
+    const { documentsByType } = $modalState.value;
+    const updatedDocs = {
+      ...documentsByType,
+      [documentType]: [...documentsByType[documentType], newDoc],
+    };
+    const initiateUploadData = {
+      fileName: file.name,
+      contentType: file.type,
+      borrowerId: $borrowerFinancialsView.value.currentBorrowerId,
+      documentType,
+      uploadedBy: $user.value.email || $user.value.name || 'Unknown User',
+    };
+    const response = await initiateUploadToSensibleApi(initiateUploadData);
 
-  // Update the PDF URL to show the newly uploaded document
-  if (pdfUrl) {
-    URL.revokeObjectURL(pdfUrl);
-  }
+    if (pdfUrl) {
+      URL.revokeObjectURL(pdfUrl);
+    }
 
-  $modalState.update({
-    pdfUrl: newDoc.previewUrl,
-    documentsByType: updatedDocs,
-    currentDocumentIndex: {
-      ...$modalState.value.currentDocumentIndex,
-      [documentType]: updatedDocs[documentType].length - 1,
-    },
-  });
-
-  // Mock OCR: When files are uploaded, auto-populate the form with mock data
-  // Generate data specific to the document type and filename being uploaded
-  setTimeout(() => {
-    const mockData = generateMockFinancialData(documentType, file.name);
-
-    // Log everything we "extracted" from the PDF for debugging/POC visibility
-    // In a real implementation this would be the raw OCR/financial extraction payload
-
-    $borrowerFinancialsForm.update(mockData);
     $modalState.update({
-      ocrApplied: true,
-      refreshKey: $modalState.value.refreshKey + 1,
+      pdfUrl: newDoc.previewUrl,
+      documentsByType: updatedDocs,
+      currentDocumentIndex: {
+        ...$modalState.value.currentDocumentIndex,
+        [documentType]: updatedDocs[documentType].length - 1,
+      },
     });
-  }, 500);
+    $modalState.update({ isLoading: false });
+    // Firebase Storage requires a non-root path; build path from storageUrl or fallback
+    //
+    const storageRef = storage.ref(response.storagePath);
+    const uploadTask = await storageRef.put(file, {
+      contentType: file.type,
+    });
 
-  // Clear the uploader
-  $financialDocsUploader.update({ financialDocs: [] });
+    // Get the download URL
+    const downloadURL = await uploadTask.ref.getDownloadURL();
+    if (!downloadURL) {
+      dangerAlert('Failed to upload file to storage');
+    }
+
+    // Call Sensible API for income_statement or balance_sheet; extract and populate form for income_statement
+    const sensibleType = SENSIBLE_DOCUMENT_TYPES[documentType];
+    if (sensibleType && downloadURL) {
+      $modalState.update({ isLoadingInputData: true });
+      try {
+        const sensibleBody = {
+          url: downloadURL,
+          documentType: sensibleType,
+          configurationName: sensibleType,
+          environment: 'development',
+          documentName: file.name,
+        };
+        const sensibleResponse = await postToSensibleApi(sensibleBody);
+        const parsedDocument = sensibleResponse?.data?.parsed_document ?? sensibleResponse?.parsed_document ?? null;
+
+        if (documentType === 'incomeStatement' && parsedDocument) {
+          const extractedData = extractIncomeStatementFromApiResponse(parsedDocument);
+          if (extractedData) {
+            $borrowerFinancialsForm.update(extractedData);
+          }
+        }
+        if (documentType === 'balanceSheet' && parsedDocument) {
+          const extractedData = extractBalanceSheetFromApiResponse(parsedDocument);
+          if (extractedData) {
+            $borrowerFinancialsForm.update(extractedData);
+          }
+        }
+
+        $modalState.update({
+          isLoadingInputData: false,
+          ocrApplied: true,
+          refreshKey: $modalState.value.refreshKey + 1,
+        });
+
+        // Update the PDF URL to show the newly uploaded document
+      } catch (sensibleError) {
+        throw new Error(sensibleError?.message ?? 'Sensible extraction failed');
+      }
+    }
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    $modalState.update({
+      isLoading: false,
+      error: error?.message ?? 'Failed to upload file',
+    });
+  } finally {
+    $modalState.update({ isLoading: false });
+    $financialDocsUploader.update({ financialDocs: [] });
+  }
 };
 
 /**
@@ -165,6 +226,7 @@ export const handleRemoveDocument = ($modalState, documentId) => {
     // Don't revoke here as it's managed in the documentsByType
   }
 
+  $borrowerFinancialsForm.reset();
   $modalState.update({
     documentsByType: {
       ...documentsByType,
