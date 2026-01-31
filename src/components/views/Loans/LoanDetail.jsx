@@ -449,10 +449,10 @@ const LoanDetail = () => {
                       </thead>
                       <tbody>
                         {($loanDetailCollateralDateFilter.value
-                          ? mockCollateral.filter(
+                          ? $loanDetailCollateral.value.filter(
                             (entry) => (entry.asOfDate ?? '') === $loanDetailCollateralDateFilter.value,
                           )
-                          : mockCollateral
+                          : $loanDetailCollateral.value
                         ).map((entry) => {
                           const collateralItems = Array.isArray(entry.collateralItems) ? entry.collateralItems : [];
                           if (collateralItems.length === 0) {
