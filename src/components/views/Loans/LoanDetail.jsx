@@ -1,7 +1,7 @@
 /* eslint-disable react/no-danger */
 import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Row, Col, Button, Collapse, Spinner } from 'react-bootstrap';
+import { Container, Row, Col, Button, Collapse, Spinner, Dropdown } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faArrowRight, faMagic, faUser, faLandmark, faFileAlt, faSync } from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';
@@ -28,7 +28,9 @@ import {
   $loanDetailShowSecondaryContacts,
   $loanDetailFinancials,
   $loanDetailCollateral,
+  $loanDetailCollateralDateFilter,
   $industryReportGenerating,
+  loanCollateralDateOptions,
 } from './_helpers/loans.consts';
 import { fetchLoanDetail } from './_helpers/loans.resolvers';
 import {
@@ -50,6 +52,7 @@ const LoanDetail = () => {
     $loanDetailShowSecondaryContacts.value = false;
     $loanDetailFinancials.value = [];
     $loanDetailCollateral.value = [];
+    $loanDetailCollateralDateFilter.value = null;
   }, [loanId]);
 
   if ($loan.value?.isLoading) {
@@ -74,6 +77,9 @@ const LoanDetail = () => {
       </Container>
     );
   }
+
+  const selectedValue = $loanDetailCollateralDateFilter.value ?? '';
+  const selectedLabel = loanCollateralDateOptions.find((o) => o.value === selectedValue)?.label ?? loanCollateralDateOptions[0].label;
 
   return (
     <Loadable signal={$loan} template="fullscreen">
@@ -408,11 +414,33 @@ const LoanDetail = () => {
             <UniversalCard headerText="Collateral Values" className="mt-12 mt-md-16">
               {$loanDetailCollateral.value && $loanDetailCollateral.value.length > 0 ? (
                 <div>
+                  <div className="d-flex align-items-center gap-12 my-12 flex-wrap">
+                    <label htmlFor="collateral-date-filter" className="text-info-100 fw-500 font-size-16 mb-0">
+                      As of Date:
+                    </label>
+                    <Dropdown
+                      id="collateral-date-filter"
+                      label="As of Date"
+                      onSelect={(v) => {
+                        $loanDetailCollateralDateFilter.value = v === '' ? null : v;
+                      }}
+                    >
+                      <Dropdown.Toggle variant="outline-info-500" size="sm">
+                        {selectedLabel}
+                      </Dropdown.Toggle>
+                      <Dropdown.Menu>
+                        {loanCollateralDateOptions.map((opt) => (
+                          <Dropdown.Item key={opt.value || 'all'} eventKey={opt.value}>
+                            {opt.label}
+                          </Dropdown.Item>
+                        ))}
+                      </Dropdown.Menu>
+                    </Dropdown>
+                  </div>
                   <div className="table-responsive">
                     <table className="table table-hover" style={{ backgroundColor: 'transparent' }}>
                       <thead className="bg-info-700">
                         <tr>
-                          <th className="bg-info-700 text-info-50 fw-500">As of Date</th>
                           <th className="bg-info-700 text-info-50 fw-500">Item</th>
                           <th className="bg-info-700 text-info-50 fw-500 text-end">Value</th>
                           <th className="bg-info-700 text-info-50 fw-500 text-end">Previous Liens</th>
@@ -420,7 +448,12 @@ const LoanDetail = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {$loanDetailCollateral.value.map((entry) => {
+                        {($loanDetailCollateralDateFilter.value
+                          ? mockCollateral.filter(
+                            (entry) => (entry.asOfDate ?? '') === $loanDetailCollateralDateFilter.value,
+                          )
+                          : mockCollateral
+                        ).map((entry) => {
                           const collateralItems = Array.isArray(entry.collateralItems) ? entry.collateralItems : [];
                           if (collateralItems.length === 0) {
                             return (
@@ -433,14 +466,8 @@ const LoanDetail = () => {
                           return collateralItems.map((item, idx) => {
                             const previousLiens = item.previousLiens || 0;
                             const netValue = (item.value || 0) - previousLiens;
-                            const isFirstItem = idx === 0;
                             return (
                               <tr key={`${entry.id}-${idx}`}>
-                                {isFirstItem && (
-                                  <td rowSpan={collateralItems.length} className="text-info-50 align-middle">
-                                    {formatDate(entry.asOfDate)}
-                                  </td>
-                                )}
                                 <td className="text-info-50">{item.description || 'N/A'}</td>
                                 <td className="text-info-50 text-end">{formatCurrency(item.value || 0)}</td>
                                 <td className="text-info-50 text-end">{formatCurrency(previousLiens)}</td>
@@ -454,8 +481,14 @@ const LoanDetail = () => {
                   </div>
                   <div className="mt-16 pt-16 border-top">
                     {$loanDetailCollateral.value.length > 0 && (() => {
-                      const latestEntry = $loanDetailCollateral.value[0];
-                      const collateralItems = Array.isArray(latestEntry.collateralItems) ? latestEntry.collateralItems : [];
+                      const summaryEntry = $loanDetailCollateralDateFilter.value
+                        ? $loanDetailCollateral.value.find(
+                          (e) => (e.asOfDate ?? '') === $loanDetailCollateralDateFilter.value,
+                        )
+                        : $loanDetailCollateral.value[0];
+                      const collateralItems = summaryEntry && Array.isArray(summaryEntry.collateralItems)
+                        ? summaryEntry.collateralItems
+                        : [];
                       const totalNetValue = collateralItems.reduce((sum, item) => {
                         const previousLiens = item.previousLiens || 0;
                         const netValue = (item.value || 0) - previousLiens;
@@ -463,6 +496,7 @@ const LoanDetail = () => {
                       }, 0);
                       const principalBalance = $loan.value?.loan?.principalAmount || 0;
                       const collateralCoverage = principalBalance > 0 ? totalNetValue / principalBalance : 0;
+
                       return (
                         <>
                           <div className="d-flex justify-content-between align-items-center mb-12">
