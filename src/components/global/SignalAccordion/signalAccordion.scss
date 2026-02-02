@@ -1,0 +1,84 @@
+@import '@src/scss/_vars.scss';
+
+.signal-accordion {
+  background-color: $light-400;
+
+  &__header {
+    background-color: $info-800;
+    font-size: 1rem;
+    &:focus {
+      background-color: $info-900;
+    }
+  }
+
+
+  &__item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    border-bottom: 1px solid rgba($grey-200, 0.5);
+    background-color: $info-900;
+    color: $info-100;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+
+    &:hover {
+      background-color: $info-900;
+    }
+    &:focus,
+    &:focus-visible {
+      background-color: $info-900;
+      color: $info-100;
+      outline: none !important;
+      box-shadow: none !important;
+    }
+
+    &--open {
+      background-color: $info-900;
+      color: $info-100;
+
+      .signal-accordion__item-label,
+      .signal-accordion__item-icon {
+        color: $info-100;
+      }
+
+      .signal-accordion__item-value,
+      .signal-accordion__item-trend {
+        color: $success !important;
+      }
+    }
+  }
+
+
+  &__item-body {
+    background-color: $light-400;
+
+    .collapse:not(.show) {
+      display: none;
+    }
+  }
+
+  &__footer {
+    background-color: $info-800;
+    color: $white;
+    border-top: 1px solid rgba($info-500, 0.3);
+  }
+}
+
+// When SignalTable is embedded inside SignalAccordion: remove its border/radius
+// and override global td styling so data rows use light background and dark text.
+.signal-accordion {
+  .signal-accordion__item-body > div.bg-info-800 {
+    border: none !important;
+    border-radius: 0 !important;
+  }
+  .table thead td {
+    padding: 12px 16px !important;
+  }
+
+
+}

@@ -1,11 +1,13 @@
 /* eslint-disable react/no-danger */
 import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Row, Col, Button, Collapse, Spinner, Dropdown } from 'react-bootstrap';
+import { Container, Row, Col, Button, Collapse, Spinner } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faArrowRight, faMagic, faUser, faLandmark, faFileAlt, faSync } from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';
 import UniversalCard from '@src/components/global/UniversalCard';
+import SignalAccordion from '@src/components/global/SignalAccordion';
+import SignalTable from '@src/components/global/SignalTable';
 import { $loan, WATCH_SCORE_OPTIONS } from '@src/consts/consts';
 import { formatCurrency } from '@src/utils/formatCurrency';
 import Loadable from '@src/components/global/Loadable';
@@ -29,8 +31,8 @@ import {
   $loanDetailFinancials,
   $loanDetailCollateral,
   $loanDetailCollateralDateFilter,
+  $loanDetailCollateralAccordionExpanded,
   $industryReportGenerating,
-  loanCollateralDateOptions,
 } from './_helpers/loans.consts';
 import { fetchLoanDetail } from './_helpers/loans.resolvers';
 import {
@@ -53,6 +55,7 @@ const LoanDetail = () => {
     $loanDetailFinancials.value = [];
     $loanDetailCollateral.value = [];
     $loanDetailCollateralDateFilter.value = null;
+    $loanDetailCollateralAccordionExpanded.value = undefined;
   }, [loanId]);
 
   if ($loan.value?.isLoading) {
@@ -78,8 +81,71 @@ const LoanDetail = () => {
     );
   }
 
-  const selectedValue = $loanDetailCollateralDateFilter.value ?? '';
-  const selectedLabel = loanCollateralDateOptions.find((o) => o.value === selectedValue)?.label ?? loanCollateralDateOptions[0].label;
+  const collateralEntries = ($loanDetailCollateral.value || [])
+    .sort((a, b) => new Date(b.asOfDate || 0) - new Date(a.asOfDate || 0));
+  const collateralAccordionItems = collateralEntries.map((entry, idx) => {
+    const collateralItems = Array.isArray(entry.collateralItems) ? entry.collateralItems : [];
+    const totalNetValue = collateralItems.reduce((sum, item) => {
+      const previousLiens = item.previousLiens || 0;
+      return sum + ((item.value || 0) - previousLiens);
+    }, 0);
+    const prevEntry = collateralEntries[idx + 1];
+    const prevTotal = prevEntry
+      ? (Array.isArray(prevEntry.collateralItems) ? prevEntry.collateralItems : []).reduce(
+        (sum, item) => sum + ((item.value || 0) - (item.previousLiens || 0)),
+        0,
+      )
+      : 0;
+    const trendText =
+      prevTotal > 0 && prevEntry
+        ? `${totalNetValue >= prevTotal ? '↑' : '↓'} ${formatPercent(Math.abs((totalNetValue - prevTotal) / prevTotal) * 100)} vs ${formatDate(prevEntry.asOfDate)}`
+        : null;
+    const tableHeaders = [
+      { key: 'item', value: 'Item' },
+      { key: 'value', value: 'Value' },
+      { key: 'previousLiens', value: 'Previous Liens' },
+      { key: 'netValue', value: 'Net Value' },
+    ];
+    const tableRows = collateralItems.map((item) => {
+      const previousLiens = item.previousLiens || 0;
+      const netValue = (item.value || 0) - previousLiens;
+      return {
+        item: item.description || 'N/A',
+        value: formatCurrency(item.value || 0),
+        previousLiens: formatCurrency(previousLiens),
+        netValue: formatCurrency(netValue),
+      };
+    });
+    return {
+      id: String(entry.id ?? entry.asOfDate ?? idx),
+      label: formatDate(entry.asOfDate),
+      value: formatCurrency(totalNetValue),
+      trendText: trendText || undefined,
+      content: (
+        <>
+          <SignalTable
+            headers={tableHeaders}
+            rows={tableRows}
+            hasPagination={false}
+          />
+          <div className="d-flex justify-content-between align-items-center py-12 px-16 bg-info-800 border-top border-info-500 text-white fw-bold small">
+            <span>Total Net Value</span>
+            <span>{formatCurrency(totalNetValue)}</span>
+          </div>
+        </>
+      ),
+    };
+  });
+  const firstEntry = collateralEntries[0];
+  const firstItems = firstEntry && Array.isArray(firstEntry.collateralItems) ? firstEntry.collateralItems : [];
+  const footerNetValue = firstEntry
+    ? firstItems.reduce(
+      (sum, item) => sum + ((item.value || 0) - (item.previousLiens || 0)),
+      0,
+    )
+    : 0;
+  const principalBalance = $loan.value?.loan?.principalAmount || 0;
+  const footerCoverage = principalBalance > 0 ? footerNetValue / principalBalance : 0;
 
   return (
     <Loadable signal={$loan} template="fullscreen">
@@ -413,118 +479,28 @@ const LoanDetail = () => {
             </UniversalCard>
             <UniversalCard headerText="Collateral Values" className="mt-12 mt-md-16">
               {$loanDetailCollateral.value && $loanDetailCollateral.value.length > 0 ? (
-                <div>
-                  <div className="d-flex align-items-center gap-12 my-12 flex-wrap">
-                    <label htmlFor="collateral-date-filter" className="text-info-100 fw-500 font-size-16 mb-0">
-                      As of Date:
-                    </label>
-                    <Dropdown
-                      id="collateral-date-filter"
-                      label="As of Date"
-                      onSelect={(v) => {
-                        $loanDetailCollateralDateFilter.value = v === '' ? null : v;
-                      }}
+                <div className="mt-16">
+                  <SignalAccordion
+                    items={collateralAccordionItems}
+                    defaultExpandedId={collateralAccordionItems[0]?.id}
+                    $expandedId={$loanDetailCollateralAccordionExpanded}
+                    footer={{
+                      netValueLabel: 'Net Value',
+                      netValue: formatCurrency(footerNetValue),
+                      coverageLabel: 'Coverage Ratio',
+                      coverageValue: formatRatio(footerCoverage),
+                    }}
+                  />
+                  <div className="mt-16 pt-16 border-top d-flex justify-content-center">
+                    <Button
+                      variant="info"
+                      size="sm"
+                      disabled
+                      style={{ opacity: 0.7 }}
                     >
-                      <Dropdown.Toggle variant="outline-info-500" size="sm">
-                        {selectedLabel}
-                      </Dropdown.Toggle>
-                      <Dropdown.Menu>
-                        {loanCollateralDateOptions.map((opt) => (
-                          <Dropdown.Item key={opt.value || 'all'} eventKey={opt.value}>
-                            {opt.label}
-                          </Dropdown.Item>
-                        ))}
-                      </Dropdown.Menu>
-                    </Dropdown>
-                  </div>
-                  <div className="table-responsive">
-                    <table className="table table-hover" style={{ backgroundColor: 'transparent' }}>
-                      <thead className="bg-info-700">
-                        <tr>
-                          <th className="bg-info-700 text-info-50 fw-500">Item</th>
-                          <th className="bg-info-700 text-info-50 fw-500 text-end">Value</th>
-                          <th className="bg-info-700 text-info-50 fw-500 text-end">Previous Liens</th>
-                          <th className="bg-info-700 text-info-50 fw-500 text-end">Net Value</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {($loanDetailCollateralDateFilter.value
-                          ? $loanDetailCollateral.value.filter(
-                            (entry) => (entry.asOfDate ?? '') === $loanDetailCollateralDateFilter.value,
-                          )
-                          : $loanDetailCollateral.value
-                        ).map((entry) => {
-                          const collateralItems = Array.isArray(entry.collateralItems) ? entry.collateralItems : [];
-                          if (collateralItems.length === 0) {
-                            return (
-                              <tr key={entry.id}>
-                                <td className="text-info-50">{formatDate(entry.asOfDate)}</td>
-                                <td colSpan="4" className="text-info-50 text-center">No items</td>
-                              </tr>
-                            );
-                          }
-                          return collateralItems.map((item, idx) => {
-                            const previousLiens = item.previousLiens || 0;
-                            const netValue = (item.value || 0) - previousLiens;
-                            return (
-                              <tr key={`${entry.id}-${idx}`}>
-                                <td className="text-info-50">{item.description || 'N/A'}</td>
-                                <td className="text-info-50 text-end">{formatCurrency(item.value || 0)}</td>
-                                <td className="text-info-50 text-end">{formatCurrency(previousLiens)}</td>
-                                <td className="text-info-50 text-end fw-bold">{formatCurrency(netValue)}</td>
-                              </tr>
-                            );
-                          });
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="mt-16 pt-16 border-top">
-                    {$loanDetailCollateral.value.length > 0 && (() => {
-                      const summaryEntry = $loanDetailCollateralDateFilter.value
-                        ? $loanDetailCollateral.value.find(
-                          (e) => (e.asOfDate ?? '') === $loanDetailCollateralDateFilter.value,
-                        )
-                        : $loanDetailCollateral.value[0];
-                      const collateralItems = summaryEntry && Array.isArray(summaryEntry.collateralItems)
-                        ? summaryEntry.collateralItems
-                        : [];
-                      const totalNetValue = collateralItems.reduce((sum, item) => {
-                        const previousLiens = item.previousLiens || 0;
-                        const netValue = (item.value || 0) - previousLiens;
-                        return sum + netValue;
-                      }, 0);
-                      const principalBalance = $loan.value?.loan?.principalAmount || 0;
-                      const collateralCoverage = principalBalance > 0 ? totalNetValue / principalBalance : 0;
-
-                      return (
-                        <>
-                          <div className="d-flex justify-content-between align-items-center mb-12">
-                            <div className="text-info-100 fw-bold">Net Value:</div>
-                            <div className="text-success-500 fs-5 fw-bold">
-                              {formatCurrency(totalNetValue)}
-                            </div>
-                          </div>
-                          <div className="d-flex justify-content-between align-items-center">
-                            <div className="text-info-100 fw-bold">Collateral Coverage:</div>
-                            <div className="text-info-50 fs-5 fw-bold">
-                              {formatRatio(collateralCoverage)}
-                            </div>
-                          </div>
-                          <div className="mt-16 pt-16 border-top d-flex justify-content-center">
-                            <Button
-                              variant="info"
-                              size="sm"
-                              disabled
-                              style={{ opacity: 0.7 }}
-                            >
-                              <FontAwesomeIcon icon={faSync} className="me-8" />
-                              Update Collateral (Coming soon...)
-                            </Button>
-                          </div>
-                        </>
-                      );
-                    })()}
+                      <FontAwesomeIcon icon={faSync} className="me-8" />
+                      Update Collateral (Coming soon...)
+                    </Button>
                   </div>
                 </div>
               ) : (

@@ -1,5 +1,4 @@
 import { Signal } from '@fyclabs/tools-fyc-react/signals';
-import { signal } from '@preact/signals-react';
 import { WATCH_SCORE_OPTIONS } from '@src/consts/consts';
 import { formatDate } from './loans.helpers';
 
@@ -36,19 +35,20 @@ export const RISK_RATING_LABELS = {
   5: WATCH_SCORE_OPTIONS[5].label,
 };
 
+export const $loanDetailCollateral = Signal([]);
 export const loanCollateralDateOptions = $loanDetailCollateral.value.map((e) => ({ value: e.asOfDate ?? '', label: formatDate(e.asOfDate) }));
 
 // Signals for loan detail component state
 export const $financialsUploader = Signal({ financialFiles: [] });
-export const $borrowers = signal([]);
-export const $managers = signal([]);
-export const $loanDetailNewComment = signal('');
-export const $loanDetailNewCommentLoading = signal(false);
-export const $loanDetailShowSecondaryContacts = signal(false);
-export const $loanDetailFinancials = signal([]);
-export const $loanDetailCollateral = signal([]);
-export const $loanDetailCollateralDateFilter = signal(null);
-export const $industryReportGenerating = signal(false);
+export const $borrowers = Signal([]);
+export const $managers = Signal([]);
+export const $loanDetailNewComment = Signal('');
+export const $loanDetailNewCommentLoading = Signal(false);
+export const $loanDetailShowSecondaryContacts = Signal(false);
+export const $loanDetailFinancials = Signal([]);
+export const $loanDetailCollateralDateFilter = Signal(null);
+export const $loanDetailCollateralAccordionExpanded = Signal(undefined);
+export const $industryReportGenerating = Signal(false);
 
 export const $loanDetailView = Signal({
   showEditLoanModal: false,
