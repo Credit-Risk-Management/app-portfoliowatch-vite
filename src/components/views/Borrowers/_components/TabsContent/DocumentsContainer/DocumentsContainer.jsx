@@ -71,6 +71,8 @@ const DocumentsContainer = ({
     return undefined;
   }, [currentDoc]);
 
+
+
   // Reset PDF state when URL changes
   useEffect(() => {
     resolvers.resetPdfState();
@@ -88,7 +90,9 @@ const DocumentsContainer = ({
       $modalState.update({ pdfUrl: currentDoc.storageUrl });
       return null; // Will re-render with pdfUrl
     }
-
+    console.log("pdfBlobUrl",pdfBlobUrl,);
+    console.log("currentDoc?.storageUrl", currentDoc?.storageUrl);
+    console.log("pdfUrl", pdfUrl);
     if (!pdfUrl && !hasStorageUrl) {
       return (
         <div>

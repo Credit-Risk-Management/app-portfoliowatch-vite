@@ -119,14 +119,12 @@ export const handleFileUpload = async ($financialDocsUploader, $modalState, ocrA
     }
 
     $modalState.update({
-      pdfUrl: newDoc.previewUrl,
       documentsByType: updatedDocs,
       currentDocumentIndex: {
         ...$modalState.value.currentDocumentIndex,
         [documentType]: updatedDocs[documentType].length - 1,
       },
     });
-    $modalState.update({ isLoading: false });
     // Firebase Storage requires a non-root path; build path from storageUrl or fallback
     //
     const storageRef = storage.ref(response.storagePath);
@@ -139,6 +137,8 @@ export const handleFileUpload = async ($financialDocsUploader, $modalState, ocrA
     if (!downloadURL) {
       dangerAlert('Failed to upload file to storage');
     }
+
+    $modalState.update({ downloadSensibleUrl: response.storagePath, pdfUrl: newDoc.previewUrl, isLoading: false });
 
     // Call Sensible API for income_statement or balance_sheet; extract and populate form for income_statement
     const sensibleType = SENSIBLE_DOCUMENT_TYPES[documentType];
@@ -176,6 +176,11 @@ export const handleFileUpload = async ($financialDocsUploader, $modalState, ocrA
 
         // Update the PDF URL to show the newly uploaded document
       } catch (sensibleError) {
+        if ($modalState.value.downloadSensibleUrl) {
+          const deleteStorageRef = storage.ref($modalState.value.downloadSensibleUrl);
+          await deleteStorageRef.delete();
+          $modalState.update({ downloadSensibleUrl: null });
+        }
         throw new Error(sensibleError?.message ?? 'Sensible extraction failed');
       }
     }
@@ -196,7 +201,8 @@ export const handleFileUpload = async ($financialDocsUploader, $modalState, ocrA
  * @param {Object} $modalState - Signal for modal state
  * @param {string} documentId - The ID of the document to remove
  */
-export const handleRemoveDocument = ($modalState, documentId) => {
+export const handleRemoveDocument = async ($modalState, documentId) => {
+  $modalState.update({ isLoading: true });
   const { documentType } = $borrowerFinancialsForm.value;
   const { documentsByType, currentDocumentIndex } = $modalState.value;
 
@@ -225,7 +231,10 @@ export const handleRemoveDocument = ($modalState, documentId) => {
   if ($modalState.value.pdfUrl && $modalState.value.pdfUrl !== newPdfUrl) {
     // Don't revoke here as it's managed in the documentsByType
   }
-
+  if ($modalState.value.downloadSensibleUrl) {
+    const deleteStorageRef = storage.ref($modalState.value.downloadSensibleUrl);
+    await deleteStorageRef.delete();
+  }
   $borrowerFinancialsForm.reset();
   $modalState.update({
     documentsByType: {
@@ -237,6 +246,8 @@ export const handleRemoveDocument = ($modalState, documentId) => {
       [documentType]: newIndex,
     },
     pdfUrl: newPdfUrl,
+    downloadSensibleUrl: null,
+    isLoading: false,
   });
 };
 
@@ -410,7 +421,11 @@ export const handleSubmit = async ($modalState, onCloseCallback) => {
         showWatchScoreResults: true,
         updatedLoans,
       });
-
+      if ($modalState.value.downloadSensibleUrl) {
+        const deleteStorageRef = storage.ref($modalState.value.downloadSensibleUrl);
+        await deleteStorageRef.delete();
+        $modalState.update({ downloadSensibleUrl: null });
+      }
       const message = isEditMode
         ? 'Financial data updated successfully!'
         : 'Submitted new financials!';
@@ -450,7 +465,6 @@ export const handleSubmit = async ($modalState, onCloseCallback) => {
 const loadDocumentsFromBackend = async (financialId) => {
   try {
     const response = await borrowerFinancialDocumentsApi.getByBorrowerFinancial(financialId);
-
     // The response structure is { success: true, data: [...], count: ... }
     const documents = response?.success && response?.data ? response.data : [];
 
@@ -512,7 +526,6 @@ export const handleOpenEditMode = async (financial, $modalState) => {
 
   // Load documents from backend
   const documentsByType = await loadDocumentsFromBackend(financial.id);
-
   // Set the first document as the current one if available
   const firstDocType = Object.keys(documentsByType).find((type) => documentsByType[type].length > 0);
   const firstDoc = firstDocType ? documentsByType[firstDocType][0] : null;

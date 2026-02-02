@@ -12,6 +12,7 @@ export const $modalState = Signal({
   error: null,
   refreshKey: 0,
   pdfUrl: null,
+  downloadSensibleUrl: false,
   isLoading: false,
   isLoadingInputData: false,
   previousFinancial: null,
