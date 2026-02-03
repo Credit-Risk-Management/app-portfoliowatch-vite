@@ -11,6 +11,7 @@ import SignalTable from '@src/components/global/SignalTable';
 import { $loan, WATCH_SCORE_OPTIONS } from '@src/consts/consts';
 import { formatCurrency } from '@src/utils/formatCurrency';
 import Loadable from '@src/components/global/Loadable';
+import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import SubmitCollateralModal from './_components/SubmitCollateralModal';
 import { $loanCollateralView } from './_components/submitCollateralModal.signals';
 import AddCreditMemoModal from './_components/AddCreditMemoModal';
@@ -33,6 +34,7 @@ import {
   $loanDetailCollateralDateFilter,
   $loanDetailCollateralAccordionExpanded,
   $industryReportGenerating,
+  $loanDetailGuarantors,
 } from './_helpers/loans.consts';
 import { fetchLoanDetail } from './_helpers/loans.resolvers';
 import {
@@ -44,9 +46,9 @@ const LoanDetail = () => {
   const navigate = useNavigate();
 
   // Fetch loan detail on mount or when loanId changes
-  useEffect(() => {
-    fetchLoanDetail(loanId);
-  }, [loanId]);
+  useEffectAsync(async () => {
+    await fetchLoanDetail(loanId);
+  }, []);
 
   // Reset component state when the loan changes
   useEffect(() => {
@@ -54,6 +56,7 @@ const LoanDetail = () => {
     $loanDetailShowSecondaryContacts.value = false;
     $loanDetailFinancials.value = [];
     $loanDetailCollateral.value = [];
+    $loanDetailGuarantors.value = [];
     $loanDetailCollateralDateFilter.value = null;
     $loanDetailCollateralAccordionExpanded.value = undefined;
   }, [loanId]);
@@ -146,6 +149,28 @@ const LoanDetail = () => {
     : 0;
   const principalBalance = $loan.value?.loan?.principalAmount || 0;
   const footerCoverage = principalBalance > 0 ? footerNetValue / principalBalance : 0;
+
+  const guarantorsTableRows = $loanDetailGuarantors.value.map((guarantor) => ({
+    ...guarantor,
+    name: `${guarantor.name}`,
+    email: guarantor.email,
+    phone: guarantor.phone,
+    totalAssets: formatCurrency(guarantor.financials?.[0]?.totalAssets || 0),
+    totalLiabilities: formatCurrency(guarantor.financials?.[0]?.totalLiabilities || 0),
+    netWorth: formatCurrency(guarantor.financials?.[0]?.netWorth || 0),
+    liquidity: formatCurrency(guarantor.financials?.[0]?.liquidity || 0),
+    debtService: formatCurrency(($loan.value?.loan?.paymentAmount || 0) * 12 || 0),
+  }));
+  const guarantorsTableHeaders = [
+    { key: 'name', value: 'Name', sortKey: 'name' },
+    { key: 'email', value: 'Email', sortKey: 'email' },
+    { key: 'phone', value: 'Phone', sortKey: 'phone' },
+    { key: 'totalAssets', value: 'Total Assets', sortKey: 'totalAssets' },
+    { key: 'totalLiabilities', value: 'Total Liabilities', sortKey: 'totalLiabilities' },
+    { key: 'netWorth', value: 'Net Worth', sortKey: 'netWorth' },
+    { key: 'liquidity', value: 'Liquidity', sortKey: 'liquidity' },
+    { key: 'debtService', value: 'Total Debt Service', sortKey: 'debtService' },
+  ];
 
   return (
     <Loadable signal={$loan} template="fullscreen">
@@ -357,6 +382,16 @@ const LoanDetail = () => {
         </Row>
         <Row>
           <Col xs={12} md={12}>
+            <UniversalCard headerText="Guarantors" bodyContainer="container-fluid" className="mt-12 mt-md-16">
+              <Row className="mt-12 mb-12">
+                <SignalTable
+                  headers={guarantorsTableHeaders}
+                  rows={guarantorsTableRows}
+                  className="shadow"
+                  onRowClick={(guarantor) => navigate(`/guarantors/${guarantor.id}`)}
+                />
+              </Row>
+            </UniversalCard>
             <UniversalCard headerText="Covenants" bodyContainer="container-fluid" className="mt-12 mt-md-16">
               <Row>
                 <Col xs={12} md={6} className="mb-12 mb-md-0">

@@ -36,6 +36,7 @@ export const RISK_RATING_LABELS = {
 };
 
 export const $loanDetailCollateral = Signal([]);
+export const $loanDetailGuarantors = Signal([]);
 export const loanCollateralDateOptions = $loanDetailCollateral.value.map((e) => ({ value: e.asOfDate ?? '', label: formatDate(e.asOfDate) }));
 
 // Signals for loan detail component state

@@ -43,7 +43,7 @@ import {
 import { fetchBorrowerDetail, fetchBorrowerDocuments, fetchLoanWatchScoreBreakdowns } from './_helpers/borrowerDetail.resolvers';
 import { handleGenerateIndustryReport, handleGenerateAnnualReview } from './_helpers/borrowerDetail.events';
 import DeleteBorrowerDocumentModal from '../../DeleteBorrowerDocumentModal';
-import LoansContainer from '../LoansContainer/LoansContainer';
+import LoansContainer from '../BorrowerLoansTab/BorrowerLoansTab';
 import TriggersTab from '../../TriggersTab';
 import { $modalState } from './_components/submitFinancialsModal.signals';
 
