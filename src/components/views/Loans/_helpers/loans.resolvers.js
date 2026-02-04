@@ -93,7 +93,6 @@ export const fetchLoanDetail = async (loanId) => {
     // Update collateral history list
     const collateral = collateralResponse?.data || collateralResponse || [];
     $loanDetailCollateral.value = Array.isArray(collateral) ? collateral : [];
-    console.log('collateral', collateral);
   } catch (error) {
     console.error('Failed to fetch loan detail:', error);
     $loan.update({ loan: null, isLoading: false });
