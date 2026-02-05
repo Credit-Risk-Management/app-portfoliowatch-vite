@@ -26,7 +26,8 @@ export const uploadToFirebase = async (file, signedUrl) => {
 
     return true;
   } catch (error) {
-    throw error;
+    dangerAlert(error.message || 'Failed to upload file');
+    return false;
   }
 };
 

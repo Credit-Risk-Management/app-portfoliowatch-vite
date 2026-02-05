@@ -22,7 +22,7 @@ const FinancialSpreadsheetModal = ({ show, onHide, borrowerId }) => {
 
   const fetchFinancialData = async () => {
     if (!borrowerId) return;
-    
+
     try {
       setIsLoading(true);
       const response = await borrowerFinancialsApi.getByBorrowerId(borrowerId, {
@@ -63,7 +63,7 @@ const FinancialSpreadsheetModal = ({ show, onHide, borrowerId }) => {
   // Prepare spreadsheet data - columns are periods, rows are metrics
   const spreadsheetData = useMemo(() => {
     const financials = $borrowerFinancials.value?.list || [];
-    
+
     // Define the financial metrics to display
     const metrics = [
       { key: 'grossRevenue', label: 'Gross Revenue', format: 'currency' },
@@ -97,16 +97,16 @@ const FinancialSpreadsheetModal = ({ show, onHide, borrowerId }) => {
   const handleGeneratePdf = async () => {
     try {
       setIsGeneratingPdf(true);
-      
+
       // Use axios directly for blob response (bypass apiClient interceptor)
       const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3333';
-      
+
       const user = auth.currentUser;
       let token = '';
       if (user) {
         token = await user.getIdToken();
       }
-      
+
       const response = await axios.get(`${API_BASE_URL}/borrowers/${borrowerId}/financials/spreadsheet/pdf`, {
         responseType: 'blob',
         headers: {
@@ -125,7 +125,7 @@ const FinancialSpreadsheetModal = ({ show, onHide, borrowerId }) => {
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
-        
+
         successAlert('PDF generated successfully!');
       } else {
         throw new Error('Invalid response from server');
@@ -196,7 +196,7 @@ const FinancialSpreadsheetModal = ({ show, onHide, borrowerId }) => {
                       {spreadsheetData.periods.map((period) => {
                         const value = period.data[metric.key];
                         let displayValue = '-';
-                        
+
                         if (value !== null && value !== undefined && value !== '') {
                           if (metric.format === 'currency') {
                             displayValue = formatCurrency(value);
@@ -206,7 +206,7 @@ const FinancialSpreadsheetModal = ({ show, onHide, borrowerId }) => {
                             displayValue = value.toString();
                           }
                         }
-                        
+
                         return (
                           <td key={`${period.id}-${metric.key}`} style={{ textAlign: 'right' }}>
                             {displayValue}
@@ -226,4 +226,3 @@ const FinancialSpreadsheetModal = ({ show, onHide, borrowerId }) => {
 };
 
 export default FinancialSpreadsheetModal;
-

@@ -115,8 +115,8 @@ export const handleGenerateAnnualReview = async () => {
       try {
         const wordBlob = base64ToBlob(wordData.buffer, 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
         // Ensure filename has .docx extension
-        const filename = wordData.filename?.endsWith('.docx') 
-          ? wordData.filename 
+        const filename = wordData.filename?.endsWith('.docx')
+          ? wordData.filename
           : wordData.filename?.replace(/\.pdf$/, '.docx') || 'annual-review.docx';
         downloadBlob(wordBlob, filename);
         successAlert('Annual review and Word document generated successfully!');
