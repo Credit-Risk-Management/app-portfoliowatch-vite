@@ -133,7 +133,7 @@ const LoansContainer = () => {
                   <Button
                     variant="outline-primary-100"
                     size="sm"
-                    onClick={handleViewDetails}
+                    onClick={() => handleViewDetails(loan.id)}
                     className="w-100"
                   >
                     View Loan Details
