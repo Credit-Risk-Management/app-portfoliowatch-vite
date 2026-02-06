@@ -8,6 +8,7 @@ const FileUploader = ({
   signal = $form,
   hideNoFiles,
   onUpload,
+  id = 'file-input',
 }) => (
   <Container
     fluid
@@ -18,7 +19,7 @@ const FileUploader = ({
     <Row className="p-0 m-0">
       <input
         type="file"
-        id="file-input"
+        id={id}
         className="d-none"
         onChange={e => handleFileSelection(e, signal, name, onUpload)}
         multiple
@@ -31,7 +32,7 @@ const FileUploader = ({
             ${signal.value?.[name]?.length ? 'mb-12 mb-md-16' : ''}
             ${hideNoFiles ? '' : 'me-48 me-md-64'}
           `}
-          onClick={handleBrowse}
+          onClick={() => handleBrowse(id)}
         >
           Choose File
         </Button>

@@ -108,7 +108,7 @@ export const handleFileUpload = async ($financialDocsUploader, $modalState, ocrA
     const initiateUploadData = {
       fileName: file.name,
       contentType: file.type,
-      borrowerId: $borrowerFinancialsView.value.currentBorrowerId,
+      id: $borrowerFinancialsView.value.currentBorrowerId,
       documentType,
       uploadedBy: $user.value.email || $user.value.name || 'Unknown User',
     };
@@ -329,7 +329,6 @@ export const handleSubmit = async ($modalState, onCloseCallback) => {
       grossRevenue: toNumberOrNull($borrowerFinancialsForm.value.grossRevenue),
       netIncome: toNumberOrNull($borrowerFinancialsForm.value.netIncome),
       ebitda: toNumberOrNull($borrowerFinancialsForm.value.ebitda),
-      rentalExpenses: toNumberOrNull($borrowerFinancialsForm.value.rentalExpenses),
       profitMargin: toNumberOrNull($borrowerFinancialsForm.value.profitMargin),
       // Balance Sheet
       totalCurrentAssets: toNumberOrNull($borrowerFinancialsForm.value.totalCurrentAssets),
@@ -540,7 +539,6 @@ export const handleOpenEditMode = async (financial, $modalState) => {
     grossRevenue: financial.grossRevenue?.toString() || '',
     netIncome: financial.netIncome?.toString() || '',
     ebitda: financial.ebitda?.toString() || '',
-    rentalExpenses: financial.rentalExpenses?.toString() || '',
     profitMargin: financial.profitMargin?.toString() || '',
     // Balance Sheet fields
     totalCurrentAssets: financial.totalCurrentAssets?.toString() || '',
