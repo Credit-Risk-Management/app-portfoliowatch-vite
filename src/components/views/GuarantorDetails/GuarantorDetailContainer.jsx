@@ -70,12 +70,12 @@ export function GuarantorDetailContainer() {
             type="button"
             onClick={() => {
               $guarantorDetailView.reset();
-              navigate('/guarantors');
+              navigate(-1);
             }}
             className="btn-sm border-dark text-dark-800 bg-grey-50 mb-12 mb-md-16"
           >
             <FontAwesomeIcon icon={faArrowLeft} className="me-8" />
-            Back to Guarantors
+            Back
           </Button>
 
         </div>
