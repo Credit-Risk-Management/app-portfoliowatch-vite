@@ -3,13 +3,13 @@ const MOCK_DATA_BY_FILENAME = {
   // Q1 Data - March 31, 2025
   Q1_Balance_Sheet: {
     asOfDate: '2025-03-31',
-    totalCurrentAssets: '2143691.98',
-    totalCurrentLiabilities: '543841.32',
+    totalCurrentAssets: '2143691.98', // from sensible total_assets
+    totalCurrentLiabilities: '543841.32', // from sensible total_liabilities
     cash: '243990.34',
     cashEquivalents: '1500.36',
-    equity: '1545862.15',
-    accountsReceivable: '1351729.17',
-    accountsPayable: '88093.80',
+    equity: '1545862.15', // from sensible equity
+    accountsReceivable: '1351729.17', // from sensible accounts_receivable
+    accountsPayable: '88093.80', // from sensible accounts_payable
     inventory: '0.00',
   },
   Q1_Income_Statement: {
@@ -171,5 +171,166 @@ const generateMockFinancialData = (documentType = 'all', filename = null) => {
   return baseData;
 };
 
-export { MOCK_DATA_BY_FILENAME, getMockDataKeyFromFilename };
+/**
+ * Parses a numeric string from the API (strips $ and commas).
+ * @param {string} str - Value from API (e.g. '1,122,359.06' or '$242,521.63')
+ * @returns {number} - Parsed number, or NaN if invalid
+ */
+const parseApiNumber = (str) => {
+  if (str == null || str === '') return NaN;
+  const cleaned = String(str).replace(/[$,\s]/g, '');
+  return Number(cleaned);
+};
+
+/**
+ * Derives asOfDate (YYYY-MM-DD) from report_period string (e.g. 'July-September, 2025').
+ * Uses quarter-end date when month range is detected.
+ * @param {string} reportPeriod - e.g. 'July-September, 2025'
+ * @returns {string|null} - e.g. '2025-09-30' or null
+ */
+const asOfDateFromReportPeriod = (reportPeriod) => {
+  if (!reportPeriod || typeof reportPeriod !== 'string') return null;
+  const yearMatch = reportPeriod.match(/\b(20\d{2})\b/);
+  const year = yearMatch ? yearMatch[1] : new Date().getFullYear().toString();
+  const s = reportPeriod.toLowerCase();
+  if (s.includes('march') || s.includes('january') || s.includes('february')) return `${year}-03-31`;
+  if (s.includes('june') || s.includes('april') || s.includes('may')) return `${year}-06-30`;
+  if (s.includes('september') || s.includes('july') || s.includes('august')) return `${year}-09-30`;
+  if (s.includes('december') || s.includes('october') || s.includes('november')) return `${year}-12-31`;
+  return null;
+};
+
+/**
+ * Extracts rental-related expenses from expense_categories if present.
+ * @param {object} expenseCategories - parsed_document.expense_categories
+ * @returns {number} - Sum of amounts for Rent/Rental categories, or 0
+ */
+const extractRentalExpensesFromApi = (expenseCategories) => {
+  if (!expenseCategories?.columns) return 0;
+  const nameCol = expenseCategories.columns.find((c) => c.id === 'category_name');
+  const amountCol = expenseCategories.columns.find((c) => c.id === 'category_amount');
+  if (!nameCol?.values || !amountCol?.values) return 0;
+  let sum = 0;
+  for (let i = 0; i < nameCol.values.length; i++) {
+    const name = (nameCol.values[i]?.value || '').toLowerCase();
+    if (name.includes('rent') && !name.includes('current')) {
+      sum += parseApiNumber(amountCol.values[i]?.value) || 0;
+    }
+  }
+  return sum;
+};
+
+/**
+ * Extracts income statement fields from API parsed_document into the shape used by
+ * borrower financials (grossRevenue, netIncome, ebitda, rentalExpenses, profitMargin, asOfDate).
+ * Uses total_income/gross_profit for grossRevenue, net_income for netIncome,
+ * net_operating_income as proxy for ebitda, and derives profitMargin and optional rentalExpenses.
+ * @param {object} parsedDocument - API response parsed_document (e.g. from income statement OCR)
+ * @returns {object} - { asOfDate?, grossRevenue, netIncome, ebitda?, rentalExpenses?, profitMargin }
+ */
+const extractIncomeStatementFromApiResponse = (parsedDocument) => {
+  if (!parsedDocument) return null;
+
+  const getVal = (obj) => (obj && typeof obj.value !== 'undefined' ? obj.value : null);
+  const grossRevenueStr = getVal(parsedDocument.total_income) ?? getVal(parsedDocument.gross_profit);
+  const netIncomeStr = getVal(parsedDocument.net_income);
+  const netOperatingIncomeStr = getVal(parsedDocument.net_operating_income);
+  const reportPeriod = getVal(parsedDocument.report_period);
+
+  const grossRevenue = parseApiNumber(grossRevenueStr);
+  const netIncome = parseApiNumber(netIncomeStr);
+  const ebitdaNum = parseApiNumber(netOperatingIncomeStr);
+
+  if (Number.isNaN(grossRevenue) && Number.isNaN(netIncome)) return null;
+
+  const result = {
+    grossRevenue: Number.isNaN(grossRevenue) ? '' : grossRevenue.toString(),
+    netIncome: Number.isNaN(netIncome) ? '' : netIncome.toString(),
+    profitMargin:
+      !Number.isNaN(grossRevenue) && grossRevenue !== 0 && !Number.isNaN(netIncome)
+        ? ((netIncome / grossRevenue) * 100).toFixed(2)
+        : '',
+  };
+
+  const asOf = asOfDateFromReportPeriod(reportPeriod);
+  if (asOf) result.asOfDate = asOf;
+
+  if (!Number.isNaN(ebitdaNum)) result.ebitda = ebitdaNum.toString();
+
+  const rentalExpenses = extractRentalExpensesFromApi(parsedDocument.expense_categories);
+  if (rentalExpenses > 0) result.rentalExpenses = Math.floor(rentalExpenses).toString();
+
+  return result;
+};
+
+/**
+ * Derives asOfDate (YYYY-MM-DD) from report_date string (e.g. 'September 30, 2025').
+ * @param {string} reportDate - e.g. 'September 30, 2025'
+ * @returns {string|null} - e.g. '2025-09-30' or null
+ */
+const asOfDateFromReportDate = (reportDate) => {
+  if (!reportDate || typeof reportDate !== 'string') return null;
+  const parsed = new Date(reportDate.trim());
+  if (Number.isNaN(parsed.getTime())) return null;
+  const y = parsed.getFullYear();
+  const m = String(parsed.getMonth() + 1).padStart(2, '0');
+  const d = String(parsed.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+};
+
+/**
+ * Sums numeric values from a column in an API table (columns array with id and values).
+ * @param {object} table - e.g. parsed_document.bank_accounts
+ * @param {string} amountColumnId - column id for amounts (default 'amount')
+ * @returns {number} - Sum of parsed values, or 0
+ */
+const sumTableAmountColumn = (table, amountColumnId = 'amount') => {
+  if (!table?.columns) return 0;
+  const col = table.columns.find((c) => c.id === amountColumnId);
+  if (!col?.values) return 0;
+  return col.values.reduce((sum, cell) => sum + (parseApiNumber(cell?.value) || 0), 0);
+};
+
+/**
+ * Extracts balance sheet fields from API parsed_document into the shape used by
+ * borrower financials (totalCurrentAssets, totalCurrentLiabilities, cash, cashEquivalents,
+ * equity, accountsReceivable, accountsPayable, inventory, asOfDate).
+ * @param {object} parsedDocument - API response parsed_document (e.g. from balance sheet OCR)
+ * @returns {object} - { asOfDate?, totalCurrentAssets, totalCurrentLiabilities, cash?, cashEquivalents?, equity, accountsReceivable?, accountsPayable?, inventory? }
+ */
+const extractBalanceSheetFromApiResponse = (parsedDocument) => {
+  if (!parsedDocument) return null;
+
+  const getVal = (obj) => (obj && typeof obj.value !== 'undefined' ? obj.value : null);
+  const totalCurrentAssets = parseApiNumber(getVal(parsedDocument.total_current_assets));
+  const totalCurrentLiabilities = parseApiNumber(getVal(parsedDocument.total_current_liabilities));
+  const equity = parseApiNumber(getVal(parsedDocument.total_equity));
+  const reportDate = getVal(parsedDocument.report_date);
+
+  if (Number.isNaN(totalCurrentAssets) && Number.isNaN(totalCurrentLiabilities) && Number.isNaN(equity)) {
+    return null;
+  }
+
+  const cash = sumTableAmountColumn(parsedDocument.bank_accounts);
+  const accountsReceivable = sumTableAmountColumn(parsedDocument.accounts_receivable);
+  const accountsPayable = sumTableAmountColumn(parsedDocument.accounts_payable_items);
+
+  const result = {
+    totalCurrentAssets: Number.isNaN(totalCurrentAssets) ? '' : totalCurrentAssets.toString(),
+    totalCurrentLiabilities: Number.isNaN(totalCurrentLiabilities) ? '' : totalCurrentLiabilities.toString(),
+    equity: Number.isNaN(equity) ? '' : equity.toString(),
+    cash: cash > 0 ? Math.floor(cash).toString() : '',
+    cashEquivalents: '', // API has no separate cash equivalents; optional 0 or leave empty
+    accountsReceivable: accountsReceivable > 0 ? Math.floor(accountsReceivable).toString() : '',
+    accountsPayable: accountsPayable > 0 ? Math.floor(accountsPayable).toString() : '',
+    inventory: '0', // Not in balance sheet API; default 0
+  };
+
+  const asOf = asOfDateFromReportDate(reportDate);
+  if (asOf) result.asOfDate = asOf;
+
+  return result;
+};
+
+export { MOCK_DATA_BY_FILENAME, getMockDataKeyFromFilename, extractIncomeStatementFromApiResponse, extractBalanceSheetFromApiResponse };
 export default generateMockFinancialData;

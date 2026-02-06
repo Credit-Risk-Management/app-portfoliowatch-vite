@@ -7,7 +7,8 @@ import loansApi from '@src/api/loans.api';
 import commentsApi from '@src/api/comments.api';
 import documentsApi from '@src/api/documents.api';
 import loanCollateralValueApi from '@src/api/loanCollateralValue.api';
-import { $loanDetailFinancials, $loanDetailCollateral } from './loans.consts';
+import guarantorsApi from '@src/api/guarantors.api';
+import { $loanDetailFinancials, $loanDetailCollateral, $loanDetailGuarantors } from './loans.consts';
 
 export const loadReferenceData = async () => {
   try {
@@ -72,6 +73,7 @@ export const fetchLoanDetail = async (loanId) => {
       loanCollateralValueApi.getHistoryByLoanId(loanId).catch(() => ({ data: [] })), // Fail silently if no collateral
     ]);
 
+    const guarantorsResponse = await guarantorsApi.getByLoanId(loanId);
     // The API client interceptor returns response.data, so loanResponse is { success: true, data: loan }
     // Extract the loan object from the response (handle both wrapped and unwrapped responses)
     const loanData = loanResponse?.data || loanResponse;
@@ -93,6 +95,10 @@ export const fetchLoanDetail = async (loanId) => {
     // Update collateral history list
     const collateral = collateralResponse?.data || collateralResponse || [];
     $loanDetailCollateral.value = Array.isArray(collateral) ? collateral : [];
+
+    // Update guarantors list
+    const guarantors = guarantorsResponse?.data || guarantorsResponse || [];
+    $loanDetailGuarantors.value = Array.isArray(guarantors) ? guarantors : [];
   } catch (error) {
     console.error('Failed to fetch loan detail:', error);
     $loan.update({ loan: null, isLoading: false });

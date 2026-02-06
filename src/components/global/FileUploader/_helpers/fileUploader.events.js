@@ -1,5 +1,5 @@
-export const handleBrowse = () => {
-  const fileInput = document.getElementById('file-input');
+export const handleBrowse = (id) => {
+  const fileInput = document.getElementById(id);
   fileInput.click();
 };
 

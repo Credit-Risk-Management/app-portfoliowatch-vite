@@ -9,7 +9,7 @@ import relationshipManagersApi from '@src/api/relationshipManagers.api';
 import loansApi from '@src/api/loans.api';
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import { $borrowerDocumentsView } from './borrowerDetail.consts';
-import { $loanWatchScoreBreakdowns } from '../../LoansContainer/_helpers/loanCard.consts';
+import { $loanWatchScoreBreakdowns } from '../../BorrowerLoansTab/_helpers/loanCard.consts';
 
 export const fetchBorrowerDetail = async (borrowerId) => {
   if (!borrowerId) return;
