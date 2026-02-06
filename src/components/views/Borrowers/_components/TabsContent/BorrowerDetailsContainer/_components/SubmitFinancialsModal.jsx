@@ -1,3 +1,4 @@
+/* eslint-disable no-return-await */
 import { useEffect } from 'react';
 import { Alert, ButtonGroup, Button, Row, Col, Form } from 'react-bootstrap';
 import UniversalModal from '@src/components/global/UniversalModal';
@@ -6,6 +7,7 @@ import { $borrowerFinancialsView, $borrowerFinancialsForm } from '@src/signals';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import SelectInput from '@src/components/global/Inputs/SelectInput';
+import Loadable from '@src/components/global/Loadable';
 import TriggersTab from '../../../TriggersTab';
 import DebtServiceContainer from '../../DebtServiceContainer';
 import WatchScoreResultsModal from '../../../WatchScoreResultsModal';
@@ -98,7 +100,7 @@ const SubmitFinancialsModal = () => {
         size="fullscreen"
         closeButton
       >
-        <div className="pt-16">
+        <Loadable signal={$modalState} template="fullscreen" className="pt-16">
           {error && (
             <Alert variant="danger" dismissible onClose={() => $modalState.update({ error: null })}>
               {error}
@@ -169,7 +171,7 @@ const SubmitFinancialsModal = () => {
               <DocumentsContainer
                 pdfUrl={pdfUrl}
                 ocrApplied={ocrApplied}
-                handleFileUpload={() => handleFileUploadHelper($financialDocsUploader, $modalState, ocrApplied, pdfUrl)}
+                handleFileUpload={async () => await handleFileUploadHelper($financialDocsUploader, $modalState, ocrApplied, pdfUrl)}
                 refreshKey={refreshKey}
                 $financialDocsUploader={$financialDocsUploader}
                 $modalState={$modalState}
@@ -189,7 +191,7 @@ const SubmitFinancialsModal = () => {
             {/* Debt Service Tab */}
             {activeTab === 'debtService' && <DebtServiceContainer />}
           </div>
-        </div>
+        </Loadable>
       </UniversalModal>
 
       {/* Watch Score Results Modal */}

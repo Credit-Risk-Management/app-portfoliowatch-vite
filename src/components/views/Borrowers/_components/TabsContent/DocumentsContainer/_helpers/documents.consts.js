@@ -8,4 +8,7 @@ export const $documentsContainerView = Signal({
   pdfPageNumber: 1,
   pdfLoadError: false,
   pdfBlobUrl: null,
+  downloadURL: null,
 });
+
+export default $documentsContainerView;
