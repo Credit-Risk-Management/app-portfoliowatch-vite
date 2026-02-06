@@ -41,7 +41,7 @@ export const handleFileUpload = async (ocrApplied, pdfUrl) => {
     const initiateUploadData = {
       fileName: file.name,
       contentType: file.type,
-      borrowerId: $borrowerFinancialsView.value.currentBorrowerId,
+      id: $borrowerFinancialsView.value.currentBorrowerId,
       documentType,
       uploadedBy: $user.value?.email || $user.value?.name || 'Unknown User',
     };

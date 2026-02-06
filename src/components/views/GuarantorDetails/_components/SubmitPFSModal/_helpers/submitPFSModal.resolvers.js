@@ -43,11 +43,12 @@ export const handleFileUpload = async ($financialDocsUploader, $modalState, ocrA
     const initiateUploadData = {
       fileName: file.name,
       contentType: file.type,
-      guarantorId: $submitPFSModalView.value.guarantorId,
+      id: $submitPFSModalView.value.guarantorId,
       documentType,
       uploadedBy: $user.value?.email || $user.value?.name || 'Unknown User',
     };
     const response = await initiateUploadToSensibleApi(initiateUploadData);
+    console.log('response', response);
 
     if (pdfUrl) {
       URL.revokeObjectURL(pdfUrl);
@@ -69,6 +70,7 @@ export const handleFileUpload = async ($financialDocsUploader, $modalState, ocrA
 
     // Get the download URL
     const downloadURL = await uploadTask.ref.getDownloadURL();
+    console.log('downloadURL', downloadURL);
     if (!downloadURL) {
       dangerAlert('Failed to upload file to storage');
     }
@@ -159,7 +161,7 @@ export const handleRemoveDocument = async (documentId) => {
       },
       pdfUrl: newPdfUrl,
       downloadSensibleUrl: null,
-      isLoading: false,
+
     });
   } catch (error) {
     console.error('Error removing document:', error);
@@ -275,7 +277,7 @@ export const handleOpenEditMode = async (financial) => {
 };
 
 export const handleSubmit = async (onCloseCallback) => {
-  $submitPFSModalView.update({ isSubmitting: true, error: null });
+  $submitPFSModalView.update({ isSubmitting: true });
   try {
     const { guarantorId } = $submitPFSModalView.value;
     const {
@@ -346,13 +348,6 @@ export const handleSubmit = async (onCloseCallback) => {
         }
       }
 
-      await fetchGuarantorDetail(guarantorId);
-      onCloseCallback();
-
-      const updatedLoans = data?.updatedLoans || [];
-      if (updatedLoans?.length) {
-        $submitPFSModalView.update({ showWatchScoreResults: true, updatedLoans });
-      }
       if (downloadSensibleUrl) {
         try {
           const deleteStorageRef = storage.ref(downloadSensibleUrl);
@@ -360,6 +355,14 @@ export const handleSubmit = async (onCloseCallback) => {
         } finally {
           $submitPFSModalDetails.update({ downloadSensibleUrl: null });
         }
+      }
+
+      await fetchGuarantorDetail(guarantorId);
+      onCloseCallback();
+
+      const updatedLoans = data?.updatedLoans || [];
+      if (updatedLoans?.length) {
+        $submitPFSModalView.update({ showWatchScoreResults: true, updatedLoans });
       }
       successAlert($submitPFSModalView.value.isEditMode ? 'PFS updated successfully!' : 'PFS submitted successfully!', 'toast');
     } else {
