@@ -48,7 +48,6 @@ export const handleFileUpload = async ($financialDocsUploader, $modalState, ocrA
       uploadedBy: $user.value?.email || $user.value?.name || 'Unknown User',
     };
     const response = await initiateUploadToSensibleApi(initiateUploadData);
-    console.log('response', response);
 
     if (pdfUrl) {
       URL.revokeObjectURL(pdfUrl);
@@ -70,7 +69,6 @@ export const handleFileUpload = async ($financialDocsUploader, $modalState, ocrA
 
     // Get the download URL
     const downloadURL = await uploadTask.ref.getDownloadURL();
-    console.log('downloadURL', downloadURL);
     if (!downloadURL) {
       dangerAlert('Failed to upload file to storage');
     }

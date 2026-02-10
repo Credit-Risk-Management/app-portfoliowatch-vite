@@ -26,13 +26,13 @@ export const guarantorsApiBase = {
   getByBorrowerId: async (borrowerId) => apiClient.get(`/guarantors/borrower/${borrowerId}`),
 
   // Create PFS (personal financial statement) for guarantor
-  createFinancial: async (guarantorId, data) => apiClient.post(`/guarantors-financials/${guarantorId}/financials`, data),
+  createFinancial: async (guarantorId, data) => apiClient.post(`/guarantors-financials//guarantor/${guarantorId}`, data),
 
   // Update PFS for guarantor
   updateFinancial: async (guarantorFinancialId, data) => apiClient.put(`/guarantors-financials/${guarantorFinancialId}`, data),
 
   // Get single guarantor financial by ID (for edit mode)
-  getFinancialById: async (guarantorFinancialId) => apiClient.get(`/guarantors-financials/${guarantorFinancialId}`),
+  getFinancialById: async (guarantorFinancialId) => apiClient.get(`/guarantors-financials/financial/${guarantorFinancialId}`),
 
 };
 
