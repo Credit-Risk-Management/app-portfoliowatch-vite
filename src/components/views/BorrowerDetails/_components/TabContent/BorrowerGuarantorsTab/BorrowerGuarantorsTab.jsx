@@ -32,7 +32,7 @@ export function BorrowerGuarantorsTab() {
   return (
     <Row className="g-4">
       {borrower?.guarantors?.map((guarantor) => {
-        const financials = guarantor.financials?.[0] || {};
+        const financials = guarantor.financials?.sort((a, b) => new Date(b.asOfDate) - new Date(a.asOfDate))[0] || {};
         const annualDebtService =
           guarantor.loans.reduce((acc, loan) => acc + Number(loan.paymentAmount || 0), 0) * 12;
 

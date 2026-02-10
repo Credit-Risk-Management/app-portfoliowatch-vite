@@ -32,7 +32,7 @@ export function GuarantorFinancialsTab() {
   }, [guarantorId]);
 
   const uploadLinkUrl = getGuarantorUploadLinkUrl(guarantorId);
-  const rows = useMemo(() => financials.map((financial) => ({
+  const rows = useMemo(() => [...financials].sort((a, b) => new Date(b.asOfDate) - new Date(a.asOfDate)).map((financial) => ({
     id: financial.id,
     totalAssets: formatCurrency(financial.totalAssets),
     totalLiabilities: formatCurrency(financial.totalLiabilities),
