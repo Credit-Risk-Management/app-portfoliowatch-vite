@@ -150,17 +150,20 @@ const LoanDetail = () => {
   const principalBalance = $loan.value?.loan?.principalAmount || 0;
   const footerCoverage = principalBalance > 0 ? footerNetValue / principalBalance : 0;
 
-  const guarantorsTableRows = $loanDetailGuarantors.value.map((guarantor) => ({
-    ...guarantor,
-    name: `${guarantor.name}`,
-    email: guarantor.email,
-    phone: guarantor.phone,
-    totalAssets: formatCurrency(guarantor.financials?.[0]?.totalAssets || 0),
-    totalLiabilities: formatCurrency(guarantor.financials?.[0]?.totalLiabilities || 0),
-    netWorth: formatCurrency(guarantor.financials?.[0]?.netWorth || 0),
-    liquidity: formatCurrency(guarantor.financials?.[0]?.liquidity || 0),
-    debtService: formatCurrency(($loan.value?.loan?.paymentAmount || 0) * 12 || 0),
-  }));
+  const guarantorsTableRows = $loanDetailGuarantors.value.map((guarantor) => {
+    const financials = guarantor.financials?.sort((a, b) => new Date(b.asOfDate) - new Date(a.asOfDate))[0] || {};
+    return {
+      ...guarantor,
+      name: `${guarantor.name}`,
+      email: guarantor.email,
+      phone: guarantor.phone,
+      totalAssets: formatCurrency(financials.totalAssets || 0),
+      totalLiabilities: formatCurrency(financials.totalLiabilities || 0),
+      netWorth: formatCurrency(financials.netWorth || 0),
+      liquidity: formatCurrency(financials.liquidity || 0),
+      debtService: formatCurrency(($loan.value?.loan?.paymentAmount || 0) * 12 || 0),
+    };
+  });
   const guarantorsTableHeaders = [
     { key: 'name', value: 'Name', sortKey: 'name' },
     { key: 'email', value: 'Email', sortKey: 'email' },
