@@ -1,6 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import loansApi from '@src/api/loans.api';
-import { $guarantorsLoansView } from './guarantorLoansTab.consts';
+import { $guarantorsLoansView } from './guarantorLoans.consts';
 
 export const fetchLoanWatchScoreBreakdowns = async (loans) => {
   if (!loans || loans.length === 0) {

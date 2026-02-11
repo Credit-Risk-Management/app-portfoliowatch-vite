@@ -2,7 +2,7 @@ import { WATCH_SCORE_OPTIONS } from '@src/consts/consts';
 
 // Color mapping from Bootstrap class names to hex values
 // These match the SCSS variables in _vars.scss
-const COLOR_HEX_MAP = {
+export const COLOR_HEX_MAP = {
   success: '#7EEF86', // WATCH Score 1 - Winning
   info: '#7CE4F0', // WATCH Score 2 - Anchor
   primary: '#A07CF0', // WATCH Score 3 - Typical

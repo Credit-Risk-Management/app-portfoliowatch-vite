@@ -1,7 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import guarantorsApi from '@src/api/guarantors.api';
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
-import { $guarantorDetailView, $guarantorDetailsData } from './guarantorDetail.consts';
+import { $guarantorDetailView, $guarantorDetailsData } from './guarantorDetails.consts';
 
 /**
  * Fetch invitation data by token

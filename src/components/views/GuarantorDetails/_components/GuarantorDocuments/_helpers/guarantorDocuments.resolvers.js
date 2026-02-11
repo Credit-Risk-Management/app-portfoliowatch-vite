@@ -1,7 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import guarantorFinancialDocumentsApi from '@src/api/guarantorFinancialDocuments.api';
-import { $guarantorDetailView } from '@src/components/views/GuarantorDetails/_helpers/guarantorDetail.consts';
-import { $guarantorDocumentsView, $guarantorDocumentsDetails } from './guarantorDocumentsTab.consts';
+import { $guarantorDetailView } from '@src/components/views/GuarantorDetails/_helpers/guarantorDetails.consts';
+import { $guarantorDocumentsView, $guarantorDocumentsDetails } from './guarantorDocuments.consts';
 
 export const fetchGuarantorDocuments = async () => {
   const guarantorId = $guarantorDetailView.value?.guarantorId;

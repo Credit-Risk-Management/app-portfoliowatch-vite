@@ -2,7 +2,7 @@ import axios from 'axios';
 import { auth } from '@src/utils/firebase';
 import { successAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import getPermanentGuarantorUploadLink from '@src/api/guarantorFinancialUploadLink.api';
-import * as consts from './guarantorFinancialsTab.consts';
+import * as consts from './guarantorFinancials.consts';
 
 export const fetchPermanentUploadLink = async (guarantorId) => {
   if (!guarantorId) return;

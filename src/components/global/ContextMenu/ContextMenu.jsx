@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faEllipsisV } from '@fortawesome/free-solid-svg-icons';
 
 const ContextMenu = ({ items = [], onItemClick = () => { } }) => (
-  <Dropdown onClick={(e) => e.stopPropagation()}>
+  <Dropdown align="end" drop="auto" onClick={(e) => e.stopPropagation()}>
     <Dropdown.Toggle
       variant="link"
       className="text-white p-0"
