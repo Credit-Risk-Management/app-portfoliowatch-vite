@@ -121,7 +121,6 @@ const SubmitFinancialsModal = () => {
                   { value: '3', label: '3 - Satisfactory' },
                   { value: '4', label: '4 - Marginal' },
                   { value: '5', label: '5 - Poor' },
-                  { value: '6', label: '6 - Poor' },
                 ]}
                 placeholder="Select Accountability Score"
               />

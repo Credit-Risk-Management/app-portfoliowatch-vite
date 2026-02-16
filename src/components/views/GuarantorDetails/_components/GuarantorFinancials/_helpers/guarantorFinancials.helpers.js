@@ -1,4 +1,4 @@
-import * as consts from './guarantorFinancialsTab.consts';
+import * as consts from './guarantorFinancials.consts';
 
 /**
  * Build upload link URL from permanent link token (for copy button).

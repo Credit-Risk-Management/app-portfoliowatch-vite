@@ -1,3 +1,5 @@
+import { COLOR_HEX_MAP } from '@src/components/views/Dashboard/_helpers/dashboard.consts';
+
 const calculateLeverage = (liabilities, assets) => {
   if (!liabilities || !assets) return null;
   return liabilities / assets;
@@ -29,17 +31,24 @@ const leverageScore = (leverage) => {
 
 const getStrengthMeta = (score) => {
   if (score >= 85) return { label: 'Strong', color: 'success' };
-  if (score >= 70) return { label: 'Acceptable', color: 'primary' };
-  if (score >= 55) return { label: 'Weak', color: 'orange' };
+  if (score >= 70) return { label: 'Acceptable', color: 'info' };
+  if (score >= 55) return { label: 'Weak', color: 'primary' };
   return { label: 'High Risk', color: 'danger' };
 };
 
-export const getBorrowerGuarantorsTabHelpers = {
+/** Returns hex color for guarantor strength score (same palette as WATCH Score / COLOR_HEX_MAP). */
+const getStrengthColorHex = (score) => {
+  const meta = getStrengthMeta(score);
+  return COLOR_HEX_MAP[meta.color] ?? COLOR_HEX_MAP.secondary;
+};
+
+export const getGuarantorDetailsHelpers = {
   calculateLeverage,
   calculateLiquidityCoverage,
   liquidityScore,
   leverageScore,
   getStrengthMeta,
+  getStrengthColorHex,
 };
 
-export default getBorrowerGuarantorsTabHelpers;
+export default getGuarantorDetailsHelpers;

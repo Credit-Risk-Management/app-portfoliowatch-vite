@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { $guarantorDetailsData } from '@src/components/views/GuarantorDetails/_helpers/guarantorDetail.consts';
+import { $guarantorDetailsData } from '@src/components/views/GuarantorDetails/_helpers/guarantorDetails.consts';
 import { formatCurrency } from '@src/utils/formatCurrency';
 import SignalTable from '@src/components/global/SignalTable/SignalTable';
 import { Button } from 'react-bootstrap';
@@ -7,12 +7,12 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartLine, faCheck, faCopy, faTable } from '@fortawesome/free-solid-svg-icons';
 import { formatDate } from '@src/utils/formatDate';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
-import { $submitPFSModalView } from '../../SubmitPFSModal/_helpers/submitPFSModal.const';
-import { $guarantorDetailView } from '../../../_helpers/guarantorDetail.consts';
-import * as consts from './_helpers/guarantorFinancialsTab.consts';
-import * as events from './_helpers/guarantorFinancialsTab.events';
-import * as resolvers from './_helpers/guarantorFinancialsTab.resolvers';
-import getGuarantorUploadLinkUrl from './_helpers/guarantorFinancialsTab.helpers';
+import { $submitPFSModalView } from '../SubmitPFSModal/_helpers/submitPFSModal.const';
+import { $guarantorDetailView } from '../../_helpers/guarantorDetails.consts';
+import * as consts from './_helpers/guarantorFinancials.consts';
+import * as events from './_helpers/guarantorFinancials.events';
+import * as resolvers from './_helpers/guarantorFinancials.resolvers';
+import getGuarantorUploadLinkUrl from './_helpers/guarantorFinancials.helpers';
 
 const TABLE_HEADERS = [
   { key: 'asOfDate', value: 'As Of Date' },
@@ -22,7 +22,7 @@ const TABLE_HEADERS = [
   { key: 'liquidity', value: 'Liquidity' },
 ];
 
-export function GuarantorFinancialsTab() {
+export function GuarantorFinancials() {
   const { guarantorId } = $guarantorDetailView.value;
   const { financials } = $guarantorDetailsData.value;
 
@@ -32,7 +32,7 @@ export function GuarantorFinancialsTab() {
   }, [guarantorId]);
 
   const uploadLinkUrl = getGuarantorUploadLinkUrl(guarantorId);
-  const rows = useMemo(() => financials.map((financial) => ({
+  const rows = useMemo(() => [...financials].sort((a, b) => new Date(b.asOfDate) - new Date(a.asOfDate)).map((financial) => ({
     id: financial.id,
     totalAssets: formatCurrency(financial.totalAssets),
     totalLiabilities: formatCurrency(financial.totalLiabilities),
@@ -97,4 +97,4 @@ export function GuarantorFinancialsTab() {
     </div>
   );
 }
-export default GuarantorFinancialsTab;
+export default GuarantorFinancials;

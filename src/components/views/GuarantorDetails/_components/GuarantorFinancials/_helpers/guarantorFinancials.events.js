@@ -1,7 +1,7 @@
 import { successAlert, dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
-import * as consts from './guarantorFinancialsTab.consts';
-import * as resolvers from './guarantorFinancialsTab.resolvers';
-import getGuarantorUploadLinkUrl from './guarantorFinancialsTab.helpers';
+import * as consts from './guarantorFinancials.consts';
+import * as resolvers from './guarantorFinancials.resolvers';
+import getGuarantorUploadLinkUrl from './guarantorFinancials.helpers';
 
 const COPIED_RESET_MS = 2000;
 
