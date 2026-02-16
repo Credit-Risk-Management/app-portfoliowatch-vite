@@ -4,7 +4,7 @@ import guarantorFinancialDocumentsApi from '@src/api/guarantorFinancialDocuments
 import { dangerAlert, successAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import postToSensibleApi, { initiateUploadToSensibleApi } from '@src/api/sensible.api';
 import { storage } from '@src/utils/firebase';
-import { fetchGuarantorDetail } from '@src/components/views/GuarantorDetails/_helpers/guarantorDetail.resolvers';
+import { fetchGuarantorDetail } from '@src/components/views/GuarantorDetails/_helpers/guarantorDetails.resolvers';
 import { $submitPFSModalView, $submitPFSModalDetails } from './submitPFSModal.const';
 import extractFromPersonalFinancialStatement from './submitPFSModal.helpers';
 

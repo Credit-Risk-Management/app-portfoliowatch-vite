@@ -39,7 +39,7 @@ const UniversalModal = ({
           <FontAwesomeIcon role="button" icon={faTimes} onClick={onHide} size="lg" className="text-dark" />
         )}
       </Modal.Header>
-      <Modal.Body className={`bg-info-900 ${isFullscreen ? 'modal-fullscreen-body pt-16' : ''}`}>
+      <Modal.Body className={`bg-info-900 ${isFullscreen ? 'modal-fullscreen-body' : ''}`}>
         {size === 'fullscreen' ? (
           <Container fluid>
             {children}

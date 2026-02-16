@@ -5,11 +5,11 @@ import SignalTable from '@src/components/global/SignalTable';
 import ContextMenu from '@src/components/global/ContextMenu';
 import { faEye, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { handleDownloadDocument } from '@src/components/views/Documents/_helpers/documents.events';
-import { $guarantorDocumentsView, $guarantorDocumentsDetails, $guarantorDocumentsFilter, TABLE_HEADERS, formatFileSize, formatUploadDate } from './_helpers/guarantorDocumentsTab.consts';
-import { fetchGuarantorDocuments } from './_helpers/guarantorDocumentsTab.resolvers';
-import { handleDocumentRowClick } from './_helpers/guarantorDocumentsTab.events';
+import { $guarantorDocumentsView, $guarantorDocumentsDetails, $guarantorDocumentsFilter, TABLE_HEADERS, formatFileSize, formatUploadDate } from './_helpers/guarantorDocuments.consts';
+import { fetchGuarantorDocuments } from './_helpers/guarantorDocuments.resolvers';
+import { handleDocumentRowClick } from './_helpers/guarantorDocuments.events';
 
-export function GuarantorDocumentsTab() {
+export function GuarantorDocuments() {
   useEffectAsync(async () => {
     await fetchGuarantorDocuments();
   }, []);
@@ -73,6 +73,7 @@ export function GuarantorDocumentsTab() {
       $view={$guarantorDocumentsView}
       headers={TABLE_HEADERS}
       rows={documentsTableRows}
+      className="shadow"
       totalCount={$guarantorDocumentsDetails.value?.totalCount || 0}
       currentPage={$guarantorDocumentsFilter.value.page}
       onRowClick={handleDocumentRowClick}
@@ -80,4 +81,4 @@ export function GuarantorDocumentsTab() {
     />
   );
 }
-export default GuarantorDocumentsTab;
+export default GuarantorDocuments;
