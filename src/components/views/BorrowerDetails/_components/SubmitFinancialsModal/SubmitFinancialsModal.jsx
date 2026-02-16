@@ -114,6 +114,7 @@ const SubmitFinancialsModal = () => {
                 value={$borrowerFinancialsForm.value.accountabilityScore}
                 name="accountabilityScore"
                 signal={$borrowerFinancialsForm}
+                isPortal
                 options={[
                   { value: '', label: 'Select Accountability Score' },
                   { value: '1', label: '1 - Excellent' },

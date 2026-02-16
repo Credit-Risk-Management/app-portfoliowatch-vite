@@ -12,6 +12,7 @@ const SelectInput = ({
   notClearable,
   isMulti = false,
   placeholder,
+  isPortal = false,
 }) => {
   if (!name) {
     throw new Error('SelectInput has no name');
@@ -24,6 +25,7 @@ const SelectInput = ({
     <Select
       id={name}
       className={`bg-info-800 rounded-pill ${className}`}
+      menuPortalTarget={isPortal ? document.body : undefined}
       value={isMulti
         ? options.filter((option) => value?.includes(option.value))
         : options.find((option) => option.value === value)}
@@ -119,6 +121,10 @@ const SelectInput = ({
         menu: (base) => ({
           ...base,
           backgroundColor: '#2D5256',
+        }),
+        menuPortal: (base) => ({
+          ...base,
+          zIndex: 9999,
         }),
       }}
     />
