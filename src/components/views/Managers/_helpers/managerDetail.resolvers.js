@@ -14,11 +14,10 @@ export const loadManagerDetailData = async (managerId) => {
     const [managerResponse, loansResponse, borrowersResponse, commentsResponse, managersResponse] = await Promise.all([
       relationshipManagersApi.getById(managerId),
       loansApi.getByRelationshipManager(managerId),
-      borrowersApi.getAll(),
+      borrowersApi.getByManager(managerId),
       commentsApi.getAll(),
       relationshipManagersApi.getAll(),
     ]);
-
     const manager = managerResponse.data || managerResponse;
     const loans = loansResponse.data || [];
     const borrowers = borrowersResponse.data || [];
