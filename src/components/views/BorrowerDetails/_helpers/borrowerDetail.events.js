@@ -1,9 +1,11 @@
 import { $borrower } from '@src/consts/consts';
+import { $borrowersForm, $documentsView, $user } from '@src/signals';
 import borrowersApi from '@src/api/borrowers.api';
 import annualReviewsApi from '@src/api/annualReviews.api';
+import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
+import borrowerFinancialDocumentsApi from '@src/api/borrowerFinancialDocuments.api';
 import documentsApi from '@src/api/documents.api';
 import { dangerAlert, successAlert, infoAlert } from '@src/components/global/Alert/_helpers/alert.events';
-import { $borrowersForm, $documentsView } from '@src/signals';
 import { fetchBorrowerDetail, fetchBorrowerDocuments } from './borrowerDetail.resolvers';
 import { $borrowerDetailView } from './borrowerDetail.consts';
 
@@ -119,6 +121,20 @@ export const handleGenerateAnnualReview = async () => {
           ? wordData.filename
           : wordData.filename?.replace(/\.pdf$/, '.docx') || 'annual-review.docx';
         downloadBlob(wordBlob, filename);
+
+        // Save to borrower financial documents (use latest financial record)
+        const latestFinancial = await borrowerFinancialsApi.getLatestByBorrowerId(borrower.id).catch(() => null);
+        const borrowerFinancialId = latestFinancial?.data?.id ?? latestFinancial?.id;
+        if (borrowerFinancialId) {
+          const file = new File([wordBlob], filename, { type: wordBlob.type });
+          await borrowerFinancialDocumentsApi.uploadFile({
+            borrowerFinancialId,
+            file,
+            documentType: 'annualReview',
+            uploadedBy: $user.value?.email || $user.value?.name || 'Unknown User',
+          });
+        }
+
         successAlert('Annual review and Word document generated successfully!');
       } catch (downloadError) {
         console.error('Failed to download Word document:', downloadError);
