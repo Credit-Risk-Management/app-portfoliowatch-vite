@@ -1,16 +1,17 @@
 import { Row, Col, Card, Badge, Button } from 'react-bootstrap';
 import UniversalModal from '@src/components/global/UniversalModal';
 import { WATCH_SCORE_OPTIONS } from '@src/consts/consts';
-import { $modalState } from './TabsContent/BorrowerDetailsContainer/_components/submitFinancialsModal.signals';
 
-const WatchScoreResultsModal = () => {
-  const { showWatchScoreResults, updatedLoans } = $modalState.value;
+const WatchScoreResultsModal = ({ $modalState }) => {
+  const { showWatchScoreResults, updatedLoans } = $modalState?.value ?? {};
 
   const handleClose = () => {
-    $modalState.update({
-      showWatchScoreResults: false,
-      updatedLoans: [],
-    });
+    if ($modalState) {
+      $modalState.update({
+        showWatchScoreResults: false,
+        updatedLoans: [],
+      });
+    }
   };
 
   const handleLoanClick = (loanId) => {

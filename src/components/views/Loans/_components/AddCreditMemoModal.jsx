@@ -19,8 +19,8 @@ import {
   handleDownloadDocument,
 } from './addCreditMemoModal.handlers';
 
-// Set up PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+// Set up PDF.js worker - using jsdelivr CDN (cdnjs path structure doesn't support pdfjs-dist 5.x)
+pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 const AddCreditMemoModal = () => {
   // Force re-render when refreshKey changes

@@ -107,7 +107,6 @@ export const handlePdfLoadSuccess = (numPages) => {
   });
 };
 
-export const handlePdfLoadError = (error) => {
-  console.error('Error loading PDF:', error);
+export const handlePdfLoadError = () => {
   $documentsContainerView.update({ pdfLoadError: true });
 };
