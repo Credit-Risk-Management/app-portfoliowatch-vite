@@ -1,3 +1,4 @@
+import { NARRATIVE_CONSTRAINTS_PAYLOAD } from '@src/consts/annualReviewPrompts';
 import { wrapApiWithDebounce } from '@src/utils/debouncedApi';
 import apiClient from './client';
 
@@ -74,11 +75,15 @@ const annualReviewsApiBase = {
 
     const queryString = params.toString();
     const url = `/annual-reviews/loan/${loanId}/generate${queryString ? `?${queryString}` : ''}`;
-    return apiClient.post(url);
+    const body = options.generateNarratives ? { narrativeConstraints: NARRATIVE_CONSTRAINTS_PAYLOAD } : undefined;
+    return apiClient.post(url, body);
   },
 
   // Generate/regenerate AI narratives for an existing review
-  generateNarratives: async (id, sections = []) => apiClient.post(`/annual-reviews/${id}/generate-narratives`, { sections }),
+  generateNarratives: async (id, sections = [], options = {}) => apiClient.post(`/annual-reviews/${id}/generate-narratives`, {
+    sections,
+    narrativeConstraints: options.narrativeConstraints ?? NARRATIVE_CONSTRAINTS_PAYLOAD,
+  }),
 
   // Export annual review as JSON
   exportToJSON: async (id) => apiClient.get(`/annual-reviews/${id}/export/json`),
