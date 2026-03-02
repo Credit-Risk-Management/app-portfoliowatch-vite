@@ -26,6 +26,7 @@ export const fetchUploadLinkData = async (token) => {
     if (response.status === 'success') {
       $publicFinancialUploadView.update({
         linkData: response.data,
+        token,
         isLoading: false,
       });
     } else {

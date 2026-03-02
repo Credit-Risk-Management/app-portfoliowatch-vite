@@ -35,6 +35,7 @@ const EditManagerModal = () => {
         <Row>
           <Col md={12} className="mb-16">
             <UniversalInput
+              name="name"
               label="Name"
               type="text"
               value={$relationshipManagersForm.value.name}
@@ -45,6 +46,7 @@ const EditManagerModal = () => {
         <Row>
           <Col md={6} className="mb-16">
             <UniversalInput
+              name="email"
               label="Email"
               type="email"
               value={$relationshipManagersForm.value.email}
@@ -53,6 +55,7 @@ const EditManagerModal = () => {
           </Col>
           <Col md={6} className="mb-16">
             <UniversalInput
+              name="phone"
               label="Phone"
               type="text"
               value={$relationshipManagersForm.value.phone}
@@ -63,6 +66,7 @@ const EditManagerModal = () => {
         <Row>
           <Col md={12} className="mb-16">
             <UniversalInput
+              name="position_title"
               label="Position Title"
               type="text"
               value={$relationshipManagersForm.value.position_title}
@@ -73,6 +77,7 @@ const EditManagerModal = () => {
         <Row>
           <Col md={12} className="mb-16">
             <UniversalInput
+              name="office_location"
               label="Office Location"
               type="text"
               value={$relationshipManagersForm.value.office_location}

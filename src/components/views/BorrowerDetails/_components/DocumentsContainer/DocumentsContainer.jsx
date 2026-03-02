@@ -165,7 +165,7 @@ const DocumentsContainer = ({
             }}
           >
             <Document
-              file={pdfBlobUrl || currentDoc?.storageUrl || pdfUrl}
+              file={pdfBlobUrl || pdfUrl}
               onLoadSuccess={({ numPages }) => resolvers.handlePdfLoadSuccess(numPages)}
               onLoadError={resolvers.handlePdfLoadError}
               loading={(

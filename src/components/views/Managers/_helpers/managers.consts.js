@@ -2,7 +2,7 @@ export const TABLE_HEADERS = [
   { key: 'name', value: 'Name', sortKey: 'name' },
   { key: 'email', value: 'Email', sortKey: 'email' },
   { key: 'phone', value: 'Phone', sortKey: 'phone' },
-  { key: 'office_location', value: 'Office', sortKey: 'officeLocation' },
+  { key: 'officeLocation', value: 'Office', sortKey: 'officeLocation' },
   // { key: 'reports_count', value: '# Reports' },
   { key: 'portfolio_value', value: '$ Portfolio' },
   { key: 'loans_count', value: '# Loans' },

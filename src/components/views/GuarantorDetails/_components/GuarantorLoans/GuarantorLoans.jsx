@@ -3,14 +3,12 @@ import { formatDate } from '@src/utils/formatDate';
 import { $guarantorDetailsData } from '@src/components/views/GuarantorDetails/_helpers/guarantorDetails.consts';
 import { useNavigate } from 'react-router-dom';
 import SignalTable from '@src/components/global/SignalTable/SignalTable';
-import { getWatchScoreDisplay } from '@src/components/views/Borrowers/_components/TabsContent/BorrowerLoansTab/_helpers/loanCard.helpers';
+import { getWatchScoreDisplay } from '@src/components/views/BorrowerDetails/_components/TabContent/BorrowerLoansTab/_helpers/loanCard.helpers';
 import { $guarantorsLoansView, TABLE_HEADERS } from './_helpers/guarantorLoans.consts';
 
 export function GuarantorLoans() {
   const { loans } = $guarantorDetailsData.value;
   const navigate = useNavigate();
-
-  console.log(loans);
 
   const rows = (loans || []).map((loan) => {
     const watchScoreDisplay = getWatchScoreDisplay(loan?.currentWatchScore);
