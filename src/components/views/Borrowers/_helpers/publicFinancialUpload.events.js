@@ -1,67 +1,131 @@
 import { submitFinancialsViaToken } from '@src/api/borrowerFinancialUploadLink.api';
+import postToSensibleApi, { initiateUploadToSensibleApi } from '@src/api/sensible.api';
+import { storage } from '@src/utils/firebase';
+import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
+import { extractIncomeStatementFromApiResponse, extractBalanceSheetFromApiResponse } from './financials.helpers';
 import {
   $publicFinancialForm,
   $financialDocsUploader,
   $publicFinancialUploadView,
 } from './publicFinancialUpload.consts';
 
-/**
- * Generate mock financial data from OCR (simulated)
- * In production, this would call a real OCR service
- */
-const generateMockFinancialData = () => {
-  const grossRevenue = Math.floor(Math.random() * (10000000 - 2000000) + 2000000);
-  const netIncomeMargin = 0.10 + Math.random() * 0.15;
-  const netIncome = Math.floor(grossRevenue * netIncomeMargin);
-  const ebitdaMargin = 0.15 + Math.random() * 0.15;
-  const ebitda = Math.floor(grossRevenue * ebitdaMargin);
+const SENSIBLE_DOCUMENT_TYPES = {
+  incomeStatement: 'income_statement',
+  balanceSheet: 'balance_sheet',
+};
 
-  const today = new Date();
-  const quartersBack = Math.floor(Math.random() * 4);
-  const currentQuarter = Math.floor(today.getMonth() / 3);
-  const targetQuarter = currentQuarter - quartersBack;
-
-  const yearOffset = Math.floor((targetQuarter < 0 ? targetQuarter - 3 : targetQuarter) / 4);
-  const year = today.getFullYear() + yearOffset;
-  const quarter = ((targetQuarter % 4) + 4) % 4;
-  const month = quarter * 3 + 2;
-  const lastDay = new Date(year, month + 1, 0).getDate();
-  const asOfDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
-
-  return {
-    asOfDate,
-    grossRevenue: grossRevenue.toString(),
-    netIncome: netIncome.toString(),
-    ebitda: ebitda.toString(),
-    debtService: (1.0 + Math.random() * 2.0).toFixed(2),
-    debtServiceCovenant: (1.0 + Math.random() * 0.5).toFixed(2),
-    currentRatio: (1.5 + Math.random() * 2.0).toFixed(2),
-    currentRatioCovenant: (1.2 + Math.random() * 0.5).toFixed(2),
-    liquidity: Math.floor(Math.random() * (2000000 - 300000) + 300000).toString(),
-    liquidityCovenant: Math.floor(Math.random() * (800000 - 250000) + 250000).toString(),
-    liquidityRatio: (1.2 + Math.random() * 1.5).toFixed(2),
-    liquidityRatioCovenant: (1.0 + Math.random() * 0.5).toFixed(2),
-    retainedEarnings: Math.floor(grossRevenue * (0.3 + Math.random() * 0.4)).toString(),
-  };
+const inferDocumentTypeFromFilename = (fileName) => {
+  if (!fileName) return 'incomeStatement';
+  const lower = fileName.toLowerCase();
+  if (lower.includes('balance') || lower.includes('balance_sheet') || lower.includes('balancesheet')) {
+    return 'balanceSheet';
+  }
+  return 'incomeStatement';
 };
 
 /**
- * Handle file upload and trigger OCR
+ * Handle file upload and trigger Sensible OCR extraction
  */
-export const handleFileUpload = () => {
+export const handleFileUpload = async () => {
   const files = $financialDocsUploader.value.financialDocs || [];
-  const { ocrApplied } = $publicFinancialUploadView.value;
+  const { ocrApplied, token } = $publicFinancialUploadView.value;
+  if (!files.length || ocrApplied) return;
+  if (!token) {
+    $publicFinancialUploadView.update({ error: 'Upload link not ready. Please refresh the page.' });
+    return;
+  }
 
-  if (files.length > 0 && !ocrApplied) {
-    // Simulate OCR processing delay
-    setTimeout(() => {
-      const mockData = generateMockFinancialData();
-      $publicFinancialForm.update(mockData);
-      $publicFinancialUploadView.update({
-        ocrApplied: true,
-        refreshKey: $publicFinancialUploadView.value.refreshKey + 1,
-      });
-    }, 500);
+  $publicFinancialUploadView.update({ isLoading: true, error: null });
+
+  try {
+    const [file] = files;
+    const documentType = inferDocumentTypeFromFilename(file.name);
+    const sensibleType = SENSIBLE_DOCUMENT_TYPES[documentType];
+
+    const initiateUploadData = {
+      fileName: file.name,
+      contentType: file.type,
+      id: token,
+      documentType,
+      uploadedBy: 'Public Upload',
+    };
+
+    const response = await initiateUploadToSensibleApi(initiateUploadData);
+    $publicFinancialUploadView.update({ downloadSensibleUrl: response.storagePath });
+
+    const storageRef = storage.ref(response.storagePath);
+    const uploadTask = await storageRef.put(file, { contentType: file.type });
+    const downloadURL = await uploadTask.ref.getDownloadURL();
+
+    if (!downloadURL) {
+      dangerAlert('Failed to upload file to storage');
+      $publicFinancialUploadView.update({ isLoading: false, downloadSensibleUrl: null });
+      return;
+    }
+
+    $publicFinancialUploadView.update({ isLoading: false });
+
+    const sensibleBody = {
+      url: downloadURL,
+      documentType: sensibleType,
+      configurationName: sensibleType,
+      environment: 'development',
+      documentName: file.name,
+    };
+
+    const sensibleResponse = await postToSensibleApi(sensibleBody);
+    const parsedDocument = sensibleResponse?.data?.parsed_document ?? sensibleResponse?.parsed_document ?? null;
+
+    if (parsedDocument) {
+      let extractedData = null;
+      if (documentType === 'incomeStatement') {
+        extractedData = extractIncomeStatementFromApiResponse(parsedDocument);
+      } else {
+        extractedData = extractBalanceSheetFromApiResponse(parsedDocument);
+      }
+
+      if (extractedData) {
+        const formUpdate = { ...extractedData };
+
+        if (documentType === 'balanceSheet') {
+          if (extractedData.cash) formUpdate.liquidity = extractedData.cash;
+          if (extractedData.totalCurrentAssets && extractedData.totalCurrentLiabilities) {
+            const assets = parseFloat(extractedData.totalCurrentAssets);
+            const liabilities = parseFloat(extractedData.totalCurrentLiabilities);
+            if (liabilities > 0 && !Number.isNaN(assets) && !Number.isNaN(liabilities)) {
+              formUpdate.currentRatio = (assets / liabilities).toFixed(2);
+            }
+          }
+        }
+
+        $publicFinancialForm.update(formUpdate);
+      }
+    }
+
+    $publicFinancialUploadView.update({
+      ocrApplied: true,
+      refreshKey: $publicFinancialUploadView.value.refreshKey + 1,
+      isLoading: false,
+      downloadSensibleUrl: null,
+    });
+  } catch (error) {
+    const pathToClean = $publicFinancialUploadView.value.downloadSensibleUrl;
+    if (pathToClean) {
+      try {
+        const deleteStorageRef = storage.ref(pathToClean);
+        await deleteStorageRef.delete();
+      } catch {
+        // ignore cleanup errors
+      }
+      $publicFinancialUploadView.update({ downloadSensibleUrl: null });
+    }
+    $publicFinancialUploadView.update({
+      isLoading: false,
+      error: error?.message ?? 'Failed to extract financial data from document',
+    });
+  } finally {
+    $publicFinancialUploadView.update({ isLoading: false });
+    $financialDocsUploader.update({ financialDocs: [] });
   }
 };
 
@@ -127,6 +191,7 @@ export const handleSubmitAnother = () => {
   $publicFinancialUploadView.update({
     success: false,
     ocrApplied: false,
+    downloadSensibleUrl: null,
   });
   $publicFinancialForm.reset();
   $financialDocsUploader.update({ financialDocs: [] });

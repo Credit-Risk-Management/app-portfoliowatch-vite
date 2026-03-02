@@ -2,46 +2,42 @@
 import { useEffect } from 'react';
 import { Form, Row, Col } from 'react-bootstrap';
 import UniversalModal from '@src/components/global/UniversalModal';
+import {
+  $borrowersView,
+  $borrowersForm,
+  $borrowers,
+  $relationshipManagers,
+} from '@src/signals';
 import SelectInput from '@src/components/global/Inputs/SelectInput';
-import { $borrower } from '@src/consts/consts';
-import { $borrowersForm, $relationshipManagers } from '@src/signals';
-import { $borrowerDetailView } from './TabsContent/BorrowerDetailsContainer/_helpers/borrowerDetail.consts';
-import { handleEditBorrowerDetail } from './TabsContent/BorrowerDetailsContainer/_helpers/borrowerDetail.events';
+import { handleEditBorrower } from '../_helpers/borrowers.events';
 import * as helpers from '../_helpers/borrowers.helpers';
 
-const EditBorrowerDetailModal = () => {
+const EditBorrowerModal = () => {
   useEffect(() => {
-    if ($borrowerDetailView.value.showEditBorrowerModal && $borrower.value?.borrower) {
-      const { borrower } = $borrower.value;
-
-      // Map borrower data to form structure
+    if ($borrowersView.value.showEditModal && $borrowers.value.selectedClient) {
+      const client = $borrowers.value.selectedClient;
       $borrowersForm.update({
-        id: borrower.id || '',
-        name: borrower.name || '',
-        relationship_manager_id: borrower.relationshipManager?.id || '',
-        notes: borrower.notes || '',
+        ...client,
+        relationship_manager_id: client.relationshipManager?.id || '',
       });
     }
-  }, [$borrowerDetailView.value.showEditBorrowerModal]);
+  }, [$borrowersView.value.showEditModal]);
 
   const managers = $relationshipManagers.value?.list || [];
-  const managerOptions = helpers.getManagerOptions(managers);
-
-  const handleClose = () => {
-    $borrowerDetailView.update({ showEditBorrowerModal: false });
-    $borrowersForm.reset();
-  };
+  const managerOptions = [{ value: '', label: 'Select Manager' }, ...helpers.getManagerOptions(managers)];
 
   return (
     <UniversalModal
-      show={$borrowerDetailView.value.showEditBorrowerModal}
-      onHide={handleClose}
+      show={$borrowersView.value.showEditModal}
+      onHide={() => {
+        $borrowersView.update({ showEditModal: false });
+        $borrowersForm.reset();
+      }}
       headerText="Edit Borrower"
       leftBtnText="Cancel"
       rightBtnText="Save Changes"
-      rightBtnOnClick={handleEditBorrowerDetail}
+      rightBtnOnClick={handleEditBorrower}
       size="lg"
-      closeButton
     >
       <Form>
         <Row>
@@ -57,7 +53,7 @@ const EditBorrowerDetailModal = () => {
             <SelectInput
               name="relationship_manager_id"
               signal={$borrowersForm}
-              options={[{ value: '', label: 'Select Manager' }, ...managerOptions]}
+              options={managerOptions}
               value={$borrowersForm.value.relationship_manager_id}
             />
           </Col>
@@ -80,4 +76,4 @@ const EditBorrowerDetailModal = () => {
   );
 };
 
-export default EditBorrowerDetailModal;
+export default EditBorrowerModal;

@@ -19,6 +19,8 @@ import * as consts from './_helpers/borrowers.consts';
 import * as resolvers from './_helpers/borrowers.resolvers';
 import * as helpers from './_helpers/borrowers.helpers';
 import { handleBorrowerFilterChange } from './_helpers/borrowers.events';
+import EditBorrowerModal from './_components/EditBorrowerModal';
+import DeleteBorrowerModal from './_components/DeleteBorrowerModal';
 
 const Borrowers = () => {
   const navigate = useNavigate();
@@ -128,6 +130,9 @@ const Borrowers = () => {
           />
         </Col>
       </Row>
+
+      <EditBorrowerModal />
+      <DeleteBorrowerModal />
 
       <Row>
         <Col xs={12}>

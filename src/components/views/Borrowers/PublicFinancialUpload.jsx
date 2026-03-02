@@ -6,6 +6,8 @@ import { faFileAlt, faMagic, faCheckCircle, faExclamationTriangle } from '@forta
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import FileUploader from '@src/components/global/FileUploader';
 import ContentWrapper from '@src/components/global/ContentWrapper';
+import exampleLogo from '@src/assets/exampleLogo.svg?url';
+import { normalizeCurrencyValue } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
 import {
   $publicFinancialForm,
   $financialDocsUploader,
@@ -83,36 +85,40 @@ const PublicFinancialUpload = () => {
   }
 
   return (
-    <ContentWrapper fluid className="min-vh-100 bg-info-900">
+    <ContentWrapper fluid className="min-vh-100 ">
       <Container className="py-16 py-md-24">
-        <Card className="bg-info-900">
-          <Card.Header className="bg-info-800">
-            <h2 className="text-info-100 mb-0">Submit Financial Data</h2>
+        <Card className="border-0 shadow-sm">
+          <Card.Header className="bg-white border-0 pb-0">
+            <div className="d-flex justify-content-between align-items-center">
+
+              <h2 className="text-dark mb-0">Submit Financial Data</h2>
+              <img src={exampleLogo} alt="Saber Bank Logo" className="img-fluid" />
+            </div>
             {linkData && (
-              <div className="mt-8">
-                <p className="text-info-200 mb-0">
-                  <strong>Borrower:</strong> {linkData.borrower.name}
-                </p>
-                <p className="text-info-200 mb-0 small">
-                  <strong>Organization:</strong> {linkData.organization.name}
-                </p>
-              </div>
+            <div className="mt-8">
+              <p className="text-grey-600 mb-0">
+                <strong>Borrower:</strong> {linkData.borrower.name}
+              </p>
+              <p className="text-grey-600 mb-0">
+                <strong>Organization:</strong> {linkData.organization.name}
+              </p>
+            </div>
             )}
           </Card.Header>
-          <Card.Body className="py-16 py-md-24">
+          <Card.Body className=" py-16 py-md-24">
             {error && (
-              <Alert variant="danger" dismissible onClose={clearError} className="mb-16 mb-md-24">
-                {error}
-              </Alert>
+            <Alert variant="danger" dismissible onClose={clearError} className="mb-32">
+              {error}
+            </Alert>
             )}
 
             {/* File Upload Section */}
-            <div className="mb-24 mb-md-32 p-16 p-md-24 bg-info-700 rounded">
-              <h5 className="text-info-100 mb-12 mb-md-16">
+            <div className="mb-32 p-24 bg-light-100 border border-primary-200 rounded-4">
+              <h5 className="text-dark mb-16">
                 <FontAwesomeIcon icon={faFileAlt} className="me-8" />
                 Upload Financial Documents
               </h5>
-              <p className="text-info-200 small mb-12 mb-md-16">
+              <p className="text-grey-600 small">
                 Upload financial statements (PDF, Excel, etc.). Our system will automatically extract financial data.
               </p>
               <FileUploader
@@ -122,205 +128,199 @@ const PublicFinancialUpload = () => {
                 onUpload={handleFileUpload}
               />
               {ocrApplied && (
-                <Alert variant="success" className="mt-12 mt-md-16 mb-0">
-                  <FontAwesomeIcon icon={faMagic} className="me-8" />
-                  Financial data extracted from documents and populated below. Please review and adjust as needed.
-                </Alert>
+              <Alert variant="success" className="mt-24 mb-0">
+                <FontAwesomeIcon icon={faMagic} className="me-8" />
+                Financial data extracted from documents and populated below. Please review and adjust as needed.
+              </Alert>
               )}
             </div>
 
             <Form>
-              <h5 className="text-info-100 mb-12 mb-md-16 fw-600">Financial Period</h5>
-              <Row>
-                <Col xs={12} md={6} className="mb-16 mb-md-24">
-                  <UniversalInput
-                    label="As Of Date (Financial Statement Date)"
-                    type="date"
-                    placeholder="YYYY-MM-DD"
-                    value={formData.asOfDate}
-                    name="asOfDate"
-                    signal={$publicFinancialForm}
-                    required
-                  />
-                  <Form.Text className="text-info-200">
-                    The date these financials are effective (e.g., end of quarter: 2024-03-31)
-                  </Form.Text>
-                </Col>
-              </Row>
+              <Card className="border-0 shadow-sm mb-40">
+                <Card.Body>
+                  <h5 className="text-dark fw-600 mb-24">Financial Period</h5>
+                  <Row>
+                    <Col xs={12} md={6} className="mb-24">
+                      <UniversalInput
+                        label="As Of Date (Financial Statement Date)"
+                        type="date"
+                        placeholder="YYYY-MM-DD"
+                        value={formData.asOfDate}
+                        name="asOfDate"
+                        signal={$publicFinancialForm}
+                        required
+                      />
+                      <Form.Text className="text-grey-600">
+                        The date these financials are effective (e.g., end of quarter: 03-31-2024)
+                      </Form.Text>
+                    </Col>
+                  </Row>
+                </Card.Body>
+              </Card>
+              <Card className="border-0 shadow-sm mb-40">
+                <Card.Body>
+                  <h5 className="text-dark fw-600 mb-24">Revenue & Income</h5>
+                  <Row>
+                    <Col xs={12} md={4} className="mb-24">
+                      <UniversalInput
+                        label="Gross Revenue"
+                        type="currency"
+                        placeholder="$ USD"
+                        value={formData.grossRevenue}
+                        name="grossRevenue"
+                        signal={$publicFinancialForm}
+                        inputFormatCallback={normalizeCurrencyValue}
+                      />
+                    </Col>
+                    <Col xs={12} md={4} className="mb-24">
+                      <UniversalInput
+                        label="Net Income"
+                        type="currency"
+                        placeholder="$ USD"
+                        value={formData.netIncome}
+                        name="netIncome"
+                        signal={$publicFinancialForm}
+                        inputFormatCallback={normalizeCurrencyValue}
+                      />
+                    </Col>
+                    <Col xs={12} md={4} className="mb-24">
+                      <UniversalInput
+                        label="EBITDA"
+                        type="currency"
+                        placeholder="$ USD"
+                        value={formData.ebitda}
+                        name="ebitda"
+                        signal={$publicFinancialForm}
+                        inputFormatCallback={normalizeCurrencyValue}
+                      />
+                    </Col>
+                  </Row>
+                </Card.Body>
+              </Card>
+              <Card className="border-0 shadow-sm mb-40">
+                <Card.Body>
+                  <h5 className="text-dark fw-600 mb-24">Debt Service Coverage</h5>
+                  <Row>
+                    <Col xs={12} md={6} className="mb-24">
+                      <UniversalInput
+                        label="Debt Service Ratio"
+                        type="number"
+                        step="0.01"
+                        placeholder="1.45"
+                        value={formData.debtService}
+                        name="debtService"
+                        signal={$publicFinancialForm}
+                      />
+                    </Col>
+                    <Col xs={12} md={6} className="mb-24">
+                      <UniversalInput
+                        label="Debt Service Covenant"
+                        type="number"
+                        step="0.01"
+                        placeholder="1.25"
+                        value={formData.debtServiceCovenant}
+                        name="debtServiceCovenant"
+                        signal={$publicFinancialForm}
+                      />
+                    </Col>
+                  </Row>
+                </Card.Body>
+              </Card>
+              <Card className="border-0 shadow-sm mb-40">
+                <Card.Body>
+                  <h5 className="text-dark fw-600 mb-24">Current Ratio</h5>
+                  <Row>
+                    <Col xs={12} md={6} className="mb-24">
+                      <UniversalInput
+                        label="Current Ratio"
+                        type="number"
+                        step="0.01"
+                        placeholder="2.1"
+                        value={formData.currentRatio}
+                        name="currentRatio"
+                        signal={$publicFinancialForm}
+                      />
+                    </Col>
+                    <Col xs={12} md={6} className="mb-24">
+                      <UniversalInput
+                        label="Current Ratio Covenant"
+                        type="number"
+                        step="0.01"
+                        placeholder="1.5"
+                        value={formData.currentRatioCovenant}
+                        name="currentRatioCovenant"
+                        signal={$publicFinancialForm}
+                      />
+                    </Col>
+                  </Row>
+                </Card.Body>
+              </Card>
+              <Card className="border-0 shadow-sm mb-40">
+                <Card.Body>
+                  <h5 className="text-dark fw-600 mb-24">Liquidity</h5>
+                  <Row>
+                    <Col xs={12} md={6} className="mb-24">
+                      <UniversalInput
+                        label="Liquidity"
+                        type="currency"
+                        step="0.01"
+                        placeholder="$ USD"
+                        value={formData.liquidity}
+                        name="liquidity"
+                        signal={$publicFinancialForm}
+                        inputFormatCallback={normalizeCurrencyValue}
+                      />
+                    </Col>
+                    <Col xs={12} md={6} className="mb-24">
+                      <UniversalInput
+                        label="Liquidity Covenant"
+                        type="number"
+                        step="0.01"
+                        placeholder="1.5"
+                        value={formData.liquidityCovenant}
+                        name="liquidityCovenant"
+                        signal={$publicFinancialForm}
+                      />
+                    </Col>
+                  </Row>
 
-              <hr className="my-16 my-md-24 border-info-700" />
+                </Card.Body>
+              </Card>
 
-              <h5 className="text-info-100 mb-12 mb-md-16 fw-600">Revenue & Income</h5>
-              <Row>
-                <Col xs={12} md={4} className="mb-12 mb-md-16">
-                  <UniversalInput
-                    label="Gross Revenue"
-                    type="number"
-                    placeholder="5000000"
-                    value={formData.grossRevenue}
-                    name="grossRevenue"
-                    signal={$publicFinancialForm}
-                  />
-                </Col>
-                <Col xs={12} md={4} className="mb-12 mb-md-16">
-                  <UniversalInput
-                    label="Net Income"
-                    type="number"
-                    placeholder="750000"
-                    value={formData.netIncome}
-                    name="netIncome"
-                    signal={$publicFinancialForm}
-                  />
-                </Col>
-                <Col xs={12} md={4} className="mb-12 mb-md-16">
-                  <UniversalInput
-                    label="EBITDA"
-                    type="number"
-                    placeholder="1200000"
-                    value={formData.ebitda}
-                    name="ebitda"
-                    signal={$publicFinancialForm}
-                  />
-                </Col>
-              </Row>
+              <Card className="border-0 shadow-sm mb-40">
+                <Card.Body>
+                  <h5 className="text-dark fw-600 mb-24">Other</h5>
+                  <Row>
+                    <Col xs={12} md={6} className="mb-24">
+                      <UniversalInput
+                        label="Retained Earnings"
+                        type="currency"
+                        placeholder="$ USD"
+                        value={formData.retainedEarnings}
+                        name="retainedEarnings"
+                        signal={$publicFinancialForm}
+                        inputFormatCallback={normalizeCurrencyValue}
+                      />
+                    </Col>
+                    <Col xs={12} md={6} className="mb-24">
+                      <UniversalInput
+                        label="Notes"
+                        type="text"
+                        placeholder="Additional notes or comments"
+                        value={formData.notes}
+                        name="notes"
+                        signal={$publicFinancialForm}
+                      />
+                    </Col>
+                  </Row>
+                </Card.Body>
+              </Card>
 
-              <hr className="my-16 my-md-24 border-info-700" />
-
-              <h5 className="text-info-100 mb-12 mb-md-16 fw-600">Debt Service Coverage</h5>
-              <Row>
-                <Col xs={12} md={6} className="mb-12 mb-md-16">
-                  <UniversalInput
-                    label="Debt Service Ratio"
-                    type="number"
-                    step="0.01"
-                    placeholder="1.45"
-                    value={formData.debtService}
-                    name="debtService"
-                    signal={$publicFinancialForm}
-                  />
-                </Col>
-                <Col xs={12} md={6} className="mb-12 mb-md-16">
-                  <UniversalInput
-                    label="Debt Service Covenant"
-                    type="number"
-                    step="0.01"
-                    placeholder="1.25"
-                    value={formData.debtServiceCovenant}
-                    name="debtServiceCovenant"
-                    signal={$publicFinancialForm}
-                  />
-                </Col>
-              </Row>
-
-              <hr className="my-16 my-md-24 border-info-700" />
-
-              <h5 className="text-info-100 mb-12 mb-md-16 fw-600">Current Ratio</h5>
-              <Row>
-                <Col xs={12} md={6} className="mb-12 mb-md-16">
-                  <UniversalInput
-                    label="Current Ratio"
-                    type="number"
-                    step="0.01"
-                    placeholder="2.1"
-                    value={formData.currentRatio}
-                    name="currentRatio"
-                    signal={$publicFinancialForm}
-                  />
-                </Col>
-                <Col xs={12} md={6} className="mb-12 mb-md-16">
-                  <UniversalInput
-                    label="Current Ratio Covenant"
-                    type="number"
-                    step="0.01"
-                    placeholder="1.5"
-                    value={formData.currentRatioCovenant}
-                    name="currentRatioCovenant"
-                    signal={$publicFinancialForm}
-                  />
-                </Col>
-              </Row>
-
-              <hr className="my-16 my-md-24 border-info-700" />
-
-              <h5 className="text-info-100 mb-12 mb-md-16 fw-600">Liquidity</h5>
-              <Row>
-                <Col xs={12} md={6} className="mb-12 mb-md-16">
-                  <UniversalInput
-                    label="Liquidity"
-                    type="number"
-                    placeholder="850000"
-                    value={formData.liquidity}
-                    name="liquidity"
-                    signal={$publicFinancialForm}
-                  />
-                </Col>
-                <Col xs={12} md={6} className="mb-12 mb-md-16">
-                  <UniversalInput
-                    label="Liquidity Covenant"
-                    type="number"
-                    placeholder="500000"
-                    value={formData.liquidityCovenant}
-                    name="liquidityCovenant"
-                    signal={$publicFinancialForm}
-                  />
-                </Col>
-              </Row>
-
-              <Row>
-                <Col xs={12} md={6} className="mb-12 mb-md-16">
-                  <UniversalInput
-                    label="Liquidity Ratio"
-                    type="number"
-                    step="0.01"
-                    placeholder="1.85"
-                    value={formData.liquidityRatio}
-                    name="liquidityRatio"
-                    signal={$publicFinancialForm}
-                  />
-                </Col>
-                <Col xs={12} md={6} className="mb-12 mb-md-16">
-                  <UniversalInput
-                    label="Liquidity Ratio Covenant"
-                    type="number"
-                    step="0.01"
-                    placeholder="1.2"
-                    value={formData.liquidityRatioCovenant}
-                    name="liquidityRatioCovenant"
-                    signal={$publicFinancialForm}
-                  />
-                </Col>
-              </Row>
-
-              <hr className="my-16 my-md-24 border-info-700" />
-
-              <h5 className="text-info-100 mb-12 mb-md-16 fw-600">Other</h5>
-              <Row>
-                <Col xs={12} md={6} className="mb-12 mb-md-16">
-                  <UniversalInput
-                    label="Retained Earnings"
-                    type="number"
-                    placeholder="2300000"
-                    value={formData.retainedEarnings}
-                    name="retainedEarnings"
-                    signal={$publicFinancialForm}
-                  />
-                </Col>
-                <Col xs={12} md={6} className="mb-12 mb-md-16">
-                  <UniversalInput
-                    label="Notes"
-                    type="text"
-                    placeholder="Additional notes or comments"
-                    value={formData.notes}
-                    name="notes"
-                    signal={$publicFinancialForm}
-                  />
-                </Col>
-              </Row>
-
-              <div className="d-flex justify-content-end mt-24 mt-md-32">
+              <div className="d-flex justify-content-end mt-32">
                 <Button
-                  variant="primary-100"
+                  variant="primary"
                   size="lg"
+                  className="rounded-pill"
                   onClick={() => handleSubmit(token)}
                   disabled={isSubmitting || !formData.asOfDate}
                 >
