@@ -54,6 +54,7 @@ const Borrowers = () => {
     $borrowersFilter.value.page,
     $borrowersFilter.value.sortKey,
     $borrowersFilter.value.sortDirection,
+    $borrowersView.value.showAllMode,
   ]);
 
   const rows = $borrowers.value.list.map((borrower) => ({
@@ -72,7 +73,8 @@ const Borrowers = () => {
         ]}
         onItemClick={(item) => {
           if (item.action === 'detail') {
-            navigate(`/borrowers/${borrower.id}`);
+            const returnSearch = window.location.search || '';
+            navigate(`/borrowers/${borrower.id}`, { state: { fromBorrowersList: true, borrowersReturnSearch: returnSearch } });
           } else if (item.action === 'edit') {
             $borrowers.update({ selectedClient: borrower });
             $borrowersView.update({ showEditModal: true });
@@ -136,17 +138,23 @@ const Borrowers = () => {
 
       <Row>
         <Col xs={12}>
-          <SignalTable
-            $filter={$borrowersFilter}
-            $view={$borrowersView}
-            headers={consts.TABLE_HEADERS}
-            rows={rows}
-            totalCount={$borrowers.value.totalCount}
-            currentPage={$borrowersFilter.value.page}
-            itemsPerPageAmount={10}
-            className="shadow"
-            onRowClick={(borrower) => navigate(`/borrowers/${borrower.id}`)}
-          />
+          <div style={$borrowersView.value.showAllMode ? { maxHeight: '70vh', overflowY: 'auto' } : undefined}>
+            <SignalTable
+              $filter={$borrowersFilter}
+              $view={$borrowersView}
+              headers={consts.TABLE_HEADERS}
+              rows={rows}
+              totalCount={$borrowers.value.totalCount}
+              currentPage={$borrowersFilter.value.page}
+              itemsPerPageAmount={10}
+              hasPagination={!$borrowersView.value.showAllMode}
+              className="shadow"
+              onRowClick={(borrower) => {
+                const returnSearch = window.location.search || '';
+                navigate(`/borrowers/${borrower.id}`, { state: { fromBorrowersList: true, borrowersReturnSearch: returnSearch } });
+              }}
+            />
+          </div>
         </Col>
       </Row>
     </Container>

@@ -71,12 +71,13 @@ export const getRiskRatingLabel = (rating, labels) => labels[rating] || rating;
 
 /**
  * Formats a percentage value (alias for formatPercentage, but handles empty strings)
+ * @param {number} decimals - Number of decimal places (default 2, use 3 for interest rates)
  */
-export const formatPercent = (value) => {
+export const formatPercent = (value, decimals = 2) => {
   if (value === null || value === undefined || value === '') return '-';
   const num = Number(value);
   if (Number.isNaN(num)) return '-';
-  return `${num.toFixed(2)}%`;
+  return `${num.toFixed(decimals)}%`;
 };
 
 /**

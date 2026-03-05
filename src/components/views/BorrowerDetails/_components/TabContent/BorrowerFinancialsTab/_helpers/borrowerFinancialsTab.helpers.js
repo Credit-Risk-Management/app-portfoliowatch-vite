@@ -1,5 +1,19 @@
 import * as consts from './borrowerFinancialsTab.consts';
 
+/** Document type values and labels for financial documents (camelCase + snake_case for API compatibility) */
+export const FINANCIAL_DOC_TYPES = [
+  { value: 'personalFinancialStatement', label: 'Personal Financial Statement' },
+  { value: 'personal_financial_statement', label: 'Personal Financial Statement' },
+  { value: 'incomeStatement', label: 'Income Statement' },
+  { value: 'income_statement', label: 'Income Statement' },
+  { value: 'balanceSheet', label: 'Balance Sheet' },
+  { value: 'balance_sheet', label: 'Balance Sheet' },
+  { value: 'debtServiceWorksheet', label: 'Debt Service Worksheet' },
+  { value: 'debt_service_worksheet', label: 'Debt Service Worksheet' },
+  { value: 'taxReturn', label: 'Tax Return' },
+  { value: 'tax_return', label: 'Tax Return' },
+];
+
 export const FINANCIALS_TABLE_HEADERS = [
   { key: 'asOfDate', value: 'As Of Date', sortKey: 'asOfDate' },
   { key: 'submittedAt', value: 'Submitted Date', sortKey: 'submittedAt' },
@@ -7,7 +21,7 @@ export const FINANCIALS_TABLE_HEADERS = [
   { key: 'grossRevenue', value: 'Gross Revenue', sortKey: 'grossRevenue' },
   { key: 'netIncome', value: 'Net Income', sortKey: 'netIncome' },
   { key: 'ebitda', value: 'EBITDA', sortKey: 'ebitda' },
-  { key: 'debtService', value: 'DSCR', sortKey: 'debtService' },
+  { key: 'debtService', value: 'Debt Service', sortKey: 'debtService' },
   { key: 'currentRatio', value: 'Current Ratio', sortKey: 'currentRatio' },
   { key: 'liquidity', value: 'Liquidity', sortKey: 'liquidity' },
   { key: 'submittedBy', value: 'Submitted By', sortKey: 'submittedBy' },

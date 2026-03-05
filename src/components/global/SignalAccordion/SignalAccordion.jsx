@@ -104,14 +104,14 @@ const SignalAccordion = ({
         <div className="signal-accordion__footer d-flex flex-column gap-8 py-12 px-16">
           {footer.netValue != null && (
             <div className="d-flex justify-content-between align-items-center">
-              <span className="text-info-100 fw-bold">{footer.netValueLabel ?? 'Net Value'}</span>
+              <span className="text-info-100 fw-bold fs-5">{footer.netValueLabel ?? 'Net Value'}</span>
               <span className="text-success fw-bold fs-5">{footer.netValue}</span>
             </div>
           )}
           {footer.coverageValue != null && (
             <div className="d-flex justify-content-between align-items-center">
-              <span className="text-info-100 fw-bold">{footer.coverageLabel ?? 'Coverage Ratio'}</span>
-              <span className="text-success small">{footer.coverageValue}</span>
+              <span className="text-info-100 fw-bold fs-5">{footer.coverageLabel ?? 'Coverage Ratio'}</span>
+              <span className="text-success fw-bold fs-5">{footer.coverageValue}</span>
             </div>
           )}
         </div>

@@ -18,6 +18,7 @@ import {
   handleRemoveDocument,
   handleDownloadDocument,
   calculateTotalValue,
+  calculateTotalNetValue,
 } from './submitCollateralModal.handlers';
 
 const SubmitCollateralModal = () => {
@@ -32,8 +33,9 @@ const SubmitCollateralModal = () => {
     }
   }, [showSubmitModal]);
 
-  // Calculate total value
+  // Calculate total value and net value
   const totalValue = calculateTotalValue();
+  const totalNetValue = calculateTotalNetValue();
 
   // Modal title and button text
   const modalTitle = isEditMode ? 'Update Collateral Value' : 'Submit Collateral Value';
@@ -55,6 +57,7 @@ const SubmitCollateralModal = () => {
       rightButtonDisabled={isSubmitting}
       size="lg"
       closeButton
+      backdrop="static"
     >
       <div className="pt-16">
         {error && (
@@ -115,7 +118,7 @@ const SubmitCollateralModal = () => {
 
           {collateralItems.map((item, index) => (
             <Row key={index} className="mb-12 align-items-end">
-              <Col xs={12} md={6} className="mb-12 mb-md-0">
+              <Col xs={12} md={4} className="mb-12 mb-md-0">
                 <UniversalInput
                   label="Description"
                   labelClassName="text-info-100"
@@ -125,7 +128,7 @@ const SubmitCollateralModal = () => {
                   customOnChange={(e) => handleUpdateCollateralItem(index, 'description', e.target.value)}
                 />
               </Col>
-              <Col md={4}>
+              <Col xs={12} md={3} className="mb-12 mb-md-0">
                 <UniversalInput
                   label="Value"
                   labelClassName="text-info-100"
@@ -135,7 +138,17 @@ const SubmitCollateralModal = () => {
                   customOnChange={(e) => handleUpdateCollateralItem(index, 'value', e.target.value)}
                 />
               </Col>
-              <Col md={2}>
+              <Col xs={12} md={3} className="mb-12 mb-md-0">
+                <UniversalInput
+                  label="Previous Liens"
+                  labelClassName="text-info-100"
+                  type="number"
+                  placeholder="0.00"
+                  value={item.previousLiens ?? ''}
+                  customOnChange={(e) => handleUpdateCollateralItem(index, 'previousLiens', e.target.value)}
+                />
+              </Col>
+              <Col xs={12} md={2}>
                 <Button
                   variant="outline-danger"
                   size="sm"
@@ -151,11 +164,18 @@ const SubmitCollateralModal = () => {
 
           {/* Total Value Display */}
           <div className="mt-16 fw-bold pt-8 border-top border-info-700">
-            <div className="d-flex justify-content-between align-items-center">
+            <div className="d-flex justify-content-between align-items-center mb-8">
               <div className="mb-0 text-info-100">Total Collateral Value:</div>
               <div className="mb-0 text-success-300 fs-6">
                 <FontAwesomeIcon icon={faDollarSign} className="me-8" />
                 {formatCurrency(totalValue)}
+              </div>
+            </div>
+            <div className="d-flex justify-content-between align-items-center">
+              <div className="mb-0 text-info-100">Total Net Value (Value − Liens):</div>
+              <div className="mb-0 text-success-300 fs-6">
+                <FontAwesomeIcon icon={faDollarSign} className="me-8" />
+                {formatCurrency(totalNetValue)}
               </div>
             </div>
           </div>

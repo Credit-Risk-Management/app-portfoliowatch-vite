@@ -2,7 +2,7 @@
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import { useNavigate } from 'react-router-dom';
 import { Container, Row, Col } from 'react-bootstrap';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { $dashboard, $comments } from '@src/signals';
 import { formatCurrency } from '@src/utils/formatCurrency';
 import MetricCard from '@src/components/global/MetricCard';
@@ -36,7 +36,7 @@ const Dashboard = () => {
           <MetricCard
             title="Total Borrowers"
             value={$dashboard.value?.metrics?.totalBorrowers}
-            onClick={() => events.handleMetricCardClick('/loans')}
+            onClick={() => events.handleMetricCardClick('/borrowers')}
             variant="primary"
           />
         </Col>
