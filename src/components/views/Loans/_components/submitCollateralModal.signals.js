@@ -10,7 +10,7 @@ export const $loanCollateralView = Signal({
 
 export const $loanCollateralForm = Signal({
   asOfDate: '',
-  collateralItems: [{ description: '', value: '' }], // Start with one empty item
+  collateralItems: [{ description: '', value: '', previousLiens: '' }], // Start with one empty item
   notes: '',
   hasDocument: false,
 });

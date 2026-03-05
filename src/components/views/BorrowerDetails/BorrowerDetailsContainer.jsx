@@ -1,5 +1,5 @@
 /* eslint-disable react/no-danger */
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import { Container, Button, Row, Col } from 'react-bootstrap';
 import PageHeader from '@src/components/global/PageHeader';
@@ -91,6 +91,8 @@ const tabs = [
 export function BorrowerDetailsContainer() {
   const { borrowerId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const borrowersReturnSearch = location.state?.borrowersReturnSearch || '';
 
   // Fetch borrower detail and relationship managers on mount or when borrowerId changes
   useEffectAsync(async () => {
@@ -111,7 +113,7 @@ export function BorrowerDetailsContainer() {
             onClick={() => {
               $borrower.reset();
               $borrowerDetailView.reset();
-              navigate('/borrowers');
+              navigate(`/borrowers${borrowersReturnSearch}`);
             }}
             className="btn-sm border-dark text-dark-800 bg-grey-50 mb-12 mb-md-16"
           >

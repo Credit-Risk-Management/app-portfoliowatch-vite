@@ -28,9 +28,10 @@ export const handleOpenModal = async () => {
         const collateralItems = Array.isArray(collateral.collateralItems) && collateral.collateralItems.length > 0
           ? collateral.collateralItems.map(item => ({
             description: item.description || '',
-            value: item.value || '',
+            value: item.value ?? '',
+            previousLiens: item.previousLiens ?? '',
           }))
-          : [{ description: '', value: '' }];
+          : [{ description: '', value: '', previousLiens: '' }];
 
         // Pre-populate the form
         $loanCollateralForm.update({
@@ -93,7 +94,7 @@ export const handleClose = () => {
 export const handleAddCollateralItem = () => {
   const { collateralItems } = $loanCollateralForm.value;
   $loanCollateralForm.update({
-    collateralItems: [...collateralItems, { description: '', value: '' }],
+    collateralItems: [...collateralItems, { description: '', value: '', previousLiens: '' }],
   });
 };
 
@@ -192,7 +193,7 @@ const validateForm = () => {
 
   // Validate that at least one item has both description and value
   const validItems = collateralItems.filter(
-    (item) => item.description.trim() && item.value,
+    (item) => item.description.trim() && (item.value || item.value === 0),
   );
 
   if (validItems.length === 0) {
@@ -203,6 +204,10 @@ const validateForm = () => {
   for (const item of validItems) {
     if (Number.isNaN(parseFloat(item.value)) || parseFloat(item.value) < 0) {
       throw new Error(`Invalid value for "${item.description}". Must be a positive number.`);
+    }
+    const liens = parseFloat(item.previousLiens);
+    if (item.previousLiens !== '' && item.previousLiens !== undefined && (Number.isNaN(liens) || liens < 0)) {
+      throw new Error(`Invalid previous liens for "${item.description}". Must be a non-negative number.`);
     }
   }
 
@@ -231,6 +236,7 @@ export const handleSubmit = async () => {
     const collateralItems = validItems.map((item) => ({
       description: item.description.trim(),
       value: parseFloat(item.value),
+      previousLiens: parseFloat(item.previousLiens) || 0,
     }));
 
     // Prepare the data
@@ -295,12 +301,24 @@ export const handleSubmit = async () => {
 };
 
 /**
- * Calculate total collateral value
+ * Calculate total collateral value (gross - sum of values)
  */
 export const calculateTotalValue = () => {
   const { collateralItems } = $loanCollateralForm.value;
   return collateralItems.reduce((sum, item) => {
     const value = parseFloat(item.value);
     return sum + (Number.isNaN(value) ? 0 : value);
+  }, 0);
+};
+
+/**
+ * Calculate total net collateral value (value minus previous liens per item)
+ */
+export const calculateTotalNetValue = () => {
+  const { collateralItems } = $loanCollateralForm.value;
+  return collateralItems.reduce((sum, item) => {
+    const value = parseFloat(item.value) || 0;
+    const previousLiens = parseFloat(item.previousLiens) || 0;
+    return sum + (value - previousLiens);
   }, 0);
 };

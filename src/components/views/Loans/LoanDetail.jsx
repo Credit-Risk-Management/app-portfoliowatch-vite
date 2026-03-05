@@ -1,6 +1,6 @@
 /* eslint-disable react/no-danger */
 import { useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Container, Row, Col, Button, Collapse, Spinner } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faArrowRight, faMagic, faUser, faLandmark, faFileAlt, faSync } from '@fortawesome/free-solid-svg-icons';
@@ -44,6 +44,9 @@ import {
 const LoanDetail = () => {
   const { loanId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromBorrowerId = location.state?.fromBorrower;
+  const showBackToBorrower = !!fromBorrowerId;
 
   // Fetch loan detail on mount or when loanId changes
   useEffectAsync(async () => {
@@ -131,7 +134,7 @@ const LoanDetail = () => {
             rows={tableRows}
             hasPagination={false}
           />
-          <div className="d-flex justify-content-between align-items-center py-12 px-16 bg-info-800 border-top border-info-500 text-white fw-bold small">
+          <div className="d-flex justify-content-between align-items-center py-12 px-16 bg-info-800 border-top border-info-500 text-white fw-bold">
             <span>Total Net Value</span>
             <span>{formatCurrency(totalNetValue)}</span>
           </div>
@@ -180,11 +183,11 @@ const LoanDetail = () => {
       <Container className="py-16 py-md-24">
         <div className="d-flex justify-content-between align-items-center">
           <Button
-            onClick={() => navigate('/loans')}
+            onClick={() => (showBackToBorrower ? navigate(`/borrowers/${fromBorrowerId}`) : navigate('/loans'))}
             className="btn-sm border-dark text-dark-800 bg-grey-50 mb-12 mb-md-16"
           >
             <FontAwesomeIcon icon={faArrowLeft} className="me-8" />
-            Back to Loans
+            {showBackToBorrower ? 'Back to Borrower' : 'Back to Loans'}
           </Button>
           <div>
             {$loan.value?.loan?.borrower?.id && (
@@ -259,7 +262,7 @@ const LoanDetail = () => {
                 <div className="text-info-100 fw-200 mt-8">Next Financials Due</div>
                 <div className="text-info-50 lead fw-500">12/20/2025</div>
                 <div className="text-info-100 fw-200 mt-8">Interest Rate</div>
-                <div className="text-info-50 lead fw-500">{formatPercent($loan.value?.loan?.currentInterestRate)}</div>
+                <div className="text-info-50 lead fw-500">{formatPercent($loan.value?.loan?.currentInterestRate, 3)}</div>
                 <div className="text-info-100 fw-200 mt-8">Interest Type</div>
                 <div className="text-info-50 lead fw-500">{$loan.value?.loan?.typeOfInterest}</div>
                 <div className="text-info-100 fw-200 mt-8">Index</div>

@@ -17,7 +17,7 @@ const BorrowerLoansTab = () => {
 
   const handleViewDetails = (loanId) => {
     if (loanId) {
-      navigate(`/loans/${loanId}`);
+      navigate(`/loans/${loanId}`, borrower?.id ? { state: { fromBorrower: borrower.id } } : {});
     }
   };
 
