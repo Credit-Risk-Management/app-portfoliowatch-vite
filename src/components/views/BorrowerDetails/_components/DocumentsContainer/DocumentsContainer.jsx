@@ -405,6 +405,14 @@ const DocumentsContainer = ({
               Debt Service Worksheet
               {documentsByType.debtServiceWorksheet.length > 0 ? ` (${documentsByType.debtServiceWorksheet.length})` : ''}
             </option>
+            <option value="taxReturn">
+              Tax Return
+              {documentsByType.taxReturn.length > 0 ? ` (${documentsByType.taxReturn.length})` : ''}
+            </option>
+            <option value="personalFinancialStatement">
+              Personal Financial Statement
+              {documentsByType.personalFinancialStatement.length > 0 ? ` (${documentsByType.personalFinancialStatement.length})` : ''}
+            </option>
           </Form.Select>
           {documentsByType[documentType].length === 0 && (
             <Form.Text className="text-info-300">
@@ -601,6 +609,68 @@ const DocumentsContainer = ({
             </Row>
           )}
 
+          {/* Tax Return Fields */}
+          {documentType === 'taxReturn' && (
+            <Row>
+              <Col md={12} className="mb-16">
+                <div>Tax Return</div>
+              </Col>
+            </Row>
+          )}
+
+          {/* Personal Financial Statement Fields */}
+          {documentType === 'personalFinancialStatement' && (
+            <Row>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Total Assets"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.totalAssets}
+                  name="totalAssets"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValue}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Total Liabilities"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.totalLiabilities}
+                  name="totalLiabilities"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValue}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Net Worth"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.netWorth}
+                  name="netWorth"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValue}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Liquidity"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.liquidity}
+                  name="liquidity"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValue}
+                />
+              </Col>
+            </Row>
+          )}
           <hr className="my-16 border-info-700" />
 
           {/* Notes - Always show */}

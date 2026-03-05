@@ -216,16 +216,14 @@ export const $relationshipManagersView = Signal({
 
 export const $relationshipManagersForm = Signal({
   id: '',
-  user_id: '',
+  userId: '',
   name: '',
   email: '',
   phone: '',
-  office_location: '',
-  position_title: '',
-  manager_id: '',
-  is_active: true,
-  created_at: '',
-  updated_at: '',
+  officeLocation: '',
+  positionTitle: '',
+  managerId: null,
+  isActive: true,
 });
 
 export const $managerDetail = Signal({

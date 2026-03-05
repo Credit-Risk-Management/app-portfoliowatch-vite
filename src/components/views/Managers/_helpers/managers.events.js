@@ -1,4 +1,4 @@
-import { $relationshipManagers, $relationshipManagersFilter, $relationshipManagersView, $relationshipManagersForm } from '@src/signals';
+import { $relationshipManagers, $relationshipManagersFilter, $relationshipManagersView, $relationshipManagersForm, $user } from '@src/signals';
 import relationshipManagersApi from '@src/api/relationshipManagers.api';
 
 export const fetchManagers = async () => {
@@ -54,10 +54,13 @@ export const handleAddManager = async () => {
 
     const newManager = {
       ...formData,
-      manager_id: formData.manager_id || null, // Convert empty string to null
+      managerId: formData.managerId || null, // Convert empty string to null
     };
 
-    const createdManagerResponse = await relationshipManagersApi.create(newManager);
+    const createdManagerResponse = await relationshipManagersApi.create({
+      ...newManager,
+      organizationId: $user.value?.organizationId,
+    });
     const createdManager = createdManagerResponse.data || createdManagerResponse;
 
     // Update the list in the signal

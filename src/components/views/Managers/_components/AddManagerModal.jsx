@@ -56,7 +56,7 @@ const AddManagerModal = () => (
           <UniversalInput
             label="Position Title"
             type="text"
-            name="position_title"
+            name="positionTitle"
             signal={$relationshipManagersForm}
             placeholder="e.g., Senior Relationship Manager"
           />
@@ -67,7 +67,7 @@ const AddManagerModal = () => (
           <UniversalInput
             label="Office Location"
             type="text"
-            name="office_location"
+            name="officeLocation"
             signal={$relationshipManagersForm}
             placeholder="e.g., New York Office"
           />
@@ -77,21 +77,21 @@ const AddManagerModal = () => (
         <Col md={6} className="mb-16">
           <Form.Label>Reports To</Form.Label>
           <SelectInput
-            name="manager_id"
+            name="managerId"
             signal={$relationshipManagersForm}
             options={helpers.getManagerOptionsWithNone($relationshipManagers.value?.list || [])}
-            value={(helpers.getManagerOptionsWithNone($relationshipManagers.value?.list || []).find((opt) => opt.value === $relationshipManagersForm.value.manager_id) || helpers.getManagerOptionsWithNone($relationshipManagers.value?.list || [])[0])?.value}
-            onChange={(option) => $relationshipManagersForm.update({ manager_id: option?.value || '' })}
+            value={(helpers.getManagerOptionsWithNone($relationshipManagers.value?.list || []).find((opt) => opt.value === $relationshipManagersForm.value.managerId) || helpers.getManagerOptionsWithNone($relationshipManagers.value?.list || [])[0])?.value}
+            onChange={(option) => $relationshipManagersForm.update({ managerId: option?.value || '' })}
           />
         </Col>
         <Col md={6} className="mb-16">
           <Form.Label>Status</Form.Label>
           <SelectInput
-            name="is_active"
+            name="isActive"
             signal={$relationshipManagersForm}
             options={consts.STATUS_OPTIONS}
-            value={(consts.STATUS_OPTIONS.find((opt) => opt.value === $relationshipManagersForm.value.is_active) || consts.STATUS_OPTIONS[0])?.value}
-            onChange={(option) => $relationshipManagersForm.update({ is_active: option?.value !== undefined ? option.value : true })}
+            value={(consts.STATUS_OPTIONS.find((opt) => opt.value === $relationshipManagersForm.value.isActive) || consts.STATUS_OPTIONS[0])?.value}
+            onChange={(option) => $relationshipManagersForm.update({ isActive: option?.value !== undefined ? option.value : true })}
           />
         </Col>
       </Row>

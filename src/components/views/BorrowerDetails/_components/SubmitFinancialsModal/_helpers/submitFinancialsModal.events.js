@@ -38,11 +38,15 @@ export const handleClose = (pdfUrl) => {
       balanceSheet: [],
       incomeStatement: [],
       debtServiceWorksheet: [],
+      taxReturn: [],
+      personalFinancialStatement: [],
     },
     currentDocumentIndex: {
       balanceSheet: 0,
       incomeStatement: 0,
       debtServiceWorksheet: 0,
+      taxReturn: 0,
+      personalFinancialStatement: 0,
     },
   });
 };
