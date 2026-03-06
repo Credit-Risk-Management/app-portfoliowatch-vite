@@ -17,6 +17,7 @@ export const FINANCIAL_DOC_TYPES = [
 export const FINANCIALS_TABLE_HEADERS = [
   { key: 'asOfDate', value: 'As Of Date', sortKey: 'asOfDate' },
   { key: 'submittedAt', value: 'Submitted Date', sortKey: 'submittedAt' },
+  { key: 'docTypes', value: 'Document Types', sortKey: 'docTypes' },
   { key: 'accountabilityScore', value: 'Accountability Score', sortKey: 'accountabilityScore' },
   { key: 'grossRevenue', value: 'Gross Revenue', sortKey: 'grossRevenue' },
   { key: 'netIncome', value: 'Net Income', sortKey: 'netIncome' },

@@ -20,7 +20,7 @@ export const $borrowerLoansView = Signal({
 // Signals for borrower financials table
 export const $borrowerFinancialsFilter = Signal({
   page: 1,
-  sortKey: 'submittedAt',
+  sortKey: 'asOfDate',
   sortDirection: 'desc',
 });
 

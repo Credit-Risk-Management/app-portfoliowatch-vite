@@ -4,7 +4,6 @@ import borrowersApi from '@src/api/borrowers.api';
 import annualReviewsApi from '@src/api/annualReviews.api';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
 import borrowerFinancialDocumentsApi from '@src/api/borrowerFinancialDocuments.api';
-import documentsApi from '@src/api/documents.api';
 import { dangerAlert, successAlert, infoAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import { fetchBorrowerDetail, fetchBorrowerDocuments } from './borrowerDetail.resolvers';
 import { $borrowerDetailView } from './borrowerDetail.consts';
@@ -181,7 +180,7 @@ function downloadBlob(blob, filename) {
 
 export const handleDeleteBorrowerDocument = async (documentId, borrowerId) => {
   try {
-    await documentsApi.delete(documentId);
+    await borrowerFinancialDocumentsApi.delete(documentId);
     $documentsView.update({ showDeleteModal: false });
     successAlert('Document deleted successfully');
 

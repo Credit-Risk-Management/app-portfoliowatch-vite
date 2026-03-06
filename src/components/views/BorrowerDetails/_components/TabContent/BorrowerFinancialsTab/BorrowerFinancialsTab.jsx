@@ -15,6 +15,7 @@ import {
   FINANCIALS_TABLE_HEADERS,
   formatFinancialDate,
   getUploadLinkUrl,
+  FINANCIAL_DOC_TYPES,
 } from './_helpers/borrowerFinancialsTab.helpers';
 
 export function BorrowerFinancialsTab() {
@@ -31,6 +32,7 @@ export function BorrowerFinancialsTab() {
       asOfDate: formatFinancialDate(financial.asOfDate),
       submittedAt: formatFinancialDate(financial.submittedAt),
       accountabilityScore: financial.accountabilityScore ?? '-',
+      docTypes: financial.documents.map((doc) => FINANCIAL_DOC_TYPES.find((type) => type.value === doc.documentType)?.label ?? '-').join(', ') ?? '-',
       grossRevenue: <span className="text-success-500 fw-500">{formatCurrency(financial.grossRevenue)}</span>,
       netIncome: <span className="text-success-500 fw-500">{formatCurrency(financial.netIncome)}</span>,
       ebitda: <span className="text-success-500 fw-500">{formatCurrency(financial.ebitda)}</span>,

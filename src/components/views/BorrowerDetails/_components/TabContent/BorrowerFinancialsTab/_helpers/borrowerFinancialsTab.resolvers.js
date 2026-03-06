@@ -23,7 +23,6 @@ export const fetchFinancialHistory = async () => {
 
     const list = response?.data ?? (Array.isArray(response) ? response : []);
     const totalCount = response?.count ?? list?.length ?? 0;
-    console.log('list', list);
     $borrowerFinancials.update({
       list: list ?? [],
       totalCount: totalCount ?? 0,
