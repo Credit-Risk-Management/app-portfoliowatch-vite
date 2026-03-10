@@ -52,7 +52,7 @@ const documentsApiBase = {
 export const documentsApi = wrapApiWithDebounce(documentsApiBase, {
   getAll: 350, // Debounce search/filter calls
   getById: 300, // Debounce rapid detail views
-  getByLoan: 350, // Debounce loan filter
+  // getByLoan NOT debounced - parallel batch fetches per loan would collapse into one
   // Note: create, update, delete, upload operations are NOT debounced
 });
 

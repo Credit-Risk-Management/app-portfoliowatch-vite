@@ -56,10 +56,10 @@ export const fetchBorrowerDocuments = async (borrowerId) => {
 
     // 1. Fetch loan documents (if borrower has loans)
     if (borrower?.loans && borrower.loans.length > 0) {
-      const loanIds = borrower.loans.map((loan) => loan.id);
+      const loanIds = borrower.loans.map((loan) => loan.id || loan.loanId).filter(Boolean);
 
-      // Fetch documents for each loan using getAll (fetch ALL document types, not filtered)
-      const loanDocumentPromises = loanIds.map((loanId) => documentsApi.getAll({ loanId }));
+      // Use getByLoan (not debounced) - getAll is debounced so parallel calls collapse into 1
+      const loanDocumentPromises = loanIds.map((loanId) => documentsApi.getByLoan(loanId));
       const loanDocumentResponses = await Promise.all(loanDocumentPromises);
 
       // Process loan documents
