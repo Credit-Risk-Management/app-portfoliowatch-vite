@@ -36,6 +36,9 @@ const DocumentsContainer = ({
   const currentIndex = currentDocumentIndex[documentType] || 0;
   const currentDoc = currentDocs[currentIndex];
   const hasMultipleDocs = currentDocs.length > 1;
+  const annualDebtForRatio = Number($form.value.annualDebtServiceForRatio || 0);
+  const adjustedGrossIncome = Number($form.value.adjustedGrossIncome || 0);
+  const netToIncomeRatio = adjustedGrossIncome > 0 ? annualDebtForRatio / adjustedGrossIncome : null;
   const { excelData, isLoadingExcel, pdfNumPages, pdfPageNumber, pdfLoadError, pdfBlobUrl } = $documentsContainerView.value;
 
   // Memoize PDF options to prevent unnecessary re-renders (must be at component level, not inside conditionals)
@@ -76,6 +79,13 @@ const DocumentsContainer = ({
   useEffect(() => {
     resolvers.resetPdfState();
   }, [pdfUrl, pdfBlobUrl]);
+
+  useEffect(() => {
+    const nextValue = netToIncomeRatio != null ? netToIncomeRatio.toFixed(4) : '';
+    if ($form.value.netToIncomeRatio !== nextValue) {
+      $form.update({ netToIncomeRatio: nextValue });
+    }
+  }, [netToIncomeRatio]);
 
   const renderDocumentPreview = () => {
     // Check if current document is stored but doesn't have a File object
@@ -399,6 +409,10 @@ const DocumentsContainer = ({
               Personal Financial Statement
               {documentsByType.personalFinancialStatement.length > 0 ? ` (${documentsByType.personalFinancialStatement.length})` : ''}
             </option>
+            <option value="taxReturn">
+              Tax Return
+              {documentsByType.taxReturn.length > 0 ? ` (${documentsByType.taxReturn.length})` : ''}
+            </option>
           </Form.Select>
           {documentsByType[documentType].length === 0 && (
             <Form.Text className="text-info-300">
@@ -470,6 +484,46 @@ const DocumentsContainer = ({
                   name="liquidity"
                   signal={$form}
                   inputFormatCallback={normalizeCurrencyValue}
+                />
+              </Col>
+            </Row>
+          )}
+          {documentType === 'taxReturn' && (
+            <Row>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Personal Income (Line 1z)"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$form.value.personalIncome}
+                  name="personalIncome"
+                  signal={$form}
+                  inputFormatCallback={normalizeCurrencyValue}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Adjusted Gross Income (Line 11)"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$form.value.adjustedGrossIncome}
+                  name="adjustedGrossIncome"
+                  signal={$form}
+                  inputFormatCallback={normalizeCurrencyValue}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Net to Income Ratio"
+                  labelClassName="text-info-100"
+                  type="number"
+                  step="0.01"
+                  placeholder="1.00"
+                  value={$form.value.netToIncomeRatio}
+                  name="netToIncomeRatio"
+                  signal={$form}
                 />
               </Col>
             </Row>

@@ -7,7 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartLine, faCheck, faCopy, faTable } from '@fortawesome/free-solid-svg-icons';
 import { formatDate } from '@src/utils/formatDate';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
-import { $submitPFSModalView } from '../SubmitPFSModal/_helpers/submitPFSModal.const';
+import { $submitPFSModalView, $submitPFSModalDetails } from '../SubmitPFSModal/_helpers/submitPFSModal.const';
 import { $guarantorDetailView } from '../../_helpers/guarantorDetails.consts';
 import * as consts from './_helpers/guarantorFinancials.consts';
 import * as events from './_helpers/guarantorFinancials.events';
@@ -32,6 +32,7 @@ export function GuarantorFinancials() {
   }, [guarantorId]);
 
   const uploadLinkUrl = getGuarantorUploadLinkUrl(guarantorId);
+  const annualDebtServiceForRatio = (($guarantorDetailsData.value?.loans || []).reduce((acc, loan) => acc + Number(loan.paymentAmount || 0), 0) * 12) || 0;
   const rows = useMemo(() => [...financials].sort((a, b) => new Date(b.asOfDate) - new Date(a.asOfDate)).map((financial) => ({
     id: financial.id,
     totalAssets: formatCurrency(financial.totalAssets),
@@ -50,6 +51,7 @@ export function GuarantorFinancials() {
             className="me-8"
             size="sm"
             onClick={() => {
+              $submitPFSModalDetails.update({ annualDebtServiceForRatio });
               $submitPFSModalView.update({
                 activeModalKey: 'submitPFS',
                 guarantorId: $guarantorDetailView.value.guarantorId,
@@ -87,6 +89,7 @@ export function GuarantorFinancials() {
         totalCount={financials.length}
         isLoading={$guarantorDetailView.value.isLoading}
         onRowClick={(financial) => {
+          $submitPFSModalDetails.update({ annualDebtServiceForRatio });
           $submitPFSModalView.update({
             activeModalKey: 'submitPFS',
             guarantorId: $guarantorDetailView.value.guarantorId,

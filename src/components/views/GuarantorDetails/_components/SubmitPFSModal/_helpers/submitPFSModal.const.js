@@ -18,9 +18,11 @@ export const $submitPFSModalDetails = Signal({
   asOfDate: null,
   currentDocumentIndex: {
     personalFinancialStatement: 0,
+    taxReturn: 0,
   },
   documentsByType: {
     personalFinancialStatement: [],
+    taxReturn: [],
   },
   downloadSensibleUrl: false,
   pdfUrl: null,
@@ -30,6 +32,10 @@ export const $submitPFSModalDetails = Signal({
   totalLiabilities: '',
   netWorth: '',
   liquidity: '',
+  personalIncomeLine: '',
+  adjustedGrossIncomeLine: '',
+  annualDebtServiceForRatio: 0,
+  netToIncomeRatio: 0,
   notes: '',
 });
 

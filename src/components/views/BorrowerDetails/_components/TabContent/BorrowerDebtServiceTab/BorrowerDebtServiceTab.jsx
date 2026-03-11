@@ -46,10 +46,7 @@ export function BorrowerDebtServiceTab() {
 
     // Convert monthly to annual (multiply by 12)
     const debtServiceHistoryList = $debtServiceHistory.value?.list || [];
-    const totalDebtService = debtServiceHistoryList.reduce((sum, item) => {
-      const totalMonthlyPayment = item.totalMonthlyPayment != null ? Number(item.totalMonthlyPayment) : 0;
-      return sum + totalMonthlyPayment;
-    }, 0) * 12 || null;
+    const totalDebtService = debtServiceHistoryList[0]?.totalMonthlyPayment != null ? Number(debtServiceHistoryList[0]?.totalMonthlyPayment) * 12 : null;
 
     // Calculate Current DSCR: EBITDA / Annual Debt Service
     let currentDSCR = null;

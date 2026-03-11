@@ -429,21 +429,6 @@ const LoanDetail = () => {
                   </div>
                 </Col>
                 <Col xs={12} md={6} className="mb-12 mb-md-0">
-                  <div className="text-info-100 fw-200 mt-16 mb-4">Liquidity Ratio</div>
-                  <div>
-                    <span className="text-info-50 fw-500 me-8">Actual:</span>
-                    <span className={`fs-5 fw-bold text-${getCovenantStatus($loan.value?.loan?.liquidityRatio, $loan.value?.loan?.liquidityRatioCovenant).variant}`}>
-                      {formatRatio($loan.value?.loan?.liquidityRatio)}
-                    </span>
-                  </div>
-                  <div className="mb-8">
-                    <span className="text-info-50 fw-500 me-8">Covenant:</span>
-                    <span className="fs-5 fw-bold text-secondary-200">
-                      {formatRatio($loan.value?.loan?.liquidityRatioCovenant)}
-                    </span>
-                  </div>
-                </Col>
-                <Col xs={12} md={6} className="mb-12 mb-md-0">
                   <div className="text-info-100 fw-200 mt-16 mb-4">Current Ratio</div>
                   <div>
                     <span className="text-info-50 fw-500 me-8">Actual:</span>
