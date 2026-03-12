@@ -12,6 +12,20 @@ const SENSIBLE_DOCUMENT_TYPES = {
   personalFinancialStatement: 'personal_financial_statement',
 };
 
+const toNumberOrNull = (value) => {
+  if (value == null || value === '') return null;
+  const parsed = typeof value === 'string'
+    ? Number(value.replace(/[^0-9.-]/g, ''))
+    : Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const calculateNetToIncomeRatio = (annualDebtService, adjustedGrossIncome) => {
+  if (!annualDebtService || !adjustedGrossIncome) return null;
+  if (adjustedGrossIncome <= 0) return null;
+  return annualDebtService / adjustedGrossIncome;
+};
+
 export const handleFileUpload = async ($financialDocsUploader, $modalState, ocrApplied, pdfUrl) => {
   $modalState.update({ isLoading: true });
   try {
@@ -191,6 +205,7 @@ const loadGuarantorDocumentsFromBackend = async (guarantorFinancialId) => {
     if (documentsArray.length > 0) {
       const documentsByType = {
         personalFinancialStatement: [],
+        taxReturn: [],
       };
       documentsArray.forEach((doc) => {
         const type = doc.documentType || 'personalFinancialStatement';
@@ -229,6 +244,7 @@ const loadGuarantorDocumentsFromBackend = async (guarantorFinancialId) => {
   }
   return {
     personalFinancialStatement: [],
+    taxReturn: [],
   };
 };
 
@@ -238,6 +254,7 @@ const formatDateForInput = (dateString) => {
 };
 
 export const handleOpenEditMode = async (financial) => {
+  console.log('financial', financial);
   $submitPFSModalView.update({ isLoading: true });
   try {
     const documentsByType = await loadGuarantorDocumentsFromBackend(financial.id);
@@ -250,11 +267,16 @@ export const handleOpenEditMode = async (financial) => {
       totalLiabilities: financial.totalLiabilities?.toString() || '',
       netWorth: financial.netWorth?.toString() || '',
       liquidity: financial.liquidity?.toString() || '',
+      personalIncome: financial.personalIncome?.toString() || '',
+      adjustedGrossIncome: financial.adjustedGrossIncome?.toString() || '',
+      annualDebtServiceForRatio: toNumberOrNull(financial.annualDebtServiceForRatio) || 0,
+      netToIncomeRatio: financial.netToIncomeRatio != null ? Number(financial.netToIncomeRatio).toFixed(2) : null,
       notes: financial.notes || '',
       documentsByType,
       pdfUrl: firstDoc?.previewUrl || firstDoc?.storageUrl || null,
       currentDocumentIndex: {
         personalFinancialStatement: 0,
+        taxReturn: 0,
       },
     });
 
@@ -279,7 +301,15 @@ export const handleSubmit = async (onCloseCallback) => {
   try {
     const { guarantorId } = $submitPFSModalView.value;
     const {
-      asOfDate, totalAssets, totalLiabilities, netWorth, liquidity, notes,
+      asOfDate,
+      totalAssets,
+      totalLiabilities,
+      netWorth,
+      liquidity,
+      personalIncomeLine1z,
+      adjustedGrossIncomeLine11,
+      annualDebtServiceForRatio,
+      notes,
       downloadSensibleUrl,
     } = $submitPFSModalDetails.value;
     const { organizationId } = $user.value || {};
@@ -297,13 +327,21 @@ export const handleSubmit = async (onCloseCallback) => {
       return;
     }
 
+    const annualDebtService = toNumberOrNull(annualDebtServiceForRatio) || 30000;
+    const agi = toNumberOrNull(adjustedGrossIncomeLine11);
+    const netToIncomeRatio = calculateNetToIncomeRatio(annualDebtService, agi);
+
     // Body shape: GuarantorFinancialData (id only on update, from URL)
     const pfsData = {
       guarantorId,
-      totalAssets: +totalAssets,
-      totalLiabilities: +totalLiabilities,
-      netWorth: +netWorth,
-      liquidity: +liquidity,
+      totalAssets: toNumberOrNull(totalAssets),
+      totalLiabilities: toNumberOrNull(totalLiabilities),
+      netWorth: toNumberOrNull(netWorth),
+      liquidity: toNumberOrNull(liquidity),
+      personalIncome: toNumberOrNull(personalIncomeLine1z),
+      adjustedGrossIncome: agi,
+      annualDebtServiceForRatio: annualDebtService,
+      netToIncomeRatio,
       asOfDate,
       submittedBy: $user.value?.email || $user.value?.name || 'Unknown User',
       notes: notes || '',

@@ -35,6 +35,7 @@ const DocumentsContainer = ({
   const currentIndex = currentDocumentIndex[documentType] || 0;
   const currentDoc = currentDocs[currentIndex];
   const hasMultipleDocs = currentDocs.length > 1;
+  const isTaxReturnUploaded = (documentsByType.taxReturn || []).length > 0;
   const { excelData, isLoadingExcel, pdfNumPages, pdfPageNumber, pdfLoadError, pdfBlobUrl } = $documentsContainerView.value;
 
   // Memoize PDF options to prevent unnecessary re-renders (must be at component level, not inside conditionals)
@@ -75,6 +76,12 @@ const DocumentsContainer = ({
   useEffect(() => {
     resolvers.resetPdfState();
   }, [pdfUrl, pdfBlobUrl]);
+
+  useEffect(() => {
+    if (isTaxReturnUploaded && documentType !== 'taxReturn') {
+      $borrowerFinancialsForm.update({ documentType: 'taxReturn' });
+    }
+  }, [isTaxReturnUploaded, documentType]);
 
   const renderDocumentPreview = () => {
     // Check if current document is stored but doesn't have a File object
@@ -393,27 +400,34 @@ const DocumentsContainer = ({
             onChange={(e) => events.handleDocumentTypeChange(e, documentsByType, $modalState)}
             className="bg-info-800 text-info-100 border-info-600"
           >
-            <option value="balanceSheet">
-              Balance Sheet
-              {documentsByType.balanceSheet.length > 0 ? ` (${documentsByType.balanceSheet.length})` : ''}
-            </option>
-            <option value="incomeStatement">
-              Income Statement
-              {documentsByType.incomeStatement.length > 0 ? ` (${documentsByType.incomeStatement.length})` : ''}
-            </option>
-            <option value="debtServiceWorksheet">
-              Debt Service Worksheet
-              {documentsByType.debtServiceWorksheet.length > 0 ? ` (${documentsByType.debtServiceWorksheet.length})` : ''}
-            </option>
+            {!isTaxReturnUploaded && (
+              <option value="balanceSheet">
+                Balance Sheet
+                {documentsByType.balanceSheet.length > 0 ? ` (${documentsByType.balanceSheet.length})` : ''}
+              </option>
+            )}
+            {!isTaxReturnUploaded && (
+              <option value="incomeStatement">
+                Income Statement
+                {documentsByType.incomeStatement.length > 0 ? ` (${documentsByType.incomeStatement.length})` : ''}
+              </option>
+            )}
+            {!isTaxReturnUploaded && (
+              <option value="debtServiceWorksheet">
+                Debt Service Worksheet
+                {documentsByType.debtServiceWorksheet.length > 0 ? ` (${documentsByType.debtServiceWorksheet.length})` : ''}
+              </option>
+            )}
             <option value="taxReturn">
               Tax Return
               {documentsByType.taxReturn.length > 0 ? ` (${documentsByType.taxReturn.length})` : ''}
             </option>
-            <option value="personalFinancialStatement">
-              Personal Financial Statement
-              {documentsByType.personalFinancialStatement.length > 0 ? ` (${documentsByType.personalFinancialStatement.length})` : ''}
-            </option>
           </Form.Select>
+          {isTaxReturnUploaded && (
+            <Form.Text className="text-warning-300">
+              Tax return uploaded. Other document types are hidden for this submission.
+            </Form.Text>
+          )}
           {documentsByType[documentType].length === 0 && (
             <Form.Text className="text-info-300">
               No documents uploaded for this type yet.
@@ -578,7 +592,7 @@ const DocumentsContainer = ({
               </Col>
               <Col md={12} className="mb-16">
                 <UniversalInput
-                  label="Profit Margin (%)"
+                  label="Gross Profit Margin (%)"
                   labelClassName="text-info-100"
                   type="number"
                   step="0.01"
@@ -613,60 +627,51 @@ const DocumentsContainer = ({
           {documentType === 'taxReturn' && (
             <Row>
               <Col md={12} className="mb-16">
-                <div>Tax Return</div>
-              </Col>
-            </Row>
-          )}
-
-          {/* Personal Financial Statement Fields */}
-          {documentType === 'personalFinancialStatement' && (
-            <Row>
-              <Col md={12} className="mb-16">
                 <UniversalInput
-                  label="Total Assets"
+                  label="Gross Revenue"
                   labelClassName="text-info-100"
                   type="currency"
                   placeholder="$ USD"
-                  value={$borrowerFinancialsForm.value.totalAssets}
-                  name="totalAssets"
+                  value={$borrowerFinancialsForm.value.grossRevenue}
+                  name="grossRevenue"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValue}
+                  inputFormatCallback={normalizeCurrencyValueNoCents}
                 />
               </Col>
               <Col md={12} className="mb-16">
                 <UniversalInput
-                  label="Total Liabilities"
+                  label="Net Income"
                   labelClassName="text-info-100"
                   type="currency"
                   placeholder="$ USD"
-                  value={$borrowerFinancialsForm.value.totalLiabilities}
-                  name="totalLiabilities"
+                  value={$borrowerFinancialsForm.value.netIncome}
+                  name="netIncome"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValue}
+                  inputFormatCallback={normalizeCurrencyValueNoCents}
                 />
               </Col>
               <Col md={12} className="mb-16">
                 <UniversalInput
-                  label="Net Worth"
+                  label="EBITDA"
                   labelClassName="text-info-100"
                   type="currency"
                   placeholder="$ USD"
-                  value={$borrowerFinancialsForm.value.netWorth}
-                  name="netWorth"
+                  value={$borrowerFinancialsForm.value.ebitda}
+                  name="ebitda"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValue}
+                  inputFormatCallback={normalizeCurrencyValueNoCents}
                 />
               </Col>
               <Col md={12} className="mb-16">
                 <UniversalInput
-                  label="Liquidity"
+                  label="Gross Gross Profit Margin (%)"
                   labelClassName="text-info-100"
-                  type="currency"
-                  placeholder="$ USD"
-                  value={$borrowerFinancialsForm.value.liquidity}
-                  name="liquidity"
+                  type="number"
+                  step="0.01"
+                  placeholder="15.5"
+                  value={$borrowerFinancialsForm.value.profitMargin}
+                  name="profitMargin"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValue}
                 />
               </Col>
             </Row>

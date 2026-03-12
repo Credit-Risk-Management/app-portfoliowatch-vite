@@ -151,7 +151,7 @@ const DocumentsContainer = ({
           </div>
         );
       }
-
+      console.log('form value', $form.value);
       return (
         <div style={{ height: '65vh', width: '100%', position: 'relative' }}>
           <div
@@ -399,8 +399,12 @@ const DocumentsContainer = ({
               Personal Financial Statement
               {documentsByType.personalFinancialStatement.length > 0 ? ` (${documentsByType.personalFinancialStatement.length})` : ''}
             </option>
+            <option value="taxReturn">
+              Tax Return
+              {documentsByType.taxReturn.length > 0 ? ` (${documentsByType.taxReturn.length})` : ''}
+            </option>
           </Form.Select>
-          {documentsByType[documentType].length === 0 && (
+          {documentsByType[documentType]?.length === 0 && (
             <Form.Text className="text-info-300">
               No documents uploaded for this type yet.
             </Form.Text>
@@ -470,6 +474,46 @@ const DocumentsContainer = ({
                   name="liquidity"
                   signal={$form}
                   inputFormatCallback={normalizeCurrencyValue}
+                />
+              </Col>
+            </Row>
+          )}
+          {documentType === 'taxReturn' && (
+            <Row>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Personal Income (Line 1z)"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$form.value.personalIncome}
+                  name="personalIncome"
+                  signal={$form}
+                  inputFormatCallback={normalizeCurrencyValue}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Adjusted Gross Income (Line 11)"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$form.value.adjustedGrossIncome}
+                  name="adjustedGrossIncome"
+                  signal={$form}
+                  inputFormatCallback={normalizeCurrencyValue}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Net to Income Ratio"
+                  labelClassName="text-info-100"
+                  type="number"
+                  step="0.01"
+                  placeholder="1.00"
+                  value={$form.value.netToIncomeRatio}
+                  name="netToIncomeRatio"
+                  signal={$form}
                 />
               </Col>
             </Row>

@@ -184,7 +184,6 @@ const loadDocumentsFromBackend = async (financialId) => {
         incomeStatement: [],
         debtServiceWorksheet: [],
         taxReturn: [],
-        personalFinancialStatement: [],
       };
       documents.forEach((doc) => {
         const type = doc.documentType;
@@ -213,7 +212,6 @@ const loadDocumentsFromBackend = async (financialId) => {
     incomeStatement: [],
     debtServiceWorksheet: [],
     taxReturn: [],
-    personalFinancialStatement: [],
   };
 };
 
@@ -275,7 +273,6 @@ export const handleOpenEditMode = async (financial) => {
       incomeStatement: 0,
       debtServiceWorksheet: 0,
       taxReturn: 0,
-      personalFinancialStatement: 0,
       ...(firstDocType ? { [firstDocType]: 0 } : {}),
     },
   });
