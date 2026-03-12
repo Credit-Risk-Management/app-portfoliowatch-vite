@@ -7,7 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartLine, faCheck, faCopy, faTable } from '@fortawesome/free-solid-svg-icons';
 import { formatDate } from '@src/utils/formatDate';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
-import { $submitPFSModalView, $submitPFSModalDetails } from '../SubmitPFSModal/_helpers/submitPFSModal.const';
+import { $submitPFSModalView } from '../SubmitPFSModal/_helpers/submitPFSModal.const';
 import { $guarantorDetailView } from '../../_helpers/guarantorDetails.consts';
 import * as consts from './_helpers/guarantorFinancials.consts';
 import * as events from './_helpers/guarantorFinancials.events';
@@ -22,6 +22,13 @@ const TABLE_HEADERS = [
   { key: 'liquidity', value: 'Liquidity' },
 ];
 
+const TAX_RETURN_HEADERS = [
+  { key: 'asOfDate', value: 'As Of Date' },
+  { key: 'personalIncome', value: 'Personal Income' },
+  { key: 'adjustedGrossIncome', value: 'Adjusted Gross Income ' },
+  { key: 'netToIncomeRatio', value: 'Net to Income Ratio' },
+];
+
 export function GuarantorFinancials() {
   const { guarantorId } = $guarantorDetailView.value;
   const { financials } = $guarantorDetailsData.value;
@@ -32,15 +39,46 @@ export function GuarantorFinancials() {
   }, [guarantorId]);
 
   const uploadLinkUrl = getGuarantorUploadLinkUrl(guarantorId);
-  const annualDebtServiceForRatio = (($guarantorDetailsData.value?.loans || []).reduce((acc, loan) => acc + Number(loan.paymentAmount || 0), 0) * 12) || 0;
-  const rows = useMemo(() => [...financials].sort((a, b) => new Date(b.asOfDate) - new Date(a.asOfDate)).map((financial) => ({
+  const sortedFinancials = useMemo(
+    () => [...(financials || [])].sort((a, b) => new Date(b.asOfDate) - new Date(a.asOfDate)),
+    [financials],
+  );
+  const pfsFinancials = useMemo(
+    () => sortedFinancials.filter((financial) => (
+      financial.totalAssets != null
+      || financial.totalLiabilities != null
+      || financial.netWorth != null
+      || financial.liquidity != null
+    )),
+    [sortedFinancials],
+  );
+
+  const taxReturnFinancials = useMemo(
+    () => sortedFinancials.filter((financial) => (
+      financial.personalIncome != null
+      || financial.adjustedGrossIncome != null
+      || financial.netToIncomeRatio != null
+    )),
+    [sortedFinancials],
+  );
+
+  const pfsRows = useMemo(() => pfsFinancials.map((financial) => ({
     id: financial.id,
     totalAssets: formatCurrency(financial.totalAssets),
     totalLiabilities: formatCurrency(financial.totalLiabilities),
     netWorth: formatCurrency(financial.netWorth),
     liquidity: formatCurrency(financial.liquidity),
     asOfDate: formatDate(financial.asOfDate),
-  })), [financials]);
+  })), [pfsFinancials]);
+
+  const taxReturnRows = useMemo(() => taxReturnFinancials.map((financial) => ({
+    id: financial.id,
+    asOfDate: formatDate(financial.asOfDate),
+    personalIncome: formatCurrency(financial.personalIncome),
+    adjustedGrossIncome: formatCurrency(financial.adjustedGrossIncome),
+
+    netToIncomeRatio: financial.netToIncomeRatio != null ? Number(financial.netToIncomeRatio).toFixed(2) : '-',
+  })), [taxReturnFinancials]);
 
   return (
     <div>
@@ -51,7 +89,6 @@ export function GuarantorFinancials() {
             className="me-8"
             size="sm"
             onClick={() => {
-              $submitPFSModalDetails.update({ annualDebtServiceForRatio });
               $submitPFSModalView.update({
                 activeModalKey: 'submitPFS',
                 guarantorId: $guarantorDetailView.value.guarantorId,
@@ -82,18 +119,34 @@ export function GuarantorFinancials() {
           </Button>
         </div>
       </div>
+      <h6 className="text-info-100 mb-8">Personal Financial Statements</h6>
       <SignalTable
-        rows={rows}
+        rows={pfsRows}
         headers={TABLE_HEADERS}
-        data={financials}
-        totalCount={financials.length}
+        data={pfsFinancials}
+        totalCount={pfsFinancials.length}
         isLoading={$guarantorDetailView.value.isLoading}
         onRowClick={(financial) => {
-          $submitPFSModalDetails.update({ annualDebtServiceForRatio });
           $submitPFSModalView.update({
             activeModalKey: 'submitPFS',
             guarantorId: $guarantorDetailView.value.guarantorId,
             editingFinancialId: financial.id,
+          });
+        }}
+      />
+      <h6 className="text-info-100 mt-16 mb-8">Tax Returns</h6>
+      <SignalTable
+        rows={taxReturnRows}
+        headers={TAX_RETURN_HEADERS}
+        data={taxReturnFinancials}
+        totalCount={taxReturnFinancials.length}
+        isLoading={$guarantorDetailView.value.isLoading}
+        onRowClick={(financial) => {
+          $submitPFSModalView.update({
+            activeModalKey: 'submitPFS',
+            guarantorId: $guarantorDetailView.value.guarantorId,
+            editingFinancialId: financial.id,
+            documentType: 'taxSheet',
           });
         }}
       />

@@ -36,9 +36,6 @@ const DocumentsContainer = ({
   const currentIndex = currentDocumentIndex[documentType] || 0;
   const currentDoc = currentDocs[currentIndex];
   const hasMultipleDocs = currentDocs.length > 1;
-  const annualDebtForRatio = Number($form.value.annualDebtServiceForRatio || 0);
-  const adjustedGrossIncome = Number($form.value.adjustedGrossIncome || 0);
-  const netToIncomeRatio = adjustedGrossIncome > 0 ? annualDebtForRatio / adjustedGrossIncome : null;
   const { excelData, isLoadingExcel, pdfNumPages, pdfPageNumber, pdfLoadError, pdfBlobUrl } = $documentsContainerView.value;
 
   // Memoize PDF options to prevent unnecessary re-renders (must be at component level, not inside conditionals)
@@ -79,13 +76,6 @@ const DocumentsContainer = ({
   useEffect(() => {
     resolvers.resetPdfState();
   }, [pdfUrl, pdfBlobUrl]);
-
-  useEffect(() => {
-    const nextValue = netToIncomeRatio != null ? netToIncomeRatio.toFixed(4) : '';
-    if ($form.value.netToIncomeRatio !== nextValue) {
-      $form.update({ netToIncomeRatio: nextValue });
-    }
-  }, [netToIncomeRatio]);
 
   const renderDocumentPreview = () => {
     // Check if current document is stored but doesn't have a File object
@@ -161,7 +151,7 @@ const DocumentsContainer = ({
           </div>
         );
       }
-
+      console.log('form value', $form.value);
       return (
         <div style={{ height: '65vh', width: '100%', position: 'relative' }}>
           <div
@@ -414,7 +404,7 @@ const DocumentsContainer = ({
               {documentsByType.taxReturn.length > 0 ? ` (${documentsByType.taxReturn.length})` : ''}
             </option>
           </Form.Select>
-          {documentsByType[documentType].length === 0 && (
+          {documentsByType[documentType]?.length === 0 && (
             <Form.Text className="text-info-300">
               No documents uploaded for this type yet.
             </Form.Text>

@@ -254,6 +254,7 @@ const formatDateForInput = (dateString) => {
 };
 
 export const handleOpenEditMode = async (financial) => {
+  console.log('financial', financial);
   $submitPFSModalView.update({ isLoading: true });
   try {
     const documentsByType = await loadGuarantorDocumentsFromBackend(financial.id);
@@ -269,7 +270,7 @@ export const handleOpenEditMode = async (financial) => {
       personalIncome: financial.personalIncome?.toString() || '',
       adjustedGrossIncome: financial.adjustedGrossIncome?.toString() || '',
       annualDebtServiceForRatio: toNumberOrNull(financial.annualDebtServiceForRatio) || 0,
-      netToIncomeRatio: toNumberOrNull(financial.netToIncomeRatio) || 0,
+      netToIncomeRatio: financial.netToIncomeRatio != null ? Number(financial.netToIncomeRatio).toFixed(2) : null,
       notes: financial.notes || '',
       documentsByType,
       pdfUrl: firstDoc?.previewUrl || firstDoc?.storageUrl || null,
