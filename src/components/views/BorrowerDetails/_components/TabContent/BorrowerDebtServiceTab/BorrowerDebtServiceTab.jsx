@@ -108,7 +108,7 @@ export function BorrowerDebtServiceTab() {
             month: 'short',
             day: 'numeric',
           }),
-          totalCurrentBalance: <span className="text-danger-500 fw-500">{formatCurrency(record.totalCurrentBalance)}</span>,
+          totalCurrentBalance: <span className="text-warning-500 fw-500">{formatCurrency(record.totalCurrentBalance)}</span>,
           totalMonthlyPayment: <span className="text-warning-500 fw-500">{formatCurrency(annualPayment)}</span>,
           debtCount: (
             <Button

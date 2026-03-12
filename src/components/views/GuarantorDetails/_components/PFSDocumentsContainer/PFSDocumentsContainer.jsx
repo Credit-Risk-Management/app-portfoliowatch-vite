@@ -399,9 +399,9 @@ const DocumentsContainer = ({
               Personal Financial Statement
               {documentsByType.personalFinancialStatement.length > 0 ? ` (${documentsByType.personalFinancialStatement.length})` : ''}
             </option>
-            <option value="taxReturn">
-              Tax Return
-              {documentsByType.taxReturn.length > 0 ? ` (${documentsByType.taxReturn.length})` : ''}
+            <option value="personalTaxReturn">
+              Personal Tax Return
+              {documentsByType.personalTaxReturn.length > 0 ? ` (${documentsByType.personalTaxReturn.length})` : ''}
             </option>
           </Form.Select>
           {documentsByType[documentType]?.length === 0 && (
@@ -478,20 +478,8 @@ const DocumentsContainer = ({
               </Col>
             </Row>
           )}
-          {documentType === 'taxReturn' && (
+          {documentType === 'personalTaxReturn' && (
             <Row>
-              <Col md={12} className="mb-16">
-                <UniversalInput
-                  label="Personal Income (Line 1z)"
-                  labelClassName="text-info-100"
-                  type="currency"
-                  placeholder="$ USD"
-                  value={$form.value.personalIncome}
-                  name="personalIncome"
-                  signal={$form}
-                  inputFormatCallback={normalizeCurrencyValue}
-                />
-              </Col>
               <Col md={12} className="mb-16">
                 <UniversalInput
                   label="Adjusted Gross Income (Line 11)"
@@ -506,13 +494,13 @@ const DocumentsContainer = ({
               </Col>
               <Col md={12} className="mb-16">
                 <UniversalInput
-                  label="Net to Income Ratio"
+                  label="Debt to Income Ratio"
                   labelClassName="text-info-100"
                   type="number"
                   step="0.01"
                   placeholder="1.00"
-                  value={$form.value.netToIncomeRatio}
-                  name="netToIncomeRatio"
+                  value={$form.value.debtToIncomeRatio}
+                  name="debtToIncomeRatio"
                   signal={$form}
                 />
               </Col>

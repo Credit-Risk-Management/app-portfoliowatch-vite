@@ -10,6 +10,7 @@ import extractFromPersonalFinancialStatement from './submitPFSModal.helpers';
 
 const SENSIBLE_DOCUMENT_TYPES = {
   personalFinancialStatement: 'personal_financial_statement',
+  personalTaxReturn: 'tax_return',
 };
 
 const toNumberOrNull = (value) => {
@@ -18,12 +19,6 @@ const toNumberOrNull = (value) => {
     ? Number(value.replace(/[^0-9.-]/g, ''))
     : Number(value);
   return Number.isFinite(parsed) ? parsed : null;
-};
-
-const calculateNetToIncomeRatio = (annualDebtService, adjustedGrossIncome) => {
-  if (!annualDebtService || !adjustedGrossIncome) return null;
-  if (adjustedGrossIncome <= 0) return null;
-  return annualDebtService / adjustedGrossIncome;
 };
 
 export const handleFileUpload = async ($financialDocsUploader, $modalState, ocrApplied, pdfUrl) => {
@@ -244,7 +239,7 @@ const loadGuarantorDocumentsFromBackend = async (guarantorFinancialId) => {
   }
   return {
     personalFinancialStatement: [],
-    taxReturn: [],
+    personalTaxReturn: [],
   };
 };
 
@@ -254,7 +249,6 @@ const formatDateForInput = (dateString) => {
 };
 
 export const handleOpenEditMode = async (financial) => {
-  console.log('financial', financial);
   $submitPFSModalView.update({ isLoading: true });
   try {
     const documentsByType = await loadGuarantorDocumentsFromBackend(financial.id);
@@ -267,16 +261,14 @@ export const handleOpenEditMode = async (financial) => {
       totalLiabilities: financial.totalLiabilities?.toString() || '',
       netWorth: financial.netWorth?.toString() || '',
       liquidity: financial.liquidity?.toString() || '',
-      personalIncome: financial.personalIncome?.toString() || '',
       adjustedGrossIncome: financial.adjustedGrossIncome?.toString() || '',
-      annualDebtServiceForRatio: toNumberOrNull(financial.annualDebtServiceForRatio) || 0,
-      netToIncomeRatio: financial.netToIncomeRatio != null ? Number(financial.netToIncomeRatio).toFixed(2) : null,
+      debtToIncomeRatio: financial.debtToIncomeRatio != null ? Number(financial.debtToIncomeRatio).toFixed(2) : null,
       notes: financial.notes || '',
       documentsByType,
       pdfUrl: firstDoc?.previewUrl || firstDoc?.storageUrl || null,
       currentDocumentIndex: {
         personalFinancialStatement: 0,
-        taxReturn: 0,
+        personalTaxReturn: 0,
       },
     });
 
@@ -306,9 +298,8 @@ export const handleSubmit = async (onCloseCallback) => {
       totalLiabilities,
       netWorth,
       liquidity,
-      personalIncomeLine1z,
-      adjustedGrossIncomeLine11,
-      annualDebtServiceForRatio,
+      adjustedGrossIncome,
+      debtToIncomeRatio,
       notes,
       downloadSensibleUrl,
     } = $submitPFSModalDetails.value;
@@ -327,10 +318,6 @@ export const handleSubmit = async (onCloseCallback) => {
       return;
     }
 
-    const annualDebtService = toNumberOrNull(annualDebtServiceForRatio) || 30000;
-    const agi = toNumberOrNull(adjustedGrossIncomeLine11);
-    const netToIncomeRatio = calculateNetToIncomeRatio(annualDebtService, agi);
-
     // Body shape: GuarantorFinancialData (id only on update, from URL)
     const pfsData = {
       guarantorId,
@@ -338,10 +325,8 @@ export const handleSubmit = async (onCloseCallback) => {
       totalLiabilities: toNumberOrNull(totalLiabilities),
       netWorth: toNumberOrNull(netWorth),
       liquidity: toNumberOrNull(liquidity),
-      personalIncome: toNumberOrNull(personalIncomeLine1z),
-      adjustedGrossIncome: agi,
-      annualDebtServiceForRatio: annualDebtService,
-      netToIncomeRatio,
+      adjustedGrossIncome: toNumberOrNull(adjustedGrossIncome),
+      debtToIncomeRatio: toNumberOrNull(debtToIncomeRatio),
       asOfDate,
       submittedBy: $user.value?.email || $user.value?.name || 'Unknown User',
       notes: notes || '',
@@ -396,10 +381,6 @@ export const handleSubmit = async (onCloseCallback) => {
       await fetchGuarantorDetail(guarantorId);
       onCloseCallback();
 
-      const updatedLoans = data?.updatedLoans || [];
-      if (updatedLoans?.length) {
-        $submitPFSModalView.update({ showWatchScoreResults: true, updatedLoans });
-      }
       successAlert($submitPFSModalView.value.isEditMode ? 'PFS updated successfully!' : 'PFS submitted successfully!', 'toast');
     } else {
       $submitPFSModalView.update({ error: response?.error || response?.message || 'Failed to submit PFS' });

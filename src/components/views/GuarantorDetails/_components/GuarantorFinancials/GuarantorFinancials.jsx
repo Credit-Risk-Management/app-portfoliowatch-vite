@@ -20,13 +20,8 @@ const TABLE_HEADERS = [
   { key: 'totalLiabilities', value: 'Total Liabilities' },
   { key: 'netWorth', value: 'Net Worth' },
   { key: 'liquidity', value: 'Liquidity' },
-];
-
-const TAX_RETURN_HEADERS = [
-  { key: 'asOfDate', value: 'As Of Date' },
-  { key: 'personalIncome', value: 'Personal Income' },
   { key: 'adjustedGrossIncome', value: 'Adjusted Gross Income ' },
-  { key: 'netToIncomeRatio', value: 'Net to Income Ratio' },
+  { key: 'debtToIncomeRatio', value: 'Debt to Income Ratio' },
 ];
 
 export function GuarantorFinancials() {
@@ -43,42 +38,17 @@ export function GuarantorFinancials() {
     () => [...(financials || [])].sort((a, b) => new Date(b.asOfDate) - new Date(a.asOfDate)),
     [financials],
   );
-  const pfsFinancials = useMemo(
-    () => sortedFinancials.filter((financial) => (
-      financial.totalAssets != null
-      || financial.totalLiabilities != null
-      || financial.netWorth != null
-      || financial.liquidity != null
-    )),
-    [sortedFinancials],
-  );
 
-  const taxReturnFinancials = useMemo(
-    () => sortedFinancials.filter((financial) => (
-      financial.personalIncome != null
-      || financial.adjustedGrossIncome != null
-      || financial.netToIncomeRatio != null
-    )),
-    [sortedFinancials],
-  );
-
-  const pfsRows = useMemo(() => pfsFinancials.map((financial) => ({
+  const financialsRows = useMemo(() => sortedFinancials.map((financial) => ({
     id: financial.id,
     totalAssets: formatCurrency(financial.totalAssets),
     totalLiabilities: formatCurrency(financial.totalLiabilities),
     netWorth: formatCurrency(financial.netWorth),
     liquidity: formatCurrency(financial.liquidity),
-    asOfDate: formatDate(financial.asOfDate),
-  })), [pfsFinancials]);
-
-  const taxReturnRows = useMemo(() => taxReturnFinancials.map((financial) => ({
-    id: financial.id,
-    asOfDate: formatDate(financial.asOfDate),
-    personalIncome: formatCurrency(financial.personalIncome),
     adjustedGrossIncome: formatCurrency(financial.adjustedGrossIncome),
-
-    netToIncomeRatio: financial.netToIncomeRatio != null ? Number(financial.netToIncomeRatio).toFixed(2) : '-',
-  })), [taxReturnFinancials]);
+    debtToIncomeRatio: financial.debtToIncomeRatio != null ? Number(financial.debtToIncomeRatio).toFixed(2) : '-',
+    asOfDate: formatDate(financial.asOfDate),
+  })), [sortedFinancials]);
 
   return (
     <div>
@@ -119,34 +89,18 @@ export function GuarantorFinancials() {
           </Button>
         </div>
       </div>
-      <h6 className="text-info-100 mb-8">Personal Financial Statements</h6>
+      <h6 className="text-info-100 mb-8">Financial Statements</h6>
       <SignalTable
-        rows={pfsRows}
+        rows={financialsRows}
         headers={TABLE_HEADERS}
-        data={pfsFinancials}
-        totalCount={pfsFinancials.length}
+        data={sortedFinancials}
+        totalCount={sortedFinancials.length}
         isLoading={$guarantorDetailView.value.isLoading}
         onRowClick={(financial) => {
           $submitPFSModalView.update({
             activeModalKey: 'submitPFS',
             guarantorId: $guarantorDetailView.value.guarantorId,
             editingFinancialId: financial.id,
-          });
-        }}
-      />
-      <h6 className="text-info-100 mt-16 mb-8">Tax Returns</h6>
-      <SignalTable
-        rows={taxReturnRows}
-        headers={TAX_RETURN_HEADERS}
-        data={taxReturnFinancials}
-        totalCount={taxReturnFinancials.length}
-        isLoading={$guarantorDetailView.value.isLoading}
-        onRowClick={(financial) => {
-          $submitPFSModalView.update({
-            activeModalKey: 'submitPFS',
-            guarantorId: $guarantorDetailView.value.guarantorId,
-            editingFinancialId: financial.id,
-            documentType: 'taxSheet',
           });
         }}
       />

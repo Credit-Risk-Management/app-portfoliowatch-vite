@@ -31,12 +31,14 @@ export function BorrowerFinancialsTab() {
       ...financial,
       asOfDate: formatFinancialDate(financial.asOfDate),
       submittedAt: formatFinancialDate(financial.submittedAt),
-      accountabilityScore: financial.accountabilityScore ?? '-',
+      accountabilityScore: <span className="d-block text-center">{financial.accountabilityScore ?? '-'}</span>,
       docTypes: financial.documents.map((doc) => FINANCIAL_DOC_TYPES.find((type) => type.value === doc.documentType)?.label ?? '-').join(', ') ?? '-',
       grossRevenue: <span className="text-success-500 fw-500">{formatCurrency(financial.grossRevenue)}</span>,
       netIncome: <span className="text-success-500 fw-500">{formatCurrency(financial.netIncome)}</span>,
       ebitda: <span className="text-success-500 fw-500">{formatCurrency(financial.ebitda)}</span>,
-      debtService: financial.debtService ? parseFloat(financial.debtService).toFixed(2) : '-',
+      debtService: financial.debtService ? (
+        <span className="text-warning-500 fw-600">{formatCurrency(financial.debtService)}</span>
+      ) : '-',
       currentRatio: financial.currentRatio ? parseFloat(financial.currentRatio).toFixed(2) : '-',
       liquidity: <span className="text-success-500 fw-500">{formatCurrency(financial.liquidity)}</span>,
       submittedBy: financial.submittedBy ?? '-',

@@ -2,7 +2,7 @@
 /* eslint-disable react/no-danger */
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
-import { Container, Button, Row, Col, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { Container, Button, Row, Col } from 'react-bootstrap';
 import PageHeader from '@src/components/global/PageHeader';
 import UniversalCard from '@src/components/global/UniversalCard';
 import Loadable from '@src/components/global/Loadable';
@@ -14,7 +14,6 @@ import GuarantorFinancials from './_components/GuarantorFinancials';
 import GuarantorDocuments from './_components/GuarantorDocuments';
 import { $guarantorDetailView, $guarantorDetailsData } from './_helpers/guarantorDetails.consts';
 import SubmitPFSModal from './_components/SubmitPFSModal/SubmitPFSModal';
-import getGuarantorDetailsHelpers from './_helpers/guarantorDetails.helpers';
 import GuarantorLoans from './_components/GuarantorLoans';
 
 export function GuarantorDetailContainer() {
@@ -28,42 +27,6 @@ export function GuarantorDetailContainer() {
   //
   // Mutations
   //
-
-  const financials = $guarantorDetailsData.value?.financials?.sort((a, b) => new Date(b.asOfDate) - new Date(a.asOfDate))[0] || {};
-  const annualDebtService = $guarantorDetailsData.value?.loans.reduce((acc, loan) => acc + Number(loan.paymentAmount || 0), 0) * 12 || 0;
-
-  const leverage = getGuarantorDetailsHelpers.calculateLeverage(
-    financials.totalLiabilities,
-    financials.totalAssets,
-  );
-
-  const liquidityCoverage = getGuarantorDetailsHelpers.calculateLiquidityCoverage(
-    financials.liquidity,
-    annualDebtService,
-  );
-
-  const liquidityScoreContrib = liquidityCoverage !== null ? getGuarantorDetailsHelpers.liquidityScore(liquidityCoverage) : 0;
-  const leverageScoreContrib = leverage !== null ? getGuarantorDetailsHelpers.leverageScore(leverage) : 0;
-  const score = liquidityScoreContrib + leverageScoreContrib;
-
-  const strength = getGuarantorDetailsHelpers.getStrengthMeta(score);
-
-  const scoreBreakdownTooltip = (
-    <Tooltip id="guarantor-score-breakdown">
-      <div className="text-start small">
-        <strong>Score breakdown</strong>
-        <div className="mt-8">
-          Liquidity coverage (up to 60 pts): {liquidityCoverage != null ? `${liquidityCoverage.toFixed(1)}×` : 'N/A'} → {liquidityScoreContrib} pts
-        </div>
-        <div>
-          Leverage ratio (up to 40 pts): {leverage != null ? `${Math.round(leverage * 100)}%` : 'N/A'} → {leverageScoreContrib} pts
-        </div>
-        <div className="mt-8 pt-8 border-top border-white border-opacity-25">
-          Total: {score} / 100 — {strength.label}
-        </div>
-      </div>
-    </Tooltip>
-  );
 
   //
   //  Render
@@ -108,31 +71,22 @@ export function GuarantorDetailContainer() {
             Back
           </Button>
         </div>
-        <PageHeader
-          title={$guarantorDetailsData.value?.name}
-          AdditionalComponents={() => (
-            <OverlayTrigger placement="bottom" overlay={scoreBreakdownTooltip}>
-              <div className={`px-12 py-4 rounded-pill bg-${strength.color}-200 text-${strength.color}-800 small fw-600`}>
-                {score} / 100 · {strength.label}
-              </div>
-            </OverlayTrigger>
-          )}
-        />
+        <PageHeader title={$guarantorDetailsData.value?.name} />
 
         <Row>
           <Col xs={6} md={4} className="mb-12 mb-md-16">
             <UniversalCard headerText="Guarantor Details">
               <Col>
-                <div className="text-info-200 small fw-300 mt-8">Net Worth</div>
+                <div className="text-info-200 fw-300 fs-6 mt-8">Net Worth</div>
                 <div className="text-success-400 fw-600 fs-5">
                   {formatCurrency($guarantorDetailsData.value?.financials?.[0]?.netWorth || 'N/A')}
                 </div>
-                <div className="text-info-200 small fw-300 mt-8">Email</div>
-                <div className="text-info-50 fw-500 fs-6">
+                <div className="text-info-200 fw-300 fs-6 mt-8">Email</div>
+                <div className="text-info-50 fw-500 fs-5">
                   {$guarantorDetailsData.value?.email || 'N/A'}
                 </div>
-                <div className="text-info-200 small fw-300 mt-8">Phone</div>
-                <div className="text-info-50 fw-500 fs-6">
+                <div className="text-info-200 fw-300 fs-6 mt-8">Phone</div>
+                <div className="text-info-50 fw-500 fs-5">
                   {$guarantorDetailsData.value?.phone || 'N/A'}
                 </div>
               </Col>
@@ -158,37 +112,14 @@ export function GuarantorDetailContainer() {
               <Row className="mt-8 g-2 justify-content-between">
                 <Col xs={12} md={4}>
                   <div className="text-info-200 small fw-300">Liquidity</div>
-                  <div className="text-info-50 fw-500 fs-6">
+                  <div className="text-info-50 fw-500 fs-5">
                     {formatCurrency($guarantorDetailsData.value?.financials?.[0]?.liquidity || 'N/A')}
                   </div>
                 </Col>
                 <Col xs={12} md={4}>
                   <div className="text-info-200 small fw-300">Debt Service</div>
-                  <div className="text-info-50 fw-500 fs-6">
+                  <div className="text-info-50 fw-500 fs-5">
                     {formatCurrency($guarantorDetailsData.value?.loans.reduce((acc, loan) => acc + +loan.paymentAmount, 0) * 12 || 'N/A')}
-                  </div>
-                </Col>
-              </Row>
-              <Row className="mt-8 g-2 justify-content-between">
-                <Col xs={12} md={4}>
-                  <div className="text-info-200 small fw-300">Leverage Ratio</div>
-                  <div className="text-info-50 fw-600 fs-6">
-                    {leverage !== null ? `${Math.round(leverage * 100)}%` : 'N/A'}
-                    {leverage > 0.65 && (
-                      <span className="text-danger-400 ms-8 small">⚠ High</span>
-                    )}
-                  </div>
-                </Col>
-
-                <Col xs={12} md={4}>
-                  <div className="text-info-200 small fw-300">Liquidity Coverage</div>
-                  <div className="text-info-50 fw-600 fs-6">
-                    {liquidityCoverage !== null
-                      ? `${liquidityCoverage.toFixed(1)}×`
-                      : 'N/A'}
-                    {liquidityCoverage < 1.25 && (
-                      <span className="text-danger-400 ms-8 small">⚠ Weak</span>
-                    )}
                   </div>
                 </Col>
               </Row>
