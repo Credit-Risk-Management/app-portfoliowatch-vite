@@ -200,7 +200,7 @@ const loadGuarantorDocumentsFromBackend = async (guarantorFinancialId) => {
     if (documentsArray.length > 0) {
       const documentsByType = {
         personalFinancialStatement: [],
-        taxReturn: [],
+        personalTaxReturn: [],
       };
       documentsArray.forEach((doc) => {
         const type = doc.documentType || 'personalFinancialStatement';

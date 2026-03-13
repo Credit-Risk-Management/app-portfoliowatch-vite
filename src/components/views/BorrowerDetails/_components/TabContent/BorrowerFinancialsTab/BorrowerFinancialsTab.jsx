@@ -36,9 +36,7 @@ export function BorrowerFinancialsTab() {
       grossRevenue: <span className="text-success-500 fw-500">{formatCurrency(financial.grossRevenue)}</span>,
       netIncome: <span className="text-success-500 fw-500">{formatCurrency(financial.netIncome)}</span>,
       ebitda: <span className="text-success-500 fw-500">{formatCurrency(financial.ebitda)}</span>,
-      debtService: financial.debtService ? (
-        <span className="text-warning-500 fw-600">{formatCurrency(financial.debtService)}</span>
-      ) : '-',
+      debtService: financial.debtService ? parseFloat(financial.debtService).toFixed(2) : '-',
       currentRatio: financial.currentRatio ? parseFloat(financial.currentRatio).toFixed(2) : '-',
       liquidity: <span className="text-success-500 fw-500">{formatCurrency(financial.liquidity)}</span>,
       submittedBy: financial.submittedBy ?? '-',
