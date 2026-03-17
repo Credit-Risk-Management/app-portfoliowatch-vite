@@ -17,6 +17,7 @@ const UniversalModal = ({
   footerClass,
   size = 'lg',
   children = null,
+  backdrop = true,
 }) => {
   const isFullscreen = size === 'fullscreen';
 
@@ -28,6 +29,7 @@ const UniversalModal = ({
       size={isFullscreen ? undefined : size}
       dialogClassName={isFullscreen ? 'modal-fullscreen-custom' : ''}
       className={isFullscreen ? '' : 'pt-32 text-info-200'}
+      backdrop={backdrop}
     >
       <Modal.Header
         className={`bg-info-600 lead border-0 d-flex justify-content-between ${isFullscreen ? 'modal-fullscreen-header pt-16 border-bottom border-info' : ''}`}

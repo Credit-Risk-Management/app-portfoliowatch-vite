@@ -5,6 +5,7 @@ import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 import { $borrower } from '@src/consts/consts';
 import { formatCurrency } from '@src/utils/formatCurrency';
+import { calculateAnnualDebtServiceFromLoans } from '@src/utils/currency';
 
 export function BorrowerGuarantorsTab() {
   const navigate = useNavigate();
@@ -31,8 +32,7 @@ export function BorrowerGuarantorsTab() {
   return (
     <Row className="g-4">
       {borrower?.guarantors?.map((guarantor) => {
-        const annualDebtService =
-          guarantor.loans.reduce((acc, loan) => acc + Number(loan.paymentAmount || 0), 0) * 12;
+        const annualDebtService = calculateAnnualDebtServiceFromLoans(guarantor.loans || []);
 
         return (
           <Col key={guarantor.id} xs={12} lg={6} className="mb-3">
@@ -82,7 +82,7 @@ export function BorrowerGuarantorsTab() {
                 <Row className="mb-16 g-2 justify-content-between">
                   <Col xs={12} md={4}>  <div className="text-info-200 small fw-300">Debt Service</div>
                     <div className="text-info-50 fw-500 fs-5">
-                      {formatCurrency(annualDebtService || 'N/A')}
+                      {formatCurrency(annualDebtService)}
                     </div>
                   </Col>
                 </Row>

@@ -6,14 +6,23 @@ import { useNavigate } from 'react-router-dom';
 import { formatCurrency } from '@src/utils/formatCurrency';
 import { formatDate } from '@src/utils/formatDate';
 import { $borrower } from '@src/consts/consts';
+import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
+import { $borrowerFinancialsView } from '@src/signals';
 import LoanMiniRadarChart from './_components/LoanMiniRadarChart';
 import { getWatchScoreDisplay, formatCategoryBreakdown, hasWatchScoreData, getCategoryTextColor } from './_helpers/loanCard.helpers';
 import { $loanWatchScoreBreakdowns } from './_helpers/loanCard.consts';
 import { $borrowerFinancialsTableView } from '../../../_helpers/borrowerDetail.consts';
+import { fetchFinancialHistory } from '../BorrowerFinancialsTab/_helpers/borrowerFinancialsTab.resolvers';
+import { fetchLoanWatchScoreBreakdowns } from './_helpers/loanCoard.resolvers';
 
 const BorrowerLoansTab = () => {
   const navigate = useNavigate();
   const borrower = $borrower.value?.borrower;
+
+  useEffectAsync(async () => {
+    await fetchFinancialHistory();
+    await fetchLoanWatchScoreBreakdowns();
+  }, [$borrowerFinancialsView.value?.refreshTrigger]);
 
   const handleViewDetails = (loanId) => {
     if (loanId) {

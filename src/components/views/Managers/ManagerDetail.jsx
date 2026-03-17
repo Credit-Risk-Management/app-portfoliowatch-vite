@@ -24,8 +24,6 @@ const ManagerDetail = () => {
 
   const { manager, metrics, recentLoans, isLoading } = $managerDetail.value;
 
-  console.log('manager', manager);
-
   useEffectAsync(async () => {
     await resolvers.loadManagerDetailData(managerId);
   }, [managerId]);

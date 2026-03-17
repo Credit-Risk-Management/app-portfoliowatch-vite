@@ -6,7 +6,7 @@ import postToSensibleApi, { initiateUploadToSensibleApi } from '@src/api/sensibl
 import { storage } from '@src/utils/firebase';
 import { fetchGuarantorDetail } from '@src/components/views/GuarantorDetails/_helpers/guarantorDetails.resolvers';
 import { $submitPFSModalView, $submitPFSModalDetails } from './submitPFSModal.const';
-import extractFromPersonalFinancialStatement from './submitPFSModal.helpers';
+import { extractFromPersonalFinancialStatement, extractTaxReturnFromApiResponse } from './submitPFSModal.helpers';
 
 const SENSIBLE_DOCUMENT_TYPES = {
   personalFinancialStatement: 'personal_financial_statement',
@@ -106,6 +106,12 @@ export const handleFileUpload = async ($financialDocsUploader, $modalState, ocrA
           const pfsData = extractFromPersonalFinancialStatement(parsedDocument);
           if (pfsData) {
             $submitPFSModalDetails.update(pfsData);
+          }
+        }
+        if (documentType === 'taxReturn' && parsedDocument) {
+          const extractedData = extractTaxReturnFromApiResponse(parsedDocument);
+          if (extractedData) {
+            $submitPFSModalDetails.update(extractedData);
           }
         }
 

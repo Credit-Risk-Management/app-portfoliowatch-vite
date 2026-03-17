@@ -44,7 +44,7 @@ const sumTableAmountColumn = (table, amountColumnId = 'amount') => {
   return col.values.reduce((sum, cell) => sum + (parseApiNumber(cell?.value) || 0), 0);
 };
 
-export default function extractFromPersonalFinancialStatement(parsedDocument) {
+export function extractFromPersonalFinancialStatement(parsedDocument) {
   if (!parsedDocument || typeof parsedDocument !== 'object') return null;
 
   const getVal = (obj) => (obj && typeof obj.value !== 'undefined' ? obj.value : null);
@@ -81,3 +81,15 @@ export default function extractFromPersonalFinancialStatement(parsedDocument) {
 
   return result;
 }
+
+export const extractTaxReturnFromApiResponse = (parsedDocument) => {
+  if (!parsedDocument || typeof parsedDocument !== 'object') return null;
+
+  const getVal = (obj) => (obj && typeof obj.value !== 'undefined' ? obj.value : null);
+  const result = {
+    adjustedGrossIncome: parseApiNumber(getVal(parsedDocument.adjustedGrossIncome)),
+    debtToincomeRatio: 0,
+  };
+
+  return result;
+};

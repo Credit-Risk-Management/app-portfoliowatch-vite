@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartLine, faCheck, faCopy, faTable } from '@fortawesome/free-solid-svg-icons';
 import SignalTable from '@src/components/global/SignalTable';
 import { $borrower } from '@src/consts/consts';
-import { $borrowerFinancials } from '@src/signals';
+import { $borrowerFinancials, $borrowerFinancialsView } from '@src/signals';
 import { formatCurrency } from '@src/utils/formatCurrency';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import { $borrowerFinancialsFilter, $borrowerFinancialsTableView } from '@src/components/views/BorrowerDetails/_helpers/borrowerDetail.consts';
@@ -24,7 +24,14 @@ export function BorrowerFinancialsTab() {
   useEffectAsync(async () => {
     if (!borrowerId) return;
     await resolvers.fetchPermanentUploadLink(borrowerId);
+    await resolvers.fetchFinancialHistory();
   }, [borrowerId]);
+
+  useEffectAsync(async () => {
+    if ($borrowerFinancialsView.value?.refreshTrigger > 0) {
+      await resolvers.fetchFinancialHistory();
+    }
+  }, [$borrowerFinancials.value?.list, $borrowerFinancialsView.value?.refreshTrigger]);
 
   const financialsTableRows = useMemo(
     () => ($borrowerFinancials.value?.list || []).map((financial) => ({

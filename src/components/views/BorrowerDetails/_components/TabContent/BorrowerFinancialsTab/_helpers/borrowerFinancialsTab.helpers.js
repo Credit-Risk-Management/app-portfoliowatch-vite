@@ -1,3 +1,4 @@
+import { formatDate } from '@src/utils/formatDate';
 import * as consts from './borrowerFinancialsTab.consts';
 
 /** Document type values and labels for financial documents (camelCase + snake_case for API compatibility) */
@@ -29,15 +30,7 @@ export const FINANCIALS_TABLE_HEADERS = [
   { key: 'documents', value: 'Documents' },
 ];
 
-export const formatFinancialDate = (dateString) => {
-  if (!dateString) return '-';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  });
-};
+export const formatFinancialDate = formatDate;
 
 /**
  * Build upload link URL from permanent link token (for copy button).

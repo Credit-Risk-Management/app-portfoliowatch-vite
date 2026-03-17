@@ -1,12 +1,26 @@
 import { Row, Col, Alert, Card } from 'react-bootstrap';
+import { $borrower } from '@src/consts/consts';
 import { $borrowerFinancials } from '@src/signals';
+import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import { $modalState } from '../../SubmitFinancialsModal/_helpers/submitFinancialsModal.consts';
+import { fetchFinancialHistory } from '../BorrowerFinancialsTab/_helpers/borrowerFinancialsTab.resolvers';
 
 const BorrowerTriggersTab = (props = {}) => {
   const list = $borrowerFinancials.value?.list || [];
-  const currentForm = props.currentForm ?? list[1] ?? list[0] ?? {};
-  const previousFinancial = props.previousFinancial ?? list[2] ?? list[1] ?? {};
+  const borrowerId = $borrower.value?.borrower?.id;
+  const isModalContext = props.currentForm !== undefined || props.previousFinancial !== undefined;
+
+  useEffectAsync(async () => {
+    if (isModalContext) return;
+    if (borrowerId && list.length === 0) {
+      await fetchFinancialHistory();
+    }
+  }, [borrowerId, list.length, isModalContext]);
+
+  const currentForm = props.currentForm ?? list[0] ?? {};
+  const previousFinancial = props.previousFinancial ?? list[1];
   const isLoadingPrevious = props.isLoadingPrevious ?? $modalState.value?.isLoadingPrevious ?? false;
+
   const calculateChange = (current, previous) => {
     if (!previous || previous === 0) return null;
     const currentVal = parseFloat(current) || 0;
@@ -67,7 +81,7 @@ const BorrowerTriggersTab = (props = {}) => {
     );
   };
 
-  if (isLoadingPrevious) {
+  if (isLoadingPrevious || $borrowerFinancials.value?.isLoading) {
     return (
       <div className="text-center py-32">
         <div className="spinner-border text-primary" role="status">
@@ -114,7 +128,7 @@ const BorrowerTriggersTab = (props = {}) => {
         </Col>
         <Col md={6}>
           <TriggerCard
-            title="Change in Accounts Receivable"
+            title="Change in A/R"
             previousValue={previousFinancial.accountsReceivable}
             currentValue={currentForm.accountsReceivable}
           />
@@ -136,7 +150,7 @@ const BorrowerTriggersTab = (props = {}) => {
         </Col>
         <Col md={6}>
           <TriggerCard
-            title="Change in Accounts Payable"
+            title="Change in A/P"
             previousValue={previousFinancial.accountsPayable}
             currentValue={currentForm.accountsPayable}
           />
