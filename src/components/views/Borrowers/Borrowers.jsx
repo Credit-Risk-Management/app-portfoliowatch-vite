@@ -1,5 +1,5 @@
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Container, Row, Col } from 'react-bootstrap';
 import { faEdit, faEye, faTrash } from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';
@@ -15,6 +15,7 @@ import {
 } from '@src/signals';
 import SelectInput from '@src/components/global/Inputs/SelectInput';
 import { formatCurrency } from '@src/utils/formatCurrency';
+import { useRef } from 'react';
 import * as consts from './_helpers/borrowers.consts';
 import * as resolvers from './_helpers/borrowers.resolvers';
 import * as helpers from './_helpers/borrowers.helpers';
@@ -24,14 +25,28 @@ import DeleteBorrowerModal from './_components/DeleteBorrowerModal';
 
 const Borrowers = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const isInitialMount = useRef(true);
 
   useEffectAsync(async () => {
+    const searchTerm = searchParams.get('searchTerm');
+    const page = searchParams.get('page');
+
+    if (searchTerm || page) {
+      const parsedPage = page ? Number(page) : 1;
+      $borrowersFilter.update({ searchTerm, page: parsedPage });
+      await resolvers.fetchAndSetBorrowerData({ searchTerm, page: parsedPage }, false);
+    } else {
+      await resolvers.fetchAndSetBorrowerData();
+    }
+
     await resolvers.loadReferenceData();
-    await resolvers.fetchAndSetBorrowerData();
+    isInitialMount.current = false;
   }, []);
 
-  // Watch for filter changes and refresh table data
   useEffectAsync(async () => {
+    if (isInitialMount.current) return;
+
     const borrowerTypeValue = Array.isArray($borrowersFilter.value.borrowerType)
       ? $borrowersFilter.value.borrowerType.filter((type) => type !== '').join(',')
       : $borrowersFilter.value.borrowerType;
@@ -44,6 +59,7 @@ const Borrowers = () => {
       searchTerm: $borrowersFilter.value.searchTerm,
       borrowerType: borrowerTypeValue,
       relationshipManager: relationshipManagerValue,
+      page: $borrowersFilter.value.page,
     };
 
     await resolvers.fetchAndSetBorrowerData(filters, false);
@@ -54,7 +70,6 @@ const Borrowers = () => {
     $borrowersFilter.value.page,
     $borrowersFilter.value.sortKey,
     $borrowersFilter.value.sortDirection,
-    $borrowersView.value.showAllMode,
   ]);
 
   const rows = $borrowers.value.list.map((borrower) => ({
@@ -73,8 +88,9 @@ const Borrowers = () => {
         ]}
         onItemClick={(item) => {
           if (item.action === 'detail') {
-            const returnSearch = window.location.search || '';
-            navigate(`/borrowers/${borrower.id}`, { state: { fromBorrowersList: true, borrowersReturnSearch: returnSearch } });
+            const params = new URLSearchParams(searchParams);
+            window.localStorage.setItem('filterQueryString', params.toString());
+            navigate(`/borrowers/${borrower.id}`);
           } else if (item.action === 'edit') {
             $borrowers.update({ selectedClient: borrower });
             $borrowersView.update({ showEditModal: true });
@@ -87,7 +103,6 @@ const Borrowers = () => {
     ),
   }));
 
-  // Get relationship managers list - ensure we're using relationship managers, not borrowers
   const relationshipManagersList = Array.isArray($relationshipManagers.value?.list)
     ? $relationshipManagers.value.list
     : [];
@@ -104,7 +119,17 @@ const Borrowers = () => {
           <Search
             placeholder="Search borrowers..."
             value={$borrowersFilter.value.searchTerm}
-            onChange={handleBorrowerFilterChange}
+            onChange={() => {
+              handleBorrowerFilterChange();
+              if ($borrowersFilter.value.searchTerm.length > 0) {
+                setSearchParams({ searchTerm: $borrowersFilter.value.searchTerm });
+              } else {
+                setSearchParams((prev) => {
+                  prev.delete('searchTerm');
+                  return prev;
+                });
+              }
+            }}
             signal={$borrowersFilter}
             name="searchTerm"
           />
@@ -150,8 +175,9 @@ const Borrowers = () => {
               hasPagination={!$borrowersView.value.showAllMode}
               className="shadow"
               onRowClick={(borrower) => {
-                const returnSearch = window.location.search || '';
-                navigate(`/borrowers/${borrower.id}`, { state: { fromBorrowersList: true, borrowersReturnSearch: returnSearch } });
+                const params = new URLSearchParams(searchParams);
+                window.localStorage.setItem('filterQueryString', params.toString());
+                navigate(`/borrowers/${borrower.id}`);
               }}
             />
           </div>

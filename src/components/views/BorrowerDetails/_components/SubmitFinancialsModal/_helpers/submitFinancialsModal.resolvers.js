@@ -4,12 +4,13 @@ import borrowerFinancialDocumentsApi from '@src/api/borrowerFinancialDocuments.a
 import { dangerAlert, successAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import postToSensibleApi, { initiateUploadToSensibleApi } from '@src/api/sensible.api';
 import { storage } from '@src/utils/firebase';
-import { extractIncomeStatementFromApiResponse, extractBalanceSheetFromApiResponse } from '@src/components/views/Borrowers/_helpers/financials.helpers';
+import { extractIncomeStatementFromApiResponse, extractBalanceSheetFromApiResponse, extractTaxReturnFromApiResponse } from '@src/components/views/Borrowers/_helpers/financials.helpers';
 import * as consts from './submitFinancialsModal.consts';
 
 const SENSIBLE_DOCUMENT_TYPES = {
   incomeStatement: 'income_statement',
   balanceSheet: 'balance_sheet',
+  taxReturn: 'tax_return',
 };
 
 export const handleFileUpload = async (ocrApplied, pdfUrl) => {
@@ -90,6 +91,12 @@ export const handleFileUpload = async (ocrApplied, pdfUrl) => {
         }
         if (documentType === 'balanceSheet' && parsedDocument) {
           const extractedData = extractBalanceSheetFromApiResponse(parsedDocument);
+          if (extractedData) {
+            $borrowerFinancialsForm.update(extractedData);
+          }
+        }
+        if (documentType === 'taxReturn' && parsedDocument) {
+          const extractedData = extractTaxReturnFromApiResponse(parsedDocument);
           if (extractedData) {
             $borrowerFinancialsForm.update(extractedData);
           }

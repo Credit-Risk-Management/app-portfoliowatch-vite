@@ -332,5 +332,39 @@ const extractBalanceSheetFromApiResponse = (parsedDocument) => {
   return result;
 };
 
-export { MOCK_DATA_BY_FILENAME, getMockDataKeyFromFilename, extractIncomeStatementFromApiResponse, extractBalanceSheetFromApiResponse };
+const extractTaxReturnFromApiResponse = (parsedDocument) => {
+  if (!parsedDocument) return null;
+
+  const getVal = (obj) => (obj && typeof obj.value !== 'undefined' ? obj.value : null);
+  const grossReceipts = parseApiNumber(getVal(parsedDocument.scheduleC_grossReceipts) ?? getVal(parsedDocument.totalIncome));
+  const grossProfit = parseApiNumber(getVal(parsedDocument.scheduleC_grossProfit));
+  const netIncome = parseApiNumber(getVal(parsedDocument.scheduleC_netProfit));
+  const depreciationExpense = parseApiNumber(getVal(parsedDocument.scheduleC_depreciationExpense));
+  const interestExpense = parseApiNumber(getVal(parsedDocument.scheduleC_interestExpense));
+  const ebitdaComputed = netIncome + depreciationExpense + interestExpense;
+  const profitMargin = grossReceipts > 0
+    ? parseFloat((grossProfit / grossReceipts).toFixed(4))
+    : undefined;
+
+  const result = {
+    grossRevenue: grossReceipts,
+    netIncome,
+    profitMargin,
+    ebitda: ebitdaComputed !== 0 ? ebitdaComputed : parseApiNumber(getVal(parsedDocument.ebitda)),
+  };
+
+  const y = getVal(parsedDocument.taxYear);
+  const year = y != null ? String(y).trim() : '';
+  if (year && /^\d{4}$/.test(year)) result.asOfDate = `${year}-12-31`;
+
+  return result;
+};
+
+export {
+  MOCK_DATA_BY_FILENAME,
+  getMockDataKeyFromFilename,
+  extractIncomeStatementFromApiResponse,
+  extractBalanceSheetFromApiResponse,
+  extractTaxReturnFromApiResponse,
+};
 export default generateMockFinancialData;

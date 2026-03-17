@@ -1,5 +1,5 @@
 /* eslint-disable react/no-danger */
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import { Container, Button, Row, Col } from 'react-bootstrap';
 import PageHeader from '@src/components/global/PageHeader';
@@ -12,9 +12,9 @@ import { $borrower } from '@src/consts/consts';
 import SubmitFinancialsModal from '@src/components/views/BorrowerDetails/_components/SubmitFinancialsModal';
 import DeleteBorrowerDocumentModal from '@src/components/views/Borrowers/_components/DeleteBorrowerDocumentModal';
 import UniversalCard from '@src/components/global/UniversalCard';
+import { $borrowerFinancials } from '@src/signals';
 import { $borrowerDetailView } from './_helpers/borrowerDetail.consts';
 import { handleGenerateAnnualReview } from './_helpers/borrowerDetail.events';
-import { fetchFinancialHistory } from './_components/TabContent/BorrowerFinancialsTab/_helpers/borrowerFinancialsTab.resolvers';
 import {
   BorrowerDetailsTab,
   BorrowerTriggersTab,
@@ -26,7 +26,6 @@ import {
   BorrowerIndustryTab,
 } from './_components/TabContent';
 import { fetchBorrowerDetail } from './_helpers/borrowerDetail.resolvers';
-import { fetchLoanWatchScoreBreakdowns } from './_components/TabContent/BorrowerLoansTab/_helpers/loanCoard.resolvers';
 import EditBorrowerDetailModal from './_components/EditBorrowerDetailModal';
 
 const tabs = [
@@ -91,20 +90,13 @@ const tabs = [
 export function BorrowerDetailsContainer() {
   const { borrowerId } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
-  const borrowersReturnSearch = location.state?.borrowersReturnSearch || '';
-
   // Fetch borrower detail and relationship managers on mount or when borrowerId changes
   useEffectAsync(async () => {
-    await fetchBorrowerDetail(borrowerId);
-  }, [borrowerId]);
-
-  useEffectAsync(async () => {
-    if ($borrowerDetailView.value.activeKey === 'loans' || $borrowerDetailView.value.activeKey === 'financials') {
-      await fetchFinancialHistory();
-      await fetchLoanWatchScoreBreakdowns();
+    if (borrowerId) {
+      await fetchBorrowerDetail(borrowerId);
     }
-  }, [$borrowerDetailView.value.activeKey, borrowerId, $borrower.value?.borrower]);
+  }, []);
+
   return (
     <Loadable signal={$borrower} template="fullscreen">
       <Container className="fluid py-16 py-md-24">
@@ -113,7 +105,10 @@ export function BorrowerDetailsContainer() {
             onClick={() => {
               $borrower.reset();
               $borrowerDetailView.reset();
-              navigate(`/borrowers${borrowersReturnSearch}`);
+              $borrowerFinancials.reset();
+              const storedFilter = window.localStorage.getItem('filterQueryString');
+              const params = new URLSearchParams(storedFilter ? storedFilter.replace(/^\?/, '') : '');
+              navigate(`/borrowers?${params.toString()}`, { replace: true });
             }}
             className="btn-sm border-dark text-dark-800 bg-grey-50 mb-12 mb-md-16"
           >

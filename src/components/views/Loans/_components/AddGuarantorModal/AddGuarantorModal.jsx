@@ -19,7 +19,6 @@ const AddGuarantorModal = () => {
       rightButtonDisabled={isSubmitting}
       size="lg"
       closeButton
-      backdrop="static"
     >
       <div className="pt-16">
         {error && (

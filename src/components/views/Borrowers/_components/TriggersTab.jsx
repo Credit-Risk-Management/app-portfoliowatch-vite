@@ -108,7 +108,7 @@ const TriggersTab = ({ previousFinancial, currentForm, isLoadingPrevious }) => {
         </Col>
         <Col md={6}>
           <TriggerCard
-            title="Change in Accounts Receivable"
+            title="Change in A/R"
             previousValue={previousFinancial.accountsReceivable}
             currentValue={currentForm.accountsReceivable}
           />
@@ -130,7 +130,7 @@ const TriggersTab = ({ previousFinancial, currentForm, isLoadingPrevious }) => {
         </Col>
         <Col md={6}>
           <TriggerCard
-            title="Change in Accounts Payable"
+            title="Change in A/P"
             previousValue={previousFinancial.accountsPayable}
             currentValue={currentForm.accountsPayable}
           />

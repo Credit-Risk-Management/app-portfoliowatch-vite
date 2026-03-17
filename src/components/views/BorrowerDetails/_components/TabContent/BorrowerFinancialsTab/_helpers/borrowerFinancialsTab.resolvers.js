@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { $borrower } from '@src/consts/consts';
-import { $borrowerFinancials } from '@src/signals';
+import { $borrowerFinancials, $borrowerFinancialsView } from '@src/signals';
 import { getPermanentUploadLink } from '@src/api/borrowerFinancialUploadLink.api';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
 import { auth } from '@src/utils/firebase';
@@ -9,6 +9,7 @@ import { $borrowerFinancialsFilter, $borrowerFinancialsTableView } from '@src/co
 import * as consts from './borrowerFinancialsTab.consts';
 
 export const fetchFinancialHistory = async () => {
+  $borrowerFinancials.update({ isLoading: true });
   const borrowerId = $borrower.value?.borrower?.id;
   if (!borrowerId) return;
 
@@ -28,14 +29,18 @@ export const fetchFinancialHistory = async () => {
       totalCount: totalCount ?? 0,
       isLoading: false,
     });
+    $borrowerFinancialsView.update({ refreshTrigger: 0 });
   } catch (error) {
     $borrowerFinancials.update({
       list: [],
       totalCount: 0,
       isLoading: false,
     });
+    $borrowerFinancialsView.update({ refreshTrigger: 0 });
   } finally {
     $borrowerFinancialsTableView.update({ isTableLoading: false });
+    $borrowerFinancials.update({ isLoading: false });
+    $borrowerFinancialsView.update({ refreshTrigger: 0 });
   }
 };
 

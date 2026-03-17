@@ -9,6 +9,7 @@ import Loadable from '@src/components/global/Loadable';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { formatCurrency } from '@src/utils/formatCurrency';
+import { calculateAnnualDebtServiceFromLoans } from '@src/utils/currency';
 import * as resolvers from './_helpers/guarantorDetails.resolvers';
 import GuarantorFinancials from './_components/GuarantorFinancials';
 import GuarantorDocuments from './_components/GuarantorDocuments';
@@ -119,7 +120,7 @@ export function GuarantorDetailContainer() {
                 <Col xs={12} md={4}>
                   <div className="text-info-200 small fw-300">Debt Service</div>
                   <div className="text-info-50 fw-500 fs-5">
-                    {formatCurrency($guarantorDetailsData.value?.loans.reduce((acc, loan) => acc + +loan.paymentAmount, 0) * 12 || 'N/A')}
+                    {formatCurrency(calculateAnnualDebtServiceFromLoans($guarantorDetailsData.value?.loans || []))}
                   </div>
                 </Col>
               </Row>

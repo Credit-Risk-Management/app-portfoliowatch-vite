@@ -304,6 +304,7 @@ export const $borrowerFinancials = Signal({
   isLoading: false,
   totalCount: 0,
   selectedFinancial: null,
+  refreshTrigger: 0,
 });
 
 export const $borrowerFinancialsView = Signal({

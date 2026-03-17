@@ -15,21 +15,20 @@ export default function DebtServiceModalUpsert({ show, onHide }) {
   const { debtLineItems, asOfDate, notes } = $debtServiceHistoryForm.value;
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Calculate totals whenever debt items change
+  // Calculate totals whenever debt items change (round to cents to avoid float drift)
   useEffect(() => {
+    const roundToCents = (n) => Math.round(Number(n) * 100) / 100;
     const totalBalance = debtLineItems.reduce((sum, item) => {
-      const balance = parseFloat(item.currentBalance) || 0;
-      return sum + balance;
+      return sum + roundToCents(item.currentBalance);
     }, 0);
 
     const totalPayment = debtLineItems.reduce((sum, item) => {
-      const payment = parseFloat(item.monthlyPayment) || 0;
-      return sum + payment;
+      return sum + roundToCents(item.monthlyPayment);
     }, 0);
 
     $debtServiceHistoryForm.update({
-      totalCurrentBalance: totalBalance,
-      totalMonthlyPayment: totalPayment,
+      totalCurrentBalance: roundToCents(totalBalance),
+      totalMonthlyPayment: roundToCents(totalPayment),
     });
   }, [debtLineItems]);
 

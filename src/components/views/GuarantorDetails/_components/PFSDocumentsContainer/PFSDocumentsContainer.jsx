@@ -151,7 +151,7 @@ const DocumentsContainer = ({
           </div>
         );
       }
-      console.log('form value', $form.value);
+
       return (
         <div style={{ height: '65vh', width: '100%', position: 'relative' }}>
           <div

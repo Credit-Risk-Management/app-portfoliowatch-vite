@@ -25,4 +25,5 @@ export const TABLE_HEADERS = [
   { key: 'relationshipManager', value: 'Manager' },
   { key: 'loanCount', value: 'Loans' },
   { key: 'totalBalance', value: 'Total Balance' },
+  { key: 'actions', value: 'Actions' },
 ];

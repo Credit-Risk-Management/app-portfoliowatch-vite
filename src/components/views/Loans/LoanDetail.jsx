@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Container, Row, Col, Button, Collapse, Spinner } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faArrowRight, faMagic, faUser, faLandmark, faFileAlt, faSync, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faArrowRight, faMagic, faUser, faLandmark, faFileAlt, faSync } from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';
 import UniversalCard from '@src/components/global/UniversalCard';
 import SignalAccordion from '@src/components/global/SignalAccordion';
@@ -13,9 +13,7 @@ import { formatCurrency } from '@src/utils/formatCurrency';
 import Loadable from '@src/components/global/Loadable';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import SubmitCollateralModal from './_components/SubmitCollateralModal';
-import AddGuarantorModal from './_components/AddGuarantorModal';
 import { $loanCollateralView } from './_components/submitCollateralModal.signals';
-import { handleOpenModal as handleOpenAddGuarantorModal } from './_components/AddGuarantorModal/addGuarantorModal.handlers';
 import AddCreditMemoModal from './_components/AddCreditMemoModal';
 import { handleOpenModal as handleOpenCreditMemoModal } from './_components/addCreditMemoModal.handlers';
 import LoanRadarChart from './_components/LoanRadarChart';
@@ -392,7 +390,7 @@ const LoanDetail = () => {
           <Col xs={12} md={12}>
             <UniversalCard headerText="Guarantors" bodyContainer="container-fluid" className="mt-12 mt-md-16">
               <Row className="mt-12 mb-12">
-                <div className="d-flex justify-content-end mb-12">
+                {/* <div className="d-flex justify-content-end mb-12">
                   <Button
                     variant="outline-primary-100"
                     size="sm"
@@ -402,7 +400,7 @@ const LoanDetail = () => {
                     <FontAwesomeIcon icon={faUserPlus} className="me-8" />
                     Add Guarantor
                   </Button>
-                </div>
+                </div> */}
                 <SignalTable
                   headers={guarantorsTableHeaders}
                   rows={guarantorsTableRows}
@@ -558,7 +556,7 @@ const LoanDetail = () => {
         <SubmitCollateralModal />
 
         {/* Add Guarantor Modal */}
-        <AddGuarantorModal />
+        {/* <AddGuarantorModal /> */}
 
         {/* Credit Memo Modal */}
         <AddCreditMemoModal />

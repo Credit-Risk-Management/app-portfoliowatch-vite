@@ -1,3 +1,16 @@
+/**
+ * Calculate annual debt service from loan monthly payments.
+ * Rounds each payment to whole dollars (matching display) before summing
+ * so the result matches hand calculation from displayed values.
+ * @param {Array<{paymentAmount?: number|string}>} loans - Array of loan objects with paymentAmount
+ * @returns {number} Annual debt service (monthly sum * 12)
+ */
+export const calculateAnnualDebtServiceFromLoans = (loans = []) => {
+  const roundToWholeDollar = (n) => Math.round(Number(n) || 0);
+  const monthlyTotal = loans.reduce((acc, loan) => acc + roundToWholeDollar(loan.paymentAmount), 0);
+  return monthlyTotal * 12;
+};
+
 export const formatMoneyShorthand = (num, currency = '$') => {
   const roundedNum = Math.round(Number(num));
 
