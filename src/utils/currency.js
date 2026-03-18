@@ -6,7 +6,7 @@
  * @returns {number} Annual debt service (monthly sum * 12)
  */
 export const calculateAnnualDebtServiceFromLoans = (loans = []) => {
-  const roundToWholeDollar = (n) => Math.round(Number(n) || 0);
+  const roundToWholeDollar = (n) => Math.floor(Number(n) || 0);
   const monthlyTotal = loans.reduce((acc, loan) => acc + roundToWholeDollar(loan.paymentAmount), 0);
   return monthlyTotal * 12;
 };
