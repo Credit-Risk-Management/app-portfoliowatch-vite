@@ -8,7 +8,7 @@ import 'react-pdf/dist/Page/TextLayer.css';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import FileUploader from '@src/components/global/FileUploader';
 import { $borrowerFinancialsForm } from '@src/signals';
-import { normalizeCurrencyValue, normalizeCurrencyValueNoCents } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
+import { normalizeCurrencyValueAllowNegative } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
 import { $documentsContainerView } from './_helpers/documents.consts';
 import * as events from './_helpers/documents.events';
 import * as helpers from './_helpers/documents.helpers';
@@ -461,7 +461,7 @@ const DocumentsContainer = ({
                   value={$borrowerFinancialsForm.value.equity}
                   name="equity"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValue}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
                 />
               </Col>
               <Col md={12} className="mb-16">
@@ -473,7 +473,7 @@ const DocumentsContainer = ({
                   value={$borrowerFinancialsForm.value.cash}
                   name="cash"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValue}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
                 />
               </Col>
               <Col md={12} className="mb-16">
@@ -485,7 +485,7 @@ const DocumentsContainer = ({
                   value={$borrowerFinancialsForm.value.cashEquivalents}
                   name="cashEquivalents"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValue}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
                 />
               </Col>
               <Col md={12} className="mb-16">
@@ -497,7 +497,7 @@ const DocumentsContainer = ({
                   value={$borrowerFinancialsForm.value.accountsReceivable}
                   name="accountsReceivable"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValue}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
                 />
               </Col>
               <Col md={12} className="mb-16">
@@ -509,7 +509,7 @@ const DocumentsContainer = ({
                   value={$borrowerFinancialsForm.value.inventory}
                   name="inventory"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValue}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
                 />
               </Col>
               <Col md={12} className="mb-16">
@@ -521,7 +521,7 @@ const DocumentsContainer = ({
                   value={$borrowerFinancialsForm.value.totalCurrentAssets}
                   name="totalCurrentAssets"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValue}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
                 />
               </Col>
               <Col md={12} className="mb-16">
@@ -533,7 +533,7 @@ const DocumentsContainer = ({
                   value={$borrowerFinancialsForm.value.accountsPayable}
                   name="accountsPayable"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValue}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
                 />
               </Col>
               <Col md={12} className="mb-16">
@@ -545,7 +545,7 @@ const DocumentsContainer = ({
                   value={$borrowerFinancialsForm.value.totalCurrentLiabilities}
                   name="totalCurrentLiabilities"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValue}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
                 />
               </Col>
             </Row>
@@ -563,7 +563,7 @@ const DocumentsContainer = ({
                   value={$borrowerFinancialsForm.value.grossRevenue}
                   name="grossRevenue"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValueNoCents}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
                 />
               </Col>
               <Col md={12} className="mb-16">
@@ -575,7 +575,7 @@ const DocumentsContainer = ({
                   value={$borrowerFinancialsForm.value.netIncome}
                   name="netIncome"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValueNoCents}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
                 />
               </Col>
               <Col md={12} className="mb-16">
@@ -587,7 +587,7 @@ const DocumentsContainer = ({
                   value={$borrowerFinancialsForm.value.ebitda}
                   name="ebitda"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValueNoCents}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
                 />
               </Col>
               <Col md={12} className="mb-16">
@@ -635,7 +635,7 @@ const DocumentsContainer = ({
                   value={$borrowerFinancialsForm.value.grossRevenue}
                   name="grossRevenue"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValueNoCents}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
                 />
               </Col>
               <Col md={12} className="mb-16">
@@ -647,7 +647,7 @@ const DocumentsContainer = ({
                   value={$borrowerFinancialsForm.value.netIncome}
                   name="netIncome"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValueNoCents}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
                 />
               </Col>
               <Col md={12} className="mb-16">
@@ -659,7 +659,7 @@ const DocumentsContainer = ({
                   value={$borrowerFinancialsForm.value.ebitda}
                   name="ebitda"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValueNoCents}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
                 />
               </Col>
               <Col md={12} className="mb-16">

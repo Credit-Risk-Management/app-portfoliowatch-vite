@@ -37,7 +37,7 @@ export const normalizeCurrencyValue = (value) => {
   if (value === null || value === undefined) return '';
 
   const stringValue = `${value}`;
-  
+
   // If the value contains a decimal point, parse it as a number and round to nearest integer
   if (stringValue.includes('.')) {
     const numValue = parseFloat(stringValue);
@@ -45,7 +45,7 @@ export const normalizeCurrencyValue = (value) => {
       return Math.round(numValue).toString();
     }
   }
-  
+
   // Remove all non-digit characters
   const cleaned = stringValue.replace(/\D/g, '');
 
@@ -53,8 +53,31 @@ export const normalizeCurrencyValue = (value) => {
 
   // Remove leading zeros but keep at least one zero if that's all there is
   const normalized = cleaned.replace(/^0+(?=\d)/, '') || '0';
-  
+
   return normalized;
+};
+
+// Like normalizeCurrencyValue but allows a leading minus for negative numbers
+export const normalizeCurrencyValueAllowNegative = (value) => {
+  if (value === null || value === undefined) return '';
+
+  const stringValue = `${value}`.trim();
+  const isNegative = stringValue.startsWith('-');
+  const numericPart = stringValue.replace(/^-/, '');
+
+  if (numericPart.includes('.')) {
+    const numValue = parseFloat(stringValue);
+    if (!Number.isNaN(numValue)) {
+      const rounded = Math.round(Math.abs(numValue)).toString();
+      return numValue < 0 ? `-${rounded}` : rounded;
+    }
+  }
+
+  const cleaned = numericPart.replace(/\D/g, '');
+  if (!cleaned) return isNegative ? '-' : '';
+
+  const normalized = cleaned.replace(/^0+(?=\d)/, '') || '0';
+  return isNegative ? `-${normalized}` : normalized;
 };
 
 // Normalize user input for currency fields without cents (whole numbers only):
@@ -65,7 +88,7 @@ export const normalizeCurrencyValueNoCents = (value) => {
   if (value === null || value === undefined) return '';
 
   const stringValue = `${value}`;
-  
+
   // If the value contains a decimal point, parse it as a number and round to nearest integer
   if (stringValue.includes('.')) {
     const numValue = parseFloat(stringValue);
@@ -73,7 +96,7 @@ export const normalizeCurrencyValueNoCents = (value) => {
       return Math.round(numValue).toString();
     }
   }
-  
+
   // Remove all non-digit characters
   const cleaned = stringValue.replace(/\D/g, '');
 
@@ -81,7 +104,7 @@ export const normalizeCurrencyValueNoCents = (value) => {
 
   // Remove leading zeros but keep at least one zero if that's all there is
   const normalized = cleaned.replace(/^0+(?=\d)/, '') || '0';
-  
+
   return normalized;
 };
 
@@ -90,12 +113,12 @@ export const formatCurrencyDisplay = (value, currency = '$') => {
   if (value === null || value === undefined || value === '') return '';
 
   const stringValue = `${value}`;
-  
+
   // Remove any decimal portion if present
-  const intValue = stringValue.includes('.') 
+  const intValue = stringValue.includes('.')
     ? Math.round(parseFloat(stringValue)).toString()
     : stringValue;
-  
+
   const intNumber = Number(intValue);
 
   if (Number.isNaN(intNumber)) return '';
