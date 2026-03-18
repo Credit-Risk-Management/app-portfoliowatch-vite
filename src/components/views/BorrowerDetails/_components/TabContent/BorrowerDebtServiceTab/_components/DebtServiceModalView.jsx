@@ -28,7 +28,7 @@ export default function DebtServiceModalView({ show, onHide, record }) {
             Total Balance: {formatCurrency(record.totalCurrentBalance)}
           </Badge>
           <Badge bg="warning-500" className="text-warning-900">
-            Total Annual Payment: {formatCurrency(record.totalMonthlyPayment != null ? record.totalMonthlyPayment * 12 : null)}
+            Total Annual Payment: {formatCurrency(record.totalMonthlyPayment != null ? Math.floor(Number(record.totalMonthlyPayment)) * 12 : null)}
           </Badge>
         </div>
 
