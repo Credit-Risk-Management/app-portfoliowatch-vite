@@ -5,8 +5,8 @@ import { dangerAlert, successAlert } from '@src/components/global/Alert/_helpers
 import postToSensibleApi, { initiateUploadToSensibleApi } from '@src/api/sensible.api';
 import { storage } from '@src/utils/firebase';
 import { fetchGuarantorDetail } from '@src/components/views/GuarantorDetails/_helpers/guarantorDetails.resolvers';
+import { parseSingleDocResponse } from '@src/utils/sensibleParseApi';
 import { $submitPFSModalView, $submitPFSModalDetails } from './submitPFSModal.const';
-import { extractFromPersonalFinancialStatement, extractTaxReturnFromApiResponse } from './submitPFSModal.helpers';
 
 const SENSIBLE_DOCUMENT_TYPES = {
   personalFinancialStatement: 'personal_financial_statement',
@@ -103,15 +103,25 @@ export const handleFileUpload = async ($financialDocsUploader, $modalState, ocrA
         const parsedDocument = sensibleResponse?.data?.parsed_document ?? sensibleResponse?.parsed_document ?? null;
 
         if (documentType === 'personalFinancialStatement' && parsedDocument) {
-          const pfsData = extractFromPersonalFinancialStatement(parsedDocument);
+          const pfsData = parseSingleDocResponse(parsedDocument, 'personalFinancialStatement');
           if (pfsData) {
-            $submitPFSModalDetails.update(pfsData);
+            $submitPFSModalDetails.update({
+              asOfDate: pfsData.asOfDate,
+              totalAssets: pfsData.totalAssets,
+              totalLiabilities: pfsData.totalLiabilities,
+              netWorth: pfsData.netWorth,
+              liquidity: pfsData.liquidity,
+              cash: pfsData.cash,
+            });
           }
         }
         if (documentType === 'taxReturn' && parsedDocument) {
-          const extractedData = extractTaxReturnFromApiResponse(parsedDocument);
+          const extractedData = parseSingleDocResponse(parsedDocument, 'personalTaxReturn');
           if (extractedData) {
-            $submitPFSModalDetails.update(extractedData);
+            $submitPFSModalDetails.update({
+              asOfDate: extractedData.asOfDate,
+              adjustedGrossIncome: extractedData.adjustedGrossIncome,
+            });
           }
         }
 

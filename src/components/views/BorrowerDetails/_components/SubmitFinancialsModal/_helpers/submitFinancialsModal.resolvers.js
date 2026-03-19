@@ -4,7 +4,7 @@ import borrowerFinancialDocumentsApi from '@src/api/borrowerFinancialDocuments.a
 import { dangerAlert, successAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import postToSensibleApi, { initiateUploadToSensibleApi } from '@src/api/sensible.api';
 import { storage } from '@src/utils/firebase';
-import { extractIncomeStatementFromApiResponse, extractBalanceSheetFromApiResponse, extractTaxReturnFromApiResponse } from '@src/components/views/Borrowers/_helpers/financials.helpers';
+import { parseSingleDocResponse } from '@src/utils/sensibleParseApi';
 import * as consts from './submitFinancialsModal.consts';
 
 const SENSIBLE_DOCUMENT_TYPES = {
@@ -84,21 +84,45 @@ export const handleFileUpload = async (ocrApplied, pdfUrl) => {
         const parsedDocument = sensibleResponse?.data?.parsed_document ?? sensibleResponse?.parsed_document ?? null;
 
         if (documentType === 'incomeStatement' && parsedDocument) {
-          const extractedData = extractIncomeStatementFromApiResponse(parsedDocument);
+          const extractedData = parseSingleDocResponse(parsedDocument, 'incomeStatement');
           if (extractedData) {
-            $borrowerFinancialsForm.update(extractedData);
+            $borrowerFinancialsForm.update({
+              asOfDate: extractedData.asOfDate,
+              grossRevenue: extractedData.grossRevenue,
+              netIncome: extractedData.netIncome,
+              profitMargin: extractedData.profitMargin,
+              ebitda: extractedData.ebitda,
+              rentalExpenses: extractedData.rentalExpenses,
+            });
           }
         }
         if (documentType === 'balanceSheet' && parsedDocument) {
-          const extractedData = extractBalanceSheetFromApiResponse(parsedDocument);
+          const extractedData = parseSingleDocResponse(parsedDocument, 'balanceSheet');
           if (extractedData) {
-            $borrowerFinancialsForm.update(extractedData);
+            $borrowerFinancialsForm.update({
+              asOfDate: extractedData.asOfDate,
+              totalCurrentAssets: extractedData.totalCurrentAssets,
+              totalCurrentLiabilities: extractedData.totalCurrentLiabilities,
+              cash: extractedData.cash,
+              cashEquivalents: extractedData.cashEquivalents,
+              equity: extractedData.equity,
+              accountsReceivable: extractedData.accountsReceivable,
+              accountsPayable: extractedData.accountsPayable,
+              inventory: extractedData.inventory,
+            });
           }
         }
         if (documentType === 'taxReturn' && parsedDocument) {
-          const extractedData = extractTaxReturnFromApiResponse(parsedDocument);
+          const extractedData = parseSingleDocResponse(parsedDocument, 'taxReturn');
           if (extractedData) {
-            $borrowerFinancialsForm.update(extractedData);
+            $borrowerFinancialsForm.update({
+              asOfDate: extractedData.asOfDate,
+              grossRevenue: extractedData.grossRevenue,
+              netIncome: extractedData.netIncome,
+              profitMargin: extractedData.profitMargin,
+              ebitda: extractedData.ebitda,
+              rentalExpenses: extractedData.rentalExpenses,
+            });
           }
         }
 
