@@ -3,6 +3,7 @@ import UniversalModal from '@src/components/global/UniversalModal';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import SelectInput from '@src/components/global/Inputs/SelectInput';
 import { $usersView, $usersForm } from '@src/signals';
+import Loadable from '@src/components/global/Loadable';
 import { handleInviteUser } from '../_helpers/users.events';
 
 const ROLE_OPTIONS = [
@@ -19,35 +20,38 @@ const InviteUserModal = () => (
     }}
     headerText="Invite User"
     leftBtnText="Cancel"
-    rightBtnText="Send Invitation"
+    rightBtnText={$usersView.value?.isLoading ? 'Sending...' : 'Send Invitation'}
+    rightButtonDisabled={$usersView.value?.isLoading}
     rightBtnOnClick={handleInviteUser}
   >
     <Form>
-      <Row>
-        <Col md={12} className="mb-16">
-          <UniversalInput
-            label="Email"
-            type="email"
-            value={$usersForm.value.email || ''}
-            onChange={(e) => $usersForm.update({ email: e.target.value })}
-            placeholder="user@example.com"
-            required
-            name="email"
-          />
-        </Col>
-      </Row>
-      <Row>
-        <Col md={12} className="mb-16">
-          <Form.Label>Role</Form.Label>
-          <SelectInput
-            name="role"
-            signal={$usersForm}
-            options={ROLE_OPTIONS}
-            value={$usersForm.value.role}
-            notClearable
-          />
-        </Col>
-      </Row>
+      <Loadable signal={$usersView} template="component">
+        <Row>
+          <Col md={12} className="mb-16">
+            <UniversalInput
+              label="Email"
+              type="email"
+              value={$usersForm.value.email || ''}
+              onChange={(e) => $usersForm.update({ email: e.target.value })}
+              placeholder="user@example.com"
+              required
+              name="email"
+            />
+          </Col>
+        </Row>
+        <Row>
+          <Col md={12} className="mb-16">
+            <Form.Label>Role</Form.Label>
+            <SelectInput
+              name="role"
+              signal={$usersForm}
+              options={ROLE_OPTIONS}
+              value={$usersForm.value.role}
+              notClearable
+            />
+          </Col>
+        </Row>
+      </Loadable>
     </Form>
   </UniversalModal>
 );

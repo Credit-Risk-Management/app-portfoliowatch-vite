@@ -60,7 +60,7 @@ export default function DebtServiceModalView({ show, onHide, record }) {
                       {item.loanStatus || 'current'}
                     </Badge>
                   </td>
-                  <td className="text-danger-500 fw-500">
+                  <td className="text-warning-500 fw-500">
                     {item.currentBalance ? formatCurrency(item.currentBalance) : '-'}
                   </td>
                   <td className="text-warning-500 fw-500">

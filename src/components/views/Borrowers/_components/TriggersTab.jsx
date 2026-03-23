@@ -2,11 +2,11 @@ import { Row, Col, Alert, Card } from 'react-bootstrap';
 
 const TriggersTab = ({ previousFinancial, currentForm, isLoadingPrevious }) => {
   const calculateChange = (current, previous) => {
-    if (!previous || previous === 0) return null;
+    if (previous == null || previous === '' || previous === 0) return null;
     const currentVal = parseFloat(current) || 0;
     const previousVal = parseFloat(previous) || 0;
     if (previousVal === 0) return null;
-    return ((currentVal - previousVal) / previousVal) * 100;
+    return ((currentVal - previousVal) / Math.abs(previousVal)) * 100;
   };
 
   const formatCurrency = (value) => {

@@ -1,4 +1,5 @@
-import { $users, $usersView, $usersForm, $user, $organization, $alert } from '@src/signals';
+import { $users, $usersView, $usersForm, $user, $organization, $settingsView } from '@src/signals';
+import { successAlert, dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import * as invitationApi from '@src/api/invitation.api';
 import * as organizationApi from '@src/api/organization.api';
 
@@ -33,25 +34,23 @@ export const fetchUsers = async () => {
 };
 
 export const handleInviteUser = async () => {
+  const isSettingsModal = $settingsView.value?.showInviteModal;
+  const $view = isSettingsModal ? $settingsView : $usersView;
+
   try {
+    $view.update({ isLoading: true });
     const formData = $usersForm.value;
     const organizationId = $user.value?.organizationId || $organization.value?.id;
 
     if (!organizationId) {
-      $alert.update({
-        show: true,
-        variant: 'danger',
-        message: 'Organization not found',
-      });
+      $view.update({ isLoading: false });
+      dangerAlert('Organization not found');
       return;
     }
 
     if (!formData.email) {
-      $alert.update({
-        show: true,
-        variant: 'danger',
-        message: 'Email is required',
-      });
+      $view.update({ isLoading: false });
+      dangerAlert('Email is required');
       return;
     }
 
@@ -66,21 +65,15 @@ export const handleInviteUser = async () => {
     await fetchUsers();
 
     // Close modal and reset form
-    $usersView.update({ showInviteModal: false });
+    $view.update({ showInviteModal: false });
     $usersForm.reset();
 
-    $alert.update({
-      show: true,
-      variant: 'success',
-      message: 'Invitation sent successfully',
-    });
+    successAlert('Invitation sent successfully');
   } catch (error) {
     const errorMessage = error?.response?.data?.message || error?.message || 'Failed to send invitation';
-    $alert.update({
-      show: true,
-      variant: 'danger',
-      message: errorMessage,
-    });
+    dangerAlert(errorMessage);
+  } finally {
+    $view.update({ isLoading: false });
   }
 };
 
@@ -89,18 +82,10 @@ export const handleResendInvitation = async (invitationId) => {
     await invitationApi.resendInvitation(invitationId);
     await fetchUsers();
 
-    $alert.update({
-      show: true,
-      variant: 'success',
-      message: 'Invitation resent successfully',
-    });
+    successAlert('Invitation resent successfully');
   } catch (error) {
     const errorMessage = error?.response?.data?.message || error?.message || 'Failed to resend invitation';
-    $alert.update({
-      show: true,
-      variant: 'danger',
-      message: errorMessage,
-    });
+    dangerAlert(errorMessage);
   }
 };
 
@@ -109,18 +94,10 @@ export const handleRevokeInvitation = async (invitationId) => {
     await invitationApi.revokeInvitation(invitationId);
     await fetchUsers();
 
-    $alert.update({
-      show: true,
-      variant: 'success',
-      message: 'Invitation revoked successfully',
-    });
+    successAlert('Invitation revoked successfully');
   } catch (error) {
     const errorMessage = error?.response?.data?.message || error?.message || 'Failed to revoke invitation';
-    $alert.update({
-      show: true,
-      variant: 'danger',
-      message: errorMessage,
-    });
+    dangerAlert(errorMessage);
   }
 };
 
@@ -134,18 +111,10 @@ export const handleSuspendUser = async (userId) => {
     await organizationApi.suspendMember(organizationId, userId);
     await fetchUsers();
 
-    $alert.update({
-      show: true,
-      variant: 'success',
-      message: 'User suspended successfully',
-    });
+    successAlert('User suspended successfully');
   } catch (error) {
     const errorMessage = error?.response?.data?.message || error?.message || 'Failed to suspend user';
-    $alert.update({
-      show: true,
-      variant: 'danger',
-      message: errorMessage,
-    });
+    dangerAlert(errorMessage);
   }
 };
 
@@ -159,18 +128,10 @@ export const handleUnsuspendUser = async (userId) => {
     await organizationApi.unsuspendMember(organizationId, userId);
     await fetchUsers();
 
-    $alert.update({
-      show: true,
-      variant: 'success',
-      message: 'User unsuspended successfully',
-    });
+    successAlert('User unsuspended successfully');
   } catch (error) {
     const errorMessage = error?.response?.data?.message || error?.message || 'Failed to unsuspend user';
-    $alert.update({
-      show: true,
-      variant: 'danger',
-      message: errorMessage,
-    });
+    dangerAlert(errorMessage);
   }
 };
 
@@ -184,17 +145,9 @@ export const handleDeleteUser = async (userId) => {
     await organizationApi.deleteMember(organizationId, userId);
     await fetchUsers();
 
-    $alert.update({
-      show: true,
-      variant: 'success',
-      message: 'User deleted successfully',
-    });
+    successAlert('User deleted successfully');
   } catch (error) {
     const errorMessage = error?.response?.data?.message || error?.message || 'Failed to delete user';
-    $alert.update({
-      show: true,
-      variant: 'danger',
-      message: errorMessage,
-    });
+    dangerAlert(errorMessage);
   }
 };

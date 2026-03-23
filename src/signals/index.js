@@ -389,6 +389,7 @@ export const $users = Signal({
 export const $usersView = Signal({
   showInviteModal: false,
   showDeleteModal: false,
+  isLoading: true,
 });
 
 export const $usersForm = Signal({
@@ -420,6 +421,7 @@ export const $settingsView = Signal({
   activeTab: 'organization',
   isSaving: false,
   showInviteModal: false,
+  isLoading: false,
 });
 
 export const $settingsForm = Signal({
