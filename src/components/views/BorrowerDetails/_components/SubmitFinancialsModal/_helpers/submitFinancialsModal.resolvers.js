@@ -93,6 +93,7 @@ export const handleFileUpload = async (ocrApplied, pdfUrl) => {
               profitMargin: extractedData.profitMargin,
               ebitda: extractedData.ebitda,
               rentalExpenses: extractedData.rentalExpenses,
+              debtService: extractedData.debtService,
             });
           }
         }

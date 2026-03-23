@@ -100,7 +100,7 @@ export function extractDataFromApiResponse(
         ? parseFloat((pmRaw / 100).toFixed(4))
         : parseFloat(pmRaw.toFixed(4));
     } else if (grossRevenue !== undefined && grossRevenue > 0) {
-      profitMargin = parseFloat((netIncome / grossRevenue).toFixed(4));
+      profitMargin = parseFloat((parsedDocument.total_income / grossRevenue).toFixed(4));
     }
     return {
       asOfDate,
@@ -108,6 +108,7 @@ export function extractDataFromApiResponse(
       netIncome,
       profitMargin,
       ebitda,
+      debtService: num(getVal(parsedDocument.debtService)),
       rentalExpenses: num(
         getVal(parsedDocument.rentalExpenses) ?? getVal(parsedDocument.rentExpense),
       ),
