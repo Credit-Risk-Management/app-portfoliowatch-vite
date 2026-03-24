@@ -31,19 +31,32 @@ const SubmitFinancialsModal = () => {
   } = $modalState.value;
 
   useEffect(() => {
-    if (activeModalKey === 'submitFinancials' && isEditMode && editingFinancialId) {
-      const loadData = async () => {
-        try {
-          const response = await borrowerFinancialsApi.getById(editingFinancialId);
-          if (response?.success && response?.data) {
-            await resolvers.handleOpenEditMode(response.data);
-          }
-        } catch (err) {
+    if (activeModalKey !== 'submitFinancials' || !isEditMode || !editingFinancialId) {
+      return undefined;
+    }
+
+    const editingId = editingFinancialId;
+    let cancelled = false;
+
+    const loadData = async () => {
+      try {
+        const response = await borrowerFinancialsApi.getById(editingId);
+        if (cancelled) return;
+        if ($borrowerFinancialsView.value.editingFinancialId !== editingId) return;
+        if (response?.success && response?.data) {
+          await resolvers.handleOpenEditMode(response.data);
+        }
+      } catch (err) {
+        if (!cancelled && $borrowerFinancialsView.value.editingFinancialId === editingId) {
           $modalState.update({ error: 'Failed to load financial data for editing' });
         }
-      };
-      loadData();
-    }
+      }
+    };
+    loadData();
+
+    return () => {
+      cancelled = true;
+    };
   }, [activeModalKey, isEditMode, editingFinancialId]);
 
   useEffectAsync(async () => {
@@ -69,9 +82,11 @@ const SubmitFinancialsModal = () => {
   const activeTabClass = 'bg-info-100 text-info-900';
   const inactiveTabClass = 'text-info-100';
   const modalTitle = isEditMode ? 'Edit Financial Data' : 'Submit Financial Data';
-  const submitButtonText = isSubmitting ? (isEditMode ? 'Updating...' : 'Submitting...') : 'Update';
+  const submitButtonText = isSubmitting
+    ? (isEditMode ? 'Updating...' : 'Submitting...')
+    : (isEditMode ? 'Update' : 'Submit');
 
-  const handleCloseWithRevoke = () => events.handleClose(pdfUrl);
+  const handleCloseWithRevoke = async () => events.handleClose(pdfUrl);
   const handleSubmitClick = () => resolvers.handleSubmit(handleCloseWithRevoke);
   const handleFileUploadClick = async () => resolvers.handleFileUpload(ocrApplied, pdfUrl);
 

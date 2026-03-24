@@ -27,6 +27,12 @@ export const $modalState = Signal({
     debtServiceWorksheet: 0,
     taxReturn: 0,
   },
+  initialStoredDocumentIdsByType: {
+    balanceSheet: [],
+    incomeStatement: [],
+    debtServiceWorksheet: [],
+    taxReturn: [],
+  },
   showWatchScoreResults: false,
   updatedLoans: [],
 });

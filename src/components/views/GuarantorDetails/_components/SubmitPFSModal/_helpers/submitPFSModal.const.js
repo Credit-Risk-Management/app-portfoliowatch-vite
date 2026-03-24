@@ -24,6 +24,10 @@ export const $submitPFSModalDetails = Signal({
     personalFinancialStatement: [],
     personalTaxReturn: [],
   },
+  initialStoredDocumentIdsByType: {
+    personalFinancialStatement: [],
+    personalTaxReturn: [],
+  },
   downloadSensibleUrl: false,
   pdfUrl: null,
   updatedGuarantors: [],

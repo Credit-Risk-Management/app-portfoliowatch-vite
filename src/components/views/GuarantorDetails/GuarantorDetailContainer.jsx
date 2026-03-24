@@ -16,6 +16,7 @@ import GuarantorDocuments from './_components/GuarantorDocuments';
 import { $guarantorDetailView, $guarantorDetailsData } from './_helpers/guarantorDetails.consts';
 import SubmitPFSModal from './_components/SubmitPFSModal/SubmitPFSModal';
 import GuarantorLoans from './_components/GuarantorLoans';
+import { $submitPFSModalView } from './_components/SubmitPFSModal/_helpers/submitPFSModal.const';
 
 export function GuarantorDetailContainer() {
   const { guarantorId } = useParams();
@@ -24,6 +25,7 @@ export function GuarantorDetailContainer() {
   useEffectAsync(async () => {
     await resolvers.fetchGuarantorDetail(guarantorId);
   }, [guarantorId]);
+  console.log('submitPFSModalView', $submitPFSModalView.value);
 
   //
   // Mutations
