@@ -155,40 +155,93 @@ export const handleFileUpload = async (ocrApplied, pdfUrl) => {
 export const handleRemoveDocument = async (documentId) => {
   const { $modalState } = consts;
   $modalState.update({ isLoading: true });
-  const { documentType } = $borrowerFinancialsForm.value;
-  const { documentsByType, currentDocumentIndex } = $modalState.value;
-  const docs = documentsByType[documentType] || [];
-  const docIndex = docs.findIndex((doc) => doc.id === documentId);
-  if (docIndex === -1) return;
+  try {
+    const { documentType } = $borrowerFinancialsForm.value;
+    const { documentsByType, currentDocumentIndex } = $modalState.value;
+    const docs = documentsByType[documentType] || [];
+    const docIndex = docs.findIndex((doc) => doc.id === documentId);
+    if (docIndex === -1) return;
 
-  const doc = docs[docIndex];
-  if (doc.previewUrl) {
-    URL.revokeObjectURL(doc.previewUrl);
-  }
-  const updatedDocs = docs.filter((_, i) => i !== docIndex);
-  let newIndex = currentDocumentIndex[documentType];
-  if (newIndex >= updatedDocs.length) {
-    newIndex = Math.max(0, updatedDocs.length - 1);
-  }
-  const newPdfUrl = updatedDocs[newIndex]?.previewUrl || null;
-  if ($modalState.value.downloadSensibleUrl) {
-    const deleteStorageRef = storage.ref($modalState.value.downloadSensibleUrl);
-    await deleteStorageRef.delete();
-  }
-  $borrowerFinancialsForm.reset();
-  $modalState.update({
-    documentsByType: {
+    const doc = docs[docIndex];
+    if (doc.previewUrl) {
+      URL.revokeObjectURL(doc.previewUrl);
+    }
+    const updatedDocs = docs.filter((_, i) => i !== docIndex);
+    let newIndex = currentDocumentIndex[documentType];
+    if (newIndex >= updatedDocs.length) {
+      newIndex = Math.max(0, updatedDocs.length - 1);
+    }
+    const newPdfUrl = updatedDocs[newIndex]?.previewUrl || null;
+    if ($modalState.value.downloadSensibleUrl) {
+      const deleteStorageRef = storage.ref($modalState.value.downloadSensibleUrl);
+      await deleteStorageRef.delete();
+    }
+
+    const updatedDocumentsByType = {
       ...documentsByType,
       [documentType]: updatedDocs,
-    },
-    currentDocumentIndex: {
-      ...currentDocumentIndex,
-      [documentType]: newIndex,
-    },
-    pdfUrl: newPdfUrl,
-    downloadSensibleUrl: null,
-    isLoading: false,
-  });
+    };
+    const allEmpty = ['balanceSheet', 'incomeStatement', 'debtServiceWorksheet', 'taxReturn'].every(
+      (k) => !(updatedDocumentsByType[k] || []).length,
+    );
+
+    const clearedFields = {};
+    const taxStillHasDocs = (updatedDocumentsByType.taxReturn || []).length > 0;
+    const incomeStillHasDocs = (updatedDocumentsByType.incomeStatement || []).length > 0;
+    if (documentType === 'incomeStatement' && updatedDocs.length === 0) {
+      clearedFields.debtService = '';
+      if (!taxStillHasDocs) {
+        clearedFields.grossRevenue = '';
+        clearedFields.netIncome = '';
+        clearedFields.profitMargin = '';
+        clearedFields.ebitda = '';
+        clearedFields.rentalExpenses = '';
+      }
+    }
+    if (documentType === 'balanceSheet' && updatedDocs.length === 0) {
+      clearedFields.totalCurrentAssets = '';
+      clearedFields.totalCurrentLiabilities = '';
+      clearedFields.cash = '';
+      clearedFields.cashEquivalents = '';
+      clearedFields.equity = '';
+      clearedFields.accountsReceivable = '';
+      clearedFields.accountsPayable = '';
+      clearedFields.inventory = '';
+    }
+    if (documentType === 'taxReturn' && updatedDocs.length === 0 && !incomeStillHasDocs) {
+      clearedFields.grossRevenue = '';
+      clearedFields.netIncome = '';
+      clearedFields.profitMargin = '';
+      clearedFields.ebitda = '';
+      clearedFields.rentalExpenses = '';
+    }
+    if (allEmpty) {
+      clearedFields.asOfDate = '';
+    }
+
+    if (Object.keys(clearedFields).length > 0) {
+      $borrowerFinancialsForm.update(clearedFields);
+    }
+
+    $modalState.update({
+      ...$modalState.value,
+      documentsByType: updatedDocumentsByType,
+      currentDocumentIndex: {
+        ...currentDocumentIndex,
+        [documentType]: newIndex,
+      },
+      pdfUrl: newPdfUrl,
+      downloadSensibleUrl: null,
+    });
+
+    if (allEmpty) {
+      $modalState.update({ ocrApplied: false });
+    }
+  } catch (error) {
+    $modalState.update({ error: error?.message ?? 'Failed to remove document', isLoading: false });
+  } finally {
+    $modalState.update({ isLoading: false });
+  }
 };
 
 export const handleSwitchDocument = (index) => {
@@ -247,14 +300,34 @@ const loadDocumentsFromBackend = async (financialId) => {
   };
 };
 
+const collectStoredIdsByType = (documentsByType) => ({
+  balanceSheet: (documentsByType.balanceSheet || [])
+    .filter((d) => d.isStored && d.id)
+    .map((d) => d.id),
+  incomeStatement: (documentsByType.incomeStatement || [])
+    .filter((d) => d.isStored && d.id)
+    .map((d) => d.id),
+  debtServiceWorksheet: (documentsByType.debtServiceWorksheet || [])
+    .filter((d) => d.isStored && d.id)
+    .map((d) => d.id),
+  taxReturn: (documentsByType.taxReturn || [])
+    .filter((d) => d.isStored && d.id)
+    .map((d) => d.id),
+});
+
 export const handleOpenEditMode = async (financial) => {
   const { $modalState } = consts;
+  const expectedFinancialId = financial.id;
   const formatDateForInput = (dateString) => {
     if (!dateString) return '';
     return new Date(dateString).toISOString().split('T')[0];
   };
 
   const documentsByType = await loadDocumentsFromBackend(financial.id);
+  // User may have closed the modal or submitted while documents were loading; do not reopen.
+  if ($borrowerFinancialsView.value.editingFinancialId !== expectedFinancialId) {
+    return;
+  }
   const firstDocType = Object.keys(documentsByType).find((type) => documentsByType[type].length > 0);
   const firstDoc = firstDocType ? documentsByType[firstDocType][0] : null;
 
@@ -299,6 +372,7 @@ export const handleOpenEditMode = async (financial) => {
 
   $modalState.update({
     documentsByType,
+    initialStoredDocumentIdsByType: collectStoredIdsByType(documentsByType),
     pdfUrl: firstDoc?.previewUrl || firstDoc?.storageUrl || null,
     currentDocumentIndex: {
       balanceSheet: 0,
@@ -375,16 +449,20 @@ export const handleSubmit = async (onCloseCallback) => {
     }
 
     if (response?.success) {
+      const wasEditMode = $borrowerFinancialsView.value.isEditMode;
       const financialId = response.data?.id || response.data?.data?.id || editingId;
-      if (financialId && $modalState.value.documentsByType) {
+      const uploadBorrowerFinancialId = editingId ?? financialId;
+
+      if (uploadBorrowerFinancialId && $modalState.value.documentsByType) {
+        const { documentsByType } = $modalState.value;
         const uploadPromises = [];
-        Object.keys($modalState.value.documentsByType).forEach((docType) => {
-          const docs = $modalState.value.documentsByType[docType] || [];
+        Object.keys(documentsByType || {}).forEach((docType) => {
+          const docs = documentsByType[docType] || [];
           docs.forEach((doc) => {
-            if (doc.file && !doc.isStored) {
+            if (doc?.file && !doc.isStored) {
               uploadPromises.push(
                 borrowerFinancialDocumentsApi.uploadFile({
-                  borrowerFinancialId: financialId,
+                  borrowerFinancialId: uploadBorrowerFinancialId,
                   file: doc.file,
                   documentType: docType,
                   uploadedBy: $user.value?.email || $user.value?.name || 'Unknown User',
@@ -394,28 +472,39 @@ export const handleSubmit = async (onCloseCallback) => {
           });
         });
         if (uploadPromises.length > 0) {
-          Promise.all(uploadPromises).then((results) => {
-            const successCount = results.filter((r) => r !== null).length;
-            if (successCount > 0) {
-              // optional log
-            }
+          await Promise.all(uploadPromises);
+        }
+
+        if (editingId) {
+          const { initialStoredDocumentIdsByType } = $modalState.value;
+          const deletePromises = [];
+          Object.keys(initialStoredDocumentIdsByType || {}).forEach((docType) => {
+            const docs = documentsByType[docType] || [];
+            const currentStoredIds = new Set(
+              docs.filter((d) => d.isStored && d.id).map((d) => d.id),
+            );
+            (initialStoredDocumentIdsByType[docType] || []).forEach((id) => {
+              if (!currentStoredIds.has(id)) {
+                deletePromises.push(
+                  borrowerFinancialDocumentsApi.delete(id).catch(() => null),
+                );
+              }
+            });
           });
+          if (deletePromises.length > 0) {
+            await Promise.all(deletePromises);
+          }
         }
       }
 
       $borrowerFinancialsView.update({
         refreshTrigger: $borrowerFinancialsView.value.refreshTrigger + 1,
       });
-      onCloseCallback();
 
       const updatedLoans = response.data?.updatedLoans || [];
+      await onCloseCallback();
       $modalState.update({ showWatchScoreResults: true, updatedLoans });
-      if ($modalState.value.downloadSensibleUrl) {
-        const deleteStorageRef = storage.ref($modalState.value.downloadSensibleUrl);
-        await deleteStorageRef.delete();
-        $modalState.update({ downloadSensibleUrl: null });
-      }
-      successAlert(isEditMode ? 'Financial data updated successfully!' : 'Submitted new financials!', 'toast');
+      successAlert(wasEditMode ? 'Financial data updated successfully!' : 'Submitted new financials!', 'toast');
     } else {
       $modalState.update({ error: response?.error || response?.message || 'Failed to submit financial data' });
     }

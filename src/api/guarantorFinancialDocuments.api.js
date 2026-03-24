@@ -40,6 +40,10 @@ const guarantorFinancialDocumentsApi = {
     );
     return response;
   },
+  delete: async (id) => {
+    const response = await apiClient.delete(`/guarantor-financial-documents/${id}`);
+    return response?.data ?? response;
+  },
 };
 
 export default guarantorFinancialDocumentsApi;

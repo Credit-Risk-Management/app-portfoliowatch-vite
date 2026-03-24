@@ -2,10 +2,23 @@ import { storage } from '@src/utils/firebase';
 import { $submitPFSModalView, $submitPFSModalDetails } from './submitPFSModal.const';
 /**
  * Close the modal and reset all state.
- * @param {string} pdfUrl - Current PDF URL to revoke
+ * @param {string} [pdfUrlOrEvent] - Blob URL to revoke; React-Bootstrap may pass a synthetic event from onHide — ignored for revoke in that case.
  */
-export const handleClose = async (pdfUrl) => {
-  const { documentsByType } = $submitPFSModalDetails.value;
+export const handleClose = async (pdfUrlOrEvent) => {
+  const { documentsByType, downloadSensibleUrl, pdfUrl: detailsPdfUrl } = $submitPFSModalDetails.value;
+  const pdfUrlToRevoke = typeof pdfUrlOrEvent === 'string' ? pdfUrlOrEvent : detailsPdfUrl;
+
+  // Hide immediately so the modal does not wait on Firebase/async cleanup (matches Submit Financials pattern).
+  $submitPFSModalView.update({
+    activeModalKey: null,
+    editingFinancialId: null,
+    isEditMode: false,
+    isSubmitting: false,
+    isLoading: false,
+    isLoadingInputData: false,
+    error: null,
+  });
+
   Object.values(documentsByType || {}).forEach((docs) => {
     (docs || []).forEach((doc) => {
       if (doc.previewUrl) {
@@ -14,18 +27,15 @@ export const handleClose = async (pdfUrl) => {
     });
   });
 
-  if ($submitPFSModalDetails.value.downloadSensibleUrl) {
-    const deleteStorageRef = storage.ref($submitPFSModalDetails.value.downloadSensibleUrl);
-    await deleteStorageRef.delete().catch((error) => {
-      console.error('Error deleting storage ref:', error);
-    });
+  if (downloadSensibleUrl) {
+    const deleteStorageRef = storage.ref(downloadSensibleUrl);
+    await deleteStorageRef.delete().catch(() => { });
   }
 
-  if (pdfUrl) {
-    URL.revokeObjectURL(pdfUrl);
+  if (pdfUrlToRevoke) {
+    URL.revokeObjectURL(pdfUrlToRevoke);
   }
 
-  $submitPFSModalView.reset();
   $submitPFSModalDetails.reset();
 };
 
