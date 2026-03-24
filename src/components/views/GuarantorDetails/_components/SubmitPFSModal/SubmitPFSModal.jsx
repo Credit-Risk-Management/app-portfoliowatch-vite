@@ -26,19 +26,30 @@ const SubmitPFSModal = () => {
   }
 
   useEffect(() => {
-    if ($submitPFSModalView.value.editingFinancialId) {
-      const loadData = async () => {
-        try {
-          const response = await guarantorsApi.getFinancialById($submitPFSModalView.value.editingFinancialId);
-          if (response?.success && response?.data) {
-            await resolvers.handleOpenEditMode(response.data);
-          }
-        } catch (err) {
+    const editingId = $submitPFSModalView.value.editingFinancialId;
+    if (!editingId) return undefined;
+
+    let cancelled = false;
+
+    const loadData = async () => {
+      try {
+        const response = await guarantorsApi.getFinancialById(editingId);
+        if (cancelled) return;
+        if ($submitPFSModalView.value.editingFinancialId !== editingId) return;
+        if (response?.success && response?.data) {
+          await resolvers.handleOpenEditMode(response.data);
+        }
+      } catch (err) {
+        if (!cancelled && $submitPFSModalView.value.editingFinancialId === editingId) {
           $submitPFSModalView.update({ error: 'Failed to load financial data for editing' });
         }
-      };
-      loadData();
-    }
+      }
+    };
+    loadData();
+
+    return () => {
+      cancelled = true;
+    };
   }, [$submitPFSModalView.value.editingFinancialId]);
   const handleCloseWithRevoke = async () => await events.handleClose($submitPFSModalDetails.value.pdfUrl);
   const handleSubmitClick = () => resolvers.handleSubmit(handleCloseWithRevoke);

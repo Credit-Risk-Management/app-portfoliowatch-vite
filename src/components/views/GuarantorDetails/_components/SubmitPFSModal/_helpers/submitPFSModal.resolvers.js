@@ -173,21 +173,44 @@ export const handleRemoveDocument = async (documentId) => {
       const deleteStorageRef = storage.ref($submitPFSModalDetails.value.downloadSensibleUrl);
       await deleteStorageRef.delete();
     }
+
+    const updatedDocumentsByType = {
+      ...documentsByType,
+      [documentType]: updatedDocs,
+    };
+    const pfsEmpty = !(updatedDocumentsByType.personalFinancialStatement || []).length;
+    const taxEmpty = !(updatedDocumentsByType.personalTaxReturn || []).length;
+
+    const clearedFields = {};
+    if (documentType === 'personalFinancialStatement' && updatedDocs.length === 0) {
+      clearedFields.totalAssets = '';
+      clearedFields.totalLiabilities = '';
+      clearedFields.netWorth = '';
+      clearedFields.liquidity = '';
+    }
+    if (documentType === 'personalTaxReturn' && updatedDocs.length === 0) {
+      clearedFields.adjustedGrossIncome = '';
+    }
+    if (pfsEmpty && taxEmpty) {
+      clearedFields.asOfDate = null;
+    }
+
     $submitPFSModalDetails.update({
-      documentsByType: {
-        ...documentsByType,
-        [documentType]: updatedDocs,
-      },
+      ...$submitPFSModalDetails.value,
+      documentsByType: updatedDocumentsByType,
       currentDocumentIndex: {
         ...currentDocumentIndex,
         [documentType]: newIndex,
       },
       pdfUrl: newPdfUrl,
       downloadSensibleUrl: null,
-
+      ...clearedFields,
     });
+
+    if (pfsEmpty && taxEmpty) {
+      $submitPFSModalView.update({ ocrApplied: false });
+    }
   } catch (error) {
-    console.error('Error removing document:', error);
     $submitPFSModalView.update({ error: error?.message ?? 'Failed to remove document', isLoading: false });
   } finally {
     $submitPFSModalView.update({ isLoading: false });
@@ -263,11 +286,24 @@ const formatDateForInput = (dateString) => {
   if (!dateString) return '';
   return new Date(dateString).toISOString().split('T')[0];
 };
+const collectStoredIdsByType = (documentsByType) => ({
+  personalFinancialStatement: (documentsByType.personalFinancialStatement || [])
+    .filter((d) => d.isStored && d.id)
+    .map((d) => d.id),
+  personalTaxReturn: (documentsByType.personalTaxReturn || [])
+    .filter((d) => d.isStored && d.id)
+    .map((d) => d.id),
+});
 
 export const handleOpenEditMode = async (financial) => {
+  const expectedFinancialId = financial.id;
   $submitPFSModalView.update({ isLoading: true });
   try {
     const documentsByType = await loadGuarantorDocumentsFromBackend(financial.id);
+    // User may have closed the modal or submitted while documents were loading; do not reopen.
+    if ($submitPFSModalView.value.editingFinancialId !== expectedFinancialId) {
+      return;
+    }
     const firstDocType = Object.keys(documentsByType).find((type) => documentsByType[type].length > 0);
     const firstDoc = firstDocType ? documentsByType[firstDocType][0] : null;
 
@@ -281,6 +317,7 @@ export const handleOpenEditMode = async (financial) => {
       debtToIncomeRatio: financial.debtToIncomeRatio != null ? Number(financial.debtToIncomeRatio).toFixed(2) : null,
       notes: financial.notes || '',
       documentsByType,
+      initialStoredDocumentIdsByType: collectStoredIdsByType(documentsByType),
       pdfUrl: firstDoc?.previewUrl || firstDoc?.storageUrl || null,
       currentDocumentIndex: {
         personalFinancialStatement: 0,
@@ -297,6 +334,9 @@ export const handleOpenEditMode = async (financial) => {
       isLoading: false,
     });
   } catch (error) {
+    if ($submitPFSModalView.value.editingFinancialId !== expectedFinancialId) {
+      return;
+    }
     $submitPFSModalView.update({
       error: error?.message ?? 'Failed to load financial data for editing',
       isLoading: false,
@@ -359,8 +399,10 @@ export const handleSubmit = async (onCloseCallback) => {
     if (response?.success || response?.data) {
       const data = response?.data ?? response;
       const financialId = data?.id ?? data?.data?.id ?? $submitPFSModalView.value.editingFinancialId;
+      const uploadGuarantorFinancialId =
+        $submitPFSModalView.value.editingFinancialId ?? financialId;
 
-      if (financialId) {
+      if (uploadGuarantorFinancialId) {
         const { documentsByType } = $submitPFSModalDetails.value;
         const uploadPromises = [];
         Object.keys(documentsByType || {}).forEach((docType) => {
@@ -370,7 +412,7 @@ export const handleSubmit = async (onCloseCallback) => {
               uploadPromises.push(
                 guarantorFinancialDocumentsApi
                   .uploadFile({
-                    guarantorFinancialId: financialId,
+                    guarantorFinancialId: uploadGuarantorFinancialId,
                     file: doc.file,
                     documentType: docType,
                     uploadedBy: $user.value?.email || $user.value?.name || 'Unknown User',
@@ -383,6 +425,27 @@ export const handleSubmit = async (onCloseCallback) => {
         if (uploadPromises.length > 0) {
           await Promise.all(uploadPromises);
         }
+
+        if ($submitPFSModalView.value.editingFinancialId) {
+          const { initialStoredDocumentIdsByType } = $submitPFSModalDetails.value;
+          const deletePromises = [];
+          Object.keys(initialStoredDocumentIdsByType || {}).forEach((docType) => {
+            const docs = documentsByType[docType] || [];
+            const currentStoredIds = new Set(
+              docs.filter((d) => d.isStored && d.id).map((d) => d.id),
+            );
+            (initialStoredDocumentIdsByType[docType] || []).forEach((id) => {
+              if (!currentStoredIds.has(id)) {
+                deletePromises.push(
+                  guarantorFinancialDocumentsApi.delete(id).catch(() => null),
+                );
+              }
+            });
+          });
+          if (deletePromises.length > 0) {
+            await Promise.all(deletePromises);
+          }
+        }
       }
 
       if (downloadSensibleUrl) {
@@ -394,10 +457,11 @@ export const handleSubmit = async (onCloseCallback) => {
         }
       }
 
+      const wasEditMode = $submitPFSModalView.value.isEditMode;
+      await onCloseCallback();
       await fetchGuarantorDetail(guarantorId);
-      onCloseCallback();
 
-      successAlert($submitPFSModalView.value.isEditMode ? 'PFS updated successfully!' : 'PFS submitted successfully!', 'toast');
+      successAlert(wasEditMode ? 'PFS updated successfully!' : 'PFS submitted successfully!', 'toast');
     } else {
       $submitPFSModalView.update({ error: response?.error || response?.message || 'Failed to submit PFS' });
     }
