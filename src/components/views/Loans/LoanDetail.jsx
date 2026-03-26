@@ -28,16 +28,13 @@ import {
   renderMarkdownLinks,
 } from './_helpers/loans.helpers';
 import {
-  $loanDetailNewComment,
   $loanDetailShowSecondaryContacts,
   $loanDetailFinancials,
-  $loanDetailCollateral,
-  $loanDetailCollateralDateFilter,
-  $loanDetailCollateralAccordionExpanded,
+  $loanDetailCollateral, $loanDetailCollateralAccordionExpanded,
   $industryReportGenerating,
-  $loanDetailGuarantors,
+  $loanDetailGuarantors
 } from './_helpers/loans.consts';
-import { fetchLoanDetail } from './_helpers/loans.resolvers';
+import { fetchLoanDetail, resetLoanRouteState } from './_helpers/loans.resolvers';
 import {
   handleGenerateIndustryReport,
 } from './_helpers/loans.events';
@@ -49,20 +46,14 @@ const LoanDetail = () => {
   const fromBorrowerId = location.state?.fromBorrower;
   const showBackToBorrower = !!fromBorrowerId;
 
-  // Fetch loan detail on mount or when loanId changes
-  useEffectAsync(async () => {
-    await fetchLoanDetail(loanId);
-  }, []);
+  useEffect(() => () => {
+    resetLoanRouteState();
+  }, [loanId]);
 
-  // Reset component state when the loan changes
-  useEffect(() => {
-    $loanDetailNewComment.value = '';
-    $loanDetailShowSecondaryContacts.value = false;
-    $loanDetailFinancials.value = [];
-    $loanDetailCollateral.value = [];
-    $loanDetailGuarantors.value = [];
-    $loanDetailCollateralDateFilter.value = null;
-    $loanDetailCollateralAccordionExpanded.value = undefined;
+  useEffectAsync(async () => {
+    if (loanId) {
+      await fetchLoanDetail(loanId);
+    }
   }, [loanId]);
 
   if ($loan.value?.isLoading) {

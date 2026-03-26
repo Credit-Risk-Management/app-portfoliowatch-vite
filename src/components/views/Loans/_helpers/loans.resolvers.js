@@ -8,7 +8,26 @@ import commentsApi from '@src/api/comments.api';
 import documentsApi from '@src/api/documents.api';
 import loanCollateralValueApi from '@src/api/loanCollateralValue.api';
 import guarantorsApi from '@src/api/guarantors.api';
-import { $loanDetailFinancials, $loanDetailCollateral, $loanDetailGuarantors } from './loans.consts';
+import {
+  $loanDetailFinancials,
+  $loanDetailCollateral,
+  $loanDetailGuarantors,
+  $loanDetailNewComment,
+  $loanDetailNewCommentLoading,
+  $loanDetailShowSecondaryContacts,
+  $loanDetailCollateralDateFilter,
+  $loanDetailCollateralAccordionExpanded,
+  $industryReportGenerating,
+  $loanDetailView,
+  $financialsUploader,
+  $loanDetailMissingFinancials,
+} from './loans.consts';
+import {
+  $loanCollateralView,
+  $loanCollateralForm,
+  $collateralDocUploader,
+  $collateralModalState,
+} from '../_components/submitCollateralModal.signals';
 
 export const loadReferenceData = async () => {
   try {
@@ -64,19 +83,20 @@ export const fetchLoanDetail = async (loanId) => {
   try {
     $loan.update({ isLoading: true });
     $watchScoreBreakdown.update({ isLoading: true });
+    $loanDetailMissingFinancials.value = false;
 
-    const [loanResponse, commentsResponse, watchScoreResponse, documentsResponse, collateralResponse] = await Promise.all([
-      loansApi.getById(loanId),
-      commentsApi.getByLoan(loanId),
-      loansApi.getWatchScoreBreakdown(loanId),
-      documentsApi.getAll({ loanId, documentType: 'Financial Statement' }),
-      loanCollateralValueApi.getHistoryByLoanId(loanId).catch(() => ({ data: [] })), // Fail silently if no collateral
-    ]);
+    const loanResponse = await loansApi.getById(loanId);
+    const loanData = loanResponse?.data || loanResponse;
+
+    const [commentsResponse, watchScoreResponse, documentsResponse, collateralResponse, missingFinancials] =
+      await Promise.all([
+        commentsApi.getByLoan(loanId),
+        loansApi.getWatchScoreBreakdown(loanId),
+        documentsApi.getAll({ loanId, documentType: 'Financial Statement' }),
+        loanCollateralValueApi.getHistoryByLoanId(loanId).catch(() => ({ data: [] })), // Fail silently if no collateral
+      ]);
 
     const guarantorsResponse = await guarantorsApi.getByLoanId(loanId);
-    // The API client interceptor returns response.data, so loanResponse is { success: true, data: loan }
-    // Extract the loan object from the response (handle both wrapped and unwrapped responses)
-    const loanData = loanResponse?.data || loanResponse;
 
     $loan.update({ loan: loanData, isLoading: false });
     $comments.update({ list: commentsResponse?.data || commentsResponse || [] });
@@ -84,6 +104,7 @@ export const fetchLoanDetail = async (loanId) => {
       breakdown: watchScoreResponse?.data || watchScoreResponse,
       isLoading: false,
     });
+    $loanDetailMissingFinancials.value = missingFinancials;
 
     // Update financial documents list
     const financials = documentsResponse?.data || documentsResponse || [];
@@ -103,6 +124,32 @@ export const fetchLoanDetail = async (loanId) => {
     console.error('Failed to fetch loan detail:', error);
     $loan.update({ loan: null, isLoading: false });
     $watchScoreBreakdown.update({ breakdown: null, isLoading: false });
+    $loanDetailMissingFinancials.value = false;
     dangerAlert(`Failed to fetch loan detail: ${error?.message || 'Unknown error'}`);
   }
+};
+
+/**
+ * Clears loan detail–scoped signals when leaving `/loans/:loanId` or switching loans.
+ */
+export const resetLoanRouteState = () => {
+  $loan.reset();
+  $watchScoreBreakdown.reset();
+  $comments.update({ list: [], isLoading: false });
+  $loanDetailFinancials.value = [];
+  $loanDetailCollateral.value = [];
+  $loanDetailGuarantors.value = [];
+  $loanDetailNewComment.value = '';
+  $loanDetailNewCommentLoading.value = false;
+  $loanDetailShowSecondaryContacts.value = false;
+  $loanDetailCollateralDateFilter.value = null;
+  $loanDetailCollateralAccordionExpanded.value = undefined;
+  $industryReportGenerating.value = false;
+  $loanDetailView.reset();
+  $loanDetailMissingFinancials.value = false;
+  $financialsUploader.update({ financialFiles: [] });
+  $loanCollateralView.reset();
+  $loanCollateralForm.reset();
+  $collateralDocUploader.reset();
+  $collateralModalState.reset();
 };

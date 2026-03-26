@@ -1,4 +1,5 @@
 /* eslint-disable react/no-danger */
+import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import { Container, Button, Row, Col } from 'react-bootstrap';
@@ -12,7 +13,6 @@ import { $borrower } from '@src/consts/consts';
 import SubmitFinancialsModal from '@src/components/views/BorrowerDetails/_components/SubmitFinancialsModal';
 import DeleteBorrowerDocumentModal from '@src/components/views/Borrowers/_components/DeleteBorrowerDocumentModal';
 import UniversalCard from '@src/components/global/UniversalCard';
-import { $borrowerFinancials } from '@src/signals';
 import { $borrowerDetailView } from './_helpers/borrowerDetail.consts';
 import { handleGenerateAnnualReview } from './_helpers/borrowerDetail.events';
 import {
@@ -25,7 +25,7 @@ import {
   BorrowerGuarantorsTab,
   BorrowerIndustryTab,
 } from './_components/TabContent';
-import { fetchBorrowerDetail } from './_helpers/borrowerDetail.resolvers';
+import { fetchBorrowerDetail, resetBorrowerRouteState } from './_helpers/borrowerDetail.resolvers';
 import EditBorrowerDetailModal from './_components/EditBorrowerDetailModal';
 
 const tabs = [
@@ -86,16 +86,18 @@ const tabs = [
       </UniversalCard>),
   },
 ];
-
 export function BorrowerDetailsContainer() {
   const { borrowerId } = useParams();
   const navigate = useNavigate();
-  // Fetch borrower detail and relationship managers on mount or when borrowerId changes
+  useEffect(() => () => {
+    resetBorrowerRouteState();
+  }, [borrowerId]);
+
   useEffectAsync(async () => {
     if (borrowerId) {
       await fetchBorrowerDetail(borrowerId);
     }
-  }, []);
+  }, [borrowerId]);
 
   return (
     <Loadable signal={$borrower} template="fullscreen">
@@ -103,9 +105,7 @@ export function BorrowerDetailsContainer() {
         <div className="d-flex justify-content-between align-items-center flex-wrap">
           <Button
             onClick={() => {
-              $borrower.reset();
-              $borrowerDetailView.reset();
-              $borrowerFinancials.reset();
+              resetBorrowerRouteState();
               const storedFilter = window.localStorage.getItem('filterQueryString');
               const params = new URLSearchParams(storedFilter ? storedFilter.replace(/^\?/, '') : '');
               navigate(`/borrowers?${params.toString()}`, { replace: true });

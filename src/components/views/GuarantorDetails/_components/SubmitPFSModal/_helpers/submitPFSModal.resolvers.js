@@ -115,7 +115,7 @@ export const handleFileUpload = async ($financialDocsUploader, $modalState, ocrA
             });
           }
         }
-        if (documentType === 'taxReturn' && parsedDocument) {
+        if (documentType === 'personalTaxReturn' && parsedDocument) {
           const extractedData = parseSingleDocResponse(parsedDocument, 'personalTaxReturn');
           if (extractedData) {
             $submitPFSModalDetails.update({

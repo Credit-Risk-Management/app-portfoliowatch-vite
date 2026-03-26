@@ -1,5 +1,12 @@
 import { $borrower } from '@src/consts/consts';
-import { $contacts, $documents, $relationshipManagers } from '@src/signals';
+import {
+  $contacts,
+  $documents,
+  $relationshipManagers,
+  $borrowerFinancials,
+  $borrowerFinancialsView,
+  $borrowerFinancialsForm,
+} from '@src/signals';
 import borrowersApi from '@src/api/borrowers.api';
 import contactsApi from '@src/api/contacts.api';
 import documentsApi from '@src/api/documents.api';
@@ -8,8 +15,17 @@ import borrowerFinancialDocumentsApi from '@src/api/borrowerFinancialDocuments.a
 import relationshipManagersApi from '@src/api/relationshipManagers.api';
 import loansApi from '@src/api/loans.api';
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
-import { $borrowerDocumentsView } from './borrowerDetail.consts';
+import {
+  $borrowerDetailView,
+  $borrowerDocumentsView,
+  $borrowerDocumentsFilter,
+  $borrowerFinancialsFilter,
+  $borrowerFinancialsTableView,
+  $borrowerLoansFilter,
+  $borrowerLoansView,
+} from './borrowerDetail.consts';
 import { $loanWatchScoreBreakdowns } from '../_components/TabContent/BorrowerLoansTab/_helpers/loanCard.consts';
+import * as submitFinancialsModalConsts from '../_components/SubmitFinancialsModal/_helpers/submitFinancialsModal.consts';
 
 export const fetchBorrowerDetail = async (borrowerId) => {
   if (!borrowerId) return;
@@ -186,4 +202,26 @@ export const fetchLoanWatchScoreBreakdowns = async (loans) => {
     console.error('Failed to fetch loan Watch Score breakdowns:', error);
     $loanWatchScoreBreakdowns.update({ breakdowns: {}, isLoading: false });
   }
+};
+
+/**
+ * Clears borrower detail–scoped signals when leaving `/borrowers/:borrowerId`
+ * (e.g. navbar navigation) or switching borrowers, so stale data does not persist.
+ */
+export const resetBorrowerRouteState = () => {
+  $borrower.reset();
+  $borrowerDetailView.reset();
+  $borrowerFinancials.reset();
+  $borrowerFinancialsView.reset();
+  $borrowerFinancialsForm.reset();
+  $contacts.update({ list: [], selectedContact: null, isLoading: false, totalCount: 0 });
+  submitFinancialsModalConsts.$modalState.reset();
+  submitFinancialsModalConsts.$financialDocsUploader.reset();
+  $borrowerLoansFilter.reset();
+  $borrowerLoansView.reset();
+  $borrowerFinancialsFilter.reset();
+  $borrowerFinancialsTableView.reset();
+  $borrowerDocumentsFilter.reset();
+  $borrowerDocumentsView.reset();
+  $loanWatchScoreBreakdowns.reset();
 };
