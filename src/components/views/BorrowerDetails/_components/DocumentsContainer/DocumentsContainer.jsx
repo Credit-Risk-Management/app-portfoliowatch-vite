@@ -8,8 +8,10 @@ import 'react-pdf/dist/Page/TextLayer.css';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import FileUploader from '@src/components/global/FileUploader';
 import { $borrowerFinancialsForm } from '@src/signals';
-import { normalizeCurrencyValueAllowNegative } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
-import { formatPercentage } from '@src/components/views/Loans/_helpers/loans.helpers';
+import {
+  normalizeCurrencyValueAllowNegative,
+  normalizePercentageInput,
+} from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
 import { $documentsContainerView } from './_helpers/documents.consts';
 import * as events from './_helpers/documents.events';
 import * as helpers from './_helpers/documents.helpers';
@@ -595,12 +597,12 @@ const DocumentsContainer = ({
                 <UniversalInput
                   label="Gross Profit Margin (%)"
                   labelClassName="text-info-100"
-                  type="number"
-                  step="0.01"
-                  placeholder="15.5"
+                  type="percentage"
+                  placeholder="15.5%"
                   value={$borrowerFinancialsForm.value.profitMargin}
                   name="profitMargin"
                   signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizePercentageInput}
                 />
               </Col>
             </Row>
@@ -672,7 +674,7 @@ const DocumentsContainer = ({
                   value={$borrowerFinancialsForm.value.profitMargin}
                   name="profitMargin"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={formatPercentage}
+                  inputFormatCallback={normalizePercentageInput}
                 />
               </Col>
             </Row>

@@ -18,13 +18,9 @@ export default function DebtServiceModalUpsert({ show, onHide }) {
   // Calculate totals whenever debt items change (round to cents to avoid float drift)
   useEffect(() => {
     const roundToCents = (n) => Math.round(Number(n) * 100) / 100;
-    const totalBalance = debtLineItems.reduce((sum, item) => {
-      return sum + roundToCents(item.currentBalance);
-    }, 0);
+    const totalBalance = debtLineItems.reduce((sum, item) => sum + roundToCents(item.currentBalance), 0);
 
-    const totalPayment = debtLineItems.reduce((sum, item) => {
-      return sum + roundToCents(item.monthlyPayment);
-    }, 0);
+    const totalPayment = debtLineItems.reduce((sum, item) => sum + roundToCents(item.monthlyPayment), 0);
 
     $debtServiceHistoryForm.update({
       totalCurrentBalance: roundToCents(totalBalance),
@@ -264,11 +260,11 @@ export default function DebtServiceModalUpsert({ show, onHide }) {
                     <Form.Label className="text-info-100">Interest Rate (%)</Form.Label>
                     <Form.Control
                       type="number"
-                      step="0.01"
+                      step="0.001"
                       value={item.interestRate}
                       onChange={(e) => handleDebtItemChange(index, 'interestRate', e.target.value)}
                       className="bg-info-800 text-info-50 border-info-600"
-                      placeholder="5.25"
+                      placeholder="5.250"
                     />
                   </Form.Group>
                 </Col>

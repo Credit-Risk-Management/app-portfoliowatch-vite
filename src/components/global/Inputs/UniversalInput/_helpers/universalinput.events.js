@@ -57,16 +57,22 @@ export const normalizeCurrencyValue = (value) => {
   return normalized;
 };
 
-// Like normalizeCurrencyValue but allows a leading minus for negative numbers
+// Like normalizeCurrencyValue but allows a leading minus for negative numbers.
+// Strips $ and commas so users can type -$1,234, $-1,234, or -1234 interchangeably.
 export const normalizeCurrencyValueAllowNegative = (value) => {
   if (value === null || value === undefined) return '';
 
   const stringValue = `${value}`.trim();
-  const isNegative = stringValue.startsWith('-');
-  const numericPart = stringValue.replace(/^-/, '');
+  if (stringValue === '' || stringValue === '-') return stringValue === '-' ? '-' : '';
+
+  const stripped = stringValue.replace(/[$,\s]/g, '');
+  const parenNegative = stripped.startsWith('(') && stripped.endsWith(')');
+  const work = parenNegative ? stripped.slice(1, -1) : stripped;
+  const isNegative = work.startsWith('-') || parenNegative;
+  const numericPart = work.replace(/^-/, '');
 
   if (numericPart.includes('.')) {
-    const numValue = parseFloat(stringValue);
+    const numValue = parseFloat(`${isNegative ? '-' : ''}${numericPart}`);
     if (!Number.isNaN(numValue)) {
       const rounded = Math.round(Math.abs(numValue)).toString();
       return numValue < 0 ? `-${rounded}` : rounded;
@@ -108,13 +114,14 @@ export const normalizeCurrencyValueNoCents = (value) => {
   return normalized;
 };
 
-// Format a normalized numeric string for display as currency (whole numbers only, no cents)
+// Format a normalized numeric string for display as currency (whole numbers only, no cents).
+// Negative amounts show as -$1,234 (not $-1,234) for natural typing and readability.
 export const formatCurrencyDisplay = (value, currency = '$') => {
   if (value === null || value === undefined || value === '') return '';
 
-  const stringValue = `${value}`;
+  const stringValue = `${value}`.trim();
+  if (stringValue === '-') return '-';
 
-  // Remove any decimal portion if present
   const intValue = stringValue.includes('.')
     ? Math.round(parseFloat(stringValue)).toString()
     : stringValue;
@@ -123,6 +130,33 @@ export const formatCurrencyDisplay = (value, currency = '$') => {
 
   if (Number.isNaN(intNumber)) return '';
 
-  const intFormatted = intNumber.toLocaleString();
-  return `${currency}${intFormatted}`;
+  const absFormatted = Math.abs(intNumber).toLocaleString();
+  if (intNumber < 0) {
+    return `-${currency}${absFormatted}`;
+  }
+  return `${currency}${absFormatted}`;
+};
+
+/** Raw numeric string for percentage fields (no % stored in signal). */
+export const normalizePercentageInput = (value) => {
+  if (value === null || value === undefined) return '';
+  let s = String(value).replace(/%/g, '').trim();
+  if (s === '' || s === '-') return s === '-' ? '-' : '';
+  const neg = s.startsWith('-');
+  s = s.replace(/^-/, '');
+  s = s.replace(/[^0-9.]/g, '');
+  const parts = s.split('.');
+  if (parts.length > 2) {
+    s = `${parts[0]}.${parts.slice(1).join('')}`;
+  }
+  return neg ? `-${s}` : s;
+};
+
+/** Display value for percentage inputs: suffix % without breaking partial input (e.g. "15."). */
+export const formatPercentageDisplay = (value) => {
+  if (value === null || value === undefined || value === '') return '';
+  const s = String(value).trim();
+  if (s === '-') return '-';
+  if (s.endsWith('.')) return s;
+  return `${s}%`;
 };
