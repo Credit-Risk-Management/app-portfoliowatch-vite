@@ -181,6 +181,7 @@ export const fetchLoanDetail = async (loanId, options = {}) => {
   try {
     $loan.update({ isLoading: true });
     $watchScoreBreakdown.update({ isLoading: true });
+    $loanDetailMissingFinancials.value = false;
 
     await loadLoanDetailData(loanId);
 
