@@ -66,7 +66,7 @@ export default function DebtServiceModalView({ show, onHide, record }) {
                   <td className="text-warning-500 fw-500">
                     {item.monthlyPayment ? formatCurrency(item.monthlyPayment) : '-'}
                   </td>
-                  <td>{item.interestRate ? `${parseFloat(item.interestRate).toFixed(2)}%` : '-'}</td>
+                  <td>{item.interestRate ? `${parseFloat(item.interestRate).toFixed(3)}%` : '-'}</td>
                   <td>{item.originalAmountFinanced ? formatCurrency(item.originalAmountFinanced) : '-'}</td>
                   <td>{item.lineOfCreditLimit ? formatCurrency(item.lineOfCreditLimit) : '-'}</td>
                   <td>{formatDate(item.maturityDate)}</td>

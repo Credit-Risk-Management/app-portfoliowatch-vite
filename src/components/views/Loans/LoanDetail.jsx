@@ -20,6 +20,7 @@ import LoanRadarChart from './_components/LoanRadarChart';
 import LoanComments from './_components/LoanComments';
 import {
   formatDate,
+  formatInterestRatePercent,
   formatPercent,
   formatRatio,
   getCovenantStatus,
@@ -262,15 +263,15 @@ const LoanDetail = () => {
                 <div className="text-info-100 fw-200 mt-8">Next Financials Due</div>
                 <div className="text-info-50 lead fw-500">12/20/2025</div>
                 <div className="text-info-100 fw-200 mt-8">Interest Rate</div>
-                <div className="text-info-50 lead fw-500">{formatPercent($loan.value?.loan?.currentInterestRate, 3)}</div>
+                <div className="text-info-50 lead fw-500">{formatInterestRatePercent($loan.value?.loan?.currentInterestRate)}</div>
                 <div className="text-info-100 fw-200 mt-8">Interest Type</div>
                 <div className="text-info-50 lead fw-500">{$loan.value?.loan?.typeOfInterest}</div>
                 <div className="text-info-100 fw-200 mt-8">Index</div>
                 <div className="text-info-50 lead fw-500">{$loan.value?.loan?.indexName || '-'}</div>
                 <div className="text-info-100 fw-200 mt-8">Index Rate</div>
-                <div className="text-info-50 lead fw-500">{formatPercent($loan.value?.loan?.indexRate)}</div>
+                <div className="text-info-50 lead fw-500">{formatInterestRatePercent($loan.value?.loan?.indexRate)}</div>
                 <div className="text-info-100 fw-200 mt-8">Spread</div>
-                <div className="text-info-50 lead fw-500">{formatPercent($loan.value?.loan?.spread)}</div>
+                <div className="text-info-50 lead fw-500">{formatInterestRatePercent($loan.value?.loan?.spread)}</div>
                 <div className="text-info-100 fw-200 mt-8">Next Rate Adjustment</div>
                 <div className="text-info-50 lead fw-500">{formatDate($loan.value?.loan?.nextRateAdjustmentDate)}</div>
                 <div className="text-info-100 fw-200 mt-8">Maturity Date</div>

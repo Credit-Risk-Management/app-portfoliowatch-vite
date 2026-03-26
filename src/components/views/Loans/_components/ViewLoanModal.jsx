@@ -41,7 +41,7 @@ const ViewLoanModal = () => {
               <strong>Type of Interest:</strong> {loan.type_of_interest}
             </Col>
             <Col md={6}>
-              <strong>Current Interest Rate:</strong> {helpers.formatPercentage(loan.current_interest_rate)}
+              <strong>Current Interest Rate:</strong> {helpers.formatInterestRatePercent(loan.current_interest_rate)}
             </Col>
           </Row>
 

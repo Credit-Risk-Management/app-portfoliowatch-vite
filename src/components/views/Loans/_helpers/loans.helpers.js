@@ -56,13 +56,21 @@ export const handleBorrowerChange = (option, borrowers, updateForm) => {
   }
 };
 
+/** Decimal places for all interest rate displays and inputs (e.g. 5.125%). */
+export const INTEREST_RATE_DECIMALS = 3;
+
 /**
- * Formats a percentage value
+ * Formats a percentage value (general-purpose; default 2 decimals).
  */
 export const formatPercentage = (value) => {
   if (value === null || value === undefined) return '-';
   return `${Number(value).toFixed(2)}%`;
 };
+
+/**
+ * Formats an interest rate as a percentage with {@link INTEREST_RATE_DECIMALS} places.
+ */
+export const formatInterestRatePercent = (value) => formatPercent(value, INTEREST_RATE_DECIMALS);
 
 /**
  * Returns the label for a risk rating
@@ -71,7 +79,7 @@ export const getRiskRatingLabel = (rating, labels) => labels[rating] || rating;
 
 /**
  * Formats a percentage value (alias for formatPercentage, but handles empty strings)
- * @param {number} decimals - Number of decimal places (default 2, use 3 for interest rates)
+ * @param {number} decimals - Number of decimal places (default 2; use {@link INTEREST_RATE_DECIMALS} for interest rates)
  */
 export const formatPercent = (value, decimals = 2) => {
   if (value === null || value === undefined || value === '') return '-';

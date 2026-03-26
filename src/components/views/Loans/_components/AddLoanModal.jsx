@@ -110,8 +110,8 @@ const AddLoanModal = () => {
               type="number"
               name="currentInterestRate"
               signal={$loansForm}
-              step="0.01"
-              placeholder="0.00"
+              step="0.001"
+              placeholder="0.000"
             />
           </Col>
           <Col md={6} className="mb-16">
