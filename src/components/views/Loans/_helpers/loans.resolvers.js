@@ -82,7 +82,6 @@ export const fetchLoanDetail = async (loanId) => {
   try {
     $loan.update({ isLoading: true });
     $watchScoreBreakdown.update({ isLoading: true });
-    $loanDetailMissingFinancials.value = false;
 
     const loanResponse = await loansApi.getById(loanId);
     const loanData = loanResponse?.data || loanResponse;
@@ -103,7 +102,6 @@ export const fetchLoanDetail = async (loanId) => {
       breakdown: watchScoreResponse?.data || watchScoreResponse,
       isLoading: false,
     });
-    $loanDetailMissingFinancials.value = missingFinancials;
 
     // Update financial documents list
     const financials = documentsResponse?.data || documentsResponse || [];
@@ -123,7 +121,6 @@ export const fetchLoanDetail = async (loanId) => {
     console.error('Failed to fetch loan detail:', error);
     $loan.update({ loan: null, isLoading: false });
     $watchScoreBreakdown.update({ breakdown: null, isLoading: false });
-    $loanDetailMissingFinancials.value = false;
     dangerAlert(`Failed to fetch loan detail: ${error?.message || 'Unknown error'}`);
   } finally {
     $loan.update({ isLoading: false });
