@@ -1,4 +1,4 @@
-import { Form } from 'react-bootstrap';
+import { Form, InputGroup } from 'react-bootstrap';
 import Select from 'react-select';
 import Signal from '@fyclabs/tools-fyc-react/signals/Signal';
 import { $form } from '@src/signals';
@@ -10,7 +10,8 @@ import {
   formatTime,
   isEmailValid,
   formatCurrencyDisplay,
-  formatPercentageDisplay,
+  formatPercentageInputValue,
+  canonicalizePercentageToPoints,
 } from './_helpers/universalinput.events';
 
 const $select = Signal({});
@@ -35,6 +36,7 @@ const UniversalInput = ({
   isMulti = false, // For select type
   disabled,
   labelClassName,
+  onBlur: onBlurProp,
   ...props
 }) => {
   if ((!signal || !name) && !customOnChange && type !== 'select') {
@@ -180,7 +182,7 @@ const UniversalInput = ({
       return formatCurrencyDisplay(val || value || '');
     }
     if (type === 'percentage') {
-      return formatPercentageDisplay(val || value || '');
+      return formatPercentageInputValue(val || value || '');
     }
     if (type === 'phone') {
       return formatPhone(val);
@@ -200,25 +202,52 @@ const UniversalInput = ({
   const allowedNativeTypes = ['text', 'email', 'number', 'password', 'tel', 'date', 'time'];
   const inputType = allowedNativeTypes.includes(type) ? type : 'text';
 
+  const handleBlur = (e) => {
+    if (type === 'percentage' && signal && name) {
+      const raw = signal.value?.[name];
+      const canonical = canonicalizePercentageToPoints(raw ?? '');
+      if (canonical !== raw) {
+        signal.update({ [name]: canonical });
+      }
+    }
+    onBlurProp?.(e);
+  };
+
+  const controlShared = {
+    type: inputType,
+    value: formatValue(),
+    placeholder,
+    className: `bg-info-800 border-0 text-info-100 ${className || ''}`,
+    name,
+    autoComplete,
+    onChange: customOnChange || ((e) => signal.update({
+      [name]: inputFormatCallback ? inputFormatCallback(e.target.value) : e.target.value,
+    })),
+    isValid: validation[type] ? validation[type].valid : isValid,
+    isInvalid: validation[type] ? val && validation[type].invalid : isInvalid,
+    disabled,
+    maxLength: type === 'phone' ? 14 : '',
+  };
+
   return (
     <div>
       {label && <Form.Label className={labelClassName}>{label}</Form.Label>}
-      <Form.Control
-        type={inputType}
-        value={formatValue()}
-        placeholder={placeholder}
-        className={`bg-info-800 border-0 text-info-100 ${className}`}
-        name={name}
-        autoComplete={autoComplete}
-        onChange={customOnChange || ((e) => signal.update({
-          [name]: inputFormatCallback ? inputFormatCallback(e.target.value) : e.target.value,
-        }))}
-        isValid={validation[type] ? validation[type].valid : isValid}
-        isInvalid={validation[type] ? val && validation[type].invalid : isInvalid}
-        disabled={disabled}
-        maxLength={type === 'phone' ? 14 : ''}
-        {...props}
-      />
+      {type === 'percentage' ? (
+        <InputGroup>
+          <Form.Control
+            {...controlShared}
+            {...props}
+            onBlur={handleBlur}
+          />
+          <InputGroup.Text className="bg-info-800 border-0 text-info-100">%</InputGroup.Text>
+        </InputGroup>
+      ) : (
+        <Form.Control
+          {...controlShared}
+          {...props}
+          onBlur={handleBlur}
+        />
+      )}
     </div>
   );
 };

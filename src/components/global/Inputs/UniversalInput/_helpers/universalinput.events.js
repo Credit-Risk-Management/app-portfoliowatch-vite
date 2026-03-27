@@ -152,11 +152,71 @@ export const normalizePercentageInput = (value) => {
   return neg ? `-${s}` : s;
 };
 
-/** Display value for percentage inputs: suffix % without breaking partial input (e.g. "15."). */
+/** Digits after the decimal (e.g. "0.99" → 2). */
+const getFractionalDigitCount = (numericString) => {
+  const t = String(numericString).trim();
+  const dot = t.indexOf('.');
+  if (dot === -1) return 0;
+  return t.slice(dot + 1).length;
+};
+
+/** Ratios below this magnitude stay literal (-0.01%, 0.01%); OCR-style ratios are typically 0.10–0.99. */
+const RATIO_DECIMAL_MIN_ABS = 0.1;
+
+/**
+ * |n| in (0.1, 1) with **exactly 2** fractional digits → OCR ratio (0.99 → 99%, -0.55 → -55%).
+ * Smaller values (-0.01, 0.01) stay literal; 3+ fractional digits (0.005) stay literal.
+ */
+const shouldInterpretAsRatioDecimal = (normalizedString, n) => {
+  if (n === 0 || Number.isNaN(n)) return false;
+  if (Math.abs(n) >= 1) return false;
+  if (Math.abs(n) < RATIO_DECIMAL_MIN_ABS) return false;
+  return getFractionalDigitCount(normalizedString) === 2;
+};
+
+const scaledRatioToPercentPointsString = (n) => {
+  const scaled = n * 100;
+  const rounded = Math.round(scaled * 1e8) / 1e8;
+  if (Number.isInteger(rounded)) return String(rounded);
+  return String(parseFloat(rounded.toFixed(6)));
+};
+
+/** Converts ratio-style decimals (0.99 → 99) on blur; leaves 90.20 unchanged. */
+export const canonicalizePercentageToPoints = (value) => {
+  const s = normalizePercentageInput(value);
+  if (s === '' || s === '-') return s;
+  const n = parseFloat(s);
+  if (Number.isNaN(n)) return s;
+  if (n === 0) return '0';
+  if (shouldInterpretAsRatioDecimal(s, n)) {
+    return scaledRatioToPercentPointsString(n);
+  }
+  return s;
+};
+
+/**
+ * Full display string including % (e.g. labels, read-only). Prefer {@link formatPercentageInputValue} for the input element.
+ */
 export const formatPercentageDisplay = (value) => {
   if (value === null || value === undefined || value === '') return '';
   const s = String(value).trim();
   if (s === '-') return '-';
   if (s.endsWith('.')) return s;
-  return `${s}%`;
+  const stripped = s.replace(/%/g, '');
+  const n = parseFloat(stripped);
+  if (Number.isNaN(n)) return `${stripped}%`;
+  if (n === 0) return '0%';
+  if (shouldInterpretAsRatioDecimal(stripped, n)) {
+    return `${scaledRatioToPercentPointsString(n)}%`;
+  }
+  return `${stripped}%`;
+};
+
+/**
+ * Value for the `<input>` only — no `%` character, so backspace edits the number naturally; show % via InputGroup suffix.
+ */
+export const formatPercentageInputValue = (value) => {
+  const full = formatPercentageDisplay(value);
+  if (full.endsWith('%')) return full.slice(0, -1);
+  return full;
 };

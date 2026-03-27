@@ -97,6 +97,7 @@ export const resetPdfState = () => {
     pdfLoadError: false,
     pdfPageNumber: 1,
     pdfNumPages: null,
+    pdfZoomScale: 1,
   });
 };
 

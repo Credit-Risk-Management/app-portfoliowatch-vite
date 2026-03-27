@@ -1,5 +1,6 @@
 /* eslint-disable no-unsafe-optional-chaining */
 /* eslint-disable react/no-danger */
+import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import { Container, Button, Row, Col } from 'react-bootstrap';
@@ -11,21 +12,26 @@ import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { formatCurrency } from '@src/utils/formatCurrency';
 import { calculateAnnualDebtServiceFromLoans } from '@src/utils/currency';
 import * as resolvers from './_helpers/guarantorDetails.resolvers';
+import * as guarantorEvents from './_helpers/guarantorDetails.events';
 import GuarantorFinancials from './_components/GuarantorFinancials';
 import GuarantorDocuments from './_components/GuarantorDocuments';
 import { $guarantorDetailView, $guarantorDetailsData } from './_helpers/guarantorDetails.consts';
 import SubmitPFSModal from './_components/SubmitPFSModal/SubmitPFSModal';
 import GuarantorLoans from './_components/GuarantorLoans';
-import { $submitPFSModalView } from './_components/SubmitPFSModal/_helpers/submitPFSModal.const';
 
 export function GuarantorDetailContainer() {
   const { guarantorId } = useParams();
   const navigate = useNavigate();
 
-  useEffectAsync(async () => {
-    await resolvers.fetchGuarantorDetail(guarantorId);
+  useEffect(() => () => {
+    resolvers.resetGuarantorRouteState();
   }, [guarantorId]);
-  console.log('submitPFSModalView', $submitPFSModalView.value);
+
+  useEffectAsync(async () => {
+    if (guarantorId) {
+      await resolvers.fetchGuarantorDetail(guarantorId);
+    }
+  }, [guarantorId]);
 
   //
   // Mutations
@@ -47,7 +53,10 @@ export function GuarantorDetailContainer() {
     return (
       <Container fluid className="py-24">
         <Button
-          onClick={() => navigate(-1)}
+          onClick={() => {
+            resolvers.resetGuarantorRouteState();
+            guarantorEvents.navigateBackOrDefault(navigate);
+          }}
           className="btn-sm border-dark text-dark-800 bg-grey-50"
         >
           <FontAwesomeIcon icon={faArrowLeft} className="me-8" />
@@ -65,8 +74,8 @@ export function GuarantorDetailContainer() {
           <Button
             type="button"
             onClick={() => {
-              $guarantorDetailView.reset();
-              navigate(-1);
+              resolvers.resetGuarantorRouteState();
+              guarantorEvents.navigateBackOrDefault(navigate);
             }}
             className="btn-sm border-dark text-dark-800 bg-grey-50 mb-12 mb-md-16"
           >
