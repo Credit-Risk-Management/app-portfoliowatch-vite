@@ -8,7 +8,7 @@ import PageHeader from '@src/components/global/PageHeader';
 import UniversalCard from '@src/components/global/UniversalCard';
 import SignalAccordion from '@src/components/global/SignalAccordion';
 import SignalTable from '@src/components/global/SignalTable';
-import { $loan, WATCH_SCORE_OPTIONS } from '@src/consts/consts';
+import { $loan, WATCH_SCORE_OPTIONS, $watchScoreBreakdown } from '@src/consts/consts';
 import { formatCurrency } from '@src/utils/formatCurrency';
 import Loadable from '@src/components/global/Loadable';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
@@ -32,7 +32,7 @@ import {
   $loanDetailFinancials,
   $loanDetailCollateral, $loanDetailCollateralAccordionExpanded,
   $industryReportGenerating,
-  $loanDetailGuarantors
+  $loanDetailGuarantors,
 } from './_helpers/loans.consts';
 import { fetchLoanDetail, resetLoanRouteState } from './_helpers/loans.resolvers';
 import {
@@ -56,7 +56,7 @@ const LoanDetail = () => {
     }
   }, [loanId]);
 
-  if ($loan.value?.isLoading) {
+  if ($loan.value?.isLoading || $watchScoreBreakdown.value?.isLoading) {
     return (
       <Container fluid className="py-24">
         <PageHeader title="Loading..." />
@@ -382,17 +382,7 @@ const LoanDetail = () => {
           <Col xs={12} md={12}>
             <UniversalCard headerText="Guarantors" bodyContainer="container-fluid" className="mt-12 mt-md-16">
               <Row className="mt-12 mb-12">
-                {/* <div className="d-flex justify-content-end mb-12">
-                  <Button
-                    variant="outline-primary-100"
-                    size="sm"
-                    onClick={handleOpenAddGuarantorModal}
-                    disabled={!$loan.value?.loan?.borrowerId && !$loan.value?.loan?.borrower?.id}
-                  >
-                    <FontAwesomeIcon icon={faUserPlus} className="me-8" />
-                    Add Guarantor
-                  </Button>
-                </div> */}
+
                 <SignalTable
                   headers={guarantorsTableHeaders}
                   rows={guarantorsTableRows}

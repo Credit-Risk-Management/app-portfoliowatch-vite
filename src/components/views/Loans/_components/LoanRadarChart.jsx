@@ -1,11 +1,15 @@
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer } from 'recharts';
 import UniversalCard from '@src/components/global/UniversalCard';
-import { $watchScoreBreakdown } from '@src/consts/consts';
-import { Col, Row } from 'react-bootstrap';
+import { $loan, $watchScoreBreakdown } from '@src/consts/consts';
+import { Col, Row, OverlayTrigger, Tooltip } from 'react-bootstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { getWatchScoreColor } from '@src/components/views/Dashboard/_helpers/dashboard.consts';
 
 const LoanRadarChart = () => {
   const breakdown = $watchScoreBreakdown.value?.breakdown;
+  const isMissingFinancials = ($loan.value?.loan?.missingFinancialYears?.length ?? 0) > 0;
+  const currentLoanId = $loan.value?.loan?.id ?? 'detail';
 
   // Support both new (categories) and legacy (components) format
   const hasData = breakdown && (breakdown.categories || breakdown.components);
@@ -204,9 +208,31 @@ const LoanRadarChart = () => {
                         <div className="px-12 py-4 rounded bg-info-900">
                           <div className="d-flex justify-content-between align-items-start">
                             <div>
-                              <div className="fw-bold fs-5 mb-4 text-success">
-                                {category.shortMetric}
-                              </div>
+                              {isMissingFinancials && category.shortMetric === 'T' ? (
+                                <OverlayTrigger
+                                  placement="top"
+                                  trigger={['hover', 'focus']}
+                                  overlay={(
+                                    <Tooltip id={`watch-triggers-missing-${currentLoanId}`}>
+                                      Triggers are missing Financials
+                                    </Tooltip>
+                                  )}
+                                >
+                                  <span className="d-inline-flex align-items-center gap-2 mb-4">
+                                    <span className="fw-bold fs-5 text-success">{category.shortMetric}</span>
+                                    <FontAwesomeIcon
+                                      icon={faExclamationTriangle}
+                                      className="text-warning-400"
+                                      style={{ fontSize: '14px' }}
+                                      aria-hidden
+                                    />
+                                  </span>
+                                </OverlayTrigger>
+                              ) : (
+                                <div className="fw-bold fs-5 mb-4 text-success">
+                                  {category.shortMetric}
+                                </div>
+                              )}
                               <h6>{category.categoryName}</h6>
                             </div>
                             <span className={`badge ${getScoreColorClass(category.score)}`} style={{ fontSize: '14px' }}>

@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import { Card, Row, Col, Badge, Button } from 'react-bootstrap';
+import { Card, Row, Col, Badge, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 import { formatCurrency } from '@src/utils/formatCurrency';
 import { formatDate } from '@src/utils/formatDate';
@@ -50,6 +50,7 @@ const BorrowerLoansTab = () => {
         const hasWatchScore = hasWatchScoreData(loan);
         const categories = formatCategoryBreakdown(breakdown);
         const loanIdentifier = loan?.loanId || loan?.loanNumber || loan?.id || 'N/A';
+        const isMissingFinancials = loan?.missingFinancialYears?.length > 0;
         return (
           <Col key={loan.id} xs={12} lg={6} className="mb-3">
             <Card className="bg-info-800 border-info-600 h-100">
@@ -107,21 +108,57 @@ const BorrowerLoansTab = () => {
                             className="d-flex align-items-center justify-content-between mb-8"
                           >
                             <div className="d-flex align-items-center">
-                              <Badge
-                                bg={category.color}
-                                className="d-flex align-items-center justify-content-center me-12"
-                                style={{
-                                  width: '24px',
-                                  height: '24px',
-                                  fontSize: '13px',
-                                  fontWeight: 'bold',
-                                  borderRadius: '4px',
-                                  padding: 0,
-                                }}
-                                title={`Score: ${category.score != null ? category.score.toFixed(2) : 'N/A'}`}
-                              >
-                                {category.letter}
-                              </Badge>
+                              {isMissingFinancials && category.letter === 'T' ? (
+                                <OverlayTrigger
+                                  placement="top"
+                                  trigger={['hover', 'focus']}
+                                  overlay={(
+                                    <Tooltip id={`watch-triggers-missing-${loan.id}`}>
+                                      Triggers are missing Financials
+                                    </Tooltip>
+                                  )}
+                                >
+                                  <span className="d-inline-flex align-items-center me-4 gap-4">
+                                    <Badge
+                                      bg={category.color}
+                                      className="d-flex align-items-center justify-content-center"
+                                      style={{
+                                        width: '24px',
+                                        height: '24px',
+                                        fontSize: '13px',
+                                        fontWeight: 'bold',
+                                        borderRadius: '4px',
+                                        padding: 0,
+                                      }}
+                                      title={`Score: ${category.score != null ? category.score.toFixed(2) : 'N/A'}`}
+                                    >
+                                      {category.letter}
+                                    </Badge>
+                                    <FontAwesomeIcon
+                                      icon={faExclamationTriangle}
+                                      className="text-warning-400"
+                                      style={{ fontSize: '12px' }}
+                                      aria-hidden
+                                    />
+                                  </span>
+                                </OverlayTrigger>
+                              ) : (
+                                <Badge
+                                  bg={category.color}
+                                  className="d-flex align-items-center justify-content-center me-12"
+                                  style={{
+                                    width: '24px',
+                                    height: '24px',
+                                    fontSize: '13px',
+                                    fontWeight: 'bold',
+                                    borderRadius: '4px',
+                                    padding: 0,
+                                  }}
+                                  title={`Score: ${category.score != null ? category.score.toFixed(2) : 'N/A'}`}
+                                >
+                                  {category.letter}
+                                </Badge>
+                              )}
                               <span className="text-info-50" style={{ fontSize: '14px' }}>
                                 {category.name}
                               </span>

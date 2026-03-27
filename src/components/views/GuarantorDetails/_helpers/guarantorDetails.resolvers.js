@@ -59,6 +59,7 @@ export const fetchGuarantorDetail = async (guarantorId) => {
  */
 export const resetGuarantorRouteState = () => {
   $guarantorDetailView.reset();
+  $guarantorDetailView.update({ isLoading: true });
   $guarantorDetailsData.reset();
   $submitPFSModalView.reset();
   $submitPFSModalDetails.reset();

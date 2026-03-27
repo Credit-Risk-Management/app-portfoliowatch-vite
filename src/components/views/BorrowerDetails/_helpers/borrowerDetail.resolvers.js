@@ -210,6 +210,7 @@ export const fetchLoanWatchScoreBreakdowns = async (loans) => {
  */
 export const resetBorrowerRouteState = () => {
   $borrower.reset();
+  $borrower.update({ isLoading: true });
   $borrowerDetailView.reset();
   $borrowerFinancials.reset();
   $borrowerFinancialsView.reset();

@@ -12,6 +12,7 @@ import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { formatCurrency } from '@src/utils/formatCurrency';
 import { calculateAnnualDebtServiceFromLoans } from '@src/utils/currency';
 import * as resolvers from './_helpers/guarantorDetails.resolvers';
+import * as guarantorEvents from './_helpers/guarantorDetails.events';
 import GuarantorFinancials from './_components/GuarantorFinancials';
 import GuarantorDocuments from './_components/GuarantorDocuments';
 import { $guarantorDetailView, $guarantorDetailsData } from './_helpers/guarantorDetails.consts';
@@ -52,7 +53,10 @@ export function GuarantorDetailContainer() {
     return (
       <Container fluid className="py-24">
         <Button
-          onClick={() => navigate(-1)}
+          onClick={() => {
+            resolvers.resetGuarantorRouteState();
+            guarantorEvents.navigateBackOrDefault(navigate);
+          }}
           className="btn-sm border-dark text-dark-800 bg-grey-50"
         >
           <FontAwesomeIcon icon={faArrowLeft} className="me-8" />
@@ -71,7 +75,7 @@ export function GuarantorDetailContainer() {
             type="button"
             onClick={() => {
               resolvers.resetGuarantorRouteState();
-              navigate(-1);
+              guarantorEvents.navigateBackOrDefault(navigate);
             }}
             className="btn-sm border-dark text-dark-800 bg-grey-50 mb-12 mb-md-16"
           >

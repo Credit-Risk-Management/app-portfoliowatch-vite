@@ -9,6 +9,8 @@ export const $documentsContainerView = Signal({
   pdfLoadError: false,
   pdfBlobUrl: null,
   downloadURL: null,
+  /** Multiplier for PDF page width (1 = default fit). */
+  pdfZoomScale: 1,
 });
 
 export default $documentsContainerView;
