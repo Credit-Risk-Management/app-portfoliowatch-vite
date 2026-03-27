@@ -1,7 +1,15 @@
 import { Form, Row, Col, Alert, Button, Table } from 'react-bootstrap';
 import { useRef, useEffect, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faMagic, faTrash, faPlus, faChevronLeft, faChevronRight, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import {
+  faMagic,
+  faTrash,
+  faPlus,
+  faMinus,
+  faChevronLeft,
+  faChevronRight,
+  faSpinner,
+} from '@fortawesome/free-solid-svg-icons';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -36,7 +44,18 @@ const DocumentsContainer = ({
   const currentIndex = currentDocumentIndex[documentType] || 0;
   const currentDoc = currentDocs[currentIndex];
   const hasMultipleDocs = currentDocs.length > 1;
-  const { excelData, isLoadingExcel, pdfNumPages, pdfPageNumber, pdfLoadError, pdfBlobUrl } = $documentsContainerView.value;
+  const {
+    excelData,
+    isLoadingExcel,
+    pdfNumPages,
+    pdfPageNumber,
+    pdfLoadError,
+    pdfBlobUrl,
+    pdfZoomScale = 1,
+  } = $documentsContainerView.value;
+
+  const pdfBaseWidth = Math.min(window.innerWidth * 0.4, 800);
+  const pdfPageWidth = pdfBaseWidth * pdfZoomScale;
 
   // Memoize PDF options to prevent unnecessary re-renders (must be at component level, not inside conditionals)
   const pdfOptions = useMemo(() => ({
@@ -152,82 +171,186 @@ const DocumentsContainer = ({
         );
       }
 
-      return (
-        <div style={{ height: '65vh', width: '100%', position: 'relative' }}>
-          <div
-            style={{
-              height: '100%',
-              width: '100%',
-              overflow: 'auto',
-              border: '1px solid #41696C',
-              borderRadius: '8px',
-              backgroundColor: '#525252',
-              display: 'flex',
-              flexDirection: 'column',
-            }}
-          >
-            <Document
-              file={pdfBlobUrl || currentDoc?.storageUrl || pdfUrl}
-              onLoadSuccess={({ numPages }) => resolvers.handlePdfLoadSuccess(numPages)}
-              onLoadError={resolvers.handlePdfLoadError}
-              loading={(
-                <div className="d-flex justify-content-center align-items-center" style={{ height: '65vh' }}>
-                  <div className="text-center">
-                    <div className="spinner-border text-info-300 mb-3" role="status">
-                      <span className="visually-hidden">Loading PDF...</span>
-                    </div>
-                    <p className="text-info-100">Loading PDF...</p>
-                  </div>
-                </div>
-              )}
-              options={pdfOptions}
-            >
-              <div style={{ padding: '16px', textAlign: 'center' }}>
-                <Page
-                  pageNumber={pdfPageNumber}
-                  width={Math.min(window.innerWidth * 0.4, 800)}
-                  renderTextLayer
-                  renderAnnotationLayer
-                />
-              </div>
-            </Document>
-          </div>
+      const pdfZoomPercent = Math.round(pdfZoomScale * 100);
 
-          {/* PDF Navigation Controls */}
-          {pdfNumPages && pdfNumPages > 1 && (
+      return (
+        <div
+          className="d-flex flex-column border border-info-600 rounded overflow-hidden"
+          style={{ height: '65vh', width: '100%' }}
+        >
+          {/* PDF + zoom: toolbar is overlaid on the scroll area so rgba/backdrop-filter shows the page through it */}
+          <div
+            className="position-relative d-flex flex-column flex-grow-1"
+            style={{ minHeight: 0 }}
+          >
             <div
-              className="d-flex justify-content-between align-items-center px-3 py-2"
+              className="d-flex justify-content-center align-items-center px-3 py-2 w-100"
+              role="toolbar"
+              aria-label="PDF zoom"
               style={{
                 position: 'absolute',
-                bottom: '0',
-                left: '0',
-                right: '0',
+                top: 0,
+                left: 0,
+                right: 0,
+                zIndex: 10,
+                pointerEvents: 'auto',
+                gridTemplateColumns: 'minmax(0, 1fr) auto minmax(0, 1fr)',
+                columnGap: '0.75rem',
                 backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                borderBottomLeftRadius: '8px',
-                borderBottomRightRadius: '8px',
+                borderBottom: '1px solid rgba(65, 105, 108, 0.55)',
+                borderTopLeftRadius: '8px',
+                borderTopRightRadius: '8px',
               }}
             >
-              <Button
-                variant="outline-light"
-                size="sm"
-                onClick={events.goToPreviousPage}
-                disabled={pdfPageNumber <= 1}
+
+              <div
+                className="d-flex align-items-center justify-content-center gap-2 flex-shrink-0"
+                style={{ maxWidth: 'min(400px, 72vw)' }}
               >
-                <FontAwesomeIcon icon={faChevronLeft} />
-              </Button>
-              <span className="text-light">
-                Page {pdfPageNumber} of {pdfNumPages}
-              </span>
-              <Button
-                variant="outline-light"
-                size="sm"
-                onClick={events.goToNextPage}
-                disabled={pdfPageNumber >= pdfNumPages}
-              >
-                <FontAwesomeIcon icon={faChevronRight} />
-              </Button>
+                <Button
+                  variant="outline-light"
+                  size="sm"
+                  onClick={events.zoomPdfOut}
+                  disabled={pdfZoomScale <= events.PDF_ZOOM_MIN}
+                  title="Zoom out"
+                  aria-label="Zoom out"
+                >
+                  <FontAwesomeIcon icon={faMinus} />
+                </Button>
+                <Form.Range
+                  className="my-0 flex-grow-1"
+                  style={{
+                    width: 'min(220px, 38vw)',
+                    minWidth: '80px',
+                    accentColor: '#4a9aa7',
+                  }}
+                  min={events.PDF_ZOOM_MIN_PERCENT}
+                  max={events.PDF_ZOOM_MAX_PERCENT}
+                  step={5}
+                  value={pdfZoomPercent}
+                  onChange={events.handlePdfZoomSliderChange}
+                  aria-label="Zoom level"
+                />
+                <span className="text-light small text-nowrap user-select-none" style={{ minWidth: '2.75rem' }}>
+                  {pdfZoomPercent}
+                  %
+                </span>
+                <Button
+                  variant="outline-light"
+                  size="sm"
+                  onClick={events.zoomPdfIn}
+                  disabled={pdfZoomScale >= events.PDF_ZOOM_MAX}
+                  title="Zoom in"
+                  aria-label="Zoom in"
+                >
+                  <FontAwesomeIcon icon={faPlus} />
+                </Button>
+                <Button
+                  variant="outline-light"
+                  size="sm"
+                  className="text-nowrap mx-4"
+                  onClick={events.resetPdfZoom}
+                  disabled={pdfZoomScale === 1}
+                  title="Reset zoom to 100%"
+                  aria-label="Reset zoom to 100%"
+                >
+                  Reset
+                </Button>
+              </div>
+
+              <div className="min-w-0" aria-hidden="true" />
             </div>
-          )}
+
+            <div
+              className="flex-grow-1 overflow-auto position-relative"
+              style={{
+                minHeight: 0,
+                paddingTop: '3.25rem',
+                ...(pdfNumPages && pdfNumPages > 1 ? { paddingBottom: '3.25rem' } : {}),
+                backgroundColor: '#525252',
+                zIndex: 0,
+              }}
+            >
+              <Document
+                file={pdfBlobUrl || currentDoc?.storageUrl || pdfUrl}
+                onLoadSuccess={({ numPages }) => resolvers.handlePdfLoadSuccess(numPages)}
+                onLoadError={resolvers.handlePdfLoadError}
+                loading={(
+                  <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '50vh' }}>
+                    <div className="text-center">
+                      <div className="spinner-border text-info-300 mb-3" role="status">
+                        <span className="visually-hidden">Loading PDF...</span>
+                      </div>
+                      <p className="text-info-100">Loading PDF...</p>
+                    </div>
+                  </div>
+                )}
+                options={pdfOptions}
+              >
+                <div style={{ padding: '16px', textAlign: 'center' }}>
+                  <Page
+                    pageNumber={pdfPageNumber}
+                    width={pdfPageWidth}
+                    renderTextLayer
+                    renderAnnotationLayer
+                  />
+                </div>
+              </Document>
+            </div>
+
+            {/* Page nav — overlaid on PDF (same glass treatment as zoom bar) */}
+            {pdfNumPages && pdfNumPages > 1 && (
+              <div
+                className="d-flex justify-content-between align-items-center px-3 py-2 w-100"
+                role="toolbar"
+                aria-label="PDF page navigation"
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  zIndex: 10,
+                  pointerEvents: 'auto',
+                  backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  borderTop: '1px solid rgba(65, 105, 108, 0.55)',
+                  borderBottomLeftRadius: '8px',
+                  borderBottomRightRadius: '8px',
+                }}
+              >
+                <Button
+                  variant="outline-light"
+                  size="sm"
+                  onClick={events.goToPreviousPage}
+                  disabled={pdfPageNumber <= 1}
+                  title="Previous page"
+                  aria-label="Previous page"
+                >
+                  <FontAwesomeIcon icon={faChevronLeft} />
+                </Button>
+                <span className="text-light">
+                  Page
+                  {' '}
+                  {pdfPageNumber}
+                  {' '}
+                  of
+                  {' '}
+                  {pdfNumPages}
+                </span>
+                <Button
+                  variant="outline-light"
+                  size="sm"
+                  onClick={events.goToNextPage}
+                  disabled={pdfPageNumber >= pdfNumPages}
+                  title="Next page"
+                  aria-label="Next page"
+                >
+                  <FontAwesomeIcon icon={faChevronRight} />
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
       );
     }
