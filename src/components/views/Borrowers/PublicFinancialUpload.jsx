@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Button, Alert, Card } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -25,24 +25,13 @@ import {
   clearPublicFinancialSectionFiles,
   handleOpenPriorDebtSchedulePdf,
 } from './_helpers/publicFinancialUpload.events';
-import PublicFinancialUploadPdfPreview from './PublicFinancialUploadPdfPreview';
 
 /** Show "required*" on mandatory sections until a file is processed; first section (P&L) is check-only when done. */
 const SECTIONS_WITH_REQUIRED_STAR = new Set(['balanceSheet', 'incomeStatement']);
 
-const isSectionStaged = (sectionId) => {
-  if (sectionId === 'incomeStatement') {
-    return ($publicIncomeStatementUploader.value.financialDocs || []).length > 0;
-  }
-  if (sectionId === 'balanceSheet') {
-    return ($publicBalanceSheetUploader.value.financialDocs || []).length > 0;
-  }
-  return false;
-};
-
 const buildFinancialSectionLabel = (sectionId, title, sectionsExtracted, flowStep) => {
   const extracted = sectionsExtracted[sectionId];
-  const staged = isSectionStaged(sectionId);
+  const staged = hasPdfStagedForSection(sectionId);
   const done = flowStep === 'review' ? extracted : staged;
   const showRequiredStar = SECTIONS_WITH_REQUIRED_STAR.has(sectionId) && !done;
 
@@ -57,7 +46,7 @@ const buildFinancialSectionLabel = (sectionId, title, sectionsExtracted, flowSte
         />
       )}
       {!done && showRequiredStar && (
-        <span className="text-warning-300 small fw-normal">required*</span>
+        <span className="text-warning-500 fs-16 fw-normal">required*</span>
       )}
     </span>
   );
@@ -66,6 +55,7 @@ const buildFinancialSectionLabel = (sectionId, title, sectionsExtracted, flowSte
 const PublicFinancialUpload = () => {
   const { token } = useParams();
   const navigate = useNavigate();
+  const prevFlowStepRef = useRef(undefined);
 
   // Fetch upload link data on mount
   useEffect(() => {
@@ -80,80 +70,7 @@ const PublicFinancialUpload = () => {
     success,
     priorDebtOpening,
   } = $publicFinancialUploadView.value;
-
   const extracting = isExtracting ?? false;
-
-  const hasIncomePdf = ($publicIncomeStatementUploader.value.financialDocs || []).length > 0;
-  const hasBalancePdf = ($publicBalanceSheetUploader.value.financialDocs || []).length > 0;
-  const canRunExtraction = hasIncomePdf && hasBalancePdf;
-
-  const expandedAccordionId = $publicFinancialAccordionExpanded.value;
-  const incomeFirstFile = ($publicIncomeStatementUploader.value.financialDocs || [])[0];
-  const balanceFirstFile = ($publicBalanceSheetUploader.value.financialDocs || [])[0];
-  const stagedIncomeKey = incomeFirstFile ? `${incomeFirstFile.name}-${incomeFirstFile.size}` : '';
-  const stagedBalanceKey = balanceFirstFile ? `${balanceFirstFile.name}-${balanceFirstFile.size}` : '';
-
-  /** Subscribe so PDF preview updates after sync runs. */
-  const publicPdfPreview = $publicFinancialPdfPreview.value;
-
-  useEffect(() => {
-    if (flowStep !== 'upload') {
-      resetPublicFinancialPdfPreview();
-      return undefined;
-    }
-    syncPublicFinancialPdfPreview();
-    return () => {
-      resetPublicFinancialPdfPreview();
-    };
-  }, [flowStep, expandedAccordionId, stagedIncomeKey, stagedBalanceKey]);
-
-  const financialAccordionItems = [
-    {
-      id: 'incomeStatement',
-      label: buildFinancialSectionLabel('incomeStatement', 'Income statement (P&L)', sectionsExtracted, flowStep),
-      content: (
-        hasIncomePdf ? (
-          <PublicFinancialUploadPdfPreview key={publicPdfPreview.pdfBlobUrl || 'no-pdf'} />
-        ) : (
-          <div className=" pt-0">
-            <FileUploader
-              variant="dropzone"
-              id="public-financial-income-statement"
-              name="financialDocs"
-              signal={$publicIncomeStatementUploader}
-              acceptedTypes=".pdf"
-            >
-              <p className="text-grey-600 small mb-0 text-center">
-                Upload your profit and loss statement as a PDF.
-              </p>
-            </FileUploader>
-          </div>
-        )
-      ),
-    },
-    {
-      id: 'balanceSheet',
-      label: buildFinancialSectionLabel('balanceSheet', 'Balance sheet', sectionsExtracted, flowStep),
-      content: (
-        hasBalancePdf ? (
-          <PublicFinancialUploadPdfPreview key={publicPdfPreview.pdfBlobUrl || 'no-pdf'} />
-        ) : (
-          <div className=" pt-0">
-            <FileUploader
-              variant="dropzone"
-              id="public-financial-balance-sheet"
-              name="financialDocs"
-              signal={$publicBalanceSheetUploader}
-              acceptedTypes=".pdf"
-            >
-              <p className="text-grey-600 small mb-0 text-center">
-                Upload your balance sheet as a PDF.
-              </p>
-            </FileUploader>
-          </div>
-        )),
-    },
-  ];
 
   if (isLoading) {
     return (
