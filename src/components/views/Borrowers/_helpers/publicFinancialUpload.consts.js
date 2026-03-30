@@ -61,3 +61,13 @@ export const $publicFinancialUploadView = Signal({
   /** While opening prior debt schedule PDF in a new tab */
   priorDebtOpening: false,
 });
+
+/** Staged PDF preview (blob URL) for the expanded accordion row — mirrors PFSDocumentsContainer behavior. */
+export const $publicFinancialPdfPreview = Signal({
+  pdfBlobUrl: null,
+  pdfNumPages: null,
+  pdfPageNumber: 1,
+  pdfLoadError: false,
+  pdfZoomScale: 1,
+  previewFileName: null,
+});

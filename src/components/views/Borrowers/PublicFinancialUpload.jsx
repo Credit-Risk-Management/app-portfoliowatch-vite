@@ -26,6 +26,42 @@ import {
   handleOpenPriorDebtSchedulePdf,
 } from './_helpers/publicFinancialUpload.events';
 
+/** Show "required*" on mandatory sections until a file is processed; first section (P&L) is check-only when done. */
+const SECTIONS_WITH_REQUIRED_STAR = new Set(['balanceSheet', 'incomeStatement']);
+
+const isSectionStaged = (sectionId) => {
+  if (sectionId === 'incomeStatement') {
+    return ($publicIncomeStatementUploader.value.financialDocs || []).length > 0;
+  }
+  if (sectionId === 'balanceSheet') {
+    return ($publicBalanceSheetUploader.value.financialDocs || []).length > 0;
+  }
+  return false;
+};
+
+const buildFinancialSectionLabel = (sectionId, title, sectionsExtracted, flowStep) => {
+  const extracted = sectionsExtracted[sectionId];
+  const staged = isSectionStaged(sectionId);
+  const done = flowStep === 'review' ? extracted : staged;
+  const showRequiredStar = SECTIONS_WITH_REQUIRED_STAR.has(sectionId) && !done;
+
+  return (
+    <span className="d-inline-flex align-items-center gap-8 flex-wrap">
+      <span>{title}</span>
+      {done && (
+        <FontAwesomeIcon
+          icon={faCheck}
+          className="text-success flex-shrink-0"
+          aria-label={flowStep === 'review' ? 'Financial data extracted from this document' : 'PDF selected'}
+        />
+      )}
+      {!done && showRequiredStar && (
+        <span className="text-warning-300 small fw-normal">required*</span>
+      )}
+    </span>
+  );
+};
+
 const PublicFinancialUpload = () => {
   const { token } = useParams();
   const navigate = useNavigate();
@@ -45,6 +81,67 @@ const PublicFinancialUpload = () => {
   } = $publicFinancialUploadView.value;
 
   const extracting = isExtracting ?? false;
+
+  const hasIncomePdf = ($publicIncomeStatementUploader.value.financialDocs || []).length > 0;
+  const hasBalancePdf = ($publicBalanceSheetUploader.value.financialDocs || []).length > 0;
+  const canRunExtraction = hasIncomePdf && hasBalancePdf;
+
+  const expandedAccordionId = $publicFinancialAccordionExpanded.value;
+  const incomeFirstFile = ($publicIncomeStatementUploader.value.financialDocs || [])[0];
+  const balanceFirstFile = ($publicBalanceSheetUploader.value.financialDocs || [])[0];
+  const stagedIncomeKey = incomeFirstFile ? `${incomeFirstFile.name}-${incomeFirstFile.size}` : '';
+  const stagedBalanceKey = balanceFirstFile ? `${balanceFirstFile.name}-${balanceFirstFile.size}` : '';
+
+  /** Subscribe so PDF preview updates after sync runs. */
+  const publicPdfPreview = $publicFinancialPdfPreview.value;
+
+  useEffect(() => {
+    if (flowStep !== 'upload') {
+      resetPublicFinancialPdfPreview();
+      return undefined;
+    }
+    syncPublicFinancialPdfPreview();
+    return () => {
+      resetPublicFinancialPdfPreview();
+    };
+  }, [flowStep, expandedAccordionId, stagedIncomeKey, stagedBalanceKey]);
+
+  const financialAccordionItems = [
+    {
+      id: 'incomeStatement',
+      label: buildFinancialSectionLabel('incomeStatement', 'Income statement (P&L)', sectionsExtracted, flowStep),
+      content: (
+        <div className="p-16 pt-0">
+          <p className="text-grey-600 small mb-16">
+            Upload your profit and loss statement as a PDF.
+          </p>
+          <FileUploader
+            id="public-financial-income-statement"
+            name="financialDocs"
+            signal={$publicIncomeStatementUploader}
+            acceptedTypes=".pdf"
+          />
+        </div>
+      ),
+    },
+    {
+      id: 'balanceSheet',
+      label: buildFinancialSectionLabel('balanceSheet', 'Balance sheet', sectionsExtracted, flowStep),
+      content: (
+        <div className="p-16 pt-0">
+          <p className="text-grey-600 small mb-16">
+            Upload your balance sheet as a PDF.
+          </p>
+          <FileUploader
+            id="public-financial-balance-sheet"
+            name="financialDocs"
+            signal={$publicBalanceSheetUploader}
+            acceptedTypes=".pdf"
+          />
+        </div>
+      ),
+    },
+  ];
 
   if (isLoading) {
     return (
