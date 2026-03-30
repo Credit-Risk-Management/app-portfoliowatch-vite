@@ -13,7 +13,7 @@ import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import FileUploader from '@src/components/global/FileUploader';
 import ContentWrapper from '@src/components/global/ContentWrapper';
 import exampleLogo from '@src/assets/exampleLogo.svg?url';
-import { normalizeCurrencyValue } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
+import { formatDate, normalizeCurrencyValue } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
 import {
   $publicFinancialForm,
   $publicFinancialUploadView,
@@ -177,7 +177,7 @@ const PublicFinancialUpload = () => {
                   <strong>Organization:</strong> {linkData.organization.name}
                 </p>
                 <p className="text-grey-600 mb-0">
-                  <strong>Financial Period:</strong> 2026-03-31
+                  <strong>Financial Period:</strong> {linkData.reportingPeriodEndDate ? formatDate(new Date(linkData.reportingPeriodEndDate)) : 'N/A'}
                 </p>
               </div>
             )}
