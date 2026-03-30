@@ -45,7 +45,7 @@ export default function PublicFinancialUploadPdfPreview() {
 
   if (pdfLoadError) {
     return (
-      <div className="mt-24 text-center py-5 border border-info-600 rounded" style={{ height: '50vh' }}>
+      <div className="mt-4 text-center py-5 border border-info-600 rounded" style={{ height: '50vh' }}>
         <div className="d-flex flex-column align-items-center justify-content-center h-100 px-16">
           <h5 className="text-dark mb-16">{previewFileName || 'PDF'}</h5>
           <p className="text-grey-600 mb-24">
@@ -65,7 +65,7 @@ export default function PublicFinancialUploadPdfPreview() {
   }
 
   return (
-    <div className="mt-24">
+    <div className="mt-4">
       <p className="text-grey-600 small mb-12">
         Preview
         {previewFileName ? (
