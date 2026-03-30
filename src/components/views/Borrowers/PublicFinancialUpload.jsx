@@ -2,24 +2,77 @@ import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Form, Button, Alert, Card } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFileAlt, faMagic, faCheckCircle, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import {
+  faFileAlt,
+  faCheck,
+  faCheckCircle,
+  faExclamationTriangle,
+  faArrowLeft,
+} from '@fortawesome/free-solid-svg-icons';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import FileUploader from '@src/components/global/FileUploader';
+import SignalAccordion from '@src/components/global/SignalAccordion/SignalAccordion';
 import ContentWrapper from '@src/components/global/ContentWrapper';
 import exampleLogo from '@src/assets/exampleLogo.svg?url';
 import { normalizeCurrencyValue } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
 import {
   $publicFinancialForm,
-  $financialDocsUploader,
+  $publicIncomeStatementUploader,
+  $publicBalanceSheetUploader,
+  $publicFinancialAccordionExpanded,
+  $publicFinancialPdfPreview,
   $publicFinancialUploadView,
+  initialPublicFinancialSectionsExtracted,
 } from './_helpers/publicFinancialUpload.consts';
 import { fetchUploadLinkData } from './_helpers/publicFinancialUpload.resolvers';
 import {
-  handleFileUpload,
+  syncPublicFinancialPdfPreview,
+  resetPublicFinancialPdfPreview,
+} from './_helpers/publicFinancialUpload.pdfPreview.resolvers';
+import PublicFinancialUploadPdfPreview from './PublicFinancialUploadPdfPreview';
+import {
+  runPublicFinancialExtraction,
+  handleBackToPublicUploadStep,
   handleSubmit,
   handleSubmitAnother,
   clearError,
 } from './_helpers/publicFinancialUpload.events';
+
+/** Show "required*" on mandatory sections until a file is processed; first section (P&L) is check-only when done. */
+const SECTIONS_WITH_REQUIRED_STAR = new Set(['balanceSheet', 'incomeStatement']);
+
+const isSectionStaged = (sectionId) => {
+  if (sectionId === 'incomeStatement') {
+    return ($publicIncomeStatementUploader.value.financialDocs || []).length > 0;
+  }
+  if (sectionId === 'balanceSheet') {
+    return ($publicBalanceSheetUploader.value.financialDocs || []).length > 0;
+  }
+  return false;
+};
+
+const buildFinancialSectionLabel = (sectionId, title, sectionsExtracted, flowStep) => {
+  const extracted = sectionsExtracted[sectionId];
+  const staged = isSectionStaged(sectionId);
+  const done = flowStep === 'review' ? extracted : staged;
+  const showRequiredStar = SECTIONS_WITH_REQUIRED_STAR.has(sectionId) && !done;
+
+  return (
+    <span className="d-inline-flex align-items-center gap-8 flex-wrap">
+      <span>{title}</span>
+      {done && (
+        <FontAwesomeIcon
+          icon={faCheck}
+          className="text-success flex-shrink-0"
+          aria-label={flowStep === 'review' ? 'Financial data extracted from this document' : 'PDF selected'}
+        />
+      )}
+      {!done && showRequiredStar && (
+        <span className="text-warning-300 small fw-normal">required*</span>
+      )}
+    </span>
+  );
+};
 
 const PublicFinancialUpload = () => {
   const { token } = useParams();
@@ -31,8 +84,81 @@ const PublicFinancialUpload = () => {
   }, [token]);
 
   // Destructure signals for easier access
-  const { linkData, isLoading, isSubmitting, error, success, ocrApplied } = $publicFinancialUploadView.value;
+  const {
+    linkData,
+    isLoading,
+    isExtracting,
+    isSubmitting,
+    error,
+    success,
+    sectionsExtracted: sectionsExtractedRaw,
+    flowStep: flowStepRaw,
+  } = $publicFinancialUploadView.value;
+  const flowStep = flowStepRaw ?? 'upload';
+  const extracting = isExtracting ?? false;
+  const sectionsExtracted = sectionsExtractedRaw ?? initialPublicFinancialSectionsExtracted;
   const formData = $publicFinancialForm.value;
+
+  const hasIncomePdf = ($publicIncomeStatementUploader.value.financialDocs || []).length > 0;
+  const hasBalancePdf = ($publicBalanceSheetUploader.value.financialDocs || []).length > 0;
+  const canRunExtraction = hasIncomePdf && hasBalancePdf;
+
+  const expandedAccordionId = $publicFinancialAccordionExpanded.value;
+  const incomeFirstFile = ($publicIncomeStatementUploader.value.financialDocs || [])[0];
+  const balanceFirstFile = ($publicBalanceSheetUploader.value.financialDocs || [])[0];
+  const stagedIncomeKey = incomeFirstFile ? `${incomeFirstFile.name}-${incomeFirstFile.size}` : '';
+  const stagedBalanceKey = balanceFirstFile ? `${balanceFirstFile.name}-${balanceFirstFile.size}` : '';
+
+  /** Subscribe so PDF preview updates after sync runs. */
+  const publicPdfPreview = $publicFinancialPdfPreview.value;
+
+  useEffect(() => {
+    if (flowStep !== 'upload') {
+      resetPublicFinancialPdfPreview();
+      return undefined;
+    }
+    syncPublicFinancialPdfPreview();
+    return () => {
+      resetPublicFinancialPdfPreview();
+    };
+  }, [flowStep, expandedAccordionId, stagedIncomeKey, stagedBalanceKey]);
+
+  const financialAccordionItems = [
+    {
+      id: 'incomeStatement',
+      label: buildFinancialSectionLabel('incomeStatement', 'Income statement (P&L)', sectionsExtracted, flowStep),
+      content: (
+        <div className="p-16 pt-0">
+          <p className="text-grey-600 small mb-16">
+            Upload your profit and loss statement as a PDF.
+          </p>
+          <FileUploader
+            id="public-financial-income-statement"
+            name="financialDocs"
+            signal={$publicIncomeStatementUploader}
+            acceptedTypes=".pdf"
+          />
+        </div>
+      ),
+    },
+    {
+      id: 'balanceSheet',
+      label: buildFinancialSectionLabel('balanceSheet', 'Balance sheet', sectionsExtracted, flowStep),
+      content: (
+        <div className="p-16 pt-0">
+          <p className="text-grey-600 small mb-16">
+            Upload your balance sheet as a PDF.
+          </p>
+          <FileUploader
+            id="public-financial-balance-sheet"
+            name="financialDocs"
+            signal={$publicBalanceSheetUploader}
+            acceptedTypes=".pdf"
+          />
+        </div>
+      ),
+    },
+  ];
 
   if (isLoading) {
     return (
@@ -95,46 +221,83 @@ const PublicFinancialUpload = () => {
               <img src={exampleLogo} alt="Saber Bank Logo" className="img-fluid" />
             </div>
             {linkData && (
-            <div className="mt-8">
-              <p className="text-grey-600 mb-0">
-                <strong>Borrower:</strong> {linkData.borrower.name}
-              </p>
-              <p className="text-grey-600 mb-0">
-                <strong>Organization:</strong> {linkData.organization.name}
-              </p>
-            </div>
+              <div className="mt-8">
+                <p className="text-grey-600 mb-0">
+                  <strong>Borrower:</strong> {linkData.borrower.name}
+                </p>
+                <p className="text-grey-600 mb-0">
+                  <strong>Organization:</strong> {linkData.organization.name}
+                </p>
+                <p className="text-grey-600 mb-0">
+                  <strong>Financial Period:</strong> {linkData.financialPeriod}
+                </p>
+              </div>
             )}
           </Card.Header>
           <Card.Body className=" py-16 py-md-24">
             {error && (
-            <Alert variant="danger" dismissible onClose={clearError} className="mb-32">
-              {error}
-            </Alert>
+              <Alert variant="danger" dismissible onClose={clearError} className="mb-32">
+                {error}
+              </Alert>
             )}
 
-            {/* File Upload Section */}
-            <div className="mb-32 p-24 bg-light-100 border border-primary-200 rounded-4">
-              <h5 className="text-dark mb-16">
-                <FontAwesomeIcon icon={faFileAlt} className="me-8" />
-                Upload Financial Documents
-              </h5>
-              <p className="text-grey-600 small">
-                Upload financial statements (PDF, Excel, etc.). Our system will automatically extract financial data.
-              </p>
-              <FileUploader
-                name="financialDocs"
-                signal={$financialDocsUploader}
-                acceptedTypes=".pdf,.xlsx,.xls,.doc,.docx,.csv"
-                onUpload={handleFileUpload}
-              />
-              {ocrApplied && (
-              <Alert variant="success" className="mt-24 mb-0">
-                <FontAwesomeIcon icon={faMagic} className="me-8" />
-                Financial data extracted from documents and populated below. Please review and adjust as needed.
-              </Alert>
-              )}
-            </div>
+            {flowStep === 'upload' && (
+              <div className="mb-32 p-24 bg-light-100 border border-primary-200 rounded-4">
+                <div className="d-flex flex-wrap align-items-center justify-content-between gap-16 mb-16">
+                  <h5 className="text-dark mb-0">
+                    <FontAwesomeIcon icon={faFileAlt} className="me-8" />
+                    Step 1 — Upload financial documents
+                  </h5>
+                  <span className="text-grey-600 small">Step 1 of 2</span>
+                </div>
+                <p className="text-grey-600 small mb-24">
+                  Add both PDFs below, then run extraction. Data entry appears on the next step after extraction completes.
+                </p>
+                <SignalAccordion
+                  title="Required PDFs"
+                  items={financialAccordionItems}
+                  defaultExpandedId="incomeStatement"
+                  $expandedId={$publicFinancialAccordionExpanded}
+                />
+                <PublicFinancialUploadPdfPreview key={publicPdfPreview.pdfBlobUrl || 'no-pdf'} />
+                <div className="d-flex flex-wrap align-items-center justify-content-between gap-16 mt-24 pt-24 border-top border-primary-200">
+                  <p className="text-grey-600 small mb-0">
+                    {!canRunExtraction
+                      ? 'Upload an income statement and a balance sheet to continue.'
+                      : 'Ready to extract data from both PDFs.'}
+                  </p>
+                  <Button
+                    variant="primary"
+                    size="lg"
+                    className="rounded-pill"
+                    onClick={() => runPublicFinancialExtraction()}
+                    disabled={!canRunExtraction || extracting}
+                  >
+                    {extracting ? 'Running extraction…' : 'Run extraction'}
+                  </Button>
+                </div>
+              </div>
+            )}
 
+            {flowStep === 'review' && (
+              <div className="mb-32 d-flex flex-wrap align-items-center justify-content-between gap-16">
+                <div>
+                  <h5 className="text-dark mb-4">Step 2 — Review &amp; submit</h5>
+                  <p className="text-grey-600 small mb-0">
+                    Review the fields below and submit when accurate.
+                  </p>
+                </div>
+                <div className="d-flex flex-wrap align-items-center gap-12">
+                  <span className="text-grey-600 small">Step 2 of 2</span>
+                  <Button variant="outline-secondary" onClick={() => handleBackToPublicUploadStep()}>
+                    <FontAwesomeIcon icon={faArrowLeft} className="me-8" />
+                    Back to uploads
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {flowStep === 'review' && (
             <Form>
               <Card className="border-0 shadow-sm mb-40">
                 <Card.Body>
@@ -328,6 +491,7 @@ const PublicFinancialUpload = () => {
                 </Button>
               </div>
             </Form>
+            )}
           </Card.Body>
         </Card>
       </Container>
