@@ -25,6 +25,7 @@ import {
   clearPublicFinancialSectionFiles,
   handleOpenPriorDebtSchedulePdf,
 } from './_helpers/publicFinancialUpload.events';
+import PublicFinancialUploadPdfPreview from './PublicFinancialUploadPdfPreview';
 
 /** Show "required*" on mandatory sections until a file is processed; first section (P&L) is check-only when done. */
 const SECTIONS_WITH_REQUIRED_STAR = new Set(['balanceSheet', 'incomeStatement']);
@@ -111,35 +112,46 @@ const PublicFinancialUpload = () => {
       id: 'incomeStatement',
       label: buildFinancialSectionLabel('incomeStatement', 'Income statement (P&L)', sectionsExtracted, flowStep),
       content: (
-        <div className="p-16 pt-0">
-          <p className="text-grey-600 small mb-16">
-            Upload your profit and loss statement as a PDF.
-          </p>
-          <FileUploader
-            id="public-financial-income-statement"
-            name="financialDocs"
-            signal={$publicIncomeStatementUploader}
-            acceptedTypes=".pdf"
-          />
-        </div>
+        hasIncomePdf ? (
+          <PublicFinancialUploadPdfPreview key={publicPdfPreview.pdfBlobUrl || 'no-pdf'} />
+        ) : (
+          <div className=" pt-0">
+            <FileUploader
+              variant="dropzone"
+              id="public-financial-income-statement"
+              name="financialDocs"
+              signal={$publicIncomeStatementUploader}
+              acceptedTypes=".pdf"
+            >
+              <p className="text-grey-600 small mb-0 text-center">
+                Upload your profit and loss statement as a PDF.
+              </p>
+            </FileUploader>
+          </div>
+        )
       ),
     },
     {
       id: 'balanceSheet',
       label: buildFinancialSectionLabel('balanceSheet', 'Balance sheet', sectionsExtracted, flowStep),
       content: (
-        <div className="p-16 pt-0">
-          <p className="text-grey-600 small mb-16">
-            Upload your balance sheet as a PDF.
-          </p>
-          <FileUploader
-            id="public-financial-balance-sheet"
-            name="financialDocs"
-            signal={$publicBalanceSheetUploader}
-            acceptedTypes=".pdf"
-          />
-        </div>
-      ),
+        hasBalancePdf ? (
+          <PublicFinancialUploadPdfPreview key={publicPdfPreview.pdfBlobUrl || 'no-pdf'} />
+        ) : (
+          <div className=" pt-0">
+            <FileUploader
+              variant="dropzone"
+              id="public-financial-balance-sheet"
+              name="financialDocs"
+              signal={$publicBalanceSheetUploader}
+              acceptedTypes=".pdf"
+            >
+              <p className="text-grey-600 small mb-0 text-center">
+                Upload your balance sheet as a PDF.
+              </p>
+            </FileUploader>
+          </div>
+        )),
     },
   ];
 
