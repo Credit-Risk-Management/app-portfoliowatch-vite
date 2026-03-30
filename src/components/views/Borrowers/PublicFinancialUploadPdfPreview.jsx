@@ -13,6 +13,9 @@ import 'react-pdf/dist/Page/TextLayer.css';
 import {
   $publicIncomeStatementUploader,
   $publicBalanceSheetUploader,
+  $publicCashFlowUploader,
+  $publicOtherFinancialsUploader,
+  $publicDebtScheduleUploader,
 } from './_helpers/publicFinancialUpload.consts';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -20,6 +23,9 @@ pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@$
 const UPLOADER_BY_SECTION = {
   incomeStatement: $publicIncomeStatementUploader,
   balanceSheet: $publicBalanceSheetUploader,
+  incomeStatementQuarterly: $publicCashFlowUploader,
+  businessTaxReturn: $publicOtherFinancialsUploader,
+  debtSchedule: $publicDebtScheduleUploader,
 };
 
 const PDF_ZOOM_MIN = 0.5;

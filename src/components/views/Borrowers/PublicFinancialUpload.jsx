@@ -18,6 +18,7 @@ import {
   $publicFinancialForm,
   $publicFinancialUploadView,
   initialPublicFinancialSectionsExtracted,
+  DEFAULT_PUBLIC_ATTESTATION_TEXT,
 } from './_helpers/publicFinancialUpload.consts';
 import {
   getRequiredPdfSectionsForLink,
@@ -32,11 +33,18 @@ import {
   handleSubmitAnother,
   clearError,
   clearPublicFinancialSectionFiles,
+  setPublicFinancialAttestationAccepted,
 } from './_helpers/publicFinancialUpload.events';
 import PublicFinancialUploadPdfPreview from './PublicFinancialUploadPdfPreview';
 
 /** Show "required*" on mandatory sections until a file is processed; first section (P&L) is check-only when done. */
-const SECTIONS_WITH_REQUIRED_STAR = new Set(['balanceSheet', 'incomeStatement']);
+const SECTIONS_WITH_REQUIRED_STAR = new Set([
+  'balanceSheet',
+  'incomeStatement',
+  'incomeStatementQuarterly',
+  'businessTaxReturn',
+  'debtSchedule',
+]);
 
 const buildFinancialSectionLabel = (sectionId, title, sectionsExtracted, flowStep) => {
   const extracted = sectionsExtracted[sectionId];
@@ -81,6 +89,7 @@ const PublicFinancialUpload = () => {
     success,
     sectionsExtracted: sectionsExtractedRaw,
     flowStep: flowStepRaw,
+    attestationAccepted,
   } = $publicFinancialUploadView.value;
   const flowStep = flowStepRaw ?? 'upload';
 
@@ -203,6 +212,7 @@ const PublicFinancialUpload = () => {
                         title,
                         helperText,
                         inputId,
+                        replaceButtonVariant,
                       } = section;
                       const uploaderSignal = getPublicUploaderSignalForSection(sectionId);
                       const hasPdf = hasPdfStagedForSection(sectionId);
@@ -245,7 +255,7 @@ const PublicFinancialUpload = () => {
                                 </span>
                               </div>
                               <Button
-                                variant="primary-100"
+                                variant={replaceButtonVariant || 'outline-secondary'}
                                 size="sm"
                                 className="rounded-pill flex-shrink-0"
                                 type="button"
@@ -480,13 +490,36 @@ const PublicFinancialUpload = () => {
                   </Card.Body>
                 </Card>
 
+                {(linkData?.attestationText || DEFAULT_PUBLIC_ATTESTATION_TEXT) && (
+                  <Card className="border border-primary-200 mb-32">
+                    <Card.Body>
+                      <Form.Check
+                        type="checkbox"
+                        id="public-financial-attestation"
+                        className="mb-0"
+                        checked={Boolean(attestationAccepted)}
+                        onChange={(e) => setPublicFinancialAttestationAccepted(e.target.checked)}
+                        label={(
+                          <span className="text-dark small">
+                            {linkData.attestationText || DEFAULT_PUBLIC_ATTESTATION_TEXT}
+                          </span>
+                        )}
+                      />
+                    </Card.Body>
+                  </Card>
+                )}
+
                 <div className="d-flex justify-content-end mt-32">
                   <Button
                     variant="primary-100"
                     size="lg"
                     className="rounded-pill"
                     onClick={() => handleSubmit(token)}
-                    disabled={isSubmitting || !formData.asOfDate}
+                    disabled={
+                      isSubmitting
+                      || !formData.asOfDate
+                      || (Boolean(linkData?.attestationText || DEFAULT_PUBLIC_ATTESTATION_TEXT) && !attestationAccepted)
+                    }
                   >
                     {isSubmitting ? 'Submitting...' : 'Submit Financial Data'}
                   </Button>

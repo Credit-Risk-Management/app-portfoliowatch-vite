@@ -12,6 +12,7 @@ import {
   $publicBalanceSheetUploader,
   $publicCashFlowUploader,
   $publicOtherFinancialsUploader,
+  $publicDebtScheduleUploader,
   $publicFinancialUploadView,
   initialPublicFinancialSectionsExtracted,
 } from './publicFinancialUpload.consts';
@@ -25,6 +26,9 @@ const SENSIBLE_DOCUMENT_TYPES = {
 const SECTION_TO_API_DOCUMENT_TYPE = {
   incomeStatement: 'incomeStatement',
   balanceSheet: 'balanceSheet',
+  incomeStatementQuarterly: 'incomeStatement',
+  businessTaxReturn: 'incomeStatement',
+  debtSchedule: 'balanceSheet',
   cashFlow: 'incomeStatement',
   otherFinancials: 'incomeStatement',
 };
@@ -32,6 +36,9 @@ const SECTION_TO_API_DOCUMENT_TYPE = {
 const UPLOADER_BY_SECTION = {
   incomeStatement: $publicIncomeStatementUploader,
   balanceSheet: $publicBalanceSheetUploader,
+  incomeStatementQuarterly: $publicCashFlowUploader,
+  businessTaxReturn: $publicOtherFinancialsUploader,
+  debtSchedule: $publicDebtScheduleUploader,
   cashFlow: $publicCashFlowUploader,
   otherFinancials: $publicOtherFinancialsUploader,
 };
@@ -41,6 +48,7 @@ export const resetAllPublicFinancialUploaders = () => {
   $publicBalanceSheetUploader.update({ financialDocs: [] });
   $publicCashFlowUploader.update({ financialDocs: [] });
   $publicOtherFinancialsUploader.update({ financialDocs: [] });
+  $publicDebtScheduleUploader.update({ financialDocs: [] });
 };
 
 /** Clear staged files for one public-upload section (show dropzone again). */
@@ -218,6 +226,15 @@ export const handleSubmit = async (token) => {
     });
 
     const formData = $publicFinancialForm.value;
+    const { attestationAccepted, linkData } = $publicFinancialUploadView.value;
+
+    if (!attestationAccepted) {
+      $publicFinancialUploadView.update({
+        isSubmitting: false,
+        error: 'Please confirm the certification below before submitting.',
+      });
+      return;
+    }
 
     const financialData = {
       asOfDate: formData.asOfDate,
@@ -235,6 +252,8 @@ export const handleSubmit = async (token) => {
       retainedEarnings: formData.retainedEarnings || null,
       notes: formData.notes || null,
       documentIds: [],
+      attestationAccepted: true,
+      attestationTextVersion: linkData?.attestationTextVersion ?? undefined,
     };
 
     const response = await submitFinancialsViaToken(token, financialData);
@@ -247,6 +266,7 @@ export const handleSubmit = async (token) => {
         sectionsExtracted: { ...initialPublicFinancialSectionsExtracted },
         ocrApplied: false,
         flowStep: 'upload',
+        attestationAccepted: false,
       });
       $publicFinancialForm.reset();
       resetAllPublicFinancialUploaders();
@@ -276,6 +296,7 @@ export const handleSubmitAnother = () => {
     isExtracting: false,
     sectionsExtracted: { ...initialPublicFinancialSectionsExtracted },
     flowStep: 'upload',
+    attestationAccepted: false,
   });
   $publicFinancialForm.reset();
   resetAllPublicFinancialUploaders();
@@ -286,6 +307,10 @@ export const handleSubmitAnother = () => {
  */
 export const clearError = () => {
   $publicFinancialUploadView.update({ error: null });
+};
+
+export const setPublicFinancialAttestationAccepted = (accepted) => {
+  $publicFinancialUploadView.update({ attestationAccepted: Boolean(accepted) });
 };
 
 /**
