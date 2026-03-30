@@ -24,10 +24,7 @@ export const $publicBalanceSheetUploader = Signal({ financialDocs: [] });
 export const $publicCashFlowUploader = Signal({ financialDocs: [] });
 export const $publicOtherFinancialsUploader = Signal({ financialDocs: [] });
 
-/** Which accordion row is expanded (matches item `id` in PublicFinancialUpload). */
-export const $publicFinancialAccordionExpanded = Signal('incomeStatement');
-
-/** Initial / reset shape for per-section OCR completion (accordion checkmarks). */
+/** Initial / reset shape for per-section OCR completion. */
 export const initialPublicFinancialSectionsExtracted = {
   incomeStatement: false,
   balanceSheet: false,
@@ -50,14 +47,4 @@ export const $publicFinancialUploadView = Signal({
   flowStep: 'upload',
   sectionsExtracted: { ...initialPublicFinancialSectionsExtracted },
   refreshKey: 0,
-});
-
-/** Staged PDF preview (blob URL) for the expanded accordion row — mirrors PFSDocumentsContainer behavior. */
-export const $publicFinancialPdfPreview = Signal({
-  pdfBlobUrl: null,
-  pdfNumPages: null,
-  pdfPageNumber: 1,
-  pdfLoadError: false,
-  pdfZoomScale: 1,
-  previewFileName: null,
 });

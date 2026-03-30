@@ -15,7 +15,7 @@ import {
   $publicFinancialUploadView,
   initialPublicFinancialSectionsExtracted,
 } from './publicFinancialUpload.consts';
-import { resetPublicFinancialPdfPreview } from './publicFinancialUpload.pdfPreview.resolvers';
+import { getRequiredSectionIdsForLink } from './publicFinancialUpload.helpers';
 
 const SENSIBLE_DOCUMENT_TYPES = {
   incomeStatement: 'income_statement',
@@ -36,15 +36,17 @@ const UPLOADER_BY_SECTION = {
   otherFinancials: $publicOtherFinancialsUploader,
 };
 
-/** Order for batch extraction (income before balance so balance can complement form). */
-const EXTRACTION_ORDER = ['incomeStatement', 'balanceSheet'];
-
 export const resetAllPublicFinancialUploaders = () => {
   $publicIncomeStatementUploader.update({ financialDocs: [] });
   $publicBalanceSheetUploader.update({ financialDocs: [] });
   $publicCashFlowUploader.update({ financialDocs: [] });
   $publicOtherFinancialsUploader.update({ financialDocs: [] });
-  resetPublicFinancialPdfPreview();
+};
+
+/** Clear staged files for one public-upload section (show dropzone again). */
+export const clearPublicFinancialSectionFiles = (sectionId) => {
+  const uploader = UPLOADER_BY_SECTION[sectionId];
+  if (uploader) uploader.update({ financialDocs: [] });
 };
 
 const cleanupStoragePath = async (path) => {
@@ -138,12 +140,13 @@ export const runPublicFinancialExtraction = async () => {
     return;
   }
 
-  const incomeFiles = $publicIncomeStatementUploader.value.financialDocs || [];
-  const balanceFiles = $publicBalanceSheetUploader.value.financialDocs || [];
-
-  if (!incomeFiles.length || !balanceFiles.length) {
+  const sectionOrder = getRequiredSectionIdsForLink($publicFinancialUploadView.value.linkData);
+  const missing = sectionOrder.find(
+    (id) => !((UPLOADER_BY_SECTION[id].value.financialDocs || []).length),
+  );
+  if (missing) {
     $publicFinancialUploadView.update({
-      error: 'Please upload both an income statement and a balance sheet PDF before running extraction.',
+      error: 'Please upload all required PDFs before running extraction.',
     });
     return;
   }
@@ -151,7 +154,7 @@ export const runPublicFinancialExtraction = async () => {
   $publicFinancialUploadView.update({ isExtracting: true, error: null });
 
   try {
-    await EXTRACTION_ORDER.reduce(async (previous, sectionKey) => {
+    await sectionOrder.reduce(async (previous, sectionKey) => {
       await previous;
       const uploader = UPLOADER_BY_SECTION[sectionKey];
       const files = uploader.value.financialDocs || [];
@@ -162,14 +165,15 @@ export const runPublicFinancialExtraction = async () => {
       await extractOnePublicFinancialFile(sectionKey, file, token);
     }, Promise.resolve());
 
+    const sectionsExtracted = { ...initialPublicFinancialSectionsExtracted };
+    sectionOrder.forEach((id) => {
+      sectionsExtracted[id] = true;
+    });
+
     $publicFinancialUploadView.update({
       ocrApplied: true,
       flowStep: 'review',
-      sectionsExtracted: {
-        ...initialPublicFinancialSectionsExtracted,
-        incomeStatement: true,
-        balanceSheet: true,
-      },
+      sectionsExtracted,
       refreshKey: $publicFinancialUploadView.value.refreshKey + 1,
       isExtracting: false,
       downloadSensibleUrl: null,
@@ -200,7 +204,6 @@ export const handleBackToPublicUploadStep = () => {
     isExtracting: false,
     sectionsExtracted: { ...initialPublicFinancialSectionsExtracted },
   });
-  resetPublicFinancialPdfPreview();
 };
 
 /**
@@ -283,4 +286,72 @@ export const handleSubmitAnother = () => {
  */
 export const clearError = () => {
   $publicFinancialUploadView.update({ error: null });
+};
+
+/**
+ * Generate mock financial data from OCR (simulated)
+ * In production, this would call a real OCR service
+ */
+const generateMockFinancialData = () => {
+  const grossRevenue = Math.floor(Math.random() * (10000000 - 2000000) + 2000000);
+  const netIncomeMargin = 0.10 + Math.random() * 0.15;
+  const netIncome = Math.floor(grossRevenue * netIncomeMargin);
+  const ebitdaMargin = 0.15 + Math.random() * 0.15;
+  const ebitda = Math.floor(grossRevenue * ebitdaMargin);
+
+  const today = new Date();
+  const quartersBack = Math.floor(Math.random() * 4);
+  const currentQuarter = Math.floor(today.getMonth() / 3);
+  const targetQuarter = currentQuarter - quartersBack;
+
+  const yearOffset = Math.floor((targetQuarter < 0 ? targetQuarter - 3 : targetQuarter) / 4);
+  const year = today.getFullYear() + yearOffset;
+  const quarter = ((targetQuarter % 4) + 4) % 4;
+  const month = quarter * 3 + 2;
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  const asOfDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+  return {
+    asOfDate,
+    grossRevenue: grossRevenue.toString(),
+    netIncome: netIncome.toString(),
+    ebitda: ebitda.toString(),
+    debtService: (1.0 + Math.random() * 2.0).toFixed(2),
+    debtServiceCovenant: (1.0 + Math.random() * 0.5).toFixed(2),
+    currentRatio: (1.5 + Math.random() * 2.0).toFixed(2),
+    currentRatioCovenant: (1.2 + Math.random() * 0.5).toFixed(2),
+    liquidity: Math.floor(Math.random() * (2000000 - 300000) + 300000).toString(),
+    liquidityCovenant: Math.floor(Math.random() * (800000 - 250000) + 250000).toString(),
+    liquidityRatio: (1.2 + Math.random() * 1.5).toFixed(2),
+    liquidityRatioCovenant: (1.0 + Math.random() * 0.5).toFixed(2),
+    retainedEarnings: Math.floor(grossRevenue * (0.3 + Math.random() * 0.4)).toString(),
+  };
+};
+
+/**
+ * Handle file upload and trigger OCR
+ */
+export const handleFileUpload = () => {
+  const files = $publicIncomeStatementUploader.value.financialDocs || [];
+  const { ocrApplied } = $publicFinancialUploadView.value;
+
+  if (files.length > 0 && !ocrApplied) {
+    // Simulate OCR processing delay
+    setTimeout(() => {
+      const mockData = generateMockFinancialData();
+      $publicFinancialForm.update(mockData);
+      $publicFinancialUploadView.update({
+        ocrApplied: true,
+        refreshKey: $publicFinancialUploadView.value.refreshKey + 1,
+        isExtracting: false,
+        downloadSensibleUrl: null,
+        flowStep: 'review',
+        sectionsExtracted: {
+          ...initialPublicFinancialSectionsExtracted,
+          incomeStatement: true,
+          balanceSheet: true,
+        },
+      });
+    }, 500);
+  }
 };

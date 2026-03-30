@@ -1,5 +1,5 @@
 import { Form, Button } from 'react-bootstrap';
-import { useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faMinus,
@@ -10,24 +10,70 @@ import {
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
-import { $publicFinancialPdfPreview } from './_helpers/publicFinancialUpload.consts';
-import * as pdfPreviewEvents from './_helpers/publicFinancialUpload.pdfPreview.events';
-import * as pdfResolvers from './_helpers/publicFinancialUpload.pdfPreview.resolvers';
+import {
+  $publicIncomeStatementUploader,
+  $publicBalanceSheetUploader,
+} from './_helpers/publicFinancialUpload.consts';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
+const UPLOADER_BY_SECTION = {
+  incomeStatement: $publicIncomeStatementUploader,
+  balanceSheet: $publicBalanceSheetUploader,
+};
+
+const PDF_ZOOM_MIN = 0.5;
+const PDF_ZOOM_MAX = 3;
+const PDF_ZOOM_STEP = 0.25;
+const PDF_ZOOM_MIN_PERCENT = Math.round(PDF_ZOOM_MIN * 100);
+const PDF_ZOOM_MAX_PERCENT = Math.round(PDF_ZOOM_MAX * 100);
+
+const clampZoom = (scale) => Math.max(
+  PDF_ZOOM_MIN,
+  Math.min(PDF_ZOOM_MAX, Math.round(scale * 100) / 100),
+);
+
 /**
- * PDF preview for the staged file in the expanded accordion row (same UX as PFSDocumentsContainer).
+ * PDF preview for one public-upload section (independent zoom/page state per row).
+ *
+ * @param {{ sectionId: 'incomeStatement'|'balanceSheet' }} props
  */
-export default function PublicFinancialUploadPdfPreview() {
-  const {
-    pdfBlobUrl,
-    pdfNumPages,
-    pdfPageNumber,
-    pdfLoadError,
-    pdfZoomScale = 1,
-    previewFileName,
-  } = $publicFinancialPdfPreview.value;
+export default function PublicFinancialUploadPdfPreview({ sectionId }) {
+  const uploader = UPLOADER_BY_SECTION[sectionId];
+  const file = (uploader?.value?.financialDocs || [])[0];
+  const fileKey = file ? `${file.name}-${file.size}-${file.lastModified}` : '';
+
+  const [pdfBlobUrl, setPdfBlobUrl] = useState(null);
+  const [previewFileName, setPreviewFileName] = useState(null);
+  const [pdfNumPages, setPdfNumPages] = useState(null);
+  const [pdfPageNumber, setPdfPageNumber] = useState(1);
+  const [pdfLoadError, setPdfLoadError] = useState(false);
+  const [pdfZoomScale, setPdfZoomScale] = useState(1);
+
+  useEffect(() => {
+    if (!file || !(file.type === 'application/pdf' || file.name?.toLowerCase().endsWith('.pdf'))) {
+      setPdfBlobUrl(null);
+      setPreviewFileName(null);
+      setPdfNumPages(null);
+      setPdfPageNumber(1);
+      setPdfLoadError(false);
+      setPdfZoomScale(1);
+      return undefined;
+    }
+
+    const url = URL.createObjectURL(file);
+    setPdfBlobUrl(url);
+    setPreviewFileName(file.name);
+    setPdfNumPages(null);
+    setPdfPageNumber(1);
+    setPdfLoadError(false);
+    setPdfZoomScale(1);
+
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- fileKey encodes file identity for this slot
+  }, [fileKey, sectionId]);
 
   const pdfZoomPercent = Math.round(pdfZoomScale * 100);
   const pdfBaseWidth = Math.min(typeof window !== 'undefined' ? window.innerWidth * 0.92 : 600, 720);
@@ -38,6 +84,42 @@ export default function PublicFinancialUploadPdfPreview() {
     cMapPacked: true,
     standardFontDataUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/standard_fonts/`,
   }), []);
+
+  const onLoadSuccess = useCallback(({ numPages }) => {
+    setPdfNumPages(numPages);
+    setPdfLoadError(false);
+  }, []);
+
+  const onLoadError = useCallback(() => {
+    setPdfLoadError(true);
+  }, []);
+
+  const goPrev = useCallback(() => {
+    setPdfPageNumber((prev) => {
+      const max = pdfNumPages || 1;
+      return Math.max(1, Math.min(max, prev - 1));
+    });
+  }, [pdfNumPages]);
+
+  const goNext = useCallback(() => {
+    setPdfPageNumber((prev) => {
+      const max = pdfNumPages || 1;
+      return Math.max(1, Math.min(max, prev + 1));
+    });
+  }, [pdfNumPages]);
+
+  const zoomIn = useCallback(() => {
+    setPdfZoomScale((s) => clampZoom(s + PDF_ZOOM_STEP));
+  }, []);
+  const zoomOut = useCallback(() => {
+    setPdfZoomScale((s) => clampZoom(s - PDF_ZOOM_STEP));
+  }, []);
+  const resetZoom = useCallback(() => setPdfZoomScale(1), []);
+
+  const onZoomSlider = useCallback((e) => {
+    const v = parseInt(e.target.value, 10);
+    if (!Number.isNaN(v)) setPdfZoomScale(clampZoom(v / 100));
+  }, []);
 
   if (!pdfBlobUrl) {
     return null;
@@ -108,8 +190,8 @@ export default function PublicFinancialUploadPdfPreview() {
               <Button
                 variant="outline-light"
                 size="sm"
-                onClick={pdfPreviewEvents.zoomPdfOut}
-                disabled={pdfZoomScale <= pdfPreviewEvents.PDF_ZOOM_MIN}
+                onClick={zoomOut}
+                disabled={pdfZoomScale <= PDF_ZOOM_MIN}
                 title="Zoom out"
                 aria-label="Zoom out"
               >
@@ -122,11 +204,11 @@ export default function PublicFinancialUploadPdfPreview() {
                   minWidth: '80px',
                   accentColor: '#4a9aa7',
                 }}
-                min={pdfPreviewEvents.PDF_ZOOM_MIN_PERCENT}
-                max={pdfPreviewEvents.PDF_ZOOM_MAX_PERCENT}
+                min={PDF_ZOOM_MIN_PERCENT}
+                max={PDF_ZOOM_MAX_PERCENT}
                 step={5}
                 value={pdfZoomPercent}
-                onChange={pdfPreviewEvents.handlePdfZoomSliderChange}
+                onChange={onZoomSlider}
                 aria-label="Zoom level"
               />
               <span className="text-light small text-nowrap user-select-none" style={{ minWidth: '2.75rem' }}>
@@ -136,8 +218,8 @@ export default function PublicFinancialUploadPdfPreview() {
               <Button
                 variant="outline-light"
                 size="sm"
-                onClick={pdfPreviewEvents.zoomPdfIn}
-                disabled={pdfZoomScale >= pdfPreviewEvents.PDF_ZOOM_MAX}
+                onClick={zoomIn}
+                disabled={pdfZoomScale >= PDF_ZOOM_MAX}
                 title="Zoom in"
                 aria-label="Zoom in"
               >
@@ -147,7 +229,7 @@ export default function PublicFinancialUploadPdfPreview() {
                 variant="outline-light"
                 size="sm"
                 className="text-nowrap mx-4"
-                onClick={pdfPreviewEvents.resetPdfZoom}
+                onClick={resetZoom}
                 disabled={pdfZoomScale === 1}
                 title="Reset zoom to 100%"
                 aria-label="Reset zoom to 100%"
@@ -169,8 +251,8 @@ export default function PublicFinancialUploadPdfPreview() {
           >
             <Document
               file={pdfBlobUrl}
-              onLoadSuccess={({ numPages }) => pdfResolvers.handlePdfLoadSuccess(numPages)}
-              onLoadError={pdfResolvers.handlePdfLoadError}
+              onLoadSuccess={onLoadSuccess}
+              onLoadError={onLoadError}
               loading={(
                 <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '40vh' }}>
                   <div className="text-center">
@@ -217,7 +299,7 @@ export default function PublicFinancialUploadPdfPreview() {
               <Button
                 variant="outline-light"
                 size="sm"
-                onClick={pdfPreviewEvents.goToPreviousPage}
+                onClick={goPrev}
                 disabled={pdfPageNumber <= 1}
                 title="Previous page"
                 aria-label="Previous page"
@@ -236,7 +318,7 @@ export default function PublicFinancialUploadPdfPreview() {
               <Button
                 variant="outline-light"
                 size="sm"
-                onClick={pdfPreviewEvents.goToNextPage}
+                onClick={goNext}
                 disabled={pdfPageNumber >= pdfNumPages}
                 title="Next page"
                 aria-label="Next page"

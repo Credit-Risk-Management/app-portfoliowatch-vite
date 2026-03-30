@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Form, Button, Alert, Card } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -11,49 +11,36 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import FileUploader from '@src/components/global/FileUploader';
-import SignalAccordion from '@src/components/global/SignalAccordion/SignalAccordion';
 import ContentWrapper from '@src/components/global/ContentWrapper';
 import exampleLogo from '@src/assets/exampleLogo.svg?url';
 import { normalizeCurrencyValue } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
 import {
   $publicFinancialForm,
-  $publicIncomeStatementUploader,
-  $publicBalanceSheetUploader,
-  $publicFinancialAccordionExpanded,
-  $publicFinancialPdfPreview,
   $publicFinancialUploadView,
   initialPublicFinancialSectionsExtracted,
 } from './_helpers/publicFinancialUpload.consts';
+import {
+  getRequiredPdfSectionsForLink,
+  hasPdfStagedForSection,
+  getPublicUploaderSignalForSection,
+} from './_helpers/publicFinancialUpload.helpers';
 import { fetchUploadLinkData } from './_helpers/publicFinancialUpload.resolvers';
 import {
-  syncPublicFinancialPdfPreview,
-  resetPublicFinancialPdfPreview,
-} from './_helpers/publicFinancialUpload.pdfPreview.resolvers';
-import {
-  runPublicFinancialExtraction,
+  handleFileUpload,
   handleBackToPublicUploadStep,
   handleSubmit,
   handleSubmitAnother,
   clearError,
+  clearPublicFinancialSectionFiles,
 } from './_helpers/publicFinancialUpload.events';
 import PublicFinancialUploadPdfPreview from './PublicFinancialUploadPdfPreview';
 
 /** Show "required*" on mandatory sections until a file is processed; first section (P&L) is check-only when done. */
 const SECTIONS_WITH_REQUIRED_STAR = new Set(['balanceSheet', 'incomeStatement']);
 
-const isSectionStaged = (sectionId) => {
-  if (sectionId === 'incomeStatement') {
-    return ($publicIncomeStatementUploader.value.financialDocs || []).length > 0;
-  }
-  if (sectionId === 'balanceSheet') {
-    return ($publicBalanceSheetUploader.value.financialDocs || []).length > 0;
-  }
-  return false;
-};
-
 const buildFinancialSectionLabel = (sectionId, title, sectionsExtracted, flowStep) => {
   const extracted = sectionsExtracted[sectionId];
-  const staged = isSectionStaged(sectionId);
+  const staged = hasPdfStagedForSection(sectionId);
   const done = flowStep === 'review' ? extracted : staged;
   const showRequiredStar = SECTIONS_WITH_REQUIRED_STAR.has(sectionId) && !done;
 
@@ -68,7 +55,7 @@ const buildFinancialSectionLabel = (sectionId, title, sectionsExtracted, flowSte
         />
       )}
       {!done && showRequiredStar && (
-        <span className="text-warning-300 small fw-normal">required*</span>
+        <span className="text-warning-500 fs-16 fw-normal">required*</span>
       )}
     </span>
   );
@@ -77,6 +64,7 @@ const buildFinancialSectionLabel = (sectionId, title, sectionsExtracted, flowSte
 const PublicFinancialUpload = () => {
   const { token } = useParams();
   const navigate = useNavigate();
+  const prevFlowStepRef = useRef(undefined);
 
   // Fetch upload link data on mount
   useEffect(() => {
@@ -95,81 +83,17 @@ const PublicFinancialUpload = () => {
     flowStep: flowStepRaw,
   } = $publicFinancialUploadView.value;
   const flowStep = flowStepRaw ?? 'upload';
+
+  // Scroll to top when switching upload ↔ review (not on initial mount)
+  useEffect(() => {
+    if (prevFlowStepRef.current !== undefined && prevFlowStepRef.current !== flowStep) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    prevFlowStepRef.current = flowStep;
+  }, [flowStep]);
   const extracting = isExtracting ?? false;
   const sectionsExtracted = sectionsExtractedRaw ?? initialPublicFinancialSectionsExtracted;
   const formData = $publicFinancialForm.value;
-
-  const hasIncomePdf = ($publicIncomeStatementUploader.value.financialDocs || []).length > 0;
-  const hasBalancePdf = ($publicBalanceSheetUploader.value.financialDocs || []).length > 0;
-  const canRunExtraction = hasIncomePdf && hasBalancePdf;
-
-  const expandedAccordionId = $publicFinancialAccordionExpanded.value;
-  const incomeFirstFile = ($publicIncomeStatementUploader.value.financialDocs || [])[0];
-  const balanceFirstFile = ($publicBalanceSheetUploader.value.financialDocs || [])[0];
-  const stagedIncomeKey = incomeFirstFile ? `${incomeFirstFile.name}-${incomeFirstFile.size}` : '';
-  const stagedBalanceKey = balanceFirstFile ? `${balanceFirstFile.name}-${balanceFirstFile.size}` : '';
-
-  /** Subscribe so PDF preview updates after sync runs. */
-  const publicPdfPreview = $publicFinancialPdfPreview.value;
-
-  useEffect(() => {
-    if (flowStep !== 'upload') {
-      resetPublicFinancialPdfPreview();
-      return undefined;
-    }
-    syncPublicFinancialPdfPreview();
-    return () => {
-      resetPublicFinancialPdfPreview();
-    };
-  }, [flowStep, expandedAccordionId, stagedIncomeKey, stagedBalanceKey]);
-
-  const financialAccordionItems = [
-    {
-      id: 'incomeStatement',
-      label: buildFinancialSectionLabel('incomeStatement', 'Income statement (P&L)', sectionsExtracted, flowStep),
-      content: (
-        hasIncomePdf ? (
-          <PublicFinancialUploadPdfPreview key={publicPdfPreview.pdfBlobUrl || 'no-pdf'} />
-        ) : (
-          <div className=" pt-0">
-            <FileUploader
-              variant="dropzone"
-              id="public-financial-income-statement"
-              name="financialDocs"
-              signal={$publicIncomeStatementUploader}
-              acceptedTypes=".pdf"
-            >
-              <p className="text-grey-600 small mb-0 text-center">
-                Upload your profit and loss statement as a PDF.
-              </p>
-            </FileUploader>
-          </div>
-        )
-      ),
-    },
-    {
-      id: 'balanceSheet',
-      label: buildFinancialSectionLabel('balanceSheet', 'Balance sheet', sectionsExtracted, flowStep),
-      content: (
-        hasBalancePdf ? (
-          <PublicFinancialUploadPdfPreview key={publicPdfPreview.pdfBlobUrl || 'no-pdf'} />
-        ) : (
-          <div className=" pt-0">
-            <FileUploader
-              variant="dropzone"
-              id="public-financial-balance-sheet"
-              name="financialDocs"
-              signal={$publicBalanceSheetUploader}
-              acceptedTypes=".pdf"
-            >
-              <p className="text-grey-600 small mb-0 text-center">
-                Upload your balance sheet as a PDF.
-              </p>
-            </FileUploader>
-          </div>
-        )),
-    },
-  ];
 
   if (isLoading) {
     return (
@@ -221,6 +145,10 @@ const PublicFinancialUpload = () => {
     );
   }
 
+  const requiredPdfSections = getRequiredPdfSectionsForLink(linkData);
+  const canRunExtraction = requiredPdfSections.length > 0
+    && requiredPdfSections.every(({ sectionId }) => hasPdfStagedForSection(sectionId));
+
   return (
     <ContentWrapper fluid className="min-vh-100 ">
       <Container className="py-16 py-md-24">
@@ -240,7 +168,7 @@ const PublicFinancialUpload = () => {
                   <strong>Organization:</strong> {linkData.organization.name}
                 </p>
                 <p className="text-grey-600 mb-0">
-                  <strong>Financial Period:</strong> {linkData.financialPeriod}
+                  <strong>Financial Period:</strong> 2026-03-31
                 </p>
               </div>
             )}
@@ -262,25 +190,88 @@ const PublicFinancialUpload = () => {
                   <span className="text-grey-600 small">Step 1 of 2</span>
                 </div>
                 <p className="text-grey-600 small mb-24">
-                  Add both PDFs below, then run extraction. Data entry appears on the next step after extraction completes.
+                  Add all required PDFs below, then run extraction. Data entry appears on the next step after extraction completes.
                 </p>
-                <SignalAccordion
-                  title="Required PDFs"
-                  items={financialAccordionItems}
-                  defaultExpandedId="incomeStatement"
-                  $expandedId={$publicFinancialAccordionExpanded}
-                />
+                <div className="border border-primary-800 rounded overflow-hidden">
+                  <div className="bg-info-900 text-white px-16 py-12">
+                    <h6 className="mb-0 text-white fw-600">Required PDFs</h6>
+                  </div>
+                  <ol className="list-unstyled mb-0">
+                    {requiredPdfSections.map((section, index) => {
+                      const {
+                        sectionId,
+                        title,
+                        helperText,
+                        inputId,
+                      } = section;
+                      const uploaderSignal = getPublicUploaderSignalForSection(sectionId);
+                      const hasPdf = hasPdfStagedForSection(sectionId);
+                      const firstFileName = (uploaderSignal.value.financialDocs || [])[0]?.name;
+                      return (
+                        <li
+                          key={sectionId}
+                          className={
+                            index < requiredPdfSections.length - 1
+                              ? 'p-24 border-bottom border-primary-800'
+                              : 'p-24'
+                          }
+                        >
+                          <h6 className="text-dark mb-16">
+                            {buildFinancialSectionLabel(sectionId, title, sectionsExtracted, flowStep)}
+                          </h6>
+                          {!hasPdf ? (
+                            <div className="pt-0">
+                              <FileUploader
+                                variant="dropzone"
+                                id={inputId}
+                                name="financialDocs"
+                                signal={uploaderSignal}
+                                acceptedTypes=".pdf"
+                              >
+                                <p className="text-grey-600 small mb-0 text-center">
+                                  {helperText}
+                                </p>
+                              </FileUploader>
+                            </div>
+                          ) : (
+                            <div className="d-flex flex-wrap align-items-center justify-content-between gap-12 p-16 border border-grey-400 rounded bg-light-100 mb-0">
+                              <div className="d-flex align-items-center gap-8 min-w-0">
+                                <FontAwesomeIcon icon={faFileAlt} className="text-info-600 flex-shrink-0" aria-hidden />
+                                <span
+                                  className="text-dark fw-500 text-truncate"
+                                  title={firstFileName}
+                                >
+                                  {firstFileName}
+                                </span>
+                              </div>
+                              <Button
+                                variant="primary-100"
+                                size="sm"
+                                className="rounded-pill flex-shrink-0"
+                                type="button"
+                                onClick={() => clearPublicFinancialSectionFiles(sectionId)}
+                              >
+                                Replace
+                              </Button>
+                            </div>
+                          )}
+                          <PublicFinancialUploadPdfPreview sectionId={sectionId} />
+                        </li>
+                      );
+                    })}
+                  </ol>
+                </div>
                 <div className="d-flex flex-wrap align-items-center justify-content-between gap-16 mt-24 pt-24 border-top border-primary-200">
                   <p className="text-grey-600 small mb-0">
                     {!canRunExtraction
-                      ? 'Upload an income statement and a balance sheet to continue.'
-                      : 'Ready to extract data from both PDFs.'}
+                      ? 'Upload every required PDF to continue.'
+                      : 'Ready to extract data from your PDFs.'}
                   </p>
                   <Button
-                    variant="primary"
+                    variant="primary-100"
                     size="lg"
                     className="rounded-pill"
-                    onClick={() => runPublicFinancialExtraction()}
+                    onClick={() => handleFileUpload()}
                     disabled={!canRunExtraction || extracting}
                   >
                     {extracting ? 'Running extraction…' : 'Run extraction'}
@@ -299,7 +290,7 @@ const PublicFinancialUpload = () => {
                 </div>
                 <div className="d-flex flex-wrap align-items-center gap-12">
                   <span className="text-grey-600 small">Step 2 of 2</span>
-                  <Button variant="outline-secondary" onClick={() => handleBackToPublicUploadStep()}>
+                  <Button variant="primary-100" onClick={() => handleBackToPublicUploadStep()}>
                     <FontAwesomeIcon icon={faArrowLeft} className="me-8" />
                     Back to uploads
                   </Button>
@@ -324,7 +315,7 @@ const PublicFinancialUpload = () => {
                           required
                         />
                         <Form.Text className="text-grey-600">
-                          The date these financials are effective (e.g., end of quarter: 03-31-2024)
+                          The date these financials are effective (e.g., end of quarter: 03-31-2026)
                         </Form.Text>
                       </Col>
                     </Row>
@@ -491,7 +482,7 @@ const PublicFinancialUpload = () => {
 
                 <div className="d-flex justify-content-end mt-32">
                   <Button
-                    variant="primary"
+                    variant="primary-100"
                     size="lg"
                     className="rounded-pill"
                     onClick={() => handleSubmit(token)}
