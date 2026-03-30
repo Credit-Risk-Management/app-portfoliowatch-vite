@@ -27,7 +27,13 @@ import {
 } from './_helpers/publicFinancialUpload.events';
 
 /** Show "required*" on mandatory sections until a file is processed; first section (P&L) is check-only when done. */
-const SECTIONS_WITH_REQUIRED_STAR = new Set(['balanceSheet', 'incomeStatement']);
+const SECTIONS_WITH_REQUIRED_STAR = new Set([
+  'balanceSheet',
+  'incomeStatement',
+  'incomeStatementQuarterly',
+  'businessTaxReturn',
+  'debtSchedule',
+]);
 
 const buildFinancialSectionLabel = (sectionId, title, sectionsExtracted, flowStep) => {
   const extracted = sectionsExtracted[sectionId];

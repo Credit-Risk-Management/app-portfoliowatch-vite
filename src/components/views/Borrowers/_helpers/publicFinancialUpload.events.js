@@ -309,6 +309,10 @@ export const clearError = () => {
   $publicFinancialUploadView.update({ error: null });
 };
 
+export const setPublicFinancialAttestationAccepted = (accepted) => {
+  $publicFinancialUploadView.update({ attestationAccepted: Boolean(accepted) });
+};
+
 /**
  * Open the borrower's prior debt schedule PDF (new tab) so they can update and re-upload.
  */
