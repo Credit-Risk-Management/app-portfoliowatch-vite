@@ -56,6 +56,18 @@ const DocumentsContainer = ({
 
   const pdfBaseWidth = Math.min(window.innerWidth * 0.4, 800);
   const pdfPageWidth = pdfBaseWidth * pdfZoomScale;
+  const parseFinancialNumber = (value) => {
+    if (value == null || value === '') return null;
+    const parsed = typeof value === 'string'
+      ? Number(value.replace(/[^0-9.-]/g, ''))
+      : Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+  const totalAssetsNumber = parseFinancialNumber($form.value.totalAssets);
+  const totalLiabilitiesNumber = parseFinancialNumber($form.value.totalLiabilities);
+  const calculatedNetWorth = totalAssetsNumber != null && totalLiabilitiesNumber != null
+    ? totalAssetsNumber - totalLiabilitiesNumber
+    : null;
 
   // Memoize PDF options to prevent unnecessary re-renders (must be at component level, not inside conditionals)
   const pdfOptions = useMemo(() => ({
@@ -581,10 +593,11 @@ const DocumentsContainer = ({
                   labelClassName="text-info-100"
                   type="currency"
                   placeholder="$ USD"
-                  value={$form.value.netWorth}
+                  value={calculatedNetWorth ?? $form.value.netWorth}
                   name="netWorth"
                   signal={$form}
                   inputFormatCallback={normalizeCurrencyValue}
+                  disabled
                 />
               </Col>
               <Col md={12} className="mb-16">
@@ -595,6 +608,18 @@ const DocumentsContainer = ({
                   placeholder="$ USD"
                   value={$form.value.liquidity}
                   name="liquidity"
+                  signal={$form}
+                  inputFormatCallback={normalizeCurrencyValue}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Annual Debt Service"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$form.value.annualDebtService}
+                  name="annualDebtService"
                   signal={$form}
                   inputFormatCallback={normalizeCurrencyValue}
                 />

@@ -99,6 +99,7 @@ export const handleFileUpload = async (ocrApplied, pdfUrl) => {
         }
         if (documentType === 'balanceSheet' && parsedDocument) {
           const extractedData = parseSingleDocResponse(parsedDocument, 'balanceSheet');
+          console.log('extractedData', extractedData.currentRatio);
           if (extractedData) {
             $borrowerFinancialsForm.update({
               asOfDate: extractedData.asOfDate,
@@ -110,6 +111,8 @@ export const handleFileUpload = async (ocrApplied, pdfUrl) => {
               accountsReceivable: extractedData.accountsReceivable,
               accountsPayable: extractedData.accountsPayable,
               inventory: extractedData.inventory,
+              liquidity: extractedData.liquidity,
+              currentRatio: extractedData.currentRatio,
             });
           }
         }
