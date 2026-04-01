@@ -112,6 +112,7 @@ export const handleFileUpload = async ($financialDocsUploader, $modalState, ocrA
               netWorth: pfsData.netWorth,
               liquidity: pfsData.liquidity,
               cash: pfsData.cash,
+              annualDebtService: pfsData.annualDebtService,
             });
           }
         }
@@ -187,6 +188,7 @@ export const handleRemoveDocument = async (documentId) => {
       clearedFields.totalLiabilities = '';
       clearedFields.netWorth = '';
       clearedFields.liquidity = '';
+      clearedFields.annualDebtService = '';
     }
     if (documentType === 'personalTaxReturn' && updatedDocs.length === 0) {
       clearedFields.adjustedGrossIncome = '';
@@ -313,6 +315,7 @@ export const handleOpenEditMode = async (financial) => {
       totalLiabilities: financial.totalLiabilities?.toString() || '',
       netWorth: financial.netWorth?.toString() || '',
       liquidity: financial.liquidity?.toString() || '',
+      annualDebtService: financial.annualDebtService?.toString() || '',
       adjustedGrossIncome: financial.adjustedGrossIncome?.toString() || '',
       debtToIncomeRatio: financial.debtToIncomeRatio != null ? Number(financial.debtToIncomeRatio).toFixed(2) : null,
       notes: financial.notes || '',
@@ -354,6 +357,7 @@ export const handleSubmit = async (onCloseCallback) => {
       totalLiabilities,
       netWorth,
       liquidity,
+      annualDebtService,
       adjustedGrossIncome,
       debtToIncomeRatio,
       notes,
@@ -374,13 +378,20 @@ export const handleSubmit = async (onCloseCallback) => {
       return;
     }
 
+    const totalAssetsNumber = toNumberOrNull(totalAssets);
+    const totalLiabilitiesNumber = toNumberOrNull(totalLiabilities);
+    const computedNetWorth = totalAssetsNumber != null && totalLiabilitiesNumber != null
+      ? totalAssetsNumber - totalLiabilitiesNumber
+      : toNumberOrNull(netWorth);
+
     // Body shape: GuarantorFinancialData (id only on update, from URL)
     const pfsData = {
       guarantorId,
-      totalAssets: toNumberOrNull(totalAssets),
-      totalLiabilities: toNumberOrNull(totalLiabilities),
-      netWorth: toNumberOrNull(netWorth),
+      totalAssets: totalAssetsNumber,
+      totalLiabilities: totalLiabilitiesNumber,
+      netWorth: computedNetWorth,
       liquidity: toNumberOrNull(liquidity),
+      annualDebtService: toNumberOrNull(annualDebtService),
       adjustedGrossIncome: toNumberOrNull(adjustedGrossIncome),
       debtToIncomeRatio: toNumberOrNull(debtToIncomeRatio),
       asOfDate,

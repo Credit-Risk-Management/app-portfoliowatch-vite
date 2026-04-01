@@ -1,6 +1,6 @@
 export const CLIENT_TYPE_OPTIONS = [
-  { value: 'CRE', label: 'CRE' },
-  { value: 'C&I', label: 'C&I' },
+  { value: 'Business', label: 'Business' },
+  { value: 'SBA CA', label: 'SBA CA' },
 ];
 
 export const RISK_RATING_OPTIONS = [

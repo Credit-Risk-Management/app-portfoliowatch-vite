@@ -1,15 +1,25 @@
 /* eslint-disable react/no-danger */
 import { useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { Container, Row, Col, Button, Collapse, Spinner } from 'react-bootstrap';
+import { Container, Row, Col, Button, Collapse, Spinner, OverlayTrigger, Tooltip, Badge } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faArrowRight, faMagic, faUser, faLandmark, faFileAlt, faSync } from '@fortawesome/free-solid-svg-icons';
+import {
+  faArrowLeft,
+  faArrowRight,
+  faMagic,
+  faUser,
+  faLandmark,
+  faFileAlt,
+  faSync,
+  faFlag,
+} from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';
 import UniversalCard from '@src/components/global/UniversalCard';
 import SignalAccordion from '@src/components/global/SignalAccordion';
 import SignalTable from '@src/components/global/SignalTable';
 import { $loan, WATCH_SCORE_OPTIONS, $watchScoreBreakdown } from '@src/consts/consts';
 import { formatCurrency } from '@src/utils/formatCurrency';
+import { GuarantorNetWorthWithMemoFlag } from '@src/utils/guarantorFinancialsSource';
 import Loadable from '@src/components/global/Loadable';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import SubmitCollateralModal from './_components/SubmitCollateralModal';
@@ -154,9 +164,15 @@ const LoanDetail = () => {
       phone: guarantor.phone,
       totalAssets: formatCurrency(financials.totalAssets || 0),
       totalLiabilities: formatCurrency(financials.totalLiabilities || 0),
-      netWorth: formatCurrency(financials.netWorth || 0),
+      netWorth: (
+        <GuarantorNetWorthWithMemoFlag
+          netWorth={financials.netWorth}
+          notes={financials.notes}
+          compact
+        />
+      ),
       liquidity: formatCurrency(financials.liquidity || 0),
-      debtService: formatCurrency(($loan.value?.loan?.paymentAmount || 0) * 12 || 0),
+      annualDebtService: formatCurrency(financials.annualDebtService || 0),
     };
   });
   const guarantorsTableHeaders = [
@@ -167,8 +183,13 @@ const LoanDetail = () => {
     { key: 'totalLiabilities', value: 'Total Liabilities', sortKey: 'totalLiabilities' },
     { key: 'netWorth', value: 'Net Worth', sortKey: 'netWorth' },
     { key: 'liquidity', value: 'Liquidity', sortKey: 'liquidity' },
-    { key: 'debtService', value: 'Total Debt Service', sortKey: 'debtService' },
+    { key: 'annualDebtService', value: 'Annual Debt Service', sortKey: 'annualDebtService' },
   ];
+  const loanData = $loan.value?.loan;
+  const normalizedWatchScore = Number(loanData?.watchScore);
+  const watchScoreOption = WATCH_SCORE_OPTIONS[loanData?.watchScore] || WATCH_SCORE_OPTIONS.null;
+  const isDefaultWatchScore = normalizedWatchScore === 3
+    && (loanData?.borrower?.financials?.length ?? 0) === 0;
 
   return (
     <Loadable signal={$loan} template="fullscreen">
@@ -236,9 +257,32 @@ const LoanDetail = () => {
         </div>
         <div className="text-info-50">Loan Id: {$loan.value?.loan?.loanNumber}</div>
         <PageHeader
-          title={`${$loan.value?.loan?.borrowerName}`}
+          title={`${loanData?.borrowerName}`}
           AdditionalComponents={() => (
-            <div className={`text-${WATCH_SCORE_OPTIONS[$loan.value?.loan?.watchScore].color}-200`}><h4>WATCH Score: {WATCH_SCORE_OPTIONS[$loan.value?.loan?.watchScore].label}</h4></div>
+            <div className="d-flex align-items-center gap-2">
+              {isDefaultWatchScore && (
+              <OverlayTrigger
+                placement="top"
+                trigger={['hover', 'focus']}
+                overlay={(
+                  <Tooltip id="default-watch-score-tooltip">
+                    Default Watch Score
+                  </Tooltip>
+                        )}
+              >
+                <Badge
+                  bg="warning-600"
+                  className="me-4"
+                  style={{ fontSize: '16px', padding: '6px 12px' }}
+                >
+                  <FontAwesomeIcon icon={faFlag} className="text-warning-50" />
+                </Badge>
+              </OverlayTrigger>
+              )}
+              <div className={`text-${watchScoreOption.color}-200`}>
+                <h4 className="mb-4">WATCH Score: {watchScoreOption.label}</h4>
+              </div>
+            </div>
           )}
         />
         <Row>

@@ -10,6 +10,7 @@ import Loadable from '@src/components/global/Loadable';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { formatCurrency } from '@src/utils/formatCurrency';
+import { GuarantorNetWorthWithMemoFlag, getLatestGuarantorFinancial } from '@src/utils/guarantorFinancialsSource';
 import { calculateAnnualDebtServiceFromLoans } from '@src/utils/currency';
 import * as resolvers from './_helpers/guarantorDetails.resolvers';
 import * as guarantorEvents from './_helpers/guarantorDetails.events';
@@ -67,6 +68,8 @@ export function GuarantorDetailContainer() {
     );
   }
 
+  const latestFinancial = getLatestGuarantorFinancial($guarantorDetailsData.value?.financials);
+
   return (
     <Loadable signal={$guarantorDetailView} template="fullscreen">
       <Container className="py-16 py-md-24">
@@ -90,9 +93,10 @@ export function GuarantorDetailContainer() {
             <UniversalCard headerText="Guarantor Details">
               <Col>
                 <div className="text-info-200 fw-300 fs-6 mt-8">Net Worth</div>
-                <div className="text-success-400 fw-600 fs-5">
-                  {formatCurrency($guarantorDetailsData.value?.financials?.[0]?.netWorth || 'N/A')}
-                </div>
+                <GuarantorNetWorthWithMemoFlag
+                  netWorth={latestFinancial?.netWorth}
+                  notes={latestFinancial?.notes}
+                />
                 <div className="text-info-200 fw-300 fs-6 mt-8">Email</div>
                 <div className="text-info-50 fw-500 fs-5">
                   {$guarantorDetailsData.value?.email || 'N/A'}
@@ -110,13 +114,13 @@ export function GuarantorDetailContainer() {
                 <Col xs={6} md={4}>
                   <div className="text-info-200 small fw-300">Total Assets</div>
                   <div className="text-info-50 fw-500 fs-5">
-                    {formatCurrency($guarantorDetailsData.value?.financials?.[0]?.totalAssets || 'N/A')}
+                    {formatCurrency(latestFinancial?.totalAssets || 'N/A')}
                   </div>
                 </Col>
                 <Col xs={6} md={4}>
                   <div className="text-info-200 small fw-300">Total Liabilities</div>
                   <div className="text-info-50 fw-500 fs-5">
-                    {formatCurrency($guarantorDetailsData.value?.financials?.[0]?.totalLiabilities || 'N/A')}
+                    {formatCurrency(latestFinancial?.totalLiabilities || 'N/A')}
                   </div>
                 </Col>
 
@@ -125,13 +129,16 @@ export function GuarantorDetailContainer() {
                 <Col xs={12} md={4}>
                   <div className="text-info-200 small fw-300">Liquidity</div>
                   <div className="text-info-50 fw-500 fs-5">
-                    {formatCurrency($guarantorDetailsData.value?.financials?.[0]?.liquidity || 'N/A')}
+                    {formatCurrency(latestFinancial?.liquidity || 'N/A')}
                   </div>
                 </Col>
                 <Col xs={12} md={4}>
-                  <div className="text-info-200 small fw-300">Debt Service</div>
+                  <div className="text-info-200 small fw-300">Annual Debt Service</div>
                   <div className="text-info-50 fw-500 fs-5">
-                    {formatCurrency(calculateAnnualDebtServiceFromLoans($guarantorDetailsData.value?.loans || []))}
+                    {formatCurrency(
+                      latestFinancial?.annualDebtService
+                      ?? calculateAnnualDebtServiceFromLoans($guarantorDetailsData.value?.loans || []),
+                    )}
                   </div>
                 </Col>
               </Row>
