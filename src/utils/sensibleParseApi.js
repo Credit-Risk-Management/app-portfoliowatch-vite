@@ -24,6 +24,15 @@ const parseApiNumber = (str) => {
 };
 
 const getVal = (obj) => (obj && typeof obj.value !== 'undefined' ? obj.value : null);
+
+const extractMonthlyDebtFromNotes = (rawNotes) => {
+  if (!rawNotes || typeof rawNotes !== 'string') return 0;
+  const matches = rawNotes.match(/\b\d{2,5}\b/g) || [];
+  return matches
+    .map(Number)
+    .filter((n) => Number.isFinite(n) && n < 5000)
+    .reduce((sum, n) => sum + n, 0);
+};
 // source: 'bs' | 'is' | 'pfs' | 'tax' | 'personalTax',
 export function extractDataFromApiResponse(
   parsedDocument,
@@ -153,6 +162,18 @@ export function extractDataFromApiResponse(
       ?? getVal(parsedDocument.cash_on_hand)
       ?? getVal(parsedDocument.cash),
     );
+
+    const monthlyMortgagePayments = numOrUndefined(
+      getVal(parsedDocument.monthlyMortgagePayments)
+      ?? getVal(parsedDocument.monthly_mortgage_payments),
+    ) ?? 0;
+    const notesPayableRaw = getVal(parsedDocument.notesPayableRaw)
+      ?? getVal(parsedDocument.notes_payable_raw)
+      ?? getVal(parsedDocument.notesPayable)
+      ?? '';
+    const monthlyPaymentsFromNotes = extractMonthlyDebtFromNotes(notesPayableRaw);
+    const derivedMonthlyDebtService = monthlyPaymentsFromNotes + monthlyMortgagePayments;
+    const annualDebtService = derivedMonthlyDebtService > 0 ? derivedMonthlyDebtService * 12 : 0;
     return {
       asOfDate,
       totalAssets,
@@ -160,6 +181,7 @@ export function extractDataFromApiResponse(
       netWorth,
       liquidity: liquidityVal(),
       cash: cashOnHand,
+      annualDebtService,
     };
   }
 

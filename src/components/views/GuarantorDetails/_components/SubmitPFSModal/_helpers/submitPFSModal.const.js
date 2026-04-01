@@ -38,7 +38,8 @@ export const $submitPFSModalDetails = Signal({
   liquidity: '',
   personalIncome: '',
   adjustedGrossIncome: '',
-  netToIncomeRatio: 0,
+  debtToIncomeRatio: 0,
+  annualDebtService: '',
   notes: '',
 });
 

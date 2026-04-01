@@ -52,6 +52,9 @@ const loansApiBase = {
 
   // Compute WATCH scores for all loans
   computeAllWatchScores: async () => apiClient.post('/loans/batch/compute-watch-scores'),
+
+  /** Industry analysis for every borrower that has a loan in the org (one report per borrower). */
+  generateIndustryReportsForAllLoans: async () => apiClient.post('/loans/batch/generate-industry-reports'),
 };
 
 // Wrap with debouncing - only debounce read operations that might be called repeatedly

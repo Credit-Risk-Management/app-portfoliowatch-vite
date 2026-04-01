@@ -1,6 +1,9 @@
 import { Row, Col, Alert, Card } from 'react-bootstrap';
 
 const TriggersTab = ({ previousFinancial, currentForm, isLoadingPrevious }) => {
+  const currentAsOfDate = currentForm?.asOfDate ? new Date(currentForm.asOfDate) : null;
+  const previousAsOfDate = previousFinancial?.asOfDate ? new Date(previousFinancial.asOfDate) : null;
+
   const calculateChange = (current, previous) => {
     if (previous == null || previous === '' || previous === 0) return null;
     const currentVal = parseFloat(current) || 0;
@@ -23,6 +26,20 @@ const TriggersTab = ({ previousFinancial, currentForm, isLoadingPrevious }) => {
     const sign = value > 0 ? '+' : '';
     return `${sign}${value.toFixed(2)}%`;
   };
+
+  const formatPeriodDate = (dateValue) => {
+    if (!dateValue) return 'N/A';
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) return 'N/A';
+    return date.toLocaleDateString('en-US');
+  };
+
+  const isPeriodComparisonMismatched = currentAsOfDate
+    && previousAsOfDate
+    && (
+      currentAsOfDate.getMonth() !== previousAsOfDate.getMonth()
+      || currentAsOfDate.getDate() !== previousAsOfDate.getDate()
+    );
 
   const TriggerCard = ({ title, previousValue, currentValue, isCurrency = true }) => {
     const change = calculateChange(currentValue, previousValue);
@@ -78,7 +95,7 @@ const TriggersTab = ({ previousFinancial, currentForm, isLoadingPrevious }) => {
         <Alert variant="info">
           <h5 className="text-info-900 mb-8">No Previous Data Available</h5>
           <p className="mb-0">
-            There is no previous quarter financial data to compare against. This is the first
+            There is no previous period financial data to compare against. This is the first
             financial submission for this borrower.
           </p>
         </Alert>
@@ -89,8 +106,20 @@ const TriggersTab = ({ previousFinancial, currentForm, isLoadingPrevious }) => {
   return (
     <div className="py-16">
       <h5 className="text-info-100 mb-24 fw-600">
-        Trigger Analysis - Change from Previous Quarter
+        Trigger Analysis - Change from Previous Period
       </h5>
+      {isPeriodComparisonMismatched && (
+        <Alert variant="warning" className="mb-16">
+          <div className="fw-600">Default indicator: period mismatch detected</div>
+          <div className="small mt-4">
+            Comparison period appears inconsistent ({formatPeriodDate(previousFinancial?.asOfDate)} vs {formatPeriodDate(currentForm?.asOfDate)}).
+            Trigger trend analysis may be unreliable.
+          </div>
+          <div className="small mt-4 fw-600">
+            Trigger default score: 3.00
+          </div>
+        </Alert>
+      )}
       <Row>
         <Col xs={12} md={6} className="mb-12 mb-md-0">
           <TriggerCard
@@ -108,13 +137,6 @@ const TriggersTab = ({ previousFinancial, currentForm, isLoadingPrevious }) => {
         </Col>
         <Col md={6}>
           <TriggerCard
-            title="Change in A/R"
-            previousValue={previousFinancial.accountsReceivable}
-            currentValue={currentForm.accountsReceivable}
-          />
-        </Col>
-        <Col md={6}>
-          <TriggerCard
             title="Change in Profit Margin"
             previousValue={previousFinancial.profitMargin}
             currentValue={currentForm.profitMargin}
@@ -126,6 +148,13 @@ const TriggersTab = ({ previousFinancial, currentForm, isLoadingPrevious }) => {
             title="Change in Inventory"
             previousValue={previousFinancial.inventory}
             currentValue={currentForm.inventory}
+          />
+        </Col>
+        <Col md={6}>
+          <TriggerCard
+            title="Change in A/R"
+            previousValue={previousFinancial.accountsReceivable}
+            currentValue={currentForm.accountsReceivable}
           />
         </Col>
         <Col md={6}>

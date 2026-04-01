@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { Card, Row, Col, Badge, Button, OverlayTrigger, Tooltip } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowRight, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faExclamationTriangle, faFlag } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 import { formatCurrency } from '@src/utils/formatCurrency';
 import { formatDate } from '@src/utils/formatDate';
@@ -51,6 +51,7 @@ const BorrowerLoansTab = () => {
         const categories = formatCategoryBreakdown(breakdown);
         const loanIdentifier = loan?.loanId || loan?.loanNumber || loan?.id || 'N/A';
         const isMissingFinancials = loan?.missingFinancialYears?.length > 0;
+        const isDefaultWatchScore = Number(loan?.currentWatchScore) === 3 && borrower.financials?.length === 0;
         return (
           <Col key={loan.id} xs={12} lg={6} className="mb-3">
             <Card className="bg-info-800 border-info-600 h-100">
@@ -61,15 +62,35 @@ const BorrowerLoansTab = () => {
                       Loan: {loanIdentifier}
                     </h5>
                   </div>
-                  {hasWatchScore && (
-                    <Badge
-                      bg={watchScoreDisplay.color}
-                      className="ms-8"
-                      style={{ fontSize: '14px', padding: '6px 12px' }}
+                  <div className="d-flex  align-items-end gap-8">
+                    {isDefaultWatchScore && (
+                    <OverlayTrigger
+                      placement="top"
+                      trigger={['hover', 'focus']}
+                      overlay={(
+                        <Tooltip id="default-watch-score-tooltip">
+                          Default Watch Score
+                        </Tooltip>
+                        )}
                     >
-                      {watchScoreDisplay.label}
-                    </Badge>
-                  )}
+                      <Badge
+                        bg="warning-600"
+                        className="ms-1"
+                        style={{ fontSize: '14px', padding: '6px 12px' }}
+                      >
+                        <FontAwesomeIcon icon={faFlag} className="text-warning-50" />
+                      </Badge>
+                    </OverlayTrigger>
+                    )}
+                    {hasWatchScore && (
+                      <Badge
+                        bg={watchScoreDisplay.color}
+                        style={{ fontSize: '14px', padding: '6px 12px' }}
+                      >
+                        {watchScoreDisplay.label}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
 
                 <Row className="mb-16 g-2">
@@ -80,7 +101,7 @@ const BorrowerLoansTab = () => {
                     </div>
                   </Col>
                   <Col xs={12} md={4}>
-                    <div className="text-info-200 small fw-300">Payment Amount</div>
+                    <div className="text-info-200 small fw-300">Monthly Payment Amount</div>
                     <div className="text-info-50 fw-500" style={{ fontSize: '16px' }}>
                       {loan?.paymentAmount ? formatCurrency(loan.paymentAmount) : 'N/A'}
                     </div>

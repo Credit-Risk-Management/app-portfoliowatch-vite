@@ -5,7 +5,7 @@ import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 import { $borrower } from '@src/consts/consts';
 import { formatCurrency } from '@src/utils/formatCurrency';
-import { calculateAnnualDebtServiceFromLoans } from '@src/utils/currency';
+import { GuarantorNetWorthWithMemoFlag, getLatestGuarantorFinancial } from '@src/utils/guarantorFinancialsSource';
 
 export function BorrowerGuarantorsTab() {
   const navigate = useNavigate();
@@ -32,7 +32,7 @@ export function BorrowerGuarantorsTab() {
   return (
     <Row className="g-4">
       {borrower?.guarantors?.map((guarantor) => {
-        const annualDebtService = calculateAnnualDebtServiceFromLoans(guarantor.loans || []);
+        const latestFinancial = getLatestGuarantorFinancial(guarantor.financials);
 
         return (
           <Col key={guarantor.id} xs={12} lg={6} className="mb-3">
@@ -61,28 +61,29 @@ export function BorrowerGuarantorsTab() {
                 <Row className="mb-16 g-2">
                   <Col xs={12} md={4}>
                     <div className="text-info-200 small fw-300">Net Worth</div>
-                    <div className="text-success-400 fw-600 fs-5">
-                      {formatCurrency(guarantor.financials?.[0]?.netWorth || 'N/A')}
-                    </div>
+                    <GuarantorNetWorthWithMemoFlag
+                      netWorth={latestFinancial?.netWorth}
+                      notes={latestFinancial?.notes}
+                    />
                   </Col>
                   <Col xs={12} md={4}>
                     <div className="text-info-200 small fw-300">Total Assets</div>
                     <div className="text-info-50 fw-500 fs-5">
-                      {formatCurrency(guarantor.financials?.[0]?.totalAssets || 'N/A')}
+                      {formatCurrency(latestFinancial?.totalAssets || 'N/A')}
                     </div>
                   </Col>
                   <Col xs={12} md={4}>
                     <div className="text-info-200 small fw-300">Total Liabilities</div>
                     <div className="text-info-50 fw-500 fs-5">
-                      {formatCurrency(guarantor.financials?.[0]?.totalLiabilities || 'N/A')}
+                      {formatCurrency(latestFinancial?.totalLiabilities || 'N/A')}
                     </div>
                   </Col>
 
                 </Row>
                 <Row className="mb-16 g-2 justify-content-between">
-                  <Col xs={12} md={4}>  <div className="text-info-200 small fw-300">Debt Service</div>
+                  <Col xs={12} md={4}>  <div className="text-info-200 small fw-300">Annual Debt Service</div>
                     <div className="text-info-50 fw-500 fs-5">
-                      {formatCurrency(annualDebtService)}
+                      {formatCurrency(latestFinancial?.annualDebtService || 'N/A')}
                     </div>
                   </Col>
                 </Row>

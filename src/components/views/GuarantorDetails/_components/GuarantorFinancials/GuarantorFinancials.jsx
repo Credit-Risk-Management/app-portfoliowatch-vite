@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { $guarantorDetailsData } from '@src/components/views/GuarantorDetails/_helpers/guarantorDetails.consts';
 import { formatCurrency } from '@src/utils/formatCurrency';
+import { GuarantorNetWorthWithMemoFlag } from '@src/utils/guarantorFinancialsSource';
 import SignalTable from '@src/components/global/SignalTable/SignalTable';
 import { Button } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -20,6 +21,7 @@ const TABLE_HEADERS = [
   { key: 'totalLiabilities', value: 'Total Liabilities' },
   { key: 'netWorth', value: 'Net Worth' },
   { key: 'liquidity', value: 'Liquidity' },
+  { key: 'annualDebtService', value: 'Annual Debt Service' },
   { key: 'adjustedGrossIncome', value: 'Adjusted Gross Income ' },
   { key: 'debtToIncomeRatio', value: 'Debt to Income Ratio' },
 ];
@@ -43,7 +45,13 @@ export function GuarantorFinancials() {
     id: financial.id,
     totalAssets: formatCurrency(financial.totalAssets),
     totalLiabilities: formatCurrency(financial.totalLiabilities),
-    netWorth: formatCurrency(financial.netWorth),
+    netWorth: (
+      <GuarantorNetWorthWithMemoFlag
+        netWorth={financial.netWorth}
+        notes={financial.notes}
+        compact
+      />
+    ),
     liquidity: formatCurrency(financial.liquidity),
     adjustedGrossIncome: formatCurrency(financial.adjustedGrossIncome),
     debtToIncomeRatio: financial.debtToIncomeRatio != null ? Number(financial.debtToIncomeRatio).toFixed(2) : '-',
