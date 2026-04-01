@@ -23,7 +23,7 @@ const TABLE_HEADERS = [
   { key: 'liquidity', value: 'Liquidity' },
   { key: 'annualDebtService', value: 'Annual Debt Service' },
   { key: 'adjustedGrossIncome', value: 'Adjusted Gross Income ' },
-  { key: 'debtToIncomeRatio', value: 'Debt to Income Ratio' },
+  { key: 'debtToincomeRatio', value: 'Debt to Income Ratio' },
 ];
 
 export function GuarantorFinancials() {
@@ -53,8 +53,9 @@ export function GuarantorFinancials() {
       />
     ),
     liquidity: formatCurrency(financial.liquidity),
+    annualDebtService: formatCurrency(financial.annualDebtService),
     adjustedGrossIncome: formatCurrency(financial.adjustedGrossIncome),
-    debtToIncomeRatio: financial.debtToIncomeRatio != null ? Number(financial.debtToIncomeRatio).toFixed(2) : '-',
+    debtToincomeRatio: financial.debtToincomeRatio != null ? Number(financial.debtToincomeRatio).toFixed(2) : '-',
     asOfDate: formatDate(financial.asOfDate),
   })), [sortedFinancials]);
 
