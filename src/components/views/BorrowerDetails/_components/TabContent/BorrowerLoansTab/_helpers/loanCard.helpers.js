@@ -13,8 +13,8 @@ export const getCategoryColor = (score) => {
     return 'secondary';
   }
   if (score <= 2) return 'success';
-  if (score === 3) return 'info';
-  if (score === 4) return 'warning';
+  if (score <= 3) return 'info';
+  if (score <= 4) return 'warning';
   return 'danger';
 };
 

@@ -9,11 +9,19 @@ import { $borrower } from '@src/consts/consts';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import { $borrowerFinancialsView } from '@src/signals';
 import LoanMiniRadarChart from './_components/LoanMiniRadarChart';
-import { getWatchScoreDisplay, formatCategoryBreakdown, hasWatchScoreData, getCategoryTextColor } from './_helpers/loanCard.helpers';
+import { getWatchScoreDisplay, formatCategoryBreakdown, hasWatchScoreData } from './_helpers/loanCard.helpers';
 import { $loanWatchScoreBreakdowns } from './_helpers/loanCard.consts';
 import { $borrowerFinancialsTableView } from '../../../_helpers/borrowerDetail.consts';
 import { fetchFinancialHistory } from '../BorrowerFinancialsTab/_helpers/borrowerFinancialsTab.resolvers';
 import { fetchLoanWatchScoreBreakdowns } from './_helpers/loanCoard.resolvers';
+
+const getScoreColorClass = (score) => {
+  if (!score) return 'bg-secondary-200 text-secondary-800';
+  if (score <= 2) return 'bg-success-200 text-success-800';
+  if (score <= 3) return 'bg-info-200 text-info-800';
+  if (score <= 4) return 'bg-warning-200 text-warning-800';
+  return 'bg-danger-200 text-danger-800';
+};
 
 const BorrowerLoansTab = () => {
   const navigate = useNavigate();
@@ -185,7 +193,7 @@ const BorrowerLoansTab = () => {
                               </span>
                             </div>
                             {category.hasData && (
-                              <span className={`${getCategoryTextColor(category.color)} fw-600`} style={{ fontSize: '14px' }}>
+                              <span className={`badge ${getScoreColorClass(category.score)}`} style={{ fontSize: '14px' }}>
                                 {category.score != null ? category.score.toFixed(2) : 'N/A'}
                               </span>
                             )}
