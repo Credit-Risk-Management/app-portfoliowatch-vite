@@ -60,8 +60,8 @@
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    padding-top: 60px; // Space for fixed header
-    padding-bottom: 80px; // Space for fixed footer
+    padding-top: 88px; // Fixed header + extra gap so first form line is not covered
+    padding-bottom: 96px; // Space for fixed footer + safe area
   }
 
   .modal-fullscreen-footer {

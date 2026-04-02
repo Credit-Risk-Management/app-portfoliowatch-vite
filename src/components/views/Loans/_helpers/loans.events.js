@@ -6,7 +6,11 @@ import documentsApi from '@src/api/documents.api';
 import borrowersApi from '@src/api/borrowers.api';
 import { $loan } from '@src/consts/consts';
 import { dangerAlert, successAlert, infoAlert } from '@src/components/global/Alert/_helpers/alert.events';
-import { fetchAndSetLoans, fetchLoanDetail } from '@src/components/views/Loans/_helpers/loans.resolvers';
+import {
+  fetchAndSetLoans,
+  fetchLoanDetail,
+  loadReferenceData,
+} from '@src/components/views/Loans/_helpers/loans.resolvers';
 import { auth } from '@src/utils/firebase';
 import { uploadMultipleFiles } from './loans.upload';
 import {
@@ -38,6 +42,7 @@ export const handleAddLoan = async () => {
     $loansView.update({ showAddModal: false });
     $loansForm.reset();
 
+    await loadReferenceData();
     await fetchAndSetLoans({ isShowLoader: true });
   } catch (error) {
     dangerAlert(error);

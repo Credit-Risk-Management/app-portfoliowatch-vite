@@ -2,18 +2,18 @@ import { Form, Row, Col } from 'react-bootstrap';
 import UniversalModal from '@src/components/global/UniversalModal';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import SelectInput from '@src/components/global/Inputs/SelectInput';
+import AsyncSelectInput from '@src/components/global/Inputs/AsyncSelectInput';
 import DatePicker from '@src/components/global/Inputs/DatePicker';
-import { $loansView, $loansForm, $relationshipManagers, $borrowers } from '@src/signals';
+import { $loansView, $loansForm, $relationshipManagers } from '@src/signals';
 import { handleAddLoan } from '../_helpers/loans.events';
 import * as consts from '../_helpers/loans.consts';
 import * as helpers from '../_helpers/loans.helpers';
+import { loadBorrowerPickerOptions } from '../_helpers/loans.resolvers';
 
 const AddLoanModal = () => {
   const managers = $relationshipManagers.value?.list || [];
-  const borrowers = $borrowers.value?.list || [];
 
   const relationshipManagerOptions = helpers.getRelationshipManagerOptions(managers);
-  const borrowerOptions = helpers.getBorrowerOptions(borrowers);
 
   return (
     <UniversalModal
@@ -49,6 +49,7 @@ const AddLoanModal = () => {
               options={consts.INTEREST_TYPE_OPTIONS}
               value={consts.INTEREST_TYPE_OPTIONS.find((opt) => opt.value === $loansForm.value.typeOfInterest)?.value}
               onChange={(option) => $loansForm.update({ typeOfInterest: option?.value })}
+              isPortal
             />
           </Col>
         </Row>
@@ -56,29 +57,22 @@ const AddLoanModal = () => {
         <Row>
           <Col md={12} className="mb-16">
             <Form.Label>Borrower</Form.Label>
-            <SelectInput
-              name="borrowerId"
-              signal={$loansForm}
-              options={borrowerOptions}
-              value={borrowerOptions.find((opt) => opt.value === $loansForm.value.borrowerId)?.value}
-              onChange={(option) => helpers.handleBorrowerChange(option, borrowers, $loansForm.update)}
+            <AsyncSelectInput
+              inputId="loan-form-borrower"
+              classNamePrefix="borrower-picker"
+              loadOptions={(inputValue) => loadBorrowerPickerOptions(inputValue || '')}
+              value={helpers.borrowerPickerValueFromForm($loansForm.value.borrowerId, $loansForm.value.borrowerName)}
+              onChange={(opt) => helpers.handleBorrowerSelectChange(opt, $loansForm.update)}
+              isPortal
+              placeholder="Search borrowers by name or ID…"
+              noOptionsMessage={({ inputValue }) => (
+                inputValue?.trim()
+                  ? 'No borrowers match — try another search or add one on the Borrowers page.'
+                  : 'No borrowers found — add one on the Borrowers page first.'
+              )}
             />
           </Col>
         </Row>
-
-        {$loansForm.value.borrowerId === null && (
-          <Row>
-            <Col md={12} className="mb-16">
-              <Form.Label>Borrower Name</Form.Label>
-              <UniversalInput
-                type="text"
-                name="borrowerName"
-                signal={$loansForm}
-                placeholder="Enter borrower name"
-              />
-            </Col>
-          </Row>
-        )}
 
         <hr className="my-24" />
         <div className="lead mb-16">Loan Details</div>
@@ -275,6 +269,7 @@ const AddLoanModal = () => {
               options={consts.LOAN_RISK_RATING_OPTIONS}
               value={consts.LOAN_RISK_RATING_OPTIONS.find((opt) => opt.value === $loansForm.value.currentRiskRating)?.value}
               onChange={(option) => $loansForm.update({ currentRiskRating: option?.value })}
+              isPortal
             />
           </Col>
           <Col md={6} className="mb-16">
@@ -285,6 +280,7 @@ const AddLoanModal = () => {
               options={relationshipManagerOptions}
               value={relationshipManagerOptions.find((opt) => opt.value === $loansForm.value.relationshipManagerId)?.value}
               onChange={(option) => $loansForm.update({ relationshipManagerId: option?.value })}
+              isPortal
             />
           </Col>
         </Row>

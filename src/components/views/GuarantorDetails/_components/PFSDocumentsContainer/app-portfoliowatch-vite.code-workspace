@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "../../../../../.."
+		},
+		{
+			"path": "../../../../../../../api-portfoliowatch-express"
+		}
+	],
+	"settings": {
+		"prisma.pinToPrisma6": true
+	}
+}

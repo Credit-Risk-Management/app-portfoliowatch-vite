@@ -30,30 +30,47 @@ export const getRelationshipManagerOptions = (managers) => managers.map((m) => (
   label: m.name || m.relationshipManager?.name || 'Unknown',
 }));
 
-/**
- * Returns borrower options for dropdown
- */
-export const getBorrowerOptions = (borrowers) => [
-  { value: null, label: 'Enter Manually' },
-  ...borrowers.map((c) => ({
-    value: c.id,
-    label: c.name,
-  })),
-];
+export const formatBorrowerPickerLine = (c) => {
+  const name = (c.name || '').trim() || 'Unnamed borrower';
+  const extId = c.borrowerId != null && String(c.borrowerId).trim() !== ''
+    ? String(c.borrowerId).trim()
+    : null;
+  return extId ? `${name} (${extId})` : name;
+};
 
 /**
- * Handles borrower change in form
+ * Async-select options; includes `borrower` for onChange without a local list.
  */
-export const handleBorrowerChange = (option, borrowers, updateForm) => {
-  if (option?.value) {
-    const client = borrowers.find((c) => c.id === option.value);
-    updateForm({
-      borrowerId: option.value,
-      borrowerName: client?.name || '',
-    });
-  } else {
-    updateForm({ borrowerId: null });
+export const mapBorrowersToPickerOptions = (borrowers) => (borrowers || []).map((c) => ({
+  value: c.id,
+  label: formatBorrowerPickerLine(c),
+  borrower: c,
+}));
+
+/**
+ * Controlled value for react-select when only form fields are known.
+ */
+export const borrowerPickerValueFromForm = (borrowerId, borrowerName) => {
+  if (borrowerId == null || borrowerId === '') return null;
+  const label = (borrowerName || '').trim() || 'Selected borrower';
+  return { value: borrowerId, label };
+};
+
+/**
+ * Syncs borrowerId / borrowerName when user picks or clears the borrower picker.
+ */
+export const handleBorrowerSelectChange = (option, updateForm) => {
+  if (!option?.value) {
+    updateForm({ borrowerId: null, borrowerName: '' });
+    return;
   }
+  const name = (option.borrower?.name || '').trim()
+    || (option.label || '').replace(/\s*\([^)]*\)\s*$/, '').trim()
+    || '';
+  updateForm({
+    borrowerId: option.value,
+    borrowerName: name,
+  });
 };
 
 /** Decimal places for all interest rate displays and inputs (e.g. 5.125%). */
