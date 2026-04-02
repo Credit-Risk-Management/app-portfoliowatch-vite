@@ -42,4 +42,10 @@ export const borrowersApi = wrapApiWithDebounce(borrowersApiBase, {
   getByManager: 350,
 });
 
+/**
+ * Non-debounced getAll for async borrower search UIs (each request must match its query;
+ * the debounced client merges calls and can return wrong results for rapid successive searches).
+ */
+export const borrowersSearchGetAll = (filters) => borrowersApiBase.getAll(filters);
+
 export default borrowersApi;
