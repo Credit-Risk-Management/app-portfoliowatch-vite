@@ -594,18 +594,7 @@ const DocumentsContainer = ({
                   inputFormatCallback={normalizeCurrencyValueAllowNegative}
                 />
               </Col>
-              <Col md={12} className="mb-16">
-                <UniversalInput
-                  label="Cash (Not Including Cash Equivalents)"
-                  labelClassName="text-info-100"
-                  type="currency"
-                  placeholder="$ USD"
-                  value={$borrowerFinancialsForm.value.cash}
-                  name="cash"
-                  signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
-                />
-              </Col>
+
               <Col md={12} className="mb-16">
                 <UniversalInput
                   label="Cash Equivalents"

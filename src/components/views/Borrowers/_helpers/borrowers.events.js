@@ -24,7 +24,11 @@ export const handleEditBorrower = async () => {
   try {
     const formData = $borrowersForm.value;
 
-    await borrowersApi.update(formData.id, formData);
+    // API sanitizeBorrowerData expects camelCase (see borrowers.service); list form uses relationship_manager_id
+    await borrowersApi.update(formData.id, {
+      relationshipManagerId: formData.relationship_manager_id || null,
+      notes: formData.notes ?? '',
+    });
 
     $borrowersView.update({ showEditModal: false });
     $borrowersForm.reset();

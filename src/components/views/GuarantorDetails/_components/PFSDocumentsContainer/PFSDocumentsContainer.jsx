@@ -69,6 +69,10 @@ const DocumentsContainer = ({
     ? totalAssetsNumber - totalLiabilitiesNumber
     : null;
 
+  const syncNetWorthFromTotals = () => {
+    $submitPFSModalDetails.update({ netWorth: calculatedNetWorth });
+  };
+
   // Memoize PDF options to prevent unnecessary re-renders (must be at component level, not inside conditionals)
   const pdfOptions = useMemo(() => ({
     cMapUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/cmaps/`,
@@ -573,6 +577,7 @@ const DocumentsContainer = ({
                   name="totalAssets"
                   signal={$form}
                   inputFormatCallback={normalizeCurrencyValue}
+                  onBlur={syncNetWorthFromTotals}
                 />
               </Col>
               <Col md={12} className="mb-16">
@@ -585,6 +590,7 @@ const DocumentsContainer = ({
                   name="totalLiabilities"
                   signal={$form}
                   inputFormatCallback={normalizeCurrencyValue}
+                  onBlur={syncNetWorthFromTotals}
                 />
               </Col>
               <Col md={12} className="mb-16">
@@ -593,11 +599,10 @@ const DocumentsContainer = ({
                   labelClassName="text-info-100"
                   type="currency"
                   placeholder="$ USD"
-                  value={calculatedNetWorth ?? $form.value.netWorth}
+                  value={$form.value.netWorth}
                   name="netWorth"
                   signal={$form}
                   inputFormatCallback={normalizeCurrencyValue}
-                  disabled
                 />
               </Col>
               <Col md={12} className="mb-16">
