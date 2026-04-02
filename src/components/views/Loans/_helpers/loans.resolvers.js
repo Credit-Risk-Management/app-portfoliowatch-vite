@@ -1,6 +1,6 @@
 import { $borrowers, $loans, $loansFilter, $loansView, $relationshipManagers, $comments } from '@src/signals';
 import { $loan, $watchScoreBreakdown } from '@src/consts/consts';
-import borrowersApi from '@src/api/borrowers.api';
+import borrowersApi, { borrowersSearchGetAll } from '@src/api/borrowers.api';
 import relationshipManagersApi from '@src/api/relationshipManagers.api';
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import loansApi from '@src/api/loans.api';
@@ -8,6 +8,7 @@ import commentsApi from '@src/api/comments.api';
 import documentsApi from '@src/api/documents.api';
 import loanCollateralValueApi from '@src/api/loanCollateralValue.api';
 import guarantorsApi from '@src/api/guarantors.api';
+import { mapBorrowersToPickerOptions } from './loans.helpers';
 import {
   $loanDetailFinancials,
   $loanDetailCollateral,
@@ -28,14 +29,50 @@ import {
   $collateralModalState,
 } from '../_components/submitCollateralModal.signals';
 
+const listFromApiResponse = (response) => {
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response)) return response;
+  return [];
+};
+
+/**
+ * Server-backed borrower list for loan modals (not $borrowers — that list is often paginated to 10 from the Borrowers view).
+ */
+export const fetchBorrowersForPicker = async (searchTerm) => {
+  try {
+    const response = await borrowersSearchGetAll({
+      searchTerm: searchTerm?.trim() || undefined,
+      page: 1,
+      limit: 75,
+      sortKey: 'name',
+      sortDirection: 'asc',
+    });
+    return listFromApiResponse(response);
+  } catch {
+    return [];
+  }
+};
+
+export const loadBorrowerPickerOptions = async (inputValue) => {
+  const rows = await fetchBorrowersForPicker(inputValue);
+  return mapBorrowersToPickerOptions(rows);
+};
+
 export const loadReferenceData = async () => {
   try {
     const [borrowersResponse, managersResponse] = await Promise.all([
-      borrowersApi.getAll(),
+      borrowersApi.getAll({
+        page: 1,
+        limit: 500,
+        sortKey: 'name',
+        sortDirection: 'asc',
+      }),
       relationshipManagersApi.getAll(),
     ]);
-    $borrowers.update({ list: borrowersResponse.data || [] });
-    $relationshipManagers.update({ list: managersResponse.data || [] });
+    const borrowerList = listFromApiResponse(borrowersResponse);
+    const managerList = listFromApiResponse(managersResponse);
+    $borrowers.update({ list: borrowerList });
+    $relationshipManagers.update({ list: managerList });
   } catch (error) {
     dangerAlert(`Failed to load reference data: ${error?.message || 'Unknown error'}`);
   } finally {

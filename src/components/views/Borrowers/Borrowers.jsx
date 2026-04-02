@@ -1,7 +1,7 @@
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Container, Row, Col } from 'react-bootstrap';
-import { faEdit, faEye, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faEdit, faEye, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';
 import SignalTable from '@src/components/global/SignalTable';
 import Search from '@src/components/global/Inputs/Search';
@@ -22,6 +22,7 @@ import * as helpers from './_helpers/borrowers.helpers';
 import { handleBorrowerFilterChange } from './_helpers/borrowers.events';
 import EditBorrowerModal from './_components/EditBorrowerModal';
 import DeleteBorrowerModal from './_components/DeleteBorrowerModal';
+import AddBorrowerModal from './_components/AddBorrowerModal';
 
 const Borrowers = () => {
   const navigate = useNavigate();
@@ -112,6 +113,10 @@ const Borrowers = () => {
     <Container className="py-16 py-md-24">
       <PageHeader
         title="Borrowers"
+        actionButton
+        actionButtonText="Add Borrower"
+        actionButtonIcon={faPlus}
+        onActionClick={() => $borrowersView.update({ showAddModal: true })}
       />
 
       <Row className="mb-12 mb-md-16">
@@ -158,6 +163,7 @@ const Borrowers = () => {
         </Col>
       </Row>
 
+      <AddBorrowerModal />
       <EditBorrowerModal />
       <DeleteBorrowerModal />
 
