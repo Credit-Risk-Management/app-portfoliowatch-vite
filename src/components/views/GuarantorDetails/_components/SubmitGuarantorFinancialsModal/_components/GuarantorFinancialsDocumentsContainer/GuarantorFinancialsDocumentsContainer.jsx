@@ -2,13 +2,13 @@ import { Form, Row, Col, Alert, Button } from 'react-bootstrap';
 import { useRef, useEffect, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faMagic,
-  faTrash,
-  faPlus,
-  faMinus,
-  faChevronLeft,
-  faChevronRight,
-  faSpinner,
+    faMagic,
+    faTrash,
+    faPlus,
+    faMinus,
+    faChevronLeft,
+    faChevronRight,
+    faSpinner,
 } from '@fortawesome/free-solid-svg-icons';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -17,10 +17,10 @@ import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import { normalizeCurrencyValue } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
 import FileUploader from '@src/components/global/FileUploader';
 import OfficeUploadPreview from '@src/components/global/OfficeUploadPreview/OfficeUploadPreview';
+import * as helpers from '@src/utils/documents.utils';
 import { $submitPFSModalDetails } from '../../_helpers/submitGuarantorFinancialsModal.const';
 import { $documentsContainerView } from './_helpers/guarantorFinancialsDocumentsContainer.consts';
 import * as events from './_helpers/guarantorFinancialsDocumentsContainer.events';
-import * as helpers from '@src/utils/documents.utils';
 import * as resolvers from './_helpers/guarantorFinancialsDocumentsContainer.resolvers';
 
 // Configure PDF.js worker - using jsdelivr CDN which has proper CORS headers

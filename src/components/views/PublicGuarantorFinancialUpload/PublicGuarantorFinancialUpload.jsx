@@ -1,14 +1,14 @@
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import {
-  Container, Button, Alert, Card, Spinner,
+    Container, Button, Alert, Card, Spinner,
 } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faFileAlt,
-  faCheck,
-  faCheckCircle,
-  faExclamationTriangle,
+    faFileAlt,
+    faCheck,
+    faCheckCircle,
+    faExclamationTriangle,
 } from '@fortawesome/free-solid-svg-icons';
 import FileUploader from '@src/components/global/FileUploader';
 import ContentWrapper from '@src/components/global/ContentWrapper';
@@ -16,21 +16,21 @@ import sabreFinanceWordmark from '@src/assets/sabre_finance.svg?url';
 import { formatDate } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
 import AttestationModal from '@src/components/views/PublicFinacialUpload/_components/AttestationModal';
 import {
-  $publicGuarantorUploadView,
-  DEFAULT_GUARANTOR_PUBLIC_ATTESTATION_TEXT,
+    $publicGuarantorUploadView,
+    DEFAULT_GUARANTOR_PUBLIC_ATTESTATION_TEXT,
 } from './_helpers/publicGuarantorFinancialUpload.consts';
 import {
-  getRequiredPdfSectionsForGuarantorLink,
-  hasGuarantorPdfStagedForKey,
-  getGuarantorUploaderForDocKey,
+    getRequiredPdfSectionsForGuarantorLink,
+    hasGuarantorPdfStagedForKey,
+    getGuarantorUploaderForDocKey,
 } from './_helpers/publicGuarantorFinancialUpload.helpers';
 import { fetchGuarantorUploadLinkData } from './_helpers/publicGuarantorFinancialUpload.resolvers';
 import {
-  handleGuarantorFileUpload,
-  clearGuarantorError,
-  clearGuarantorSectionFiles, handleOpenPfsTemplatePdf,
-  openGuarantorAttestationModal,
-  closeGuarantorAttestationModal,
+    handleGuarantorFileUpload,
+    clearGuarantorError,
+    clearGuarantorSectionFiles, handleOpenPfsTemplatePdf,
+    openGuarantorAttestationModal,
+    closeGuarantorAttestationModal,
 } from './_helpers/publicGuarantorFinancialUpload.events';
 
 const PublicGuarantorFinancialUpload = () => {

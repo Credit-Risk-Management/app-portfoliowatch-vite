@@ -10,7 +10,7 @@ import { formatCurrency } from '@src/utils/formatCurrency';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import { $borrowerFinancialsFilter, $borrowerFinancialsTableView } from '@src/components/views/BorrowerDetails/_helpers/borrowerDetail.consts';
 import * as consts from './_helpers/borrowerFinancialsTab.consts';
-import * as events from './_helpers/borrowerFinancialsTab.events';
+import * as events from './_helpers/borrowerFinasncialsTab.events';
 import * as resolvers from './_helpers/borrowerFinancialsTab.resolvers';
 import * as impactQuestionnaireModalEvents from '../../ImpactQuestionnaireModal/_helpers/impactQuestionnaireModal.events';
 import {
