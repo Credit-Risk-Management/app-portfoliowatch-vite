@@ -1,3 +1,3 @@
-import exampleLogo from './exampleLogo.svg?url';
+import sabreFinanceWordmark from './sabre_finance.svg?url';
 
-export default { exampleLogo };
+export default { sabreFinanceWordmark };
