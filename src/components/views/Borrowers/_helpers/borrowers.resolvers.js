@@ -3,6 +3,16 @@ import relationshipManagersApi from '@src/api/relationshipManagers.api';
 import borrowersApi from '@src/api/borrowers.api';
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
 
+/** Reset list filters when opening Borrowers with a clean URL (avoids stale search/facets after nav or back). */
+export const resetBorrowersListFilters = () => {
+  $borrowersFilter.reset();
+  try {
+    window.localStorage.removeItem('filterQueryString');
+  } catch {
+    /* ignore */
+  }
+};
+
 export const loadReferenceData = async () => {
   try {
     const managersResponse = await relationshipManagersApi.getAll();
@@ -36,10 +46,23 @@ export const loadReferenceData = async () => {
   }
 };
 
-export const fetchAndSetBorrowerData = async (filters = {}, isShowLoader = true) => {
-  if (isShowLoader) {
-    $borrowersView.update({ isTableLoading: true });
-  }
+const facetParamsFromBorrowersFilter = () => {
+  const bf = $borrowersFilter.value;
+  const borrowerType = Array.isArray(bf?.borrowerType)
+    ? bf.borrowerType.filter((type) => type !== '').join(',')
+    : bf?.borrowerType;
+  const relationshipManager = Array.isArray(bf?.relationshipManager)
+    ? bf.relationshipManager.filter((manager) => manager !== '').join(',')
+    : bf?.relationshipManager;
+  return {
+    searchTerm: bf?.searchTerm,
+    borrowerType,
+    relationshipManager,
+  };
+};
+
+export const fetchAndSetBorrowerData = async (filters = {}) => {
+  $borrowersView.update({ isTableLoading: true });
   try {
     const paginationAndSortParams = {
       page: $borrowersFilter.value?.page || 1,
@@ -48,7 +71,11 @@ export const fetchAndSetBorrowerData = async (filters = {}, isShowLoader = true)
       sortDirection: $borrowersFilter.value?.sortDirection || 'asc',
     };
 
-    const response = await borrowersApi.getAll({ ...filters, ...paginationAndSortParams });
+    const response = await borrowersApi.getAll({
+      ...facetParamsFromBorrowersFilter(),
+      ...filters,
+      ...paginationAndSortParams,
+    });
     $borrowers.update({
       list: response.data || [],
       totalCount: response.count || 0,

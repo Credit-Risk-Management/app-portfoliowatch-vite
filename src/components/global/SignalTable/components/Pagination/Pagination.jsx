@@ -1,6 +1,7 @@
 import { Container, Button, ListGroup } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { filterValueToUrlSearchParams } from '@src/utils/tableFilterUrlParams';
 
 const Pagination = ({
   $filter,
@@ -11,6 +12,8 @@ const Pagination = ({
   currentPage,
   className = '',
   disabled = false,
+  /** Optional: e.g. borrowers list includes facet params in URL + localStorage */
+  filterToUrlParams,
 }) => {
   const pagesCount = Math.ceil(totalItemsCount / itemsPerPageAmount);
   const showPagination = pagesCount > 1;
@@ -24,7 +27,9 @@ const Pagination = ({
     if (direction === 'forward' && !value) $filter.update({ page: currentPage + 1 });
     if (direction === 'backward' && !value) $filter.update({ page: currentPage - 1 });
     if (value) $filter.update({ page: value });
-    const params = new URLSearchParams($filter.value);
+    const params = filterToUrlParams
+      ? filterToUrlParams($filter.value)
+      : filterValueToUrlSearchParams($filter.value);
     window.history.pushState(null, '', `?${params.toString()}`);
     window.localStorage.setItem('filterQueryString', params.toString());
   };

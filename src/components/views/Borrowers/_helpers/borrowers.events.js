@@ -79,7 +79,7 @@ export const handleBorrowerFilterChange = async () => {
       relationshipManager: relationshipManagerValue,
     };
 
-    await resolvers.fetchAndSetBorrowerData(filters, false);
+    await resolvers.fetchAndSetBorrowerData(filters);
   } catch (error) {
     dangerAlert(error.message || 'Failed to filter borrowers');
   } finally {

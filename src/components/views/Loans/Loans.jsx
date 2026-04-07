@@ -28,21 +28,19 @@ const Loans = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const isInitialMount = useRef(true);
 
-  // Check for watch score query parameter on mount and apply filter
+  // Mount: optional watchScore from URL; reset list filters when URL has no query (stale filters from SPA session)
   useEffectAsync(async () => {
     const watchScoreParam = searchParams.get('watchScore');
-    if (watchScoreParam) {
+    if (watchScoreParam !== null && watchScoreParam !== '') {
       const watchScore = Number(watchScoreParam);
-      if (watchScore >= 0) {
+      if (!Number.isNaN(watchScore) && watchScore >= 0) {
         $loansFilter.update({ watchScore, page: 1 });
       }
-      // Clear the query parameter after setting the filter
-      setSearchParams({});
+      setSearchParams({}, { replace: true });
+    } else if (!searchParams.toString()) {
+      $loansFilter.reset();
     }
-  }, []);
 
-  // Fetch reference data on mount
-  useEffectAsync(async () => {
     await loadReferenceData();
     await fetchAndSetLoans({ isShowLoader: true });
     isInitialMount.current = false;

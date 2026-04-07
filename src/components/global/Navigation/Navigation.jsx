@@ -7,9 +7,27 @@ import {
   faMoneyBillWave,
   faUserTie,
 } from '@fortawesome/free-solid-svg-icons';
-import { $global, $user, $organization } from '@src/signals';
+import { $global, $user, $organization, $borrowersFilter, $loansFilter } from '@src/signals';
 import { logoutUser } from '@src/utils/auth.utils';
 import NotificationBell from '@src/components/global/NotificationBell';
+
+const clearStoredListFilterQuery = () => {
+  try {
+    window.localStorage.removeItem('filterQueryString');
+  } catch {
+    /* ignore */
+  }
+};
+
+const handleBorrowersNavClick = () => {
+  clearStoredListFilterQuery();
+  $borrowersFilter.reset();
+};
+
+const handleLoansNavClick = () => {
+  clearStoredListFilterQuery();
+  $loansFilter.reset();
+};
 
 const Navigation = () => {
   const location = useLocation();
@@ -60,6 +78,7 @@ const Navigation = () => {
             <Nav.Link
               as={Link}
               to="/borrowers"
+              onClick={handleBorrowersNavClick}
               active={isActive('/borrowers')}
               className={`px-2 px-md-16 text-info-50 ${isActive('/borrowers') ? activeClass : 'text-dark'}`}
             >
@@ -69,6 +88,7 @@ const Navigation = () => {
             <Nav.Link
               as={Link}
               to="/loans"
+              onClick={handleLoansNavClick}
               active={isActive('/loans')}
               className={`px-2 px-md-16 text-info-50 ${isActive('/loans') ? activeClass : 'text-dark'}`}
             >

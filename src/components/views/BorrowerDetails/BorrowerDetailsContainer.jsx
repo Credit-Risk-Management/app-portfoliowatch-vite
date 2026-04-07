@@ -107,8 +107,12 @@ export function BorrowerDetailsContainer() {
             onClick={() => {
               resetBorrowerRouteState();
               const storedFilter = window.localStorage.getItem('filterQueryString');
-              const params = new URLSearchParams(storedFilter ? storedFilter.replace(/^\?/, '') : '');
-              navigate(`/borrowers?${params.toString()}`, { replace: true });
+              const qs = storedFilter?.replace(/^\?/, '').trim();
+              if (qs) {
+                navigate(`/borrowers?${qs}`, { replace: true });
+              } else {
+                navigate('/borrowers', { replace: true });
+              }
             }}
             className="btn-sm border-dark text-dark-800 bg-grey-50 mb-12 mb-md-16"
           >
