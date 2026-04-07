@@ -6,10 +6,19 @@ import UniversalCard from '@src/components/global/UniversalCard';
 import { $borrower } from '@src/consts/consts';
 import { getHealthScoreColor, renderMarkdownLinks } from '@src/components/views/BorrowerDetails/_helpers/borrowerDetail.helpers';
 import { handleGenerateIndustryReport } from '@src/components/views/BorrowerDetails/_helpers/borrowerDetail.events';
+import { getResolvedIndustryTitle } from '@src/utils/naicsTitles';
 
 export function BorrowerIndustryTab() {
   const borrower = $borrower.value?.borrower;
   const borrowerId = borrower?.id;
+  const loans = borrower?.loans || [];
+  const loanWithNaics = loans.find((l) => l?.naicsCode) ?? loans[0];
+  const naicsCode = loanWithNaics?.naicsCode;
+  const industryName = getResolvedIndustryTitle(
+    loanWithNaics?.naicsCode,
+    loanWithNaics?.naicsDescription,
+    borrower?.industryType,
+  );
 
   return (
     <UniversalCard headerText="Industry Analysis">
@@ -24,23 +33,21 @@ export function BorrowerIndustryTab() {
               <FontAwesomeIcon icon={faMagic} className="me-8" />
               Generate Industry Report
             </Button>
-            {borrower?.industryType && (
-              <div className="mt-16">
-                <span className="text-info-100 fw-200">Industry Type: </span>
-                <span className="fw-bold">{borrower.industryType}</span>
-              </div>
-            )}
+            <div className="mt-16">
+              <span className="text-info-100 fw-200">NAICS Code: </span>
+              <span className="fw-bold">{naicsCode || 'N/A'}</span>
+            </div>
+            <div>
+              <span className="text-info-100 fw-200">Industry: </span>
+              <span className="fw-bold">{industryName || 'N/A'}</span>
+            </div>
           </Col>
           <Col xs={12} md={4} className="text-md-end">
-            {borrower?.industryHealthScore != null && (
-              <>
-                <div className="text-info-100 fw-200">Industry Health Score</div>
-                <div className={`fs-1 fw-bold ${getHealthScoreColor(borrower.industryHealthScore)}`}>
-                  {borrower.industryHealthScore}
-                </div>
-                <div className="text-info-100 fw-200 small">out of 100</div>
-              </>
-            )}
+            <div className="text-info-100 fw-200">Industry Health Score</div>
+            <div className={`fs-1 fw-bold ${getHealthScoreColor(borrower?.industryHealthScore)}`}>
+              {borrower?.industryHealthScore ?? '-'}
+            </div>
+            <div className="text-info-100 fw-200 small">out of 100</div>
           </Col>
         </Row>
         <Row>
