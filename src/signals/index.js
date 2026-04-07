@@ -61,6 +61,7 @@ export const $borrowersForm = Signal({
   borrowerId: '',
   name: '',
   borrowerType: 'Business',
+  primaryContact: '',
   email: '',
   phoneNumber: '',
   streetAddress: '',
@@ -321,6 +322,8 @@ export const $borrowerFinancialsForm = Signal({
   // Balance Sheet fields
   totalCurrentAssets: '',
   totalCurrentLiabilities: '',
+  totalAssets: '',
+  totalLiabilities: '',
   cash: '',
   cashEquivalents: '',
   equity: '',

@@ -36,7 +36,16 @@ const AddBorrowerModal = () => (
       </Row>
 
       <Row>
-        <Col md={6} className="mb-16">
+        <Col md={4} className="mb-16">
+          <UniversalInput
+            label="Primary Contact"
+            type="primarycontact"
+            name="primaryContact"
+            signal={$borrowersForm}
+            placeholder="John Doe"
+          />
+        </Col>
+        <Col md={4} className="mb-16">
           <UniversalInput
             label="Email"
             type="email"
@@ -45,7 +54,7 @@ const AddBorrowerModal = () => (
             placeholder="email@example.com"
           />
         </Col>
-        <Col md={6} className="mb-16">
+        <Col md={4} className="mb-16">
           <UniversalInput
             label="Phone Number"
             type="text"

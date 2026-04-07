@@ -76,7 +76,7 @@ const FinancialSpreadsheetModal = ({ show, onHide, borrowerId }) => {
       { key: 'totalCurrentAssets', label: 'Total Current Assets', format: 'currency' },
       { key: 'totalCurrentLiabilities', label: 'Total Current Liabilities', format: 'currency' },
       { key: 'cash', label: 'Cash', format: 'currency' },
-      { key: 'cashEquivalents', label: 'Cash Equivalents', format: 'currency' },
+      { key: 'cashEquivalents', label: 'Cash & Cash Equivalents', format: 'currency' },
       { key: 'accountsReceivable', label: 'Accounts Receivable', format: 'currency' },
       { key: 'inventory', label: 'Inventory', format: 'currency' },
       { key: 'accountsPayable', label: 'Accounts Payable', format: 'currency' },
@@ -138,6 +138,87 @@ const FinancialSpreadsheetModal = ({ show, onHide, borrowerId }) => {
     }
   };
 
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="text-center py-32">
+          <Spinner animation="border" variant="primary" />
+          <p className="mt-16 text-info-100">Loading financial data...</p>
+        </div>
+      );
+    }
+
+    if (spreadsheetData.periods.length === 0) {
+      return (
+        <div className="text-center py-32">
+          <p className="text-info-100 lead">No financial data available</p>
+          <p className="text-info-200 small">Submit new financials to start tracking history.</p>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        <div className="d-flex justify-content-end mb-16">
+          <Button
+            variant="primary-100"
+            onClick={handleGeneratePdf}
+            disabled={isGeneratingPdf}
+            size="sm"
+          >
+            <FontAwesomeIcon icon={faFilePdf} className="me-2" />
+            {isGeneratingPdf ? 'Generating...' : 'Generate PDF'}
+          </Button>
+        </div>
+        <div style={{ overflowX: 'auto' }}>
+          <Table striped bordered hover responsive className="text-info-100">
+            <thead className="bg-info-800">
+              <tr>
+                <th className="sticky-left bg-info-700 text-info-50 fw-500" style={{ minWidth: '200px', position: 'sticky', left: 0, zIndex: 10 }}>
+                  Metric
+                </th>
+                {spreadsheetData.periods.map((period) => (
+                  <th key={period.id} className="bg-info-700 text-info-50 fw-500" style={{ minWidth: '150px', textAlign: 'center' }}>
+                    {period.date}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {spreadsheetData.metrics.map((metric) => (
+                <tr key={metric.key}>
+                  <td className="fw-bold sticky-left text-info-50" style={{ position: 'sticky', left: 0, zIndex: 5 }}>
+                    {metric.label}
+                  </td>
+                  {spreadsheetData.periods.map((period) => {
+                    const value = period.data[metric.key];
+                    let displayValue = '-';
+
+                    if (value !== null && value !== undefined && value !== '') {
+                      if (metric.format === 'currency') {
+                        displayValue = formatCurrency(value);
+                      } else if (metric.format === 'ratio') {
+                        displayValue = formatRatio(value);
+                      } else {
+                        displayValue = value.toString();
+                      }
+                    }
+
+                    return (
+                      <td key={`${period.id}-${metric.key}`} style={{ textAlign: 'right' }}>
+                        {displayValue}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </div>
+      </>
+    );
+  };
+
   return (
     <UniversalModal
       show={show}
@@ -149,78 +230,7 @@ const FinancialSpreadsheetModal = ({ show, onHide, borrowerId }) => {
       size="xl"
       closeButton
     >
-      <div>
-        {isLoading ? (
-          <div className="text-center py-32">
-            <Spinner animation="border" variant="primary" />
-            <p className="mt-16 text-info-100">Loading financial data...</p>
-          </div>
-        ) : spreadsheetData.periods.length === 0 ? (
-          <div className="text-center py-32">
-            <p className="text-info-100 lead">No financial data available</p>
-            <p className="text-info-200 small">Submit new financials to start tracking history.</p>
-          </div>
-        ) : (
-          <>
-            <div className="d-flex justify-content-end mb-16">
-              <Button
-                variant="primary-100"
-                onClick={handleGeneratePdf}
-                disabled={isGeneratingPdf}
-                size="sm"
-              >
-                <FontAwesomeIcon icon={faFilePdf} className="me-2" />
-                {isGeneratingPdf ? 'Generating...' : 'Generate PDF'}
-              </Button>
-            </div>
-            <div style={{ overflowX: 'auto' }}>
-              <Table striped bordered hover responsive className="text-info-100">
-                <thead className="bg-info-800">
-                  <tr>
-                    <th className="sticky-left bg-info-700 text-info-50 fw-500" style={{ minWidth: '200px', position: 'sticky', left: 0, zIndex: 10 }}>
-                      Metric
-                    </th>
-                    {spreadsheetData.periods.map((period, idx) => (
-                      <th key={period.id} className="bg-info-700 text-info-50 fw-500" style={{ minWidth: '150px', textAlign: 'center' }}>
-                        {period.date}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {spreadsheetData.metrics.map((metric) => (
-                    <tr key={metric.key}>
-                      <td className="fw-bold sticky-left text-info-50" style={{ position: 'sticky', left: 0, zIndex: 5 }}>
-                        {metric.label}
-                      </td>
-                      {spreadsheetData.periods.map((period) => {
-                        const value = period.data[metric.key];
-                        let displayValue = '-';
-
-                        if (value !== null && value !== undefined && value !== '') {
-                          if (metric.format === 'currency') {
-                            displayValue = formatCurrency(value);
-                          } else if (metric.format === 'ratio') {
-                            displayValue = formatRatio(value);
-                          } else {
-                            displayValue = value.toString();
-                          }
-                        }
-
-                        return (
-                          <td key={`${period.id}-${metric.key}`} style={{ textAlign: 'right' }}>
-                            {displayValue}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
-            </div>
-          </>
-        )}
-      </div>
+      <div>{renderContent()}</div>
     </UniversalModal>
   );
 };

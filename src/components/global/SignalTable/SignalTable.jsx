@@ -61,15 +61,16 @@ const SignalTable = ({
     if (!$filter) return;
 
     const urlParams = new URLSearchParams(window.location.search);
-    const sortKey = urlParams.get('sortKey');
-    const sortDirection = urlParams.get('sortDirection');
+    const urlSortKey = urlParams.get('sortKey');
+    const urlSortDirection = urlParams.get('sortDirection');
     const page = urlParams.get('page') || 1;
 
-    // Update the $filter value based on the URL parameters
+    // Only override sorting when URL explicitly provides it.
+    // This preserves per-screen defaults (e.g., Financials uses asOfDate desc).
     $filter.update({
       page: parseInt(page, 10),
-      sortKey,
-      sortDirection: sortDirection || undefined, // or default sorting logic
+      sortKey: urlSortKey || $filter.value?.sortKey,
+      sortDirection: urlSortDirection || $filter.value?.sortDirection,
     });
   }, [$filter]);
 

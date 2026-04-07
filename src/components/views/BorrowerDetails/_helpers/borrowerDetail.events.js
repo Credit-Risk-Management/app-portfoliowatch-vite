@@ -51,10 +51,18 @@ export const handleEditBorrowerDetail = async () => {
       return;
     }
 
-    // Transform snake_case form fields to camelCase for API
     const apiData = {
-      relationshipManagerId: formData.relationship_manager_id || null,
-      notes: formData.notes || '',
+      name: formData.name,
+      primaryContact: formData.primaryContact,
+      email: formData.email,
+      phoneNumber: formData.phoneNumber,
+      streetAddress: formData.streetAddress,
+      city: formData.city,
+      state: formData.state,
+      zipCode: formData.zipCode,
+      borrowerType: formData.borrowerType,
+      relationshipManagerId: formData.relationshipManagerId || null,
+      notes: formData.notes ?? '',
     };
 
     await borrowersApi.update(formData.id, apiData);

@@ -1,6 +1,7 @@
 import { $borrowerFinancialsView, $borrowerFinancialsForm, $user } from '@src/signals';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
 import borrowerFinancialDocumentsApi from '@src/api/borrowerFinancialDocuments.api';
+import debtServiceHistoryApi from '@src/api/debtServiceHistory.api';
 import { dangerAlert, successAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import postToSensibleApi, { initiateUploadToSensibleApi } from '@src/api/sensible.api';
 import { storage } from '@src/utils/firebase';
@@ -393,6 +394,16 @@ const toNumberOrNull = (value) => {
   return Number.isNaN(num) ? null : num;
 };
 
+const roundTo4 = (value) => parseFloat(value.toFixed(4));
+
+const computeDebtServiceRatio = (ebitda, totalMonthlyPayment) => {
+  if (ebitda == null || totalMonthlyPayment == null) return null;
+  if (totalMonthlyPayment <= 0) return null;
+  const annualDebtService = totalMonthlyPayment * 12;
+  if (annualDebtService <= 0) return null;
+  return roundTo4(ebitda / annualDebtService);
+};
+
 export const handleSubmit = async (onCloseCallback) => {
   const { $modalState } = consts;
   try {
@@ -415,6 +426,18 @@ export const handleSubmit = async (onCloseCallback) => {
       return;
     }
 
+    const formEbitda = toNumberOrNull($borrowerFinancialsForm.value.ebitda);
+    let computedDebtServiceRatio = null;
+    try {
+      const debtServiceResponse = await debtServiceHistoryApi.getLatestByBorrowerId(borrowerId);
+      const latestDebtService = debtServiceResponse?.data ?? null;
+      const totalMonthlyPayment = toNumberOrNull(latestDebtService?.totalMonthlyPayment);
+      computedDebtServiceRatio = computeDebtServiceRatio(formEbitda, totalMonthlyPayment);
+    } catch (error) {
+      // Non-blocking fallback: if debt service history is unavailable, keep current/form value.
+      computedDebtServiceRatio = null;
+    }
+
     const financialData = {
       borrowerId,
       asOfDate,
@@ -431,7 +454,9 @@ export const handleSubmit = async (onCloseCallback) => {
       accountsReceivable: toNumberOrNull($borrowerFinancialsForm.value.accountsReceivable),
       accountsPayable: toNumberOrNull($borrowerFinancialsForm.value.accountsPayable),
       inventory: toNumberOrNull($borrowerFinancialsForm.value.inventory),
-      debtService: toNumberOrNull($borrowerFinancialsForm.value.debtService),
+      // Always compute DSCR on submit when we have EBITDA + latest debt schedule.
+      // Fallback to existing/form value only if compute inputs are unavailable.
+      debtService: computedDebtServiceRatio ?? toNumberOrNull($borrowerFinancialsForm.value.debtService),
       currentRatio: toNumberOrNull($borrowerFinancialsForm.value.currentRatio),
       liquidity: toNumberOrNull($borrowerFinancialsForm.value.liquidity),
       liquidityRatio: toNumberOrNull($borrowerFinancialsForm.value.liquidityRatio),

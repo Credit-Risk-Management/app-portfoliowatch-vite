@@ -49,22 +49,12 @@ export function extractDataFromApiResponse(
   };
   const liquidityVal = () => num(
     getVal(parsedDocument.liquidity)
-    ?? getVal(parsedDocument.personal_liquidity)
-    ?? getVal(parsedDocument.liquidAssets)
-    ?? getVal(parsedDocument.totalLiquidAssets)
-    ?? getVal(parsedDocument.cashOnHand)
-    ?? getVal(parsedDocument.cash)
-    ?? getVal(parsedDocument.cashAndCashEquivalents),
+    ?? getVal(parsedDocument.cashEquivalents),
   );
 
   if (source === 'bs') {
     const cash = num(getVal(parsedDocument.cash));
     const cashEquivalents = num(getVal(parsedDocument.cashEquivalents));
-    const cashMaybe = numOrUndefined(getVal(parsedDocument.cash));
-    const cashEqMaybe = numOrUndefined(getVal(parsedDocument.cashEquivalents));
-    const computedLiquidity = cashMaybe !== undefined || cashEqMaybe !== undefined
-      ? (cashMaybe ?? 0) + (cashEqMaybe ?? 0)
-      : undefined;
 
     return {
       asOfDate: asOfDate || asOfDateFromApi(getVal(parsedDocument.asOfDate)),
@@ -79,7 +69,7 @@ export function extractDataFromApiResponse(
       accountsReceivable: num(getVal(parsedDocument.accountsReceivable)),
       accountsPayable: num(getVal(parsedDocument.accountsPayable)),
       retainedEarnings: num(getVal(parsedDocument.retainedEarnings) ?? getVal(parsedDocument.retained_earnings)),
-      liquidity: computedLiquidity ?? liquidityVal(),
+      liquidity: liquidityVal(),
     };
   }
 
