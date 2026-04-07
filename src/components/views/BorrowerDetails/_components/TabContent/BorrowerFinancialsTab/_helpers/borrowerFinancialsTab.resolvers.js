@@ -16,10 +16,22 @@ export const fetchFinancialHistory = async () => {
   try {
     $borrowerFinancialsTableView.update({ isTableLoading: true });
     const filter = $borrowerFinancialsFilter.value;
+    const sortKey = filter.sortKey || 'asOfDate';
+    const sortDirection = filter.sortDirection || 'desc';
+    const page = filter.page || 1;
+
+    if (filter.sortKey !== sortKey || filter.sortDirection !== sortDirection || filter.page !== page) {
+      $borrowerFinancialsFilter.update({
+        page,
+        sortKey,
+        sortDirection,
+      });
+    }
+
     const response = await borrowerFinancialsApi.getByBorrowerId(borrowerId, {
-      sortKey: filter.sortKey,
-      sortDirection: filter.sortDirection,
-      page: filter.page,
+      sortKey,
+      sortDirection,
+      page,
     });
 
     const list = response?.data ?? (Array.isArray(response) ? response : []);

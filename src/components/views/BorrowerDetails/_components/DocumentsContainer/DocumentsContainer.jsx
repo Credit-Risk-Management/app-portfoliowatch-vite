@@ -544,7 +544,7 @@ const DocumentsContainer = ({
             )}
             {!isTaxReturnUploaded && (
               <option value="debtServiceWorksheet">
-                Debt Service Worksheet
+                Debt Schedule
                 {documentsByType.debtServiceWorksheet.length > 0 ? ` (${documentsByType.debtServiceWorksheet.length})` : ''}
               </option>
             )}
@@ -597,7 +597,7 @@ const DocumentsContainer = ({
 
               <Col md={12} className="mb-16">
                 <UniversalInput
-                  label="Cash Equivalents"
+                  label="Cash & Cash Equivalents"
                   labelClassName="text-info-100"
                   type="currency"
                   placeholder="$ USD"
@@ -645,6 +645,18 @@ const DocumentsContainer = ({
               </Col>
               <Col md={12} className="mb-16">
                 <UniversalInput
+                  label="Total Assets"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.totalAssets}
+                  name="totalAssets"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
                   label="Accounts Payable"
                   labelClassName="text-info-100"
                   type="currency"
@@ -663,6 +675,18 @@ const DocumentsContainer = ({
                   placeholder="$ USD"
                   value={$borrowerFinancialsForm.value.totalCurrentLiabilities}
                   name="totalCurrentLiabilities"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Total Liabilities"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.totalLiabilities}
+                  name="totalLiabilities"
                   signal={$borrowerFinancialsForm}
                   inputFormatCallback={normalizeCurrencyValueAllowNegative}
                 />
@@ -724,20 +748,13 @@ const DocumentsContainer = ({
             </Row>
           )}
 
-          {/* Debt Service Worksheet Fields */}
+          {/* Debt Schedule Fields */}
           {documentType === 'debtServiceWorksheet' && (
             <Row>
               <Col md={12} className="mb-16">
-                <UniversalInput
-                  label="Debt Service Ratio"
-                  labelClassName="text-info-100"
-                  type="number"
-                  step="0.01"
-                  placeholder="1.45"
-                  value={$borrowerFinancialsForm.value.debtService}
-                  name="debtService"
-                  signal={$borrowerFinancialsForm}
-                />
+                <Form.Text className="text-info-300">
+                  Debt service worksheet functionality coming soon.
+                </Form.Text>
               </Col>
             </Row>
           )}

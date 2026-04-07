@@ -2,12 +2,14 @@
 import { useEffect } from 'react';
 import { Form, Row, Col } from 'react-bootstrap';
 import UniversalModal from '@src/components/global/UniversalModal';
+import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import SelectInput from '@src/components/global/Inputs/SelectInput';
 import { $borrower } from '@src/consts/consts';
 import { $borrowersForm, $relationshipManagers } from '@src/signals';
 import { $borrowerDetailView } from '../_helpers/borrowerDetail.consts';
 import { handleEditBorrowerDetail } from '../_helpers/borrowerDetail.events';
 import { getManagerOptions } from '../_helpers/borrowerDetail.helpers';
+import * as borrowerConsts from '../../Borrowers/_helpers/borrowers.consts';
 
 const EditBorrowerDetailModal = () => {
   useEffect(() => {
@@ -18,7 +20,15 @@ const EditBorrowerDetailModal = () => {
       $borrowersForm.update({
         id: borrower.id || '',
         name: borrower.name || '',
-        relationship_manager_id: borrower.relationshipManager?.id || '',
+        primaryContact: borrower.primaryContact || '',
+        email: borrower.email || '',
+        phoneNumber: borrower.phoneNumber || '',
+        streetAddress: borrower.streetAddress || '',
+        city: borrower.city || '',
+        state: borrower.state || '',
+        zipCode: borrower.zipCode || '',
+        borrowerType: borrower.borrowerType || '',
+        relationshipManagerId: borrower.relationshipManager?.id || '',
         notes: borrower.notes || '',
       });
     }
@@ -40,25 +50,109 @@ const EditBorrowerDetailModal = () => {
       leftBtnText="Cancel"
       rightBtnText="Save Changes"
       rightBtnOnClick={handleEditBorrowerDetail}
-      size="lg"
+      size="fullscreen"
       closeButton
     >
-      <Form>
+      <Form className="text-white align-items-start mt-16">
         <Row>
-          <Col md={12} className="mb-24">
+          <Col md={12} className="mb-16">
             <div className="text-info-100 fw-200 mb-8">Borrower Name</div>
             <div className="text-white lead fw-500">{$borrowersForm.value.name}</div>
           </Col>
         </Row>
 
         <Row>
+          <Col md={4} className="mb-16">
+            <UniversalInput
+              label="Primary Contact"
+              type="primarycontact"
+              name="primaryContact"
+              signal={$borrowersForm}
+              placeholder="John Doe"
+            />
+          </Col>
+          <Col md={4} className="mb-16">
+            <UniversalInput
+              label="Email"
+              type="email"
+              name="email"
+              signal={$borrowersForm}
+              placeholder="email@example.com"
+            />
+          </Col>
+          <Col md={4} className="mb-16">
+            <UniversalInput
+              label="Phone Number"
+              type="text"
+              name="phoneNumber"
+              signal={$borrowersForm}
+              placeholder="555-123-4567"
+            />
+          </Col>
+        </Row>
+
+        <Row>
           <Col md={12} className="mb-16">
+            <UniversalInput
+              label="Street Address"
+              type="text"
+              name="streetAddress"
+              signal={$borrowersForm}
+              placeholder="123 Main St"
+            />
+          </Col>
+        </Row>
+
+        <Row>
+          <Col md={4} className="mb-16">
+            <UniversalInput
+              label="City"
+              type="text"
+              name="city"
+              signal={$borrowersForm}
+              placeholder="City"
+            />
+          </Col>
+          <Col md={4} className="mb-16">
+            <UniversalInput
+              label="State"
+              type="text"
+              name="state"
+              signal={$borrowersForm}
+              placeholder="State"
+            />
+          </Col>
+          <Col md={4} className="mb-16">
+            <UniversalInput
+              label="Zip Code"
+              type="text"
+              name="zipCode"
+              signal={$borrowersForm}
+              placeholder="12345"
+            />
+          </Col>
+        </Row>
+
+        <Row>
+          <Col md={6} className="mb-16">
             <Form.Label>Relationship Manager</Form.Label>
             <SelectInput
-              name="relationship_manager_id"
+              name="relationshipManagerId"
               signal={$borrowersForm}
-              options={[{ value: '', label: 'Select Manager' }, ...managerOptions]}
-              value={$borrowersForm.value.relationship_manager_id}
+              placeholder="Select Relationship Manager"
+              options={managerOptions}
+              value={managerOptions.find((opt) => opt.value === $borrowersForm.value.relationshipManagerId)?.value}
+              onChange={(option) => $borrowersForm.update({ relationshipManagerId: option?.value })}
+            />
+          </Col>
+          <Col md={6} className="mb-16">
+            <Form.Label>Borrower Type</Form.Label>
+            <SelectInput
+              name="borrowerType"
+              signal={$borrowersForm}
+              options={borrowerConsts.CLIENT_TYPE_OPTIONS}
+              value={borrowerConsts.CLIENT_TYPE_OPTIONS.find((opt) => opt.value === $borrowersForm.value.borrowerType)?.value}
+              onChange={(option) => $borrowersForm.update({ borrowerType: option?.value })}
             />
           </Col>
         </Row>
