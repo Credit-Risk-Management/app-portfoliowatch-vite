@@ -42,6 +42,7 @@ export const $borrowersFilter = Signal({
   sortDirection: 'asc',
   searchTerm: '',
   borrowerType: [],
+  relationshipManager: [],
   riskRating: '',
 });
 

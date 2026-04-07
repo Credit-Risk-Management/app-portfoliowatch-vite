@@ -15,6 +15,7 @@ import {
 } from '@src/signals';
 import SelectInput from '@src/components/global/Inputs/SelectInput';
 import { formatCurrency } from '@src/utils/formatCurrency';
+import { borrowersFilterToUrlParams } from '@src/utils/tableFilterUrlParams';
 import { useRef } from 'react';
 import * as consts from './_helpers/borrowers.consts';
 import * as resolvers from './_helpers/borrowers.resolvers';
@@ -30,17 +31,29 @@ const Borrowers = () => {
   const isInitialMount = useRef(true);
 
   useEffectAsync(async () => {
-    const searchTerm = searchParams.get('searchTerm');
-    const page = searchParams.get('page');
+    const q = searchParams.toString();
 
-    if (searchTerm || page) {
-      const parsedPage = page ? Number(page) : 1;
-      $borrowersFilter.update({ searchTerm, page: parsedPage });
-      await resolvers.fetchAndSetBorrowerData({ searchTerm, page: parsedPage }, false);
+    if (!q) {
+      resolvers.resetBorrowersListFilters();
     } else {
-      await resolvers.fetchAndSetBorrowerData();
+      const searchTerm = searchParams.get('searchTerm') || '';
+      const pageParam = searchParams.get('page');
+      const parsedPage = pageParam ? Number(pageParam) : 1;
+      const sortKey = searchParams.get('sortKey') || 'name';
+      const sortDirection = searchParams.get('sortDirection') || 'asc';
+      const borrowerTypeParam = searchParams.get('borrowerType');
+      const relationshipManagerParam = searchParams.get('relationshipManager');
+      $borrowersFilter.update({
+        searchTerm,
+        page: parsedPage,
+        sortKey,
+        sortDirection,
+        borrowerType: borrowerTypeParam ? borrowerTypeParam.split(',').filter(Boolean) : [],
+        relationshipManager: relationshipManagerParam ? relationshipManagerParam.split(',').filter(Boolean) : [],
+      });
     }
 
+    await resolvers.fetchAndSetBorrowerData();
     await resolvers.loadReferenceData();
     isInitialMount.current = false;
   }, []);
@@ -63,7 +76,7 @@ const Borrowers = () => {
       page: $borrowersFilter.value.page,
     };
 
-    await resolvers.fetchAndSetBorrowerData(filters, false);
+    await resolvers.fetchAndSetBorrowerData(filters);
   }, [
     $borrowersFilter.value.searchTerm,
     $borrowersFilter.value.borrowerType,
@@ -89,7 +102,7 @@ const Borrowers = () => {
         ]}
         onItemClick={(item) => {
           if (item.action === 'detail') {
-            const params = new URLSearchParams(searchParams);
+            const params = borrowersFilterToUrlParams($borrowersFilter.value);
             window.localStorage.setItem('filterQueryString', params.toString());
             navigate(`/borrowers/${borrower.id}`);
           } else if (item.action === 'edit') {
@@ -126,14 +139,7 @@ const Borrowers = () => {
             value={$borrowersFilter.value.searchTerm}
             onChange={() => {
               handleBorrowerFilterChange();
-              if ($borrowersFilter.value.searchTerm.length > 0) {
-                setSearchParams({ searchTerm: $borrowersFilter.value.searchTerm });
-              } else {
-                setSearchParams((prev) => {
-                  prev.delete('searchTerm');
-                  return prev;
-                });
-              }
+              setSearchParams(borrowersFilterToUrlParams($borrowersFilter.value));
             }}
             signal={$borrowersFilter}
             name="searchTerm"
@@ -143,7 +149,10 @@ const Borrowers = () => {
           <SelectInput
             options={[{ value: '', label: 'All Types' }, ...consts.CLIENT_TYPE_OPTIONS]}
             value={$borrowersFilter.value.borrowerType}
-            onChange={handleBorrowerFilterChange}
+            onChange={() => {
+              handleBorrowerFilterChange();
+              setSearchParams(borrowersFilterToUrlParams($borrowersFilter.value));
+            }}
             placeholder="Borrower Type"
             signal={$borrowersFilter}
             name="borrowerType"
@@ -154,7 +163,10 @@ const Borrowers = () => {
           <SelectInput
             options={[{ value: '', label: 'All Managers' }, ...relationshipManagerOptions]}
             value={$borrowersFilter.value.relationshipManager}
-            onChange={handleBorrowerFilterChange}
+            onChange={() => {
+              handleBorrowerFilterChange();
+              setSearchParams(borrowersFilterToUrlParams($borrowersFilter.value));
+            }}
             placeholder="Relationship Manager"
             signal={$borrowersFilter}
             name="relationshipManager"
@@ -181,10 +193,11 @@ const Borrowers = () => {
               hasPagination={!$borrowersView.value.showAllMode}
               className="shadow"
               onRowClick={(borrower) => {
-                const params = new URLSearchParams(searchParams);
+                const params = borrowersFilterToUrlParams($borrowersFilter.value);
                 window.localStorage.setItem('filterQueryString', params.toString());
                 navigate(`/borrowers/${borrower.id}`);
               }}
+              filterToUrlParams={borrowersFilterToUrlParams}
             />
           </div>
         </Col>

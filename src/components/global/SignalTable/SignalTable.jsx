@@ -3,6 +3,7 @@
 
 import React, { useEffect } from 'react';
 import { faSort, faSortDown, faSortUp, faGear, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { filterValueToUrlSearchParams } from '@src/utils/tableFilterUrlParams';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Form, Table, Popover, OverlayTrigger } from 'react-bootstrap';
 import TableLoader from './components/TableLoader';
@@ -25,6 +26,7 @@ const SignalTable = ({
   paginationMaxButtonAmount = 5,
   itemsPerPageAmount = 10,
   rowClassName = '',
+  filterToUrlParams,
 }) => {
   const handleToggleColumn = (header) => {
     if (typeof onColumnToggle === 'function') {
@@ -110,7 +112,9 @@ const SignalTable = ({
                     sortKey: isAscending ? undefined : sortKey,
                     sortDirection: isAscending ? undefined : isDescending ? 'asc' : 'desc',
                   });
-                  const params = new URLSearchParams($filter.value);
+                  const params = filterToUrlParams
+                    ? filterToUrlParams($filter.value)
+                    : filterValueToUrlSearchParams($filter.value);
                   window.history.pushState(null, '', `?${params.toString()}`);
                   window.localStorage.setItem('filterQueryString', params.toString());
                   onHeaderClick({ key, value, sortKey }, idx);
@@ -212,6 +216,7 @@ const SignalTable = ({
           totalItemsCount={totalCount}
           currentPageItemsCount={currentPageItemsCount || 0}
           currentPage={currentPage}
+          filterToUrlParams={filterToUrlParams}
         />
       )}
     </div>
