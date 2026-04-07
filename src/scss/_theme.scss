@@ -111,23 +111,9 @@ small {
   }
 }
 
-// Default tables use Bootstrap / page background. Dark teal cells are opt-in only
-// (SignalTable wrapper + `.table-surface--dark` on react-bootstrap <Table>).
-.signal-table td,
-.table-surface--dark td {
+td {
   background-color: $info-800 !important;
   color: $white !important;
-}
-
-// Light “document list” tables (white rows, grey header — overrides any leftover globals)
-.table-surface--light table thead th,
-.table-surface--light table tbody td {
-  background-color: #fff !important;
-  border-color: #e5e7eb !important;
-}
-
-.table-surface--light table.table-hover tbody tr:hover td {
-  background-color: #f9fafb !important;
 }
 
 input::placeholder {
