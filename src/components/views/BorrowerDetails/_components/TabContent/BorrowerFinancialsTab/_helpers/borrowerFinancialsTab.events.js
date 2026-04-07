@@ -1,5 +1,7 @@
 import { $borrowerFinancialsView } from '@src/signals';
 import { successAlert, dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
+import { createUploadLink } from '@src/api/borrowerFinancialUploadLink.api';
+import { Q1_TEST_UPLOAD_LINK_OPTIONS } from '@src/constants/financialSubmissionRequirements';
 import * as consts from './borrowerFinancialsTab.consts';
 import { getUploadLinkUrl } from './borrowerFinancialsTab.helpers';
 import * as resolvers from './borrowerFinancialsTab.resolvers';
@@ -47,6 +49,26 @@ export const handleCopyPermanentLink = async () => {
     }
   } catch (error) {
     successAlert('Failed to copy link', 'toast');
+  }
+};
+
+export const handleCreateQ1TestUploadLink = async (borrowerId) => {
+  if (!borrowerId) return;
+  try {
+    const response = await createUploadLink(borrowerId, Q1_TEST_UPLOAD_LINK_OPTIONS);
+    const data = response?.data ?? response;
+    const url = data?.uploadLinkUrl ?? data?.upload_link_url;
+    const token = data?.token;
+    if (response?.status === 'success' && (url || token)) {
+      const message = url
+        ? `Q1 test link created. ${url}`
+        : `Q1 test link created. Token: ${token}`;
+      successAlert(message, 'toast');
+    } else {
+      dangerAlert('Could not create Q1 test upload link.');
+    }
+  } catch (error) {
+    dangerAlert(error?.message || 'Failed to create Q1 test upload link.');
   }
 };
 

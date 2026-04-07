@@ -46,9 +46,9 @@ function App() {
           <Route element={<AppWrapper />}>
             {/* Public auth routes */}
             <Route element={<PublicRoutes />}>x
+              <Route path="/upload-financials/:token" element={<PublicFinancialUpload />} />
               <Route path="/login" element={<Login />} />
               <Route path="/accept-invitation" element={<AcceptInvitation />} />
-              <Route path="/upload-financials/:token" element={<PublicFinancialUpload />} />
             </Route>
 
             {/* Redirect root to dashboard */}

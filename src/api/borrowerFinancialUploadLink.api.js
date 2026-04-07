@@ -2,18 +2,24 @@ import apiClient from './client';
 import publicClient from './publicClient';
 
 /**
- * Create upload link (protected)
+ * Create upload link (protected).
+ *
+ * @param {string} borrowerId
+ * @param {object} [options]
+ * @param {'QUARTERLY'|'ANNUAL'|'CUSTOM'} [options.submissionCadence]
+ * @param {string} [options.reportingPeriodEndDate] ISO date YYYY-MM-DD (as-of / period end)
+ * @param {number} [options.fiscalYearEndMonth] 1–12; omit for calendar year
+ * @param {string[]} [options.requiredDocumentKeys] e.g. balanceSheet, incomeStatementYtd, …
+ * @param {string} [options.periodLabel] display label (e.g. "Q1 2026")
+ * @param {string} [options.lenderInstructions] optional notes on public page
+ * @param {string|null} [options.priorDebtScheduleDocumentId] optional prior debt schedule doc id
  */
-export const createUploadLink = async (borrowerId) => {
-  try {
-    const response = await apiClient.post('/borrower-financial-upload-links', {
-      borrowerId,
-    });
-    return response;
-  } catch (error) {
-    console.error('Create upload link API error:', error);
-    throw error;
-  }
+export const createUploadLink = async (borrowerId, options = {}) => {
+  const response = await apiClient.post('/borrower-financial-upload-links', {
+    borrowerId,
+    ...options,
+  });
+  return response;
 };
 
 /**

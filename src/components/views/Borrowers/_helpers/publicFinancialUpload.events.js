@@ -2,131 +2,216 @@ import { submitFinancialsViaToken } from '@src/api/borrowerFinancialUploadLink.a
 import postToSensibleApi, { initiateUploadToSensibleApi } from '@src/api/sensible.api';
 import { storage } from '@src/utils/firebase';
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
-import { extractIncomeStatementFromApiResponse, extractBalanceSheetFromApiResponse } from './financials.helpers';
+import {
+  extractIncomeStatementFromApiResponse,
+  extractBalanceSheetFromApiResponse,
+} from './financials.helpers';
 import {
   $publicFinancialForm,
-  $financialDocsUploader,
+  $publicIncomeStatementUploader,
+  $publicBalanceSheetUploader,
+  $publicCashFlowUploader,
+  $publicOtherFinancialsUploader,
+  $publicDebtScheduleUploader,
   $publicFinancialUploadView,
+  initialPublicFinancialSectionsExtracted,
 } from './publicFinancialUpload.consts';
+import { getRequiredSectionIdsForLink } from './publicFinancialUpload.helpers';
 
 const SENSIBLE_DOCUMENT_TYPES = {
   incomeStatement: 'income_statement',
   balanceSheet: 'balance_sheet',
 };
 
-const inferDocumentTypeFromFilename = (fileName) => {
-  if (!fileName) return 'incomeStatement';
-  const lower = fileName.toLowerCase();
-  if (lower.includes('balance') || lower.includes('balance_sheet') || lower.includes('balancesheet')) {
-    return 'balanceSheet';
+const SECTION_TO_API_DOCUMENT_TYPE = {
+  incomeStatement: 'incomeStatement',
+  balanceSheet: 'balanceSheet',
+  incomeStatementQuarterly: 'incomeStatement',
+  businessTaxReturn: 'incomeStatement',
+  debtSchedule: 'balanceSheet',
+  cashFlow: 'incomeStatement',
+  otherFinancials: 'incomeStatement',
+};
+
+const UPLOADER_BY_SECTION = {
+  incomeStatement: $publicIncomeStatementUploader,
+  balanceSheet: $publicBalanceSheetUploader,
+  incomeStatementQuarterly: $publicCashFlowUploader,
+  businessTaxReturn: $publicOtherFinancialsUploader,
+  debtSchedule: $publicDebtScheduleUploader,
+  cashFlow: $publicCashFlowUploader,
+  otherFinancials: $publicOtherFinancialsUploader,
+};
+
+export const resetAllPublicFinancialUploaders = () => {
+  $publicIncomeStatementUploader.update({ financialDocs: [] });
+  $publicBalanceSheetUploader.update({ financialDocs: [] });
+  $publicCashFlowUploader.update({ financialDocs: [] });
+  $publicOtherFinancialsUploader.update({ financialDocs: [] });
+  $publicDebtScheduleUploader.update({ financialDocs: [] });
+};
+
+/** Clear staged files for one public-upload section (show dropzone again). */
+export const clearPublicFinancialSectionFiles = (sectionId) => {
+  const uploader = UPLOADER_BY_SECTION[sectionId];
+  if (uploader) uploader.update({ financialDocs: [] });
+};
+
+const cleanupStoragePath = async (path) => {
+  if (!path) return;
+  try {
+    await storage.ref(path).delete();
+  } catch {
+    // ignore
   }
-  return 'incomeStatement';
 };
 
 /**
- * Handle file upload and trigger Sensible OCR extraction
+ * Run Sensible OCR for one staged file and merge into the public financial form.
+ * @param {string} sectionKey
+ * @param {File} file
+ * @param {string} token
  */
-export const handleFileUpload = async () => {
-  const files = $financialDocsUploader.value.financialDocs || [];
-  const { ocrApplied, token } = $publicFinancialUploadView.value;
-  if (!files.length || ocrApplied) return;
+const extractOnePublicFinancialFile = async (sectionKey, file, token) => {
+  const documentType = SECTION_TO_API_DOCUMENT_TYPE[sectionKey] || 'incomeStatement';
+  const sensibleType = SENSIBLE_DOCUMENT_TYPES[documentType];
+
+  const initiateUploadData = {
+    fileName: file.name,
+    contentType: file.type,
+    id: token,
+    documentType,
+    uploadedBy: 'Public Upload',
+  };
+
+  const { storagePath } = await initiateUploadToSensibleApi(initiateUploadData);
+  $publicFinancialUploadView.update({ downloadSensibleUrl: storagePath });
+
+  const storageRef = storage.ref(storagePath);
+  const uploadTask = await storageRef.put(file, { contentType: file.type });
+  const downloadURL = await uploadTask.ref.getDownloadURL();
+
+  if (!downloadURL) {
+    await cleanupStoragePath(storagePath);
+    $publicFinancialUploadView.update({ downloadSensibleUrl: null });
+    throw new Error('Failed to upload file to storage');
+  }
+
+  const sensibleBody = {
+    url: downloadURL,
+    documentType: sensibleType,
+    configurationName: sensibleType,
+    environment: 'development',
+    documentName: file.name,
+  };
+
+  const sensibleResponse = await postToSensibleApi(sensibleBody);
+  const parsedDocument = sensibleResponse?.data?.parsed_document ?? sensibleResponse?.parsed_document ?? null;
+
+  await cleanupStoragePath(storagePath);
+  $publicFinancialUploadView.update({ downloadSensibleUrl: null });
+
+  if (!parsedDocument) return;
+
+  let extractedData = null;
+  if (documentType === 'incomeStatement') {
+    extractedData = extractIncomeStatementFromApiResponse(parsedDocument);
+  } else {
+    extractedData = extractBalanceSheetFromApiResponse(parsedDocument);
+  }
+
+  if (!extractedData) return;
+
+  const formUpdate = { ...extractedData };
+
+  if (documentType === 'balanceSheet') {
+    if (extractedData.cash) formUpdate.liquidity = extractedData.cash;
+    if (extractedData.totalCurrentAssets && extractedData.totalCurrentLiabilities) {
+      const assets = parseFloat(extractedData.totalCurrentAssets);
+      const liabilities = parseFloat(extractedData.totalCurrentLiabilities);
+      if (liabilities > 0 && !Number.isNaN(assets) && !Number.isNaN(liabilities)) {
+        formUpdate.currentRatio = (assets / liabilities).toFixed(2);
+      }
+    }
+  }
+
+  $publicFinancialForm.update(formUpdate);
+};
+
+/**
+ * After all staged PDFs are chosen, upload to storage and run Sensible for each (income statement, then balance sheet).
+ */
+export const runPublicFinancialExtraction = async () => {
+  const { token } = $publicFinancialUploadView.value;
   if (!token) {
     $publicFinancialUploadView.update({ error: 'Upload link not ready. Please refresh the page.' });
     return;
   }
 
-  $publicFinancialUploadView.update({ isLoading: true, error: null });
+  const sectionOrder = getRequiredSectionIdsForLink($publicFinancialUploadView.value.linkData);
+  const missing = sectionOrder.find(
+    (id) => !((UPLOADER_BY_SECTION[id].value.financialDocs || []).length),
+  );
+  if (missing) {
+    $publicFinancialUploadView.update({
+      error: 'Please upload all required PDFs before running extraction.',
+    });
+    return;
+  }
+
+  $publicFinancialUploadView.update({ isExtracting: true, error: null });
 
   try {
-    const [file] = files;
-    const documentType = inferDocumentTypeFromFilename(file.name);
-    const sensibleType = SENSIBLE_DOCUMENT_TYPES[documentType];
-
-    const initiateUploadData = {
-      fileName: file.name,
-      contentType: file.type,
-      id: token,
-      documentType,
-      uploadedBy: 'Public Upload',
-    };
-
-    const response = await initiateUploadToSensibleApi(initiateUploadData);
-    $publicFinancialUploadView.update({ downloadSensibleUrl: response.storagePath });
-
-    const storageRef = storage.ref(response.storagePath);
-    const uploadTask = await storageRef.put(file, { contentType: file.type });
-    const downloadURL = await uploadTask.ref.getDownloadURL();
-
-    if (!downloadURL) {
-      dangerAlert('Failed to upload file to storage');
-      $publicFinancialUploadView.update({ isLoading: false, downloadSensibleUrl: null });
-      return;
-    }
-
-    $publicFinancialUploadView.update({ isLoading: false });
-
-    const sensibleBody = {
-      url: downloadURL,
-      documentType: sensibleType,
-      configurationName: sensibleType,
-      environment: 'development',
-      documentName: file.name,
-    };
-
-    const sensibleResponse = await postToSensibleApi(sensibleBody);
-    const parsedDocument = sensibleResponse?.data?.parsed_document ?? sensibleResponse?.parsed_document ?? null;
-
-    if (parsedDocument) {
-      let extractedData = null;
-      if (documentType === 'incomeStatement') {
-        extractedData = extractIncomeStatementFromApiResponse(parsedDocument);
-      } else {
-        extractedData = extractBalanceSheetFromApiResponse(parsedDocument);
+    await sectionOrder.reduce(async (previous, sectionKey) => {
+      await previous;
+      const uploader = UPLOADER_BY_SECTION[sectionKey];
+      const files = uploader.value.financialDocs || [];
+      const [file] = files;
+      if (!file) {
+        throw new Error(`Missing file for ${sectionKey}`);
       }
+      await extractOnePublicFinancialFile(sectionKey, file, token);
+    }, Promise.resolve());
 
-      if (extractedData) {
-        const formUpdate = { ...extractedData };
-
-        if (documentType === 'balanceSheet') {
-          if (extractedData.cash) formUpdate.liquidity = extractedData.cash;
-          if (extractedData.totalCurrentAssets && extractedData.totalCurrentLiabilities) {
-            const assets = parseFloat(extractedData.totalCurrentAssets);
-            const liabilities = parseFloat(extractedData.totalCurrentLiabilities);
-            if (liabilities > 0 && !Number.isNaN(assets) && !Number.isNaN(liabilities)) {
-              formUpdate.currentRatio = (assets / liabilities).toFixed(2);
-            }
-          }
-        }
-
-        $publicFinancialForm.update(formUpdate);
-      }
-    }
+    const sectionsExtracted = { ...initialPublicFinancialSectionsExtracted };
+    sectionOrder.forEach((id) => {
+      sectionsExtracted[id] = true;
+    });
 
     $publicFinancialUploadView.update({
       ocrApplied: true,
+      flowStep: 'review',
+      sectionsExtracted,
       refreshKey: $publicFinancialUploadView.value.refreshKey + 1,
-      isLoading: false,
+      isExtracting: false,
       downloadSensibleUrl: null,
     });
+    resetAllPublicFinancialUploaders();
   } catch (error) {
     const pathToClean = $publicFinancialUploadView.value.downloadSensibleUrl;
     if (pathToClean) {
-      try {
-        const deleteStorageRef = storage.ref(pathToClean);
-        await deleteStorageRef.delete();
-      } catch {
-        // ignore cleanup errors
-      }
+      await cleanupStoragePath(pathToClean);
       $publicFinancialUploadView.update({ downloadSensibleUrl: null });
     }
+    dangerAlert(error?.message ?? 'Failed to extract financial data from documents');
     $publicFinancialUploadView.update({
-      isLoading: false,
-      error: error?.message ?? 'Failed to extract financial data from document',
+      isExtracting: false,
+      error: error?.message ?? 'Failed to extract financial data from documents',
     });
-  } finally {
-    $publicFinancialUploadView.update({ isLoading: false });
-    $financialDocsUploader.update({ financialDocs: [] });
   }
+};
+
+/**
+ * Return to step 1 to replace PDFs and re-run extraction (keeps current form values).
+ */
+export const handleBackToPublicUploadStep = () => {
+  $publicFinancialUploadView.update({
+    flowStep: 'upload',
+    ocrApplied: false,
+    error: null,
+    isExtracting: false,
+    sectionsExtracted: { ...initialPublicFinancialSectionsExtracted },
+  });
 };
 
 /**
@@ -141,6 +226,15 @@ export const handleSubmit = async (token) => {
     });
 
     const formData = $publicFinancialForm.value;
+    const { attestationAccepted, linkData } = $publicFinancialUploadView.value;
+
+    if (!attestationAccepted) {
+      $publicFinancialUploadView.update({
+        isSubmitting: false,
+        error: 'Please confirm the certification below before submitting.',
+      });
+      return;
+    }
 
     const financialData = {
       asOfDate: formData.asOfDate,
@@ -157,7 +251,9 @@ export const handleSubmit = async (token) => {
       liquidityRatioCovenant: formData.liquidityRatioCovenant || null,
       retainedEarnings: formData.retainedEarnings || null,
       notes: formData.notes || null,
-      documentIds: [], // In a real implementation, this would include uploaded document IDs
+      documentIds: [],
+      attestationAccepted: true,
+      attestationTextVersion: linkData?.attestationTextVersion ?? undefined,
     };
 
     const response = await submitFinancialsViaToken(token, financialData);
@@ -166,9 +262,14 @@ export const handleSubmit = async (token) => {
       $publicFinancialUploadView.update({
         success: true,
         isSubmitting: false,
+        isExtracting: false,
+        sectionsExtracted: { ...initialPublicFinancialSectionsExtracted },
+        ocrApplied: false,
+        flowStep: 'upload',
+        attestationAccepted: false,
       });
       $publicFinancialForm.reset();
-      $financialDocsUploader.update({ financialDocs: [] });
+      resetAllPublicFinancialUploaders();
     } else {
       $publicFinancialUploadView.update({
         error: response.message || 'Failed to submit financial data',
@@ -176,7 +277,7 @@ export const handleSubmit = async (token) => {
       });
     }
   } catch (err) {
-    console.error('Error submitting financial data:', err);
+    dangerAlert(err?.message || 'An error occurred while submitting financial data');
     $publicFinancialUploadView.update({
       error: err.message || 'An error occurred while submitting financial data',
       isSubmitting: false,
@@ -192,9 +293,13 @@ export const handleSubmitAnother = () => {
     success: false,
     ocrApplied: false,
     downloadSensibleUrl: null,
+    isExtracting: false,
+    sectionsExtracted: { ...initialPublicFinancialSectionsExtracted },
+    flowStep: 'upload',
+    attestationAccepted: false,
   });
   $publicFinancialForm.reset();
-  $financialDocsUploader.update({ financialDocs: [] });
+  resetAllPublicFinancialUploaders();
 };
 
 /**
@@ -202,4 +307,76 @@ export const handleSubmitAnother = () => {
  */
 export const clearError = () => {
   $publicFinancialUploadView.update({ error: null });
+};
+
+export const setPublicFinancialAttestationAccepted = (accepted) => {
+  $publicFinancialUploadView.update({ attestationAccepted: Boolean(accepted) });
+};
+
+/**
+ * Generate mock financial data from OCR (simulated)
+ * In production, this would call a real OCR service
+ */
+const generateMockFinancialData = () => {
+  const grossRevenue = Math.floor(Math.random() * (10000000 - 2000000) + 2000000);
+  const netIncomeMargin = 0.10 + Math.random() * 0.15;
+  const netIncome = Math.floor(grossRevenue * netIncomeMargin);
+  const ebitdaMargin = 0.15 + Math.random() * 0.15;
+  const ebitda = Math.floor(grossRevenue * ebitdaMargin);
+
+  const today = new Date();
+  const quartersBack = Math.floor(Math.random() * 4);
+  const currentQuarter = Math.floor(today.getMonth() / 3);
+  const targetQuarter = currentQuarter - quartersBack;
+
+  const yearOffset = Math.floor((targetQuarter < 0 ? targetQuarter - 3 : targetQuarter) / 4);
+  const year = today.getFullYear() + yearOffset;
+  const quarter = ((targetQuarter % 4) + 4) % 4;
+  const month = quarter * 3 + 2;
+  const lastDay = new Date(year, month + 1, 0).getDate();
+  const asOfDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+  return {
+    asOfDate,
+    grossRevenue: grossRevenue.toString(),
+    netIncome: netIncome.toString(),
+    ebitda: ebitda.toString(),
+    debtService: (1.0 + Math.random() * 2.0).toFixed(2),
+    debtServiceCovenant: (1.0 + Math.random() * 0.5).toFixed(2),
+    currentRatio: (1.5 + Math.random() * 2.0).toFixed(2),
+    currentRatioCovenant: (1.2 + Math.random() * 0.5).toFixed(2),
+    liquidity: Math.floor(Math.random() * (2000000 - 300000) + 300000).toString(),
+    liquidityCovenant: Math.floor(Math.random() * (800000 - 250000) + 250000).toString(),
+    liquidityRatio: (1.2 + Math.random() * 1.5).toFixed(2),
+    liquidityRatioCovenant: (1.0 + Math.random() * 0.5).toFixed(2),
+    retainedEarnings: Math.floor(grossRevenue * (0.3 + Math.random() * 0.4)).toString(),
+  };
+};
+
+/**
+ * Handle file upload and trigger OCR
+ */
+export const handleFileUpload = () => {
+  const files = $publicIncomeStatementUploader.value.financialDocs || [];
+  const { ocrApplied } = $publicFinancialUploadView.value;
+
+  if (files.length > 0 && !ocrApplied) {
+    // Simulate OCR processing delay
+    setTimeout(() => {
+      const mockData = generateMockFinancialData();
+      $publicFinancialForm.update(mockData);
+      $publicFinancialUploadView.update({
+        ocrApplied: true,
+        refreshKey: $publicFinancialUploadView.value.refreshKey + 1,
+        isExtracting: false,
+        downloadSensibleUrl: null,
+        flowStep: 'review',
+        sectionsExtracted: {
+          ...initialPublicFinancialSectionsExtracted,
+          incomeStatement: true,
+          balanceSheet: true,
+        },
+      });
+    }, 500);
+  }
 };

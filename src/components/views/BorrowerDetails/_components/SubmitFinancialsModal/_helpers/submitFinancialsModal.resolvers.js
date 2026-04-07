@@ -205,12 +205,18 @@ export const handleRemoveDocument = async (documentId) => {
     if (documentType === 'balanceSheet' && updatedDocs.length === 0) {
       clearedFields.totalCurrentAssets = '';
       clearedFields.totalCurrentLiabilities = '';
+      clearedFields.totalAssets = '';
+      clearedFields.totalLiabilities = '';
       clearedFields.cash = '';
       clearedFields.cashEquivalents = '';
       clearedFields.equity = '';
       clearedFields.accountsReceivable = '';
       clearedFields.accountsPayable = '';
       clearedFields.inventory = '';
+      clearedFields.currentRatio = '';
+      clearedFields.liquidity = '';
+      clearedFields.liquidityRatio = '';
+      clearedFields.retainedEarnings = '';
     }
     if (documentType === 'taxReturn' && updatedDocs.length === 0 && !incomeStillHasDocs) {
       clearedFields.grossRevenue = '';

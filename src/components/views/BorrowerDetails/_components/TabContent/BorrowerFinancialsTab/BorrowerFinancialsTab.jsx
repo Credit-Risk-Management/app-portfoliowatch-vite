@@ -83,6 +83,15 @@ export function BorrowerFinancialsTab() {
             {consts.$copiedLink.value ? 'Copied!' : 'Copy Borrower Link'}
           </Button>
           <Button
+            variant="info-100"
+            onClick={() => events.handleCreateQ1TestUploadLink(borrowerId)}
+            size="sm"
+            className="ms-8"
+          >
+            <FontAwesomeIcon icon={faCopy} className="me-8" />
+            Create Q1 Test Link
+          </Button>
+          <Button
             variant="outline-primary-100"
             onClick={() => events.handleExportExcel(borrowerId)}
             disabled={consts.$isExportingExcel.value}

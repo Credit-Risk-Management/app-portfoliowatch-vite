@@ -11,7 +11,7 @@ import './signalAccordion.scss';
  * Embed SignalTable (or any table) in item.content; embedded tables get light row styling per theme.
  *
  * @param {string} title - Main header label (e.g. "Collateral Values")
- * @param {Array<{ id: string, label: string, value?: string, trendText?: string, content: React.ReactNode }>} items - Accordion items; content is shown when expanded
+ * @param {Array<{ id: string, label: React.ReactNode, value?: string, trendText?: string, content: React.ReactNode }>} items - Accordion items; content is shown when expanded (`label` may be string or node)
  * @param {Object} footer - Optional: { netValueLabel, netValue, coverageLabel, coverageValue }
  * @param {string|null} expandedId - Controlled expanded id; if undefined, uses $expandedId or internal signal
  * @param {function(string|null)} onExpandedChange - Called when expanded item changes (controlled mode)
@@ -71,7 +71,9 @@ const SignalAccordion = ({
                     icon={isOpen ? faChevronDown : faChevronRight}
                     className="signal-accordion__item-icon me-8"
                   />
-                  <span className="signal-accordion__item-label">{item.label}</span>
+                  <span className="signal-accordion__item-label d-inline-flex align-items-center gap-8 flex-wrap">
+                    {item.label}
+                  </span>
                 </span>
                 <span className="d-flex align-items-center">
                   {item.value && (
