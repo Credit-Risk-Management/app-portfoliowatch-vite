@@ -8,7 +8,7 @@ import { getWatchScoreColor } from '@src/components/views/Dashboard/_helpers/das
 
 const LoanRadarChart = () => {
   const breakdown = $watchScoreBreakdown.value?.breakdown;
-  const isMissingFinancials = ($loan.value?.loan?.missingFinancialYears?.length ?? 0) > 0;
+  const isMissingFinancials = $loan.value?.loan?.hasFinancialCoverage === false;
   const currentLoanId = $loan.value?.loan?.id ?? 'detail';
 
   // Support both new (categories) and legacy (components) format

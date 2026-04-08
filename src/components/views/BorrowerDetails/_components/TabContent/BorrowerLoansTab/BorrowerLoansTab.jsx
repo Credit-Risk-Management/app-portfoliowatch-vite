@@ -58,7 +58,7 @@ const BorrowerLoansTab = () => {
         const hasWatchScore = hasWatchScoreData(loan);
         const categories = formatCategoryBreakdown(breakdown);
         const loanIdentifier = loan?.loanId || loan?.loanNumber || loan?.id || 'N/A';
-        const isMissingFinancials = loan?.missingFinancialYears?.length > 0;
+        const isMissingFinancials = loan?.hasFinancialCoverage === false;
         const isDefaultWatchScore = Number(loan?.currentWatchScore) === 3 && borrower.financials?.length === 0;
         return (
           <Col key={loan.id} xs={12} lg={6} className="mb-3">
