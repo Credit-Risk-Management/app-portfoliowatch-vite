@@ -111,11 +111,29 @@ small {
   }
 }
 
-td {
+// td {
+//   background-color: $info-800 !important;
+//   color: $white !important;
+// }
+
+input::placeholder {
+  color: $info-600 !important;
+}
+
+
+// Default tables use Bootstrap / page background. Dark teal cells are opt-in only
+// (SignalTable wrapper + `.table-surface--dark` on react-bootstrap <Table>).
+.signal-table td,
+.primary-table td {
   background-color: $info-800 !important;
   color: $white !important;
 }
 
-input::placeholder {
-  color: $info-600 !important;
+.table-secondary table thead th,
+.table-secondary table tbody td {
+  background-color: #fff !important;
+  border-color: #e5e7eb !important;
+}
+.table-secondary table.table-hover tbody tr:hover td {
+  background-color: #f9fafb !important;
 }
