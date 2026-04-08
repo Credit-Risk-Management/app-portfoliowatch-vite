@@ -357,26 +357,14 @@ const generateMockFinancialData = () => {
  * Handle file upload and trigger OCR
  */
 export const handleFileUpload = () => {
-  const files = $publicIncomeStatementUploader.value.financialDocs || [];
-  const { ocrApplied } = $publicFinancialUploadView.value;
+  $publicFinancialUploadView.update({
+    isLoading: true,
+  });
 
-  if (files.length > 0 && !ocrApplied) {
-    // Simulate OCR processing delay
-    setTimeout(() => {
-      const mockData = generateMockFinancialData();
-      $publicFinancialForm.update(mockData);
-      $publicFinancialUploadView.update({
-        ocrApplied: true,
-        refreshKey: $publicFinancialUploadView.value.refreshKey + 1,
-        isExtracting: false,
-        downloadSensibleUrl: null,
-        flowStep: 'review',
-        sectionsExtracted: {
-          ...initialPublicFinancialSectionsExtracted,
-          incomeStatement: true,
-          balanceSheet: true,
-        },
-      });
-    }, 500);
-  }
+  setTimeout(() => {
+    $publicFinancialUploadView.update({
+      success: true,
+      isLoading: false,
+    });
+  }, 1000);
 };

@@ -20,9 +20,7 @@ import {
 } from './_helpers/publicFinancialUpload.helpers';
 import { fetchUploadLinkData } from './_helpers/publicFinancialUpload.resolvers';
 import {
-  handleFileUpload,
-  handleSubmitAnother,
-  clearError,
+  handleFileUpload, clearError,
   clearPublicFinancialSectionFiles,
 } from './_helpers/publicFinancialUpload.events';
 
@@ -78,15 +76,15 @@ const PublicFinancialUpload = () => {
     return (
       <ContentWrapper fluid className="min-vh-100 bg-info-900">
         <Container className="py-24">
-          <Card className="bg-info-800 border-success">
+          <Card className="bg-info-800 ">
             <Card.Body className="text-center py-32">
               <FontAwesomeIcon icon={faCheckCircle} className="text-success mb-16" size="3x" />
               <h3 className="text-info-100 mb-16">Financial Data Submitted Successfully</h3>
               <p className="text-info-200 mb-24">
                 Thank you for submitting your financial information. Your data has been received and will be processed shortly.
               </p>
-              <Button variant="primary-100" onClick={handleSubmitAnother}>
-                Submit Another
+              <Button variant="primary-100" onClick={() => navigate('/')}>
+                Go to Dashboard
               </Button>
             </Card.Body>
           </Card>
