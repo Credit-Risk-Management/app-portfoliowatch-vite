@@ -1,11 +1,6 @@
 import { Badge, ListGroup } from 'react-bootstrap';
 import { formatMoneyShorthand } from '@src/utils/currency';
-
-const getScoreColor = (watchScore) => {
-  if (watchScore >= 5) return 'text-danger-300';
-  if (watchScore >= 3) return 'text-warning-300';
-  return 'text-success-300';
-};
+import { getWatchScoreColor } from '../_helpers/dashboard.consts';
 
 const formatDate = (dateString) => {
   if (!dateString) return '';
@@ -43,7 +38,10 @@ const RecentLoansList = ({ loans }) => {
         const loanAmount = loan.principalAmount || loan.originalAmount || loan.loanAmount || 0;
         // Convert Decimal to number if needed, handle null/undefined
         const watchScore = loan.watchScore != null ? Number(loan.watchScore) : 0;
-        const scoreColor = getScoreColor(watchScore);
+        const watchRating = Number.isFinite(watchScore)
+          ? Math.min(5, Math.max(1, Math.round(watchScore)))
+          : null;
+        const scoreColor = getWatchScoreColor(watchRating);
 
         return (
           <ListGroup.Item
@@ -56,7 +54,7 @@ const RecentLoansList = ({ loans }) => {
               <div className="fw-bold">{borrowerName}</div>
               <div>
                 <span className="fw-700 me-8">{formatMoneyShorthand(loanAmount)}{' '}</span>
-                <small className={`${scoreColor} fw-700`}>WATCH - {watchScore}</small>
+                <small className="fw-700" style={{ color: scoreColor }}>WATCH - {watchScore}</small>
               </div>
               <div className="text-white-50 mt-4" style={{ fontSize: '0.75rem' }}>
                 {formatDate(loan.updatedAt)}
