@@ -25,6 +25,8 @@ export const FINANCIAL_DOC_TYPES = [
   { value: 'personal_financial_statement', label: 'Personal Financial Statement' },
   { value: 'incomeStatement', label: 'Income Statement' },
   { value: 'income_statement', label: 'Income Statement' },
+  { value: 'incomeStatementQuarterly', label: 'Income Statement (Quarterly)' },
+  { value: 'incomeStatementYtd', label: 'Income Statement (YTD)' },
   { value: 'balanceSheet', label: 'Balance Sheet' },
   { value: 'balance_sheet', label: 'Balance Sheet' },
   { value: 'debtScheduleWorksheet', label: 'Debt Schedule' },

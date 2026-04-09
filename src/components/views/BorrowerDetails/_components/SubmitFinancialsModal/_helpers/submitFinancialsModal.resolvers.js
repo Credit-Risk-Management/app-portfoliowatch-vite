@@ -285,6 +285,19 @@ export const handleSwitchDocument = (index) => {
   });
 };
 
+/** Stored API `document_type` → modal `documentsByType` key (tabs use short names). */
+const API_DOCUMENT_TYPE_TO_MODAL_BUCKET = {
+  incomeStatementYtd: 'incomeStatement',
+  incomeStatementQuarterly: 'incomeStatement',
+  incomeStatement: 'incomeStatement',
+  businessTaxReturn: 'taxReturn',
+  debtSchedule: 'debtScheduleWorksheet',
+};
+
+const modalBucketForStoredDocumentType = (apiDocumentType) => (
+  API_DOCUMENT_TYPE_TO_MODAL_BUCKET[apiDocumentType] ?? apiDocumentType
+);
+
 const loadDocumentsFromBackend = async (financialId) => {
   try {
     const response = await borrowerFinancialDocumentsApi.getByBorrowerFinancial(financialId);
@@ -297,9 +310,9 @@ const loadDocumentsFromBackend = async (financialId) => {
         taxReturn: [],
       };
       documents.forEach((doc) => {
-        const type = doc.documentType;
-        if (documentsByType[type]) {
-          documentsByType[type].push({
+        const bucketKey = modalBucketForStoredDocumentType(doc.documentType);
+        if (documentsByType[bucketKey]) {
+          documentsByType[bucketKey].push({
             id: doc.id,
             fileName: doc.fileName,
             fileSize: doc.fileSize,

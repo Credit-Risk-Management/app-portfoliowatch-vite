@@ -66,7 +66,9 @@ export const revokeUploadLink = async (linkId) => {
  */
 export const getUploadLinkByToken = async (token) => {
   try {
-    const response = await publicClient.get(`/borrower-financial-upload-links/public/${token}`);
+    const response = await publicClient.get(
+      `/borrower-financial-upload-links/public/${encodeURIComponent(token)}`,
+    );
     return response;
   } catch (error) {
     console.error('Get upload link by token API error:', error);
@@ -87,10 +89,10 @@ export const getPublicPriorDebtScheduleDownload = async (token) => {
 /**
  * Submit financials via token (public, no auth)
  */
-export const submitFinancialsViaToken = async (token, financialData) => {
+export const submitFinancialsViaToken = async (token, financialData = undefined) => {
   try {
     const response = await publicClient.post(
-      `/borrower-financial-upload-links/public/${token}/submit`,
+      `/borrower-financial-upload-links/public/${encodeURIComponent(token)}/submit`,
       financialData,
     );
     return response;
@@ -98,4 +100,15 @@ export const submitFinancialsViaToken = async (token, financialData) => {
     console.error('Submit financials via token API error:', error);
     throw error;
   }
+};
+
+/**
+ * After uploading PDFs to Storage, tell the API to run EXTRACT_FINANCIALS (public token).
+ */
+export const notifyExtractReadyViaToken = async (token, taskId) => {
+  const response = await publicClient.post(
+    `/borrower-financial-upload-links/public/${encodeURIComponent(token)}/extract-ready`,
+    { taskId },
+  );
+  return response;
 };

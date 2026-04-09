@@ -18,7 +18,7 @@ import Profile from '@src/components/views/Profile';
 import Settings from '@src/components/views/Settings';
 import OrganizationSettings from '@src/components/views/OrganizationSettings';
 import UsersSettings from '@src/components/views/UsersSettings';
-import PublicFinancialUpload from '@src/components/views/Borrowers/PublicFinancialUpload';
+import PublicFinancialUpload from '@src/components/views/PublicFinacialUpload/PublicFinancialUpload';
 import PublicRoutes from '@src/components/global/PublicRoutes';
 import PrivateRoutes from '@src/components/global/PrivateRoutes';
 import { initAuthListener } from '@src/utils/auth.utils';
@@ -45,8 +45,6 @@ function App() {
         <Routes>
           <Route element={<AppWrapper />}>
             {/* Public auth routes */}
-            {/* Always-public routes — accessible regardless of auth state */}
-
             <Route element={<PublicRoutes />}>
               <Route path="/upload-financials/:token" element={<PublicFinancialUpload />} />
               <Route path="/login" element={<Login />} />

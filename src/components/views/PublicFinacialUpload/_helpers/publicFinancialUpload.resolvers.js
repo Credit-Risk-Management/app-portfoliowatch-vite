@@ -1,5 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import { getUploadLinkByToken } from '@src/api/borrowerFinancialUploadLink.api';
+import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import { $publicFinancialUploadView } from './publicFinancialUpload.consts';
 
 /**
@@ -23,25 +24,20 @@ export const fetchUploadLinkData = async (token) => {
 
     const response = await getUploadLinkByToken(token);
 
-    if (response.status === 'success') {
-      $publicFinancialUploadView.update({
-        linkData: response.data,
-        token,
-        isLoading: false,
-      });
-    } else {
-      $publicFinancialUploadView.update({
-        linkData: null,
-        isLoading: false,
-        error: 'Failed to load upload link',
-      });
-    }
+    $publicFinancialUploadView.update({
+      linkData: response?.data ?? null,
+      token,
+    });
   } catch (err) {
-    console.error('Error fetching link data:', err);
+    dangerAlert(err.message || 'Invalid or expired upload link');
     $publicFinancialUploadView.update({
       linkData: null,
       isLoading: false,
       error: err.message || 'Invalid or expired upload link',
+    });
+  } finally {
+    $publicFinancialUploadView.update({
+      isLoading: false,
     });
   }
 };
