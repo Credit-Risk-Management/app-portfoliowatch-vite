@@ -81,7 +81,7 @@ export function BorrowerFinancialsTab() {
             {consts.$copiedLink.value ? 'Copied!' : 'Quarterly Link'}
           </Button>
           <Button
-            variant={consts.$copiedLink.value ? 'success' : 'warning-100'}
+            variant={consts.$copiedAnnualLink.value ? 'success' : 'warning-100'}
             onClick={() => events.handleCreateAnnualTestUploadLink(borrowerId)}
             className="me-8"
             size="sm"

@@ -55,7 +55,7 @@ export const handleCopyPermanentLink = async () => {
   }
 };
 
-const copyToClipboard = async (url) => {
+const copyToClipboard = async (url, isAnnualLink = false) => {
   if (navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(url);
   } else {
@@ -68,8 +68,13 @@ const copyToClipboard = async (url) => {
     document.execCommand('copy');
     document.body.removeChild(tempInput);
   }
-  consts.$copiedLink.update(true);
-  setTimeout(() => consts.$copiedLink.update(false), COPIED_RESET_MS);
+  if (isAnnualLink) {
+    consts.$copiedAnnualLink.update(true);
+    setTimeout(() => consts.$copiedAnnualLink.update(false), COPIED_RESET_MS);
+  } else {
+    consts.$copiedLink.update(true);
+    setTimeout(() => consts.$copiedLink.update(false), COPIED_RESET_MS);
+  }
 };
 
 export const handleCreateQ1TestUploadLink = async (borrowerId) => {
@@ -96,7 +101,7 @@ export const handleCreateAnnualTestUploadLink = async (borrowerId) => {
     const data = response?.data ?? response;
     const url = data?.uploadLinkUrl ?? data?.upload_link_url;
     if (response?.status === 'success' && url) {
-      await copyToClipboard(url);
+      await copyToClipboard(url, true);
       successAlert('Annual link copied to clipboard!', 'toast');
     } else {
       dangerAlert('Could not create annual upload link.');
