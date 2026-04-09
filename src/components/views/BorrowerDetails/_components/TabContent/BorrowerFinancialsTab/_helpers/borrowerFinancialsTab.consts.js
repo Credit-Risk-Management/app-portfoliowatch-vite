@@ -3,6 +3,9 @@ import { Signal } from '@fyclabs/tools-fyc-react/signals';
 /** True when "Copy Borrower Link" was just used (show "Copied!") */
 export const $copiedLink = Signal(false);
 
+/** True when "Copy Annual Link" was just used (show "Copied!") */
+export const $copiedAnnualLink = Signal(false);
+
 /** True while Excel export is in progress */
 export const $isExportingExcel = Signal(false);
 
