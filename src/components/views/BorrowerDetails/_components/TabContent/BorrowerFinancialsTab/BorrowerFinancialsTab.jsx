@@ -91,7 +91,7 @@ export function BorrowerFinancialsTab() {
           </Button>
           <Button
             variant="outline-primary-100"
-            onClick={events.openImpactQuestionnaire}
+            onClick={() => $borrowerFinancialsView.update({ activeModalKey: 'impactQuaestionnaire' })}
             size="sm"
             className="me-8"
           >
