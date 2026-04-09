@@ -20,8 +20,10 @@ import {
 } from './_helpers/publicFinancialUpload.helpers';
 import { fetchUploadLinkData } from './_helpers/publicFinancialUpload.resolvers';
 import {
-  handleFileUpload, clearError,
+  handleFileUpload,
+  clearError,
   clearPublicFinancialSectionFiles,
+  handleOpenPriorDebtSchedulePdf,
 } from './_helpers/publicFinancialUpload.events';
 
 const PublicFinancialUpload = () => {
@@ -39,6 +41,7 @@ const PublicFinancialUpload = () => {
     isExtracting,
     error,
     success,
+    priorDebtOpening,
   } = $publicFinancialUploadView.value;
 
   const extracting = isExtracting ?? false;
@@ -170,7 +173,28 @@ const PublicFinancialUpload = () => {
                           key={sectionId}
                           className={isLast ? undefined : 'border-bottom border-grey-200'}
                         >
-                          <td className="px-16 py-8 fw-semibold text-dark">{title}</td>
+                          <td className="px-16 py-8">
+                            <div className="fw-semibold text-dark">{title}</div>
+                            {sectionId === 'debtSchedule' && linkData?.priorDebtSchedule && (
+                              <div className="mt-8 fw-semibold small text-dark">
+                                <div className="mb-4">
+                                  Previous schedule on file:
+                                  {' '}
+                                  <span className="text-dark">{linkData.priorDebtSchedule.fileName}</span>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="dark"
+                                  size="sm"
+                                  className="px-12"
+                                  disabled={priorDebtOpening}
+                                  onClick={() => handleOpenPriorDebtSchedulePdf()}
+                                >
+                                  {priorDebtOpening ? 'Opening…' : 'Open previous PDF'}
+                                </Button>
+                              </div>
+                            )}
+                          </td>
                           <td className="px-16 py-8">
                             {hasPdf ? (
                               <span className="d-inline-flex align-items-center fw-semibold text-success-700">

@@ -1,9 +1,11 @@
+/* eslint-disable no-nested-ternary */
 import { Row, Col, Alert, Card } from 'react-bootstrap';
 import { $borrower } from '@src/consts/consts';
 import { $borrowerFinancials } from '@src/signals';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import { $modalState } from '../../SubmitFinancialsModal/_helpers/submitFinancialsModal.consts';
 import { fetchFinancialHistory } from '../BorrowerFinancialsTab/_helpers/borrowerFinancialsTab.resolvers';
+import { hasIncomeStatementAndBalanceSheet } from '../BorrowerFinancialsTab/_helpers/borrowerFinancialsTab.helpers';
 
 const BorrowerTriggersTab = (props = {}) => {
   const list = $borrowerFinancials.value?.list || [];
@@ -18,7 +20,7 @@ const BorrowerTriggersTab = (props = {}) => {
   }, [borrowerId, list.length, isModalContext]);
 
   const currentForm = props.currentForm ?? list[0] ?? {};
-  const previousFinancial = props.previousFinancial ?? list[1];
+  const previousFinancial = props.previousFinancial ?? list.slice(1).find(hasIncomeStatementAndBalanceSheet);
   const isLoadingPrevious = props.isLoadingPrevious ?? $modalState.value?.isLoadingPrevious ?? false;
   const currentAsOfDate = currentForm?.asOfDate ? new Date(currentForm.asOfDate) : null;
   const previousAsOfDate = previousFinancial?.asOfDate ? new Date(previousFinancial.asOfDate) : null;
@@ -62,7 +64,11 @@ const BorrowerTriggersTab = (props = {}) => {
     return date.toLocaleDateString('en-US');
   };
 
-  const isPeriodComparisonMismatched = currentAsOfDate
+  const bothHaveRequiredDocs = hasIncomeStatementAndBalanceSheet(currentForm)
+    && hasIncomeStatementAndBalanceSheet(previousFinancial);
+
+  const isPeriodComparisonMismatched = !bothHaveRequiredDocs
+    && currentAsOfDate
     && previousAsOfDate
     && (
       currentAsOfDate.getMonth() !== previousAsOfDate.getMonth()

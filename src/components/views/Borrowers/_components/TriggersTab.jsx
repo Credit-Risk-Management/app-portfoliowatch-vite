@@ -1,4 +1,5 @@
 import { Row, Col, Alert, Card } from 'react-bootstrap';
+import { hasIncomeStatementAndBalanceSheet } from '@src/components/views/BorrowerDetails/_components/TabContent/BorrowerFinancialsTab/_helpers/borrowerFinancialsTab.helpers';
 
 const TriggersTab = ({ previousFinancial, currentForm, isLoadingPrevious }) => {
   const currentAsOfDate = currentForm?.asOfDate ? new Date(currentForm.asOfDate) : null;
@@ -34,7 +35,11 @@ const TriggersTab = ({ previousFinancial, currentForm, isLoadingPrevious }) => {
     return date.toLocaleDateString('en-US');
   };
 
-  const isPeriodComparisonMismatched = currentAsOfDate
+  const bothHaveRequiredDocs = hasIncomeStatementAndBalanceSheet(currentForm)
+    && hasIncomeStatementAndBalanceSheet(previousFinancial);
+
+  const isPeriodComparisonMismatched = !bothHaveRequiredDocs
+    && currentAsOfDate
     && previousAsOfDate
     && (
       currentAsOfDate.getMonth() !== previousAsOfDate.getMonth()

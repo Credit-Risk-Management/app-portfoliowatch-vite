@@ -52,7 +52,8 @@ export const SECTION_DEF_BY_ID = {
   debtSchedule: {
     sectionId: 'debtSchedule',
     title: 'Debt schedule',
-    helperText: 'Upload the debt schedule as a PDF. If a prior schedule was provided, you may download and update it.',
+    helperText:
+      'Upload an updated debt schedule as a PDF. If we have your last schedule on file, use Open previous PDF, update it, then upload the new file here.',
     inputId: 'public-financial-debt-schedule',
     replaceButtonVariant: 'outline-secondary',
   },

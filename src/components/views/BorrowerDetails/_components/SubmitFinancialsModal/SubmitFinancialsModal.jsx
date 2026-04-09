@@ -6,6 +6,7 @@ import UniversalModal from '@src/components/global/UniversalModal';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import { $borrowerFinancialsView, $borrowerFinancialsForm } from '@src/signals';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
+import { hasIncomeStatementAndBalanceSheet } from '@src/components/views/BorrowerDetails/_components/TabContent/BorrowerFinancialsTab/_helpers/borrowerFinancialsTab.helpers';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import SelectInput from '@src/components/global/Inputs/SelectInput';
 import Loadable from '@src/components/global/Loadable';
@@ -65,11 +66,12 @@ const SubmitFinancialsModal = () => {
       try {
         const response = await borrowerFinancialsApi.getByBorrowerId(
           $borrowerFinancialsView.value.currentBorrowerId,
-          { limit: 2, sortKey: 'asOfDate', sortDirection: 'desc' },
+          { limit: 10, sortKey: 'asOfDate', sortDirection: 'desc' },
         );
         const data = response?.data ?? (Array.isArray(response) ? response : []);
-        if (data?.length > 0) {
-          $modalState.update({ previousFinancial: data[0] });
+        const previous = data.find(hasIncomeStatementAndBalanceSheet);
+        if (previous) {
+          $modalState.update({ previousFinancial: previous });
         }
       } catch (err) {
         // no-op
