@@ -150,7 +150,7 @@ const PublicFinancialUpload = () => {
               || 'Upload each required PDF below. When every file is attached, run extraction to continue.'}
               </Card.Text>
               <div className="table-secondary overflow-hidden">
-                <table className="table table-hover mb-0 align-middle">
+                <table className="primary-table table table-hover mb-0 align-middle">
                   <thead>
                     <tr className="border-bottom border-grey-200">
                       <th className=" fw-semibold text-uppercase  px-16" style={{ width: '32%', color: '#71717a', letterSpacing: '0.06em' }}>Document</th>

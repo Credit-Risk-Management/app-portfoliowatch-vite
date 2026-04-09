@@ -37,7 +37,7 @@ export default function DebtServiceModalView({ show, onHide, record }) {
             <p className="text-info-100">No debt obligations found for this record.</p>
           </div>
         ) : (
-          <Table striped bordered hover responsive className="text-info-100">
+          <Table striped bordered hover responsive className="primary-table text-info-100">
             <thead className="bg-info-800">
               <tr>
                 <th className="bg-info-700 text-info-50 fw-500">Creditor Name</th>
