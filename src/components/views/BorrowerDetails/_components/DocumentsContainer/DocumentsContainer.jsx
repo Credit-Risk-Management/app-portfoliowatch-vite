@@ -811,10 +811,6 @@ const DocumentsContainer = ({
                 />
               </Col>
 
-              <Col md={12} className="mb-4 mt-8">
-                <hr className="border-info-700 mb-8" />
-                <h6 className="text-info-300 fw-500 mb-16">Balance Sheet</h6>
-              </Col>
               <Col md={12} className="mb-16">
                 <UniversalInput
                   label="Equity"
