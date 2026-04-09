@@ -427,6 +427,8 @@ export const $settingsForm = Signal({
 
 export const $notifications = Signal({
   list: [],
+  /** Recent items for the header bell dropdown (separate from paginated `/notifications` list). */
+  bellPreview: [],
   unreadCount: 0,
   isLoading: false,
   totalCount: 0,

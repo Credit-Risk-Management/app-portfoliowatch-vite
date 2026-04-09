@@ -9,6 +9,9 @@ export const getNotificationLink = (notification) => {
   if (notification.resourceType === 'LOAN' && notification.resourceId) {
     return `/loans/${notification.resourceId}`;
   }
+  if (notification.resourceType === 'BORROWER' && notification.resourceId) {
+    return `/borrowers/${notification.resourceId}?tab=financials`;
+  }
   return '/notifications';
 };
 
@@ -50,4 +53,3 @@ export const formatBadgeCount = (count, maxCount = 99) => {
   }
   return count;
 };
-

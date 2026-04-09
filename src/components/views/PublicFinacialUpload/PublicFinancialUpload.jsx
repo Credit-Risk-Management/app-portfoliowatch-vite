@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Button, Alert, Card } from 'react-bootstrap';
+import {
+  Container, Button, Alert, Card,
+} from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faFileAlt,
@@ -12,7 +14,8 @@ import FileUploader from '@src/components/global/FileUploader';
 import ContentWrapper from '@src/components/global/ContentWrapper';
 import sabreFinanceWordmark from '@src/assets/sabre_finance.svg?url';
 import { formatDate } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
-import { $publicFinancialUploadView } from './_helpers/publicFinancialUpload.consts';
+import { $publicFinancialUploadView, DEFAULT_PUBLIC_ATTESTATION_TEXT } from './_helpers/publicFinancialUpload.consts';
+import AttestationModal from './_components/AttestationModal';
 import {
   getRequiredPdfSectionsForLink,
   hasPdfStagedForSection,
@@ -24,6 +27,8 @@ import {
   clearError,
   clearPublicFinancialSectionFiles,
   handleOpenPriorDebtSchedulePdf,
+  openAttestationModal,
+  closeAttestationModal,
 } from './_helpers/publicFinancialUpload.events';
 
 const PublicFinancialUpload = () => {
@@ -34,17 +39,17 @@ const PublicFinancialUpload = () => {
   useEffect(() => {
     fetchUploadLinkData(token);
   }, [token]);
-
   const {
     linkData,
     isLoading,
-    isExtracting,
+    isSubmitting,
+    activeModalKey,
     error,
     success,
     priorDebtOpening,
   } = $publicFinancialUploadView.value;
 
-  const extracting = isExtracting ?? false;
+  const attestationText = linkData?.attestationText || DEFAULT_PUBLIC_ATTESTATION_TEXT;
 
   if (isLoading) {
     return (
@@ -75,6 +80,28 @@ const PublicFinancialUpload = () => {
     );
   }
 
+  if (linkData?.hasSubmitted) {
+    return (
+      <ContentWrapper fluid className="min-vh-100 bg-info-900">
+        <Container className="py-24">
+          <Card className="bg-info-800 border-secondary">
+            <Card.Body className="text-center py-32">
+              <FontAwesomeIcon icon={faCheckCircle} className="text-info-200 mb-16" size="3x" />
+              <h3 className="text-info-100 mb-16">Submission already received</h3>
+              <p className="text-info-200 mb-24">
+                This upload link has already been used to submit financial documents. If you need to send
+                updated files, contact your lender for a new link.
+              </p>
+              <Button variant="primary-100" onClick={() => navigate('/')}>
+                Go to Home
+              </Button>
+            </Card.Body>
+          </Card>
+        </Container>
+      </ContentWrapper>
+    );
+  }
+
   if (success) {
     return (
       <ContentWrapper fluid className="min-vh-100 bg-info-900">
@@ -82,9 +109,12 @@ const PublicFinancialUpload = () => {
           <Card className="bg-info-800 ">
             <Card.Body className="text-center py-32">
               <FontAwesomeIcon icon={faCheckCircle} className="text-success mb-16" size="3x" />
-              <h3 className="text-info-100 mb-16">Financial Data Submitted Successfully</h3>
-              <p className="text-info-200 mb-24">
-                Thank you for submitting your financial information. Your data has been received and will be processed shortly.
+              <h3 className="text-info-100 mb-16">Documents Submitted — Pending Extraction</h3>
+              <p className="text-info-200 mb-8">
+                Thank you! Your financial documents have been received.
+              </p>
+              <p className="text-info-300 mb-24">
+                Our system will extract the financial data from your uploaded PDFs shortly. Your lender will be notified once the extraction is complete.
               </p>
               <Button variant="primary-100" onClick={() => navigate('/')}>
                 Go to Dashboard
@@ -99,7 +129,6 @@ const PublicFinancialUpload = () => {
   const requiredPdfSections = getRequiredPdfSectionsForLink(linkData);
   const canRunExtraction = requiredPdfSections.length > 0
     && requiredPdfSections.every(({ sectionId }) => hasPdfStagedForSection(sectionId));
-
   return (
     <ContentWrapper fluid className="min-vh-100 bg-info-900">
       <Container className="py-16 py-md-24">
@@ -109,24 +138,24 @@ const PublicFinancialUpload = () => {
               <div className="flex-grow-1 min-w-0">
                 <h1 className="h4 fw-bold text-dark mb-8 lh-sm">Submit Financial Data</h1>
                 {linkData && (
-                <div className="d-flex flex-column gap-4">
-                  <div className="d-flex gap-8 fs-6">
-                    <span className="fw-semibold text-dark text-nowrap">Borrower</span>
-                    <span className="text-grey-600">{linkData.borrower.name}</span>
+                  <div className="d-flex flex-column gap-4">
+                    <div className="d-flex gap-8 fs-6">
+                      <span className="fw-semibold text-dark text-nowrap">Borrower</span>
+                      <span className="text-grey-600">{linkData.borrower.name}</span>
+                    </div>
+                    <div className="d-flex gap-8 fs-6">
+                      <span className="fw-semibold text-dark text-nowrap">Organization</span>
+                      <span className="text-grey-600">{linkData.organization.name}</span>
+                    </div>
+                    <div className="d-flex gap-8 fs-6">
+                      <span className="fw-semibold text-dark text-nowrap">Financial period</span>
+                      <span className="text-grey-600">
+                        {linkData.reportingPeriodEndDate
+                          ? formatDate(new Date(linkData.reportingPeriodEndDate))
+                          : 'N/A'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="d-flex gap-8 fs-6">
-                    <span className="fw-semibold text-dark text-nowrap">Organization</span>
-                    <span className="text-grey-600">{linkData.organization.name}</span>
-                  </div>
-                  <div className="d-flex gap-8 fs-6">
-                    <span className="fw-semibold text-dark text-nowrap">Financial period</span>
-                    <span className="text-grey-600">
-                      {linkData.reportingPeriodEndDate
-                        ? formatDate(new Date(linkData.reportingPeriodEndDate))
-                        : 'N/A'}
-                    </span>
-                  </div>
-                </div>
                 )}
               </div>
               {linkData?.organization?.name?.toLowerCase().includes('sabre') ? (
@@ -148,18 +177,18 @@ const PublicFinancialUpload = () => {
           </Card.Header>
           <Card.Body className="px-16 px-md-24 py-20 py-md-24">
             {error && (
-            <Alert variant="danger" dismissible onClose={clearError} className="mb-24">
-              {error}
-            </Alert>
+              <Alert variant="danger" dismissible onClose={clearError} className="mb-24">
+                {error}
+              </Alert>
             )}
             <Card className="rounded p-16">
               <Card.Title className="h4 fw-bold text-dark mb-8 d-flex align-items-center gap-8">
                 <FontAwesomeIcon icon={faFileAlt} style={{ color: '#6b7280' }} />
                 Upload financial documents
               </Card.Title>
-              <Card.Text className="fs-7 " style={{ color: '#6b7280' }}>
+              <Card.Text className="fs-7 mb-24" style={{ color: '#6b7280' }}>
                 {linkData?.lenderInstructions
-              || 'Upload each required PDF below. When every file is attached, run extraction to continue.'}
+                  || 'Upload each required PDF below. When every file is attached, certify and submit. Your lender will review your documents after they are received.'}
               </Card.Text>
               <div className="table-secondary overflow-hidden">
                 <table className="primary-table table table-hover mb-0 align-middle">
@@ -216,8 +245,8 @@ const PublicFinancialUpload = () => {
                               <span className="text-grey-600 fw-normal">Not uploaded</span>
                             )}
                           </td>
-                          <td className="px-16 py-8 text-grey-600 text-truncate" style={{ maxWidth: 0 }}>
-                            {hasPdf ? firstFileName : '—'}
+                          <td className="px-16 py-8 text- text-truncate" style={{ maxWidth: 0 }}>
+                            <div className="fw-semibold text-dark text-truncate">{hasPdf ? firstFileName : '—'}</div>
                           </td>
                           <td className="px-16 py-8 text-end">
                             <div className="d-none">
@@ -255,16 +284,27 @@ const PublicFinancialUpload = () => {
                 <Button
                   className="px-20"
                   style={{ borderRadius: '0.375rem', backgroundColor: '#151517', borderColor: '#5e6470', color: '#fff' }}
-                  onClick={() => handleFileUpload()}
-                  disabled={!canRunExtraction || extracting}
+                  onClick={openAttestationModal}
+                  disabled={!canRunExtraction || isSubmitting}
                 >
-                  {extracting ? 'Submitting...' : 'Submit Financials'}
+                  Submit Financials
                 </Button>
               </div>
             </Card>
           </Card.Body>
         </Card>
       </Container>
+
+      <AttestationModal
+        show={activeModalKey === 'attestation'}
+        attestationText={attestationText}
+        isSubmitting={isSubmitting}
+        onClose={closeAttestationModal}
+        onConfirm={() => {
+          closeAttestationModal();
+          handleFileUpload();
+        }}
+      />
     </ContentWrapper>
   );
 };

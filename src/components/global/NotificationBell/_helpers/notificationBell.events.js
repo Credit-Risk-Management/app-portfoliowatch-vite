@@ -29,9 +29,7 @@ export const handleNotificationClick = async (notification, setShow) => {
  * @param {boolean} isShown - Whether the dropdown is shown
  */
 export const handleDropdownToggle = async (isShown) => {
-  // Fetch recent notifications when dropdown opens
   if (isShown) {
-    await resolvers.fetchRecentNotifications();
+    await resolvers.refreshBellState();
   }
 };
-
