@@ -645,18 +645,6 @@ const DocumentsContainer = ({
                   inputFormatCallback={normalizeCurrencyValue}
                 />
               </Col>
-              <Col md={12} className="mb-16">
-                <UniversalInput
-                  label="Debt to Income Ratio"
-                  labelClassName="text-info-100"
-                  type="number"
-                  step="0.01"
-                  placeholder="1.00"
-                  value={$form.value.debtToIncomeRatio}
-                  name="debtToIncomeRatio"
-                  signal={$form}
-                />
-              </Col>
             </Row>
           )}
 

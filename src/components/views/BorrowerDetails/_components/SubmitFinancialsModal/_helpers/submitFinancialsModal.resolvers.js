@@ -219,12 +219,26 @@ export const handleRemoveDocument = async (documentId) => {
       clearedFields.liquidityRatio = '';
       clearedFields.retainedEarnings = '';
     }
-    if (documentType === 'taxReturn' && updatedDocs.length === 0 && !incomeStillHasDocs) {
-      clearedFields.grossRevenue = '';
-      clearedFields.netIncome = '';
-      clearedFields.profitMargin = '';
-      clearedFields.ebitda = '';
-      clearedFields.rentalExpenses = '';
+    if (documentType === 'taxReturn' && updatedDocs.length === 0) {
+      if (!incomeStillHasDocs) {
+        clearedFields.grossRevenue = '';
+        clearedFields.netIncome = '';
+        clearedFields.profitMargin = '';
+        clearedFields.ebitda = '';
+        clearedFields.rentalExpenses = '';
+      }
+      clearedFields.equity = '';
+      clearedFields.cashEquivalents = '';
+      clearedFields.accountsReceivable = '';
+      clearedFields.inventory = '';
+      clearedFields.totalCurrentAssets = '';
+      clearedFields.totalAssets = '';
+      clearedFields.accountsPayable = '';
+      clearedFields.totalCurrentLiabilities = '';
+      clearedFields.totalLiabilities = '';
+      clearedFields.liquidity = '';
+      clearedFields.liquidityRatio = '';
+      clearedFields.retainedEarnings = '';
     }
     if (allEmpty) {
       clearedFields.asOfDate = '';

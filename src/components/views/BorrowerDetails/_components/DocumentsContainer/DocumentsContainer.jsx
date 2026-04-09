@@ -810,6 +810,131 @@ const DocumentsContainer = ({
                   inputFormatCallback={normalizePercentageInput}
                 />
               </Col>
+
+              <Col md={12} className="mb-4 mt-8">
+                <hr className="border-info-700 mb-8" />
+                <h6 className="text-info-300 fw-500 mb-16">Balance Sheet</h6>
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Equity"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.equity}
+                  name="equity"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Cash & Cash Equivalents"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.cashEquivalents}
+                  name="cashEquivalents"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Accounts Receivable"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.accountsReceivable}
+                  name="accountsReceivable"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Inventory"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.inventory}
+                  name="inventory"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Total Current Assets"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.totalCurrentAssets}
+                  name="totalCurrentAssets"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Total Assets"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.totalAssets}
+                  name="totalAssets"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Accounts Payable"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.accountsPayable}
+                  name="accountsPayable"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Total Current Liabilities"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.totalCurrentLiabilities}
+                  name="totalCurrentLiabilities"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Total Liabilities"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.totalLiabilities}
+                  name="totalLiabilities"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Liquidity"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.liquidity}
+                  name="liquidity"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
+                />
+              </Col>
             </Row>
           )}
           <hr className="my-16 border-info-700" />

@@ -14,11 +14,23 @@ export function GuarantorDocuments() {
     await fetchGuarantorDocuments();
   }, []);
 
+  const formatDocumentType = (docType) => {
+    const labels = {
+      personalTaxReturn: 'Personal Tax Return',
+      personalFinancialStatement: 'Personal Financial Statement',
+      taxReturn: 'Tax Return',
+      balanceSheet: 'Balance Sheet',
+      incomeStatement: 'Income Statement',
+      debtServiceWorksheet: 'Debt Service Worksheet',
+    };
+    return labels[docType] ?? docType;
+  };
+
   const documentsTableRows = useMemo(
     () => $guarantorDocumentsDetails.value?.list?.map((doc) => ({
       ...doc,
       fileName: doc.fileName,
-      documentType: doc.documentType,
+      documentType: formatDocumentType(doc.documentType),
       uploadedAt: formatUploadDate(doc.uploadedAt),
       fileSize: formatFileSize(Number(doc.fileSize)),
       actions: (
