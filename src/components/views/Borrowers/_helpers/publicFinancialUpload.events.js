@@ -1,4 +1,4 @@
-import { submitFinancialsViaToken } from '@src/api/borrowerFinancialUploadLink.api';
+import { submitFinancialsViaToken, getPublicPriorDebtScheduleDownload } from '@src/api/borrowerFinancialUploadLink.api';
 import postToSensibleApi, { initiateUploadToSensibleApi } from '@src/api/sensible.api';
 import { storage } from '@src/utils/firebase';
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
@@ -307,6 +307,29 @@ export const handleSubmitAnother = () => {
  */
 export const clearError = () => {
   $publicFinancialUploadView.update({ error: null });
+};
+
+/**
+ * Open the borrower's prior debt schedule PDF (new tab) so they can update and re-upload.
+ */
+export const handleOpenPriorDebtSchedulePdf = async () => {
+  const { token } = $publicFinancialUploadView.value;
+  if (!token) return;
+  $publicFinancialUploadView.update({ priorDebtOpening: true });
+  try {
+    const res = await getPublicPriorDebtScheduleDownload(token);
+    if (res?.status === 'success' && res?.data?.downloadUrl) {
+      window.open(res.data.downloadUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      dangerAlert('Could not open prior debt schedule.');
+    }
+  } catch (error) {
+    dangerAlert(
+      error?.message || error?.error || 'Could not open prior debt schedule.',
+    );
+  } finally {
+    $publicFinancialUploadView.update({ priorDebtOpening: false });
+  }
 };
 
 export const setPublicFinancialAttestationAccepted = (accepted) => {

@@ -171,7 +171,7 @@ const FinancialSpreadsheetModal = ({ show, onHide, borrowerId }) => {
           </Button>
         </div>
         <div style={{ overflowX: 'auto' }}>
-          <Table striped bordered hover responsive className="text-info-100">
+          <Table striped bordered hover responsive className="primary-table text-info-100">
             <thead className="bg-info-800">
               <tr>
                 <th className="sticky-left bg-info-700 text-info-50 fw-500" style={{ minWidth: '200px', position: 'sticky', left: 0, zIndex: 10 }}>

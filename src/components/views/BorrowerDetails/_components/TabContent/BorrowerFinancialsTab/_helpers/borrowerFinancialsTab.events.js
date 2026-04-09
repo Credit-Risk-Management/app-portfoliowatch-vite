@@ -1,7 +1,10 @@
 import { $borrowerFinancialsView } from '@src/signals';
 import { successAlert, dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import { createUploadLink } from '@src/api/borrowerFinancialUploadLink.api';
-import { Q1_TEST_UPLOAD_LINK_OPTIONS } from '@src/constants/financialSubmissionRequirements';
+import {
+  Q1_TEST_UPLOAD_LINK_OPTIONS,
+  ANNUAL_TEST_UPLOAD_LINK_OPTIONS,
+} from '@src/constants/financialSubmissionRequirements';
 import * as consts from './borrowerFinancialsTab.consts';
 import { getUploadLinkUrl } from './borrowerFinancialsTab.helpers';
 import * as resolvers from './borrowerFinancialsTab.resolvers';
@@ -52,23 +55,54 @@ export const handleCopyPermanentLink = async () => {
   }
 };
 
+const copyToClipboard = async (url) => {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(url);
+  } else {
+    const tempInput = document.createElement('input');
+    tempInput.value = url;
+    tempInput.style.cssText = 'position:fixed;opacity:0;left:-999999px';
+    document.body.appendChild(tempInput);
+    tempInput.select();
+    tempInput.setSelectionRange(0, 99999);
+    document.execCommand('copy');
+    document.body.removeChild(tempInput);
+  }
+  consts.$copiedLink.update(true);
+  setTimeout(() => consts.$copiedLink.update(false), COPIED_RESET_MS);
+};
+
 export const handleCreateQ1TestUploadLink = async (borrowerId) => {
   if (!borrowerId) return;
   try {
     const response = await createUploadLink(borrowerId, Q1_TEST_UPLOAD_LINK_OPTIONS);
     const data = response?.data ?? response;
     const url = data?.uploadLinkUrl ?? data?.upload_link_url;
-    const token = data?.token;
-    if (response?.status === 'success' && (url || token)) {
-      const message = url
-        ? `Q1 test link created. ${url}`
-        : `Q1 test link created. Token: ${token}`;
-      successAlert(message, 'toast');
+    if (response?.status === 'success' && url) {
+      await copyToClipboard(url);
+      successAlert('Quarterly link copied to clipboard!', 'toast');
     } else {
-      dangerAlert('Could not create Q1 test upload link.');
+      dangerAlert('Could not create quarterly upload link.');
     }
   } catch (error) {
-    dangerAlert(error?.message || 'Failed to create Q1 test upload link.');
+    dangerAlert(error?.message || 'Failed to create quarterly upload link.');
+  }
+};
+
+export const handleCreateAnnualTestUploadLink = async (borrowerId) => {
+  if (!borrowerId) return;
+  try {
+    const response = await createUploadLink(borrowerId, ANNUAL_TEST_UPLOAD_LINK_OPTIONS);
+    const data = response?.data ?? response;
+    const url = data?.uploadLinkUrl ?? data?.upload_link_url;
+    if (response?.status === 'success' && url) {
+      await copyToClipboard(url);
+      successAlert('Annual link copied to clipboard!', 'toast');
+    } else {
+      dangerAlert('Could not create annual upload link.');
+    }
+  } catch (error) {
+    dangerAlert(error?.message || 'Failed to create annual upload link.');
   }
 };
 

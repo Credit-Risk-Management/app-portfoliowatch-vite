@@ -100,10 +100,11 @@ export const handleFileUpload = async (ocrApplied, pdfUrl) => {
         }
         if (documentType === 'balanceSheet' && parsedDocument) {
           const extractedData = parseSingleDocResponse(parsedDocument, 'balanceSheet');
-          console.log('extractedData', extractedData.currentRatio);
-          if (extractedData) {
+          if (extractedData && !Array.isArray(extractedData)) {
             $borrowerFinancialsForm.update({
               asOfDate: extractedData.asOfDate,
+              totalAssets: extractedData.totalAssets,
+              totalLiabilities: extractedData.totalLiabilities,
               totalCurrentAssets: extractedData.totalCurrentAssets,
               totalCurrentLiabilities: extractedData.totalCurrentLiabilities,
               cash: extractedData.cash,
@@ -218,12 +219,26 @@ export const handleRemoveDocument = async (documentId) => {
       clearedFields.liquidityRatio = '';
       clearedFields.retainedEarnings = '';
     }
-    if (documentType === 'taxReturn' && updatedDocs.length === 0 && !incomeStillHasDocs) {
-      clearedFields.grossRevenue = '';
-      clearedFields.netIncome = '';
-      clearedFields.profitMargin = '';
-      clearedFields.ebitda = '';
-      clearedFields.rentalExpenses = '';
+    if (documentType === 'taxReturn' && updatedDocs.length === 0) {
+      if (!incomeStillHasDocs) {
+        clearedFields.grossRevenue = '';
+        clearedFields.netIncome = '';
+        clearedFields.profitMargin = '';
+        clearedFields.ebitda = '';
+        clearedFields.rentalExpenses = '';
+      }
+      clearedFields.equity = '';
+      clearedFields.cashEquivalents = '';
+      clearedFields.accountsReceivable = '';
+      clearedFields.inventory = '';
+      clearedFields.totalCurrentAssets = '';
+      clearedFields.totalAssets = '';
+      clearedFields.accountsPayable = '';
+      clearedFields.totalCurrentLiabilities = '';
+      clearedFields.totalLiabilities = '';
+      clearedFields.liquidity = '';
+      clearedFields.liquidityRatio = '';
+      clearedFields.retainedEarnings = '';
     }
     if (allEmpty) {
       clearedFields.asOfDate = '';
@@ -352,6 +367,8 @@ export const handleOpenEditMode = async (financial) => {
     profitMargin: financial.profitMargin?.toString() || '',
     totalCurrentAssets: financial.totalCurrentAssets?.toString() || '',
     totalCurrentLiabilities: financial.totalCurrentLiabilities?.toString() || '',
+    totalAssets: financial.totalAssets?.toString() || '',
+    totalLiabilities: financial.totalLiabilities?.toString() || '',
     cash: financial.cash?.toString() || '',
     cashEquivalents: financial.cashEquivalents?.toString() || '',
     equity: financial.equity?.toString() || '',
@@ -454,6 +471,8 @@ export const handleSubmit = async (onCloseCallback) => {
       profitMargin: toNumberOrNull($borrowerFinancialsForm.value.profitMargin),
       totalCurrentAssets: toNumberOrNull($borrowerFinancialsForm.value.totalCurrentAssets),
       totalCurrentLiabilities: toNumberOrNull($borrowerFinancialsForm.value.totalCurrentLiabilities),
+      totalAssets: toNumberOrNull($borrowerFinancialsForm.value.totalAssets),
+      totalLiabilities: toNumberOrNull($borrowerFinancialsForm.value.totalLiabilities),
       cash: toNumberOrNull($borrowerFinancialsForm.value.cash),
       cashEquivalents: toNumberOrNull($borrowerFinancialsForm.value.cashEquivalents),
       equity: toNumberOrNull($borrowerFinancialsForm.value.equity),

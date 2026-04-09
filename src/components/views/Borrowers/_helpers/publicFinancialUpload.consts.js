@@ -58,4 +58,6 @@ export const $publicFinancialUploadView = Signal({
   refreshKey: 0,
   /** Borrower must check before submit (API requires attestationAccepted). */
   attestationAccepted: false,
+  /** While opening prior debt schedule PDF in a new tab */
+  priorDebtOpening: false,
 });

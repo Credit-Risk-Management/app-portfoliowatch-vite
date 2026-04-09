@@ -142,7 +142,7 @@ const UsersInvitationsTab = () => {
             Invite User
           </Button>
         </div>
-        <Table hover striped responsive className="primary-table">
+        <Table hover striped responsive className="primary-table text-info-100">
           <thead>
             <tr>
               {consts.TABLE_HEADERS.map((header) => (
@@ -217,7 +217,7 @@ const UsersInvitationsTab = () => {
       </UniversalCard>
 
       <UniversalCard headerText="Pending Invitations">
-        <Table striped bordered hover responsive className="primary-table">
+        <Table striped bordered hover responsive className="primary-table text-info-100">
           <thead>
             <tr>
               {consts.INVITATION_TABLE_HEADERS.map((header) => (

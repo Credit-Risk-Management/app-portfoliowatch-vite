@@ -75,6 +75,16 @@ export const getUploadLinkByToken = async (token) => {
 };
 
 /**
+ * Signed download URL for prior debt schedule PDF (public). Requires link with priorDebtScheduleDocumentId.
+ */
+export const getPublicPriorDebtScheduleDownload = async (token) => {
+  const response = await publicClient.get(
+    `/borrower-financial-upload-links/public/${encodeURIComponent(token)}/prior-debt-schedule-download`,
+  );
+  return response;
+};
+
+/**
  * Submit financials via token (public, no auth)
  */
 export const submitFinancialsViaToken = async (token, financialData) => {

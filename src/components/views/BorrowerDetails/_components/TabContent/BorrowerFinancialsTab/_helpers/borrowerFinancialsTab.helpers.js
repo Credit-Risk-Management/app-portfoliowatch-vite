@@ -1,6 +1,24 @@
 import { formatDate } from '@src/utils/formatDate';
 import * as consts from './borrowerFinancialsTab.consts';
 
+/**
+ * Returns true if a financial record has both an income statement AND a balance sheet.
+ * Only records meeting this requirement are used as comparison periods in trigger analysis.
+ */
+export const hasIncomeStatementAndBalanceSheet = (financial) => {
+  const docs = financial?.documents || [];
+  const hasIncomeStatement = docs.some(
+    (d) => d.documentType === 'incomeStatement' || d.documentType === 'income_statement',
+  );
+  const hasTaxReturn = docs.some(
+    (d) => d.documentType === 'taxReturn' || d.documentType === 'tax_return',
+  );
+  const hasBalanceSheet = docs.some(
+    (d) => d.documentType === 'balanceSheet' || d.documentType === 'balance_sheet',
+  );
+  return (hasIncomeStatement && hasBalanceSheet) || hasTaxReturn;
+};
+
 /** Document type values and labels for financial documents (camelCase + snake_case for API compatibility) */
 export const FINANCIAL_DOC_TYPES = [
   { value: 'personalFinancialStatement', label: 'Personal Financial Statement' },
