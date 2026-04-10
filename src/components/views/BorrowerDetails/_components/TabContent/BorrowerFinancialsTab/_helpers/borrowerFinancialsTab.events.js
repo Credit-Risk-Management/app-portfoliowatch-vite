@@ -61,27 +61,27 @@ export const handleCopyPermanentLink = async (isAnnualLink = false) => {
   }
 };
 
-// const copyToClipboard = async (url, isAnnualLink = false) => {
-//   if (navigator.clipboard?.writeText) {
-//     await navigator.clipboard.writeText(url);
-//   } else {
-//     const tempInput = document.createElement('input');
-//     tempInput.value = url;
-//     tempInput.style.cssText = 'position:fixed;opacity:0;left:-999999px';
-//     document.body.appendChild(tempInput);
-//     tempInput.select();
-//     tempInput.setSelectionRange(0, 99999);
-//     document.execCommand('copy');
-//     document.body.removeChild(tempInput);
-//   }
-//   if (isAnnualLink) {
-//     consts.$copiedAnnualLink.update(true);
-//     setTimeout(() => consts.$copiedAnnualLink.update(false), COPIED_RESET_MS);
-//   } else {
-//     consts.$copiedLink.update(true);
-//     setTimeout(() => consts.$copiedLink.update(false), COPIED_RESET_MS);
-//   }
-// };
+const copyToClipboard = async (url, isAnnualLink = false) => {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(url);
+  } else {
+    const tempInput = document.createElement('input');
+    tempInput.value = url;
+    tempInput.style.cssText = 'position:fixed;opacity:0;left:-999999px';
+    document.body.appendChild(tempInput);
+    tempInput.select();
+    tempInput.setSelectionRange(0, 99999);
+    document.execCommand('copy');
+    document.body.removeChild(tempInput);
+  }
+  if (isAnnualLink) {
+    consts.$copiedAnnualLink.update(true);
+    setTimeout(() => consts.$copiedAnnualLink.update(false), COPIED_RESET_MS);
+  } else {
+    consts.$copiedLink.update(true);
+    setTimeout(() => consts.$copiedLink.update(false), COPIED_RESET_MS);
+  }
+};
 
 export const handleCreateQ1TestUploadLink = async (borrowerId) => {
   if (!borrowerId) return;
@@ -90,7 +90,9 @@ export const handleCreateQ1TestUploadLink = async (borrowerId) => {
     const data = response?.data ?? response;
     const url = data?.uploadLinkUrl ?? data?.upload_link_url;
     if (response?.status === 'success' && url) {
-      handleCopyPermanentLink(false);
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+      const quarterlyUrl = `${baseUrl}/upload-financials/${data?.token}`;
+      await copyToClipboard(quarterlyUrl);
       successAlert('Quarterly link copied to clipboard!', 'toast');
     } else {
       dangerAlert('Could not create quarterly upload link.');
@@ -107,7 +109,9 @@ export const handleCreateAnnualTestUploadLink = async (borrowerId) => {
     const data = response?.data ?? response;
     const url = data?.uploadLinkUrl ?? data?.upload_link_url;
     if (response?.status === 'success' && url) {
-      handleCopyPermanentLink(true);
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+      const annualUrl = `${baseUrl}/upload-financials/${data?.token}`;
+      await copyToClipboard(annualUrl, true);
       successAlert('Annual link copied to clipboard!', 'toast');
     } else {
       dangerAlert('Could not create annual upload link.');
