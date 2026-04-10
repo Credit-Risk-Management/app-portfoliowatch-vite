@@ -129,12 +129,21 @@ const PublicFinancialUpload = () => {
                 </div>
                 )}
               </div>
-              <img
-                src={sabreFinanceWordmark}
-                alt="Sabre Finance"
-                className="flex-shrink-0"
-                style={{ height: '60px', width: 'auto' }}
-              />
+              {linkData?.organization?.name?.toLowerCase().includes('sabre') ? (
+                <img
+                  src={sabreFinanceWordmark}
+                  alt="Sabre Finance"
+                  className="flex-shrink-0"
+                  style={{ height: '60px', width: 'auto' }}
+                />
+              ) : (
+                <img
+                  src="/logo_dark.svg"
+                  alt={linkData?.organization?.name || 'Portfolio Watch'}
+                  className="flex-shrink-0"
+                  style={{ height: '38px', width: 'auto' }}
+                />
+              )}
             </div>
           </Card.Header>
           <Card.Body className="px-16 px-md-24 py-20 py-md-24">
