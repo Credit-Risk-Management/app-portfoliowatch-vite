@@ -41,7 +41,7 @@ export const FINANCIALS_TABLE_HEADERS = [
   { key: 'grossRevenue', value: 'Gross Revenue', sortKey: 'grossRevenue' },
   { key: 'netIncome', value: 'Net Income', sortKey: 'netIncome' },
   { key: 'ebitda', value: 'EBITDA', sortKey: 'ebitda' },
-  { key: 'debtService', value: 'Debt Service', sortKey: 'debtService' },
+  { key: 'debtService', value: 'DSCR', sortKey: 'debtService' },
   { key: 'currentRatio', value: 'Current Ratio', sortKey: 'currentRatio' },
   { key: 'liquidity', value: 'Liquidity', sortKey: 'liquidity' },
   { key: 'submittedBy', value: 'Submitted By', sortKey: 'submittedBy' },

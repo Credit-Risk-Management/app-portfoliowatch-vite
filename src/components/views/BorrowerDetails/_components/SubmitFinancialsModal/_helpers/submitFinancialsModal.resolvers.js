@@ -94,7 +94,8 @@ export const handleFileUpload = async (ocrApplied, pdfUrl) => {
               profitMargin: extractedData.profitMargin,
               ebitda: extractedData.ebitda,
               rentalExpenses: extractedData.rentalExpenses,
-              debtService: extractedData.debtService,
+              // debtService (DSCR) is computed on submit from EBITDA + debt schedule history;
+              // do not pre-fill from OCR since the extracted value is a dollar amount, not a ratio
             });
           }
         }
@@ -364,7 +365,8 @@ export const handleOpenEditMode = async (financial) => {
     grossRevenue: financial.grossRevenue?.toString() || '',
     netIncome: financial.netIncome?.toString() || '',
     ebitda: financial.ebitda?.toString() || '',
-    profitMargin: financial.profitMargin?.toString() || '',
+    // Stored as decimal (0-1); convert to percentage for the (%) form field
+    profitMargin: toDisplayPercentage(financial.profitMargin),
     totalCurrentAssets: financial.totalCurrentAssets?.toString() || '',
     totalCurrentLiabilities: financial.totalCurrentLiabilities?.toString() || '',
     totalAssets: financial.totalAssets?.toString() || '',
@@ -418,6 +420,19 @@ const toNumberOrNull = (value) => {
 };
 
 const roundTo4 = (value) => parseFloat(value.toFixed(4));
+
+/**
+ * Convert a stored profitMargin value to a percentage string for form display.
+ * Canonical storage format is percentage (0–100). Legacy records may have been
+ * saved as a decimal fraction (0–1); those are multiplied by 100 on load.
+ */
+const toDisplayPercentage = (value) => {
+  if (value == null || value === '') return '';
+  const num = parseFloat(value);
+  if (Number.isNaN(num)) return '';
+  if (num > 0 && num <= 1) return String(parseFloat((num * 100).toFixed(4)));
+  return String(num);
+};
 
 const computeDebtServiceRatio = (ebitda, totalMonthlyPayment) => {
   if (ebitda == null || totalMonthlyPayment == null) return null;

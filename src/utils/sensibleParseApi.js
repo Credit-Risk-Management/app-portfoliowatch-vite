@@ -95,11 +95,17 @@ export function extractDataFromApiResponse(
     const pmRaw = numOrUndefined(getVal(parsedDocument.profitMargin));
     let profitMargin;
     if (pmRaw !== undefined) {
-      profitMargin = pmRaw > 1 && pmRaw <= 100
-        ? parseFloat((pmRaw / 100).toFixed(4))
+      // Canonical format is percentage (0–100). Convert decimal fractions (0–1) to percentage points.
+      profitMargin = pmRaw > 0 && pmRaw <= 1
+        ? parseFloat((pmRaw * 100).toFixed(4))
         : parseFloat(pmRaw.toFixed(4));
     } else if (grossRevenue !== undefined && grossRevenue > 0) {
-      profitMargin = parseFloat((parsedDocument.total_income / grossRevenue).toFixed(4));
+      const totalIncomeRaw = numOrUndefined(
+        getVal(parsedDocument.totalIncome) ?? getVal(parsedDocument.total_income),
+      );
+      if (totalIncomeRaw !== undefined) {
+        profitMargin = parseFloat(((totalIncomeRaw / grossRevenue) * 100).toFixed(4));
+      }
     }
     return {
       asOfDate,
@@ -122,8 +128,9 @@ export function extractDataFromApiResponse(
     const depreciationExpense = num(getVal(parsedDocument.scheduleC_depreciationExpense));
     const interestExpense = num(getVal(parsedDocument.scheduleC_interestExpense));
     const ebitdaComputed = netIncome + depreciationExpense + interestExpense;
+    // Canonical format is percentage (0–100)
     const profitMargin = grossReceipts > 0
-      ? parseFloat((grossProfit / grossReceipts).toFixed(4))
+      ? parseFloat(((grossProfit / grossReceipts) * 100).toFixed(4))
       : undefined;
     return {
       asOfDate,
