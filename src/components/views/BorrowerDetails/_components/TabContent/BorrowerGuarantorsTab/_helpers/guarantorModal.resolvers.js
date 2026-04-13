@@ -17,11 +17,20 @@ const formatApiError = (err) => {
   return 'Failed to save guarantor';
 };
 
+const loanIdsFromFormField = (loanIdsField) => {
+  if (!loanIdsField || !Array.isArray(loanIdsField)) return [];
+  return loanIdsField
+    .map((x) => (x && typeof x === 'object' && x.value !== undefined ? x.value : x))
+    .filter(Boolean);
+};
+
 export const submitBorrowerGuarantorModal = async () => {
   const borrower = $borrower.value?.borrower;
   const borrowerId = borrower?.id;
-  const { editingGuarantorId } = $borrowerGuarantorModal.value;
-  const { name, email, phone } = $borrowerGuarantorModalForm.value;
+  const { editingGuarantorId, requireLoanSelection, initialLoanIds } = $borrowerGuarantorModal.value;
+  const { name, email, phone, loanIds: loanIdsField } = $borrowerGuarantorModalForm.value;
+  const selectedLoanIds = loanIdsFromFormField(loanIdsField);
+  const needsLoanPick = requireLoanSelection;
 
   if (!editingGuarantorId && !borrowerId) {
     dangerAlert('Borrower not loaded.');
@@ -29,6 +38,10 @@ export const submitBorrowerGuarantorModal = async () => {
   }
   if (!name?.trim()) {
     dangerAlert('Guarantor name is required.');
+    return;
+  }
+  if (needsLoanPick && selectedLoanIds.length === 0) {
+    dangerAlert('Select at least one loan for this guarantor.');
     return;
   }
 
@@ -40,14 +53,28 @@ export const submitBorrowerGuarantorModal = async () => {
         email: email?.trim() || null,
         phone: phone?.trim() || null,
       });
+      const prev = initialLoanIds || [];
+      const toAdd = selectedLoanIds.filter((id) => !prev.includes(id));
+      const toRemove = prev.filter((id) => !selectedLoanIds.includes(id));
+      await Promise.all([
+        ...toAdd.map((loanId) => guarantorsApi.linkToLoan(editingGuarantorId, loanId)),
+        ...toRemove.map((loanId) => guarantorsApi.unlinkFromLoan(editingGuarantorId, loanId)),
+      ]);
       successAlert('Guarantor updated.', 'toast');
     } else {
-      await guarantorsApi.create({
+      const createResponse = await guarantorsApi.create({
         borrowerId,
         name: name.trim(),
         email: email?.trim() || null,
         phone: phone?.trim() || null,
       });
+      const created = createResponse?.data || createResponse;
+      const newId = created?.id;
+      if (newId && selectedLoanIds.length > 0) {
+        await Promise.all(
+          selectedLoanIds.map((loanId) => guarantorsApi.linkToLoan(newId, loanId)),
+        );
+      }
       successAlert('Guarantor added.', 'toast');
     }
     guarantorModalEvents.closeBorrowerGuarantorModal();

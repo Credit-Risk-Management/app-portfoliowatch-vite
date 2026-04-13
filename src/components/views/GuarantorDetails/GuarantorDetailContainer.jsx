@@ -102,9 +102,12 @@ export function GuarantorDetailContainer() {
                   size="sm"
                   onClick={() => guarantorModalEvents.openEditBorrowerGuarantorModal({
                     id: $guarantorDetailView.value?.guarantorId,
+                    borrowerId: $guarantorDetailsData.value?.borrowerId,
                     name: $guarantorDetailsData.value?.name,
                     email: $guarantorDetailsData.value?.email,
                     phone: $guarantorDetailsData.value?.phone,
+                    loans: $guarantorDetailsData.value?.loans,
+                    borrowerLoans: $guarantorDetailsData.value?.borrowerLoans,
                   })}
                   aria-label={`Edit ${$guarantorDetailsData.value?.name || 'guarantor'}`}
                 >

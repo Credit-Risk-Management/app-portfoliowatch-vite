@@ -13,8 +13,11 @@ export const $guarantorDetailsData = Signal({
   name: null,
   email: null,
   phone: null,
+  borrowerId: null,
   financials: [],
   loans: [],
+  /** All loans for the borrower (for guarantor modal loan picker on guarantor detail) */
+  borrowerLoans: [],
 });
 
 export const TABLE_HEADERS = [
