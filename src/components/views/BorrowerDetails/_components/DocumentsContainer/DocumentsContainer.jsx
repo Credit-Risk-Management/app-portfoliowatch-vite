@@ -543,7 +543,7 @@ const DocumentsContainer = ({
               </option>
             )}
             {!isTaxReturnUploaded && (
-              <option value="debtServiceWorksheet">
+              <option value="debtScheduleWorksheet">
                 Debt Schedule
                 {documentsByType.debtServiceWorksheet.length > 0 ? ` (${documentsByType.debtServiceWorksheet.length})` : ''}
               </option>
@@ -749,11 +749,11 @@ const DocumentsContainer = ({
           )}
 
           {/* Debt Schedule Fields */}
-          {documentType === 'debtServiceWorksheet' && (
+          {documentType === 'debtScheduleWorksheet' && (
             <Row>
               <Col md={12} className="mb-16">
                 <Form.Text className="text-info-300">
-                  Debt service worksheet functionality coming soon.
+                  Debt schedule worksheet functionality coming soon.
                 </Form.Text>
               </Col>
             </Row>
