@@ -28,7 +28,7 @@ export const handleClose = async (pdfUrlOrEvent) => {
 
   if (downloadSensibleUrl) {
     const deleteStorageRef = storage.ref(downloadSensibleUrl);
-    await deleteStorageRef.delete().catch(() => {});
+    await deleteStorageRef.delete().catch(() => { });
   }
 
   if (pdfUrlToRevoke) {
@@ -54,19 +54,19 @@ export const handleClose = async (pdfUrlOrEvent) => {
     documentsByType: {
       balanceSheet: [],
       incomeStatement: [],
-      debtServiceWorksheet: [],
+      debtScheduleWorksheet: [],
       taxReturn: [],
     },
     currentDocumentIndex: {
       balanceSheet: 0,
       incomeStatement: 0,
-      debtServiceWorksheet: 0,
+      debtScheduleWorksheet: 0,
       taxReturn: 0,
     },
     initialStoredDocumentIdsByType: {
       balanceSheet: [],
       incomeStatement: [],
-      debtServiceWorksheet: [],
+      debtScheduleWorksheet: [],
       taxReturn: [],
     },
   });

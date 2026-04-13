@@ -151,7 +151,7 @@ const generateMockFinancialData = (documentType = 'all', filename = null) => {
     });
   }
 
-  if (documentType === 'debtServiceWorksheet' || documentType === 'all') {
+  if (documentType === 'debtScheduleWorksheet' || documentType === 'all') {
     Object.assign(baseData, {
       debtService: (1.0 + Math.random() * 2.0).toFixed(2), // 1.0 - 3.0 (actual value, not covenant)
     });

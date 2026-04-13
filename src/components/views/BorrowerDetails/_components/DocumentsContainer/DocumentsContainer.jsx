@@ -545,7 +545,7 @@ const DocumentsContainer = ({
             {!isTaxReturnUploaded && (
               <option value="debtScheduleWorksheet">
                 Debt Schedule
-                {documentsByType.debtServiceWorksheet.length > 0 ? ` (${documentsByType.debtServiceWorksheet.length})` : ''}
+                {documentsByType.debtScheduleWorksheet.length > 0 ? ` (${documentsByType.debtScheduleWorksheet.length})` : ''}
               </option>
             )}
             <option value="taxReturn">

@@ -27,8 +27,7 @@ export const FINANCIAL_DOC_TYPES = [
   { value: 'income_statement', label: 'Income Statement' },
   { value: 'balanceSheet', label: 'Balance Sheet' },
   { value: 'balance_sheet', label: 'Balance Sheet' },
-  { value: 'debtServiceWorksheet', label: 'Debt Schedule' },
-  { value: 'debt_service_worksheet', label: 'Debt Schedule' },
+  { value: 'debtScheduleWorksheet', label: 'Debt Schedule' },
   { value: 'taxReturn', label: 'Tax Return' },
   { value: 'tax_return', label: 'Tax Return' },
 ];
