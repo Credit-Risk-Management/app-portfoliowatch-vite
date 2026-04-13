@@ -187,7 +187,7 @@ export const handleRemoveDocument = async (documentId) => {
       ...documentsByType,
       [documentType]: updatedDocs,
     };
-    const allEmpty = ['balanceSheet', 'incomeStatement', 'debtServiceWorksheet', 'taxReturn'].every(
+    const allEmpty = ['balanceSheet', 'incomeStatement', 'debtScheduleWorksheet', 'taxReturn'].every(
       (k) => !(updatedDocumentsByType[k] || []).length,
     );
 
@@ -195,7 +195,7 @@ export const handleRemoveDocument = async (documentId) => {
     const taxStillHasDocs = (updatedDocumentsByType.taxReturn || []).length > 0;
     const incomeStillHasDocs = (updatedDocumentsByType.incomeStatement || []).length > 0;
     if (documentType === 'incomeStatement' && updatedDocs.length === 0) {
-      clearedFields.debtService = '';
+      clearedFields.debtSchedule = '';
       if (!taxStillHasDocs) {
         clearedFields.grossRevenue = '';
         clearedFields.netIncome = '';
@@ -293,7 +293,7 @@ const loadDocumentsFromBackend = async (financialId) => {
       const documentsByType = {
         balanceSheet: [],
         incomeStatement: [],
-        debtServiceWorksheet: [],
+        debtScheduleWorksheet: [],
         taxReturn: [],
       };
       documents.forEach((doc) => {
@@ -321,7 +321,7 @@ const loadDocumentsFromBackend = async (financialId) => {
   return {
     balanceSheet: [],
     incomeStatement: [],
-    debtServiceWorksheet: [],
+    debtScheduleWorksheet: [],
     taxReturn: [],
   };
 };
@@ -333,7 +333,7 @@ const collectStoredIdsByType = (documentsByType) => ({
   incomeStatement: (documentsByType.incomeStatement || [])
     .filter((d) => d.isStored && d.id)
     .map((d) => d.id),
-  debtServiceWorksheet: (documentsByType.debtServiceWorksheet || [])
+  debtScheduleWorksheet: (documentsByType.debtScheduleWorksheet || [])
     .filter((d) => d.isStored && d.id)
     .map((d) => d.id),
   taxReturn: (documentsByType.taxReturn || [])
@@ -406,7 +406,7 @@ export const handleOpenEditMode = async (financial) => {
     currentDocumentIndex: {
       balanceSheet: 0,
       incomeStatement: 0,
-      debtServiceWorksheet: 0,
+      debtScheduleWorksheet: 0,
       taxReturn: 0,
       ...(firstDocType ? { [firstDocType]: 0 } : {}),
     },
