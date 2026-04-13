@@ -34,8 +34,10 @@ export const fetchGuarantorDetail = async (guarantorId) => {
       name: guarantorData.name,
       email: guarantorData.email,
       phone: guarantorData.phone,
+      borrowerId: guarantorData.borrowerId ?? null,
       financials: guarantorData.financials,
       loans: guarantorData.guarantorToLoans.map((loan) => loan.loan),
+      borrowerLoans: guarantorData.borrower?.loans || [],
     });
     $guarantorDetailView.update({
       guarantorId: guarantorData.id,

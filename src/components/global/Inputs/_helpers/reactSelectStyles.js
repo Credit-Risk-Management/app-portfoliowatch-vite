@@ -1,4 +1,5 @@
 /** Shared react-select / react-select/async visual styles (Portfolio Watch theme). */
+//
 export const reactSelectStyles = {
   control: (base) => ({
     ...base,
@@ -27,24 +28,25 @@ export const reactSelectStyles = {
   multiValue: (base) => ({
     ...base,
     backgroundColor: '#68C0CA',
-    color: '#D0F5FA',
+    color: '#151517',
+    fontWeight: 'bold',
     borderRadius: '10px',
     margin: '0',
     marginRight: '4px',
-    height: '21px',
+    height: '22px',
   }),
   multiValueLabel: (base) => ({
     ...base,
-    color: '#D0F5FA',
+    color: '#151517',
     paddingLeft: '10px',
   }),
   multiValueRemove: (base) => ({
     ...base,
-    color: '#D0F5FA',
+    color: '#151517',
     borderRadius: '10px',
     ':hover': {
       backgroundColor: '#EDEDED',
-      color: '#D0F5FA',
+      color: '#151517',
     },
   }),
   input: (base) => ({

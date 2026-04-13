@@ -43,10 +43,18 @@ export const $borrowerGuarantorModal = Signal({
   show: false,
   editingGuarantorId: null,
   isSubmitting: false,
+  /** Borrower id for async loan search (`GET /loans/borrower/:id`) */
+  loanPickerBorrowerId: null,
+  /** True when this borrower has loans and at least one must be selected */
+  requireLoanSelection: false,
+  /** Linked loan ids when editing; used to diff add/remove */
+  initialLoanIds: [],
 });
 
 export const $borrowerGuarantorModalForm = Signal({
   name: '',
   email: '',
   phone: '',
+  /** Selected loan ids (strings) */
+  loanIds: [],
 });
