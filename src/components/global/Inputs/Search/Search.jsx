@@ -1,7 +1,7 @@
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import { $form } from '@src/signals';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 const Search = ({
   signal = $form,
@@ -9,29 +9,52 @@ const Search = ({
   placeholder = 'Search',
   hidden = false,
   onChange,
-}) => (
-  <div
-    className="d-flex align-items-center bg-info-800 pe-8"
-    style={{ borderRadius: '10px' }}
-    hidden={hidden}
-  >
-    <div className="flex-grow-1">
-      <UniversalInput
-        name={name}
-        signal={signal}
-        type="text"
-        placeholder={placeholder}
-        className="bg-transparent border-0 text-info-100"
-        onChange={(e) => {
-          signal.update({ [name]: e.target.value });
-          if (onChange) {
-            onChange();
-          }
-        }}
-      />
+  onClear,
+}) => {
+  const raw = signal?.value?.[name];
+  const showClear = typeof raw === 'string' ? raw.trim().length > 0 : Boolean(raw);
+
+  const handleClear = () => {
+    signal.update({ [name]: '' });
+    if (onClear) {
+      onClear();
+    }
+  };
+
+  return (
+    <div
+      className="d-flex align-items-center bg-info-800 pe-8"
+      style={{ borderRadius: '10px' }}
+      hidden={hidden}
+    >
+      <div className="flex-grow-1">
+        <UniversalInput
+          name={name}
+          signal={signal}
+          type="text"
+          placeholder={placeholder}
+          className="bg-transparent border-0 text-info-100"
+          onChange={(e) => {
+            signal.update({ [name]: e.target.value });
+            if (onChange) {
+              onChange();
+            }
+          }}
+        />
+      </div>
+      {showClear && (
+        <button
+          type="button"
+          className="btn btn-link p-8 ms-4 lh-1 border-0 shadow-none text-info-50 text-info-600"
+          aria-label="Clear search"
+          onClick={handleClear}
+        >
+          <FontAwesomeIcon icon={faTimes} />
+        </button>
+      )}
+      <FontAwesomeIcon icon={faSearch} className="ms-4 text-info-50 text-info-600" />
     </div>
-    <FontAwesomeIcon icon={faSearch} className="ms-4 text-info-50 text-info-600" />
-  </div>
-);
+  );
+};
 
 export default Search;

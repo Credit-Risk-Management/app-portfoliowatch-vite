@@ -8,10 +8,12 @@ import PageHeader from '@src/components/global/PageHeader';
 import UniversalCard from '@src/components/global/UniversalCard';
 import Loadable from '@src/components/global/Loadable';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faEdit } from '@fortawesome/free-solid-svg-icons';
 import { formatCurrency } from '@src/utils/formatCurrency';
 import { GuarantorNetWorthWithMemoFlag, getLatestGuarantorFinancial } from '@src/utils/guarantorFinancialsSource';
 import { calculateAnnualDebtServiceFromLoans } from '@src/utils/currency';
+import AddEditGuarantorModal from '@src/components/views/BorrowerDetails/_components/TabContent/BorrowerGuarantorsTab/_components/AddEditGuarantorModal';
+import * as guarantorModalEvents from '@src/components/views/BorrowerDetails/_components/TabContent/BorrowerGuarantorsTab/_helpers/guarantorModal.events';
 import * as resolvers from './_helpers/guarantorDetails.resolvers';
 import * as guarantorEvents from './_helpers/guarantorDetails.events';
 import GuarantorFinancials from './_components/GuarantorFinancials';
@@ -73,14 +75,14 @@ export function GuarantorDetailContainer() {
   return (
     <Loadable signal={$guarantorDetailView} template="fullscreen">
       <Container className="py-16 py-md-24">
-        <div className="d-flex justify-content-between align-items-center">
+        <div className="d-flex justify-content-between align-items-center flex-wrap gap-8 mb-12 mb-md-16">
           <Button
             type="button"
             onClick={() => {
               resolvers.resetGuarantorRouteState();
               guarantorEvents.navigateBackOrDefault(navigate);
             }}
-            className="btn-sm border-dark text-dark-800 bg-grey-50 mb-12 mb-md-16"
+            className="btn-sm border-dark text-dark-800 bg-grey-50"
           >
             <FontAwesomeIcon icon={faArrowLeft} className="me-8" />
             Back
@@ -90,7 +92,27 @@ export function GuarantorDetailContainer() {
 
         <Row>
           <Col xs={6} md={4} className="mb-12 mb-md-16">
-            <UniversalCard headerText="Guarantor Details">
+            <UniversalCard
+              headerText="Guarantor Details"
+              headerRight={(
+                <Button
+                  type="button"
+                  variant="outline-primary-100"
+                  className="flex-shrink-0"
+                  size="sm"
+                  onClick={() => guarantorModalEvents.openEditBorrowerGuarantorModal({
+                    id: $guarantorDetailView.value?.guarantorId,
+                    name: $guarantorDetailsData.value?.name,
+                    email: $guarantorDetailsData.value?.email,
+                    phone: $guarantorDetailsData.value?.phone,
+                  })}
+                  aria-label={`Edit ${$guarantorDetailsData.value?.name || 'guarantor'}`}
+                >
+                  <FontAwesomeIcon icon={faEdit} className="me-8" />
+                  Edit
+                </Button>
+              )}
+            >
               <Col>
                 <div className="text-info-200 fw-300 fs-6 mt-8">Net Worth</div>
                 <GuarantorNetWorthWithMemoFlag
@@ -174,6 +196,7 @@ export function GuarantorDetailContainer() {
         </Row>
       </Container>
       <SubmitPFSModal />
+      <AddEditGuarantorModal />
     </Loadable>
   );
 }
