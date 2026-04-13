@@ -38,3 +38,15 @@ export const $borrowerDocumentsFilter = Signal({
 export const $borrowerDocumentsView = Signal({
   isTableLoading: false,
 });
+
+export const $borrowerGuarantorModal = Signal({
+  show: false,
+  editingGuarantorId: null,
+  isSubmitting: false,
+});
+
+export const $borrowerGuarantorModalForm = Signal({
+  name: '',
+  email: '',
+  phone: '',
+});

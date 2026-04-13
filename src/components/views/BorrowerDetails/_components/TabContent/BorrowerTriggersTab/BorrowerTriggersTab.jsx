@@ -48,12 +48,24 @@ const BorrowerTriggersTab = (props = {}) => {
     return `${sign}${value.toFixed(2)}%`;
   };
 
-  /** Stored margin may be a fraction (e.g. 0.12) or already a percent (e.g. 12) */
+  /**
+   * Normalize a profitMargin value to percentage (0–100) so calculateChange always
+   * compares apples-to-apples regardless of how a legacy record was stored.
+   * Canonical format is percentage; legacy decimal fractions (0–1) are multiplied by 100.
+   */
+  const normalizeProfitMarginToPercent = (value) => {
+    if (value === null || value === undefined || value === '') return null;
+    const num = parseFloat(value);
+    if (Number.isNaN(num)) return null;
+    if (num > 0 && num <= 1) return num * 100;
+    return num;
+  };
+
+  /** Display a profitMargin percentage value as a human-readable string. */
   const formatProfitMarginValue = (value) => {
     if (value === null || value === undefined || value === '') return 'N/A';
     const num = parseFloat(value);
     if (Number.isNaN(num)) return 'N/A';
-    if (num > 0 && num <= 1) return `${(num * 100).toFixed(2)}%`;
     return `${num.toFixed(2)}%`;
   };
 
@@ -176,8 +188,8 @@ const BorrowerTriggersTab = (props = {}) => {
         <Col md={6}>
           <TriggerCard
             title="Change in Profit Margin"
-            previousValue={previousFinancial.profitMargin}
-            currentValue={currentForm.profitMargin}
+            previousValue={normalizeProfitMarginToPercent(previousFinancial.profitMargin)}
+            currentValue={normalizeProfitMarginToPercent(currentForm.profitMargin)}
             isCurrency={false}
             formatValue={formatProfitMarginValue}
           />

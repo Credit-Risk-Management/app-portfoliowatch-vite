@@ -142,6 +142,11 @@ const Borrowers = () => {
               setSearchParams(borrowersFilterToUrlParams($borrowersFilter.value));
               $borrowersFilter.update({ page: 1 });
             }}
+            onClear={() => {
+              handleBorrowerFilterChange();
+              setSearchParams(borrowersFilterToUrlParams($borrowersFilter.value));
+              $borrowersFilter.update({ page: 1 });
+            }}
             signal={$borrowersFilter}
             name="searchTerm"
           />

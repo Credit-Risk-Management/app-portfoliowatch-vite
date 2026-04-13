@@ -147,7 +147,7 @@ const generateMockFinancialData = (documentType = 'all', filename = null) => {
       netIncome: netIncome.toString(),
       ebitda: ebitda.toString(),
       rentalExpenses: Math.floor(grossRevenue * (0.02 + Math.random() * 0.08)).toString(), // 2% - 10% of revenue
-      profitMargin: ((netIncome / grossRevenue) * 100).toFixed(2), // Calculate actual margin as percentage
+      profitMargin: ((netIncome / grossRevenue) * 100).toFixed(2), // percentage (0–100)
     });
   }
 
@@ -342,8 +342,9 @@ const extractTaxReturnFromApiResponse = (parsedDocument) => {
   const depreciationExpense = parseApiNumber(getVal(parsedDocument.scheduleC_depreciationExpense));
   const interestExpense = parseApiNumber(getVal(parsedDocument.scheduleC_interestExpense));
   const ebitdaComputed = netIncome + depreciationExpense + interestExpense;
+  // Canonical format is percentage (0–100)
   const profitMargin = grossReceipts > 0
-    ? parseFloat((grossProfit / grossReceipts).toFixed(4))
+    ? parseFloat(((grossProfit / grossReceipts) * 100).toFixed(4))
     : undefined;
 
   const result = {

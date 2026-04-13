@@ -28,6 +28,7 @@ import {
 } from './_components/TabContent';
 import { fetchBorrowerDetail, resetBorrowerRouteState } from './_helpers/borrowerDetail.resolvers';
 import EditBorrowerDetailModal from './_components/EditBorrowerDetailModal';
+import AddEditGuarantorModal from './_components/TabContent/BorrowerGuarantorsTab/_components/AddEditGuarantorModal';
 
 const tabs = [
   {
@@ -163,6 +164,8 @@ export function BorrowerDetailsContainer() {
 
         {/* Edit Borrower Modal */}
         <EditBorrowerDetailModal />
+
+        <AddEditGuarantorModal />
 
         {/* Document Modals */}
         <DeleteBorrowerDocumentModal />
