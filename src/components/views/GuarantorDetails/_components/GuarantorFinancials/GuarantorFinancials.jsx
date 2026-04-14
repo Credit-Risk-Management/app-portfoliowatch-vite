@@ -7,6 +7,7 @@ import { Button } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChartLine, faCheck, faCopy, faTable } from '@fortawesome/free-solid-svg-icons';
 import { formatDate } from '@src/utils/formatDate';
+import { formatRatioPercentForDisplay } from '@src/utils/ratioPercent';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import { $submitPFSModalView } from '../SubmitPFSModal/_helpers/submitPFSModal.const';
 import { $guarantorDetailView } from '../../_helpers/guarantorDetails.consts';
@@ -55,7 +56,9 @@ export function GuarantorFinancials() {
     liquidity: formatCurrency(financial.liquidity),
     annualDebtService: formatCurrency(financial.annualDebtService),
     adjustedGrossIncome: formatCurrency(financial.adjustedGrossIncome),
-    debtToincomeRatio: financial.debtToincomeRatio != null ? Number(financial.debtToincomeRatio).toFixed(2) : '-',
+    debtToincomeRatio: financial.debtToincomeRatio != null
+      ? formatRatioPercentForDisplay(financial.debtToincomeRatio ?? financial.debtToIncomeRatio)
+      : '-',
     asOfDate: formatDate(financial.asOfDate),
   })), [sortedFinancials]);
 

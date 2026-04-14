@@ -442,6 +442,20 @@ const computeDebtServiceRatio = (ebitda, totalMonthlyPayment) => {
   return roundTo4(ebitda / annualDebtService);
 };
 
+/** Total current assets / total current liabilities (matches WATCH Weighted Exposure). */
+const computeCurrentRatio = (totalCurrentAssets, totalCurrentLiabilities) => {
+  if (totalCurrentAssets == null || totalCurrentLiabilities == null) return null;
+  if (totalCurrentLiabilities <= 0) return null;
+  return roundTo4(totalCurrentAssets / totalCurrentLiabilities);
+};
+
+/** Cash + cash equivalents (matches WATCH liquidity field). Either may be omitted; both null => no value. */
+const computeLiquidity = (cash, cashEquivalents) => {
+  if (cash == null && cashEquivalents == null) return null;
+  const sum = (cash ?? 0) + (cashEquivalents ?? 0);
+  return parseFloat(sum.toFixed(2));
+};
+
 export const handleSubmit = async (onCloseCallback) => {
   const { $modalState } = consts;
   try {
@@ -465,6 +479,11 @@ export const handleSubmit = async (onCloseCallback) => {
     }
 
     const formEbitda = toNumberOrNull($borrowerFinancialsForm.value.ebitda);
+    const formTca = toNumberOrNull($borrowerFinancialsForm.value.totalCurrentAssets);
+    const formTcl = toNumberOrNull($borrowerFinancialsForm.value.totalCurrentLiabilities);
+    const formCash = toNumberOrNull($borrowerFinancialsForm.value.cash);
+    const formCashEq = toNumberOrNull($borrowerFinancialsForm.value.cashEquivalents);
+
     let computedDebtServiceRatio = null;
     try {
       const debtServiceResponse = await debtServiceHistoryApi.getLatestByBorrowerId(borrowerId);
@@ -475,6 +494,9 @@ export const handleSubmit = async (onCloseCallback) => {
       // Non-blocking fallback: if debt service history is unavailable, keep current/form value.
       computedDebtServiceRatio = null;
     }
+
+    const computedCurrentRatio = computeCurrentRatio(formTca, formTcl);
+    const computedLiquidity = computeLiquidity(formCash, formCashEq);
 
     const financialData = {
       borrowerId,
@@ -497,8 +519,9 @@ export const handleSubmit = async (onCloseCallback) => {
       // Always compute DSCR on submit when we have EBITDA + latest debt schedule.
       // Fallback to existing/form value only if compute inputs are unavailable.
       debtService: computedDebtServiceRatio ?? toNumberOrNull($borrowerFinancialsForm.value.debtService),
-      currentRatio: toNumberOrNull($borrowerFinancialsForm.value.currentRatio),
-      liquidity: toNumberOrNull($borrowerFinancialsForm.value.liquidity),
+      // Current ratio & liquidity from balance sheet fields when possible (same as WATCH formulas).
+      currentRatio: computedCurrentRatio ?? toNumberOrNull($borrowerFinancialsForm.value.currentRatio),
+      liquidity: computedLiquidity ?? toNumberOrNull($borrowerFinancialsForm.value.liquidity),
       liquidityRatio: toNumberOrNull($borrowerFinancialsForm.value.liquidityRatio),
       retainedEarnings: toNumberOrNull($borrowerFinancialsForm.value.retainedEarnings),
       notes: $borrowerFinancialsForm.value.notes || null,
