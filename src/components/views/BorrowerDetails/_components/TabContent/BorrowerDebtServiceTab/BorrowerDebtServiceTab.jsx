@@ -31,14 +31,15 @@ export function BorrowerDebtServiceTab() {
     const financialsList = $borrowerFinancials.value?.list || [];
     let financialToUse = $debtServiceContainerDetails.value?.latestFinancial;
 
-    // If we don't have latestFinancial in state but have financials in signal, use that
+    // Resolver normally fills latestFinancial from /latest (newest with EBITDA). If missing, prefer the
+    // most recent as-of date that has EBITDA; else newest row (same ordering as Financials tab).
     if (!financialToUse && financialsList.length > 0) {
-      const sortedFinancials = [...financialsList].sort((a, b) => {
-        const dateA = new Date(a.asOfDate);
-        const dateB = new Date(b.asOfDate);
-        return dateB - dateA;
-      });
-      financialToUse = sortedFinancials[0] || null;
+      const sortedFinancials = [...financialsList].sort(
+        (a, b) => new Date(b.asOfDate) - new Date(a.asOfDate),
+      );
+      financialToUse = sortedFinancials.find(
+        (f) => f.ebitda != null && f.ebitda !== '',
+      ) ?? sortedFinancials[0] ?? null;
     }
 
     // Get EBITDA from latest financial - use same approach as Financials tab

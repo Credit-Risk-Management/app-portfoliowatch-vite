@@ -1,5 +1,5 @@
 import { $borrower } from '@src/consts/consts';
-import { $debtServiceHistory, $borrowerFinancials } from '@src/signals';
+import { $debtServiceHistory } from '@src/signals';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
 import debtServiceHistoryApi from '@src/api/debtServiceHistory.api';
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
@@ -44,32 +44,28 @@ export const fetchLatestDebtService = async () => {
 export const fetchFinancialHistory = async () => {
   if (!$borrower.value?.borrower?.id) return;
 
+  const borrowerId = $borrower.value.borrower.id;
+
   try {
-    // Check if financials are already loaded in the signal
-    const existingFinancials = $borrowerFinancials.value?.list || [];
-    if (existingFinancials.length > 0) {
-      // Use existing financials - sort and get latest
-      const sorted = [...existingFinancials].sort((a, b) => {
-        const dateA = new Date(a.asOfDate);
-        const dateB = new Date(b.asOfDate);
-        return dateB - dateA;
-      });
-      $debtServiceContainerDetails.update({ latestFinancial: sorted[0] || null });
+    // Always use server 'latest for DSCR': newest submitted row with non-null EBITDA
+    // (see borrowerFinancials.getLatestByBorrowerId — not the same as newest asOfDate only).
+    const latestResp = await borrowerFinancialsApi.getLatestByBorrowerId(borrowerId);
+    if (latestResp.success && latestResp.data) {
+      $debtServiceContainerDetails.update({ latestFinancial: latestResp.data });
       return;
     }
 
-    // If not loaded, fetch just the latest one without updating the shared signal
-    const response = await borrowerFinancialsApi.getByBorrowerId(
-      $borrower.value.borrower.id,
-      {
-        sortKey: 'asOfDate',
-        sortDirection: 'desc',
-        limit: 1,
-      },
-    );
+    // No row with EBITDA yet: fall back to most recent statement by as-of date
+    const pageResp = await borrowerFinancialsApi.getByBorrowerId(borrowerId, {
+      sortKey: 'asOfDate',
+      sortDirection: 'desc',
+      limit: 1,
+    });
 
-    if (response.success && response.data && response.data.length > 0) {
-      $debtServiceContainerDetails.update({ latestFinancial: response.data[0] });
+    if (pageResp.success && pageResp.data?.length > 0) {
+      $debtServiceContainerDetails.update({ latestFinancial: pageResp.data[0] });
+    } else {
+      $debtServiceContainerDetails.update({ latestFinancial: null });
     }
   } catch (error) {
     console.error('Error fetching financial history:', error);
