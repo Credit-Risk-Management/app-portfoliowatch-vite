@@ -22,6 +22,21 @@ const toNumberOrNull = (value) => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
+const roundTo4 = (value) => parseFloat(value.toFixed(4));
+
+/**
+ * DTI = monthly debt service ÷ monthly income.
+ * Form captures annual figures: derive monthly, then divide (same as annual ÷ annual).
+ */
+const computeDebtToIncomeRatio = (annualDebtService, adjustedGrossIncome) => {
+  if (annualDebtService == null || adjustedGrossIncome == null) return null;
+  if (adjustedGrossIncome <= 0) return null;
+  const monthlyDebt = annualDebtService / 12;
+  const monthlyIncome = adjustedGrossIncome / 12;
+  if (monthlyIncome <= 0) return null;
+  return roundTo4(monthlyDebt / monthlyIncome);
+};
+
 export const handleFileUpload = async ($financialDocsUploader, $modalState, ocrApplied, pdfUrl) => {
   $modalState.update({ isLoading: true });
   try {
@@ -391,6 +406,13 @@ export const handleSubmit = async (onCloseCallback) => {
       ? totalAssetsNumber - totalLiabilitiesNumber
       : toNumberOrNull(netWorth);
 
+    const annualDebtServiceNum = toNumberOrNull(annualDebtService);
+    const adjustedGrossIncomeNum = toNumberOrNull(adjustedGrossIncome);
+    const computedDtiRaw = computeDebtToIncomeRatio(annualDebtServiceNum, adjustedGrossIncomeNum);
+    const computedDebtToIncomeRatio = computedDtiRaw != null
+      ? normalizeRatioDecimalToPercent(computedDtiRaw)
+      : null;
+
     // Body shape: GuarantorFinancialData (id only on update, from URL)
     const pfsData = {
       guarantorId,
@@ -398,9 +420,9 @@ export const handleSubmit = async (onCloseCallback) => {
       totalLiabilities: totalLiabilitiesNumber,
       netWorth: computedNetWorth,
       liquidity: toNumberOrNull(liquidity),
-      annualDebtService: toNumberOrNull(annualDebtService),
-      adjustedGrossIncome: toNumberOrNull(adjustedGrossIncome),
-      debtToIncomeRatio: toNumberOrNull(debtToIncomeRatio),
+      annualDebtService: annualDebtServiceNum,
+      adjustedGrossIncome: adjustedGrossIncomeNum,
+      debtToIncomeRatio: computedDebtToIncomeRatio ?? toNumberOrNull(debtToIncomeRatio),
       asOfDate,
       submittedBy: $user.value?.email || $user.value?.name || 'Unknown User',
       notes: notes || '',
