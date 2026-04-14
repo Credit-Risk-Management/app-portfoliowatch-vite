@@ -3,6 +3,10 @@ import { Row, Col, Alert, Card } from 'react-bootstrap';
 import { $borrower } from '@src/consts/consts';
 import { $borrowerFinancials } from '@src/signals';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
+import {
+  normalizeRatioDecimalToPercent,
+  formatRatioPercentForDisplay,
+} from '@src/utils/ratioPercent';
 import { $modalState } from '../../SubmitFinancialsModal/_helpers/submitFinancialsModal.consts';
 import { fetchFinancialHistory } from '../BorrowerFinancialsTab/_helpers/borrowerFinancialsTab.resolvers';
 import { hasIncomeStatementAndBalanceSheet } from '../BorrowerFinancialsTab/_helpers/borrowerFinancialsTab.helpers';
@@ -46,27 +50,6 @@ const BorrowerTriggersTab = (props = {}) => {
     if (value === null || value === undefined) return 'N/A';
     const sign = value > 0 ? '+' : '';
     return `${sign}${value.toFixed(2)}%`;
-  };
-
-  /**
-   * Normalize a profitMargin value to percentage (0–100) so calculateChange always
-   * compares apples-to-apples regardless of how a legacy record was stored.
-   * Canonical format is percentage; legacy decimal fractions (0–1) are multiplied by 100.
-   */
-  const normalizeProfitMarginToPercent = (value) => {
-    if (value === null || value === undefined || value === '') return null;
-    const num = parseFloat(value);
-    if (Number.isNaN(num)) return null;
-    if (num > 0 && num <= 1) return num * 100;
-    return num;
-  };
-
-  /** Display a profitMargin percentage value as a human-readable string. */
-  const formatProfitMarginValue = (value) => {
-    if (value === null || value === undefined || value === '') return 'N/A';
-    const num = parseFloat(value);
-    if (Number.isNaN(num)) return 'N/A';
-    return `${num.toFixed(2)}%`;
   };
 
   const formatPeriodDate = (dateValue) => {
@@ -188,10 +171,10 @@ const BorrowerTriggersTab = (props = {}) => {
         <Col md={6}>
           <TriggerCard
             title="Change in Profit Margin"
-            previousValue={normalizeProfitMarginToPercent(previousFinancial.profitMargin)}
-            currentValue={normalizeProfitMarginToPercent(currentForm.profitMargin)}
+            previousValue={normalizeRatioDecimalToPercent(previousFinancial.profitMargin)}
+            currentValue={normalizeRatioDecimalToPercent(currentForm.profitMargin)}
             isCurrency={false}
-            formatValue={formatProfitMarginValue}
+            formatValue={formatRatioPercentForDisplay}
           />
         </Col>
         <Col md={6}>

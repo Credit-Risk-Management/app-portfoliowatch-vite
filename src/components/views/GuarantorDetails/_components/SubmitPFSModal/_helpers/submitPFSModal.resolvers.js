@@ -6,6 +6,7 @@ import postToSensibleApi, { initiateUploadToSensibleApi } from '@src/api/sensibl
 import { storage } from '@src/utils/firebase';
 import { fetchGuarantorDetail } from '@src/components/views/GuarantorDetails/_helpers/guarantorDetails.resolvers';
 import { parseSingleDocResponse } from '@src/utils/sensibleParseApi';
+import { normalizeRatioDecimalToPercent } from '@src/utils/ratioPercent';
 import { $submitPFSModalView, $submitPFSModalDetails } from './submitPFSModal.const';
 
 const SENSIBLE_DOCUMENT_TYPES = {
@@ -317,7 +318,13 @@ export const handleOpenEditMode = async (financial) => {
       liquidity: financial.liquidity?.toString() || '',
       annualDebtService: financial.annualDebtService?.toString() || '',
       adjustedGrossIncome: financial.adjustedGrossIncome?.toString() || '',
-      debtToIncomeRatio: financial.debtToIncomeRatio != null ? Number(financial.debtToIncomeRatio).toFixed(2) : null,
+      debtToIncomeRatio: financial.debtToIncomeRatio != null || financial.debtToincomeRatio != null
+        ? (() => {
+          const raw = financial.debtToIncomeRatio ?? financial.debtToincomeRatio;
+          const n = normalizeRatioDecimalToPercent(raw);
+          return n != null ? n.toFixed(2) : null;
+        })()
+        : null,
       notes: financial.notes || '',
       documentsByType,
       initialStoredDocumentIdsByType: collectStoredIdsByType(documentsByType),
