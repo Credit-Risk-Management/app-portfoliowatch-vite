@@ -456,6 +456,16 @@ const computeLiquidity = (cash, cashEquivalents) => {
   return parseFloat(sum.toFixed(2));
 };
 
+/**
+ * Gross profit margin as percentage points (0–100), same as sensible OCR fallback and
+ * netIncome/grossRevenue when the margin field is omitted.
+ */
+const computeProfitMarginPercent = (netIncome, grossRevenue) => {
+  if (grossRevenue == null || grossRevenue <= 0) return null;
+  if (netIncome == null) return null;
+  return roundTo4((netIncome / grossRevenue) * 100);
+};
+
 export const handleSubmit = async (onCloseCallback) => {
   const { $modalState } = consts;
   try {
@@ -479,6 +489,8 @@ export const handleSubmit = async (onCloseCallback) => {
     }
 
     const formEbitda = toNumberOrNull($borrowerFinancialsForm.value.ebitda);
+    const formGrossRevenue = toNumberOrNull($borrowerFinancialsForm.value.grossRevenue);
+    const formNetIncome = toNumberOrNull($borrowerFinancialsForm.value.netIncome);
     const formTca = toNumberOrNull($borrowerFinancialsForm.value.totalCurrentAssets);
     const formTcl = toNumberOrNull($borrowerFinancialsForm.value.totalCurrentLiabilities);
     const formCash = toNumberOrNull($borrowerFinancialsForm.value.cash);
@@ -498,6 +510,11 @@ export const handleSubmit = async (onCloseCallback) => {
     const computedCurrentRatio = computeCurrentRatio(formTca, formTcl);
     const computedLiquidity = computeLiquidity(formCash, formCashEq);
 
+    const explicitProfitMargin = toNumberOrNull($borrowerFinancialsForm.value.profitMargin);
+    const resolvedProfitMargin = explicitProfitMargin != null
+      ? explicitProfitMargin
+      : computeProfitMarginPercent(formNetIncome, formGrossRevenue);
+
     const financialData = {
       borrowerId,
       asOfDate,
@@ -505,7 +522,7 @@ export const handleSubmit = async (onCloseCallback) => {
       grossRevenue: toNumberOrNull($borrowerFinancialsForm.value.grossRevenue),
       netIncome: toNumberOrNull($borrowerFinancialsForm.value.netIncome),
       ebitda: toNumberOrNull($borrowerFinancialsForm.value.ebitda),
-      profitMargin: toNumberOrNull($borrowerFinancialsForm.value.profitMargin),
+      profitMargin: resolvedProfitMargin,
       totalCurrentAssets: toNumberOrNull($borrowerFinancialsForm.value.totalCurrentAssets),
       totalCurrentLiabilities: toNumberOrNull($borrowerFinancialsForm.value.totalCurrentLiabilities),
       totalAssets: toNumberOrNull($borrowerFinancialsForm.value.totalAssets),

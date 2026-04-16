@@ -121,3 +121,19 @@ export const zoomPdfOut = () => {
 export const resetPdfZoom = () => {
   $documentsContainerView.update({ pdfZoomScale: 1 });
 };
+
+const toNumberFromFormValue = (value) => {
+  if (value == null || value === '') return null;
+  const num = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.-]/g, '')) : Number(value);
+  return Number.isNaN(num) ? null : num;
+};
+
+/** Sets profit margin to (netIncome / grossRevenue) × 100, matching submit-time logic. */
+export const handleRecalculateProfitMargin = () => {
+  const { grossRevenue, netIncome } = $borrowerFinancialsForm.value;
+  const gr = toNumberFromFormValue(grossRevenue);
+  const ni = toNumberFromFormValue(netIncome);
+  if (gr == null || gr <= 0 || ni == null) return;
+  const pct = parseFloat(((ni / gr) * 100).toFixed(4));
+  $borrowerFinancialsForm.update({ profitMargin: String(pct) });
+};
