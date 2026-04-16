@@ -16,6 +16,7 @@ import {
   faChevronLeft,
   faChevronRight,
   faSpinner,
+  faRecycle,
 } from '@fortawesome/free-solid-svg-icons';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -734,16 +735,32 @@ const DocumentsContainer = ({
                 />
               </Col>
               <Col md={12} className="mb-16">
-                <UniversalInput
-                  label="Gross Profit Margin (%)"
-                  labelClassName="text-info-100"
-                  type="percentage"
-                  placeholder="15.5%"
-                  value={$borrowerFinancialsForm.value.profitMargin}
-                  name="profitMargin"
-                  signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizePercentageInput}
-                />
+                <Row className="align-items-end g-2">
+                  <Col>
+                    <UniversalInput
+                      label="Gross Profit Margin (%)"
+                      labelClassName="text-info-100"
+                      type="percentage"
+                      placeholder="15.5%"
+                      value={$borrowerFinancialsForm.value.profitMargin}
+                      name="profitMargin"
+                      signal={$borrowerFinancialsForm}
+                      inputFormatCallback={normalizePercentageInput}
+                    />
+                  </Col>
+                  <Col xs="auto" className="mb-2">
+                    <Button
+                      type="button"
+                      variant="outline-secondary"
+                      size="sm"
+                      title="Recalculate from Net Income ÷ Gross Revenue"
+                      aria-label="Recalculate gross profit margin from net income and gross revenue"
+                      onClick={events.handleRecalculateProfitMargin}
+                    >
+                      <FontAwesomeIcon icon={faRecycle} />
+                    </Button>
+                  </Col>
+                </Row>
               </Col>
             </Row>
           )}
@@ -799,16 +816,32 @@ const DocumentsContainer = ({
                 />
               </Col>
               <Col md={12} className="mb-16">
-                <UniversalInput
-                  label="Gross Profit Margin (%)"
-                  labelClassName="text-info-100"
-                  type="percentage"
-                  placeholder="15.5%"
-                  value={$borrowerFinancialsForm.value.profitMargin}
-                  name="profitMargin"
-                  signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizePercentageInput}
-                />
+                <Row className="align-items-end g-2">
+                  <Col>
+                    <UniversalInput
+                      label="Gross Profit Margin (%)"
+                      labelClassName="text-info-100"
+                      type="percentage"
+                      placeholder="15.5%"
+                      value={$borrowerFinancialsForm.value.profitMargin}
+                      name="profitMargin"
+                      signal={$borrowerFinancialsForm}
+                      inputFormatCallback={normalizePercentageInput}
+                    />
+                  </Col>
+                  <Col xs="auto" className="mb-2">
+                    <Button
+                      type="button"
+                      variant="outline-secondary"
+                      size="sm"
+                      title="Recalculate from Net Income ÷ Gross Revenue"
+                      aria-label="Recalculate gross profit margin from net income and gross revenue"
+                      onClick={events.handleRecalculateProfitMargin}
+                    >
+                      <FontAwesomeIcon icon={faRecycle} />
+                    </Button>
+                  </Col>
+                </Row>
               </Col>
 
               <Col md={12} className="mb-16">
