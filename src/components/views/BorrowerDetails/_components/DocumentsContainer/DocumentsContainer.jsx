@@ -748,18 +748,6 @@ const DocumentsContainer = ({
                       inputFormatCallback={normalizePercentageInput}
                     />
                   </Col>
-                  <Col xs="auto" className="mb-2">
-                    <Button
-                      type="button"
-                      variant="outline-secondary"
-                      size="sm"
-                      title="Recalculate from Net Income ÷ Gross Revenue"
-                      aria-label="Recalculate gross profit margin from net income and gross revenue"
-                      onClick={events.handleRecalculateProfitMargin}
-                    >
-                      <FontAwesomeIcon icon={faRecycle} />
-                    </Button>
-                  </Col>
                 </Row>
               </Col>
             </Row>
