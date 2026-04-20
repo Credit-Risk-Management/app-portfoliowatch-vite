@@ -1,4 +1,4 @@
-import { submitFinancialsViaToken } from '@src/api/borrowerFinancialUploadLink.api';
+import { submitFinancialsViaToken, getPublicPriorDebtScheduleDownload } from '@src/api/borrowerFinancialUploadLink.api';
 import postToSensibleApi, { initiateUploadToSensibleApi } from '@src/api/sensible.api';
 import { storage } from '@src/utils/firebase';
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
@@ -309,6 +309,29 @@ export const clearError = () => {
   $publicFinancialUploadView.update({ error: null });
 };
 
+/**
+ * Open the borrower's prior debt schedule PDF (new tab) so they can update and re-upload.
+ */
+export const handleOpenPriorDebtSchedulePdf = async () => {
+  const { token } = $publicFinancialUploadView.value;
+  if (!token) return;
+  $publicFinancialUploadView.update({ priorDebtOpening: true });
+  try {
+    const res = await getPublicPriorDebtScheduleDownload(token);
+    if (res?.status === 'success' && res?.data?.downloadUrl) {
+      window.open(res.data.downloadUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      dangerAlert('Could not open prior debt schedule.');
+    }
+  } catch (error) {
+    dangerAlert(
+      error?.message || error?.error || 'Could not open prior debt schedule.',
+    );
+  } finally {
+    $publicFinancialUploadView.update({ priorDebtOpening: false });
+  }
+};
+
 export const setPublicFinancialAttestationAccepted = (accepted) => {
   $publicFinancialUploadView.update({ attestationAccepted: Boolean(accepted) });
 };
@@ -357,26 +380,14 @@ const generateMockFinancialData = () => {
  * Handle file upload and trigger OCR
  */
 export const handleFileUpload = () => {
-  const files = $publicIncomeStatementUploader.value.financialDocs || [];
-  const { ocrApplied } = $publicFinancialUploadView.value;
+  $publicFinancialUploadView.update({
+    isLoading: true,
+  });
 
-  if (files.length > 0 && !ocrApplied) {
-    // Simulate OCR processing delay
-    setTimeout(() => {
-      const mockData = generateMockFinancialData();
-      $publicFinancialForm.update(mockData);
-      $publicFinancialUploadView.update({
-        ocrApplied: true,
-        refreshKey: $publicFinancialUploadView.value.refreshKey + 1,
-        isExtracting: false,
-        downloadSensibleUrl: null,
-        flowStep: 'review',
-        sectionsExtracted: {
-          ...initialPublicFinancialSectionsExtracted,
-          incomeStatement: true,
-          balanceSheet: true,
-        },
-      });
-    }, 500);
-  }
+  setTimeout(() => {
+    $publicFinancialUploadView.update({
+      success: true,
+      isLoading: false,
+    });
+  }, 1000);
 };

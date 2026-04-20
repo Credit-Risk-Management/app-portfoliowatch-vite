@@ -18,19 +18,19 @@ export const $modalState = Signal({
   documentsByType: {
     balanceSheet: [],
     incomeStatement: [],
-    debtServiceWorksheet: [],
+    debtScheduleWorksheet: [],
     taxReturn: [],
   },
   currentDocumentIndex: {
     balanceSheet: 0,
     incomeStatement: 0,
-    debtServiceWorksheet: 0,
+    debtScheduleWorksheet: 0,
     taxReturn: 0,
   },
   initialStoredDocumentIdsByType: {
     balanceSheet: [],
     incomeStatement: [],
-    debtServiceWorksheet: [],
+    debtScheduleWorksheet: [],
     taxReturn: [],
   },
   showWatchScoreResults: false,

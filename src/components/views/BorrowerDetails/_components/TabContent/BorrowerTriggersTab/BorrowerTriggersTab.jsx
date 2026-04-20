@@ -1,9 +1,15 @@
+/* eslint-disable no-nested-ternary */
 import { Row, Col, Alert, Card } from 'react-bootstrap';
 import { $borrower } from '@src/consts/consts';
 import { $borrowerFinancials } from '@src/signals';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
+import {
+  normalizeRatioDecimalToPercent,
+  formatRatioPercentForDisplay,
+} from '@src/utils/ratioPercent';
 import { $modalState } from '../../SubmitFinancialsModal/_helpers/submitFinancialsModal.consts';
 import { fetchFinancialHistory } from '../BorrowerFinancialsTab/_helpers/borrowerFinancialsTab.resolvers';
+import { hasIncomeStatementAndBalanceSheet } from '../BorrowerFinancialsTab/_helpers/borrowerFinancialsTab.helpers';
 
 const BorrowerTriggersTab = (props = {}) => {
   const list = $borrowerFinancials.value?.list || [];
@@ -18,7 +24,7 @@ const BorrowerTriggersTab = (props = {}) => {
   }, [borrowerId, list.length, isModalContext]);
 
   const currentForm = props.currentForm ?? list[0] ?? {};
-  const previousFinancial = props.previousFinancial ?? list[1];
+  const previousFinancial = props.previousFinancial ?? list.slice(1).find(hasIncomeStatementAndBalanceSheet);
   const isLoadingPrevious = props.isLoadingPrevious ?? $modalState.value?.isLoadingPrevious ?? false;
   const currentAsOfDate = currentForm?.asOfDate ? new Date(currentForm.asOfDate) : null;
   const previousAsOfDate = previousFinancial?.asOfDate ? new Date(previousFinancial.asOfDate) : null;
@@ -53,14 +59,18 @@ const BorrowerTriggersTab = (props = {}) => {
     return date.toLocaleDateString('en-US');
   };
 
-  const isPeriodComparisonMismatched = currentAsOfDate
+  const bothHaveRequiredDocs = hasIncomeStatementAndBalanceSheet(currentForm)
+    && hasIncomeStatementAndBalanceSheet(previousFinancial);
+
+  const isPeriodComparisonMismatched = !bothHaveRequiredDocs
+    && currentAsOfDate
     && previousAsOfDate
     && (
       currentAsOfDate.getMonth() !== previousAsOfDate.getMonth()
       || currentAsOfDate.getDate() !== previousAsOfDate.getDate()
     );
 
-  const TriggerCard = ({ title, previousValue, currentValue, isCurrency = true }) => {
+  const TriggerCard = ({ title, previousValue, currentValue, isCurrency = true, formatValue }) => {
     const change = calculateChange(currentValue, previousValue);
     let changeColor = 'text-info-200';
     if (change > 0) {
@@ -77,13 +87,17 @@ const BorrowerTriggersTab = (props = {}) => {
             <Col xs={12} sm={6} className="mb-12 mb-sm-0">
               <div className="text-info-200 small">Previous</div>
               <div className="text-info-100 fw-600 fs-6">
-                {isCurrency ? formatCurrency(previousValue) : (previousValue || 'N/A')}
+                {isCurrency
+                  ? formatCurrency(previousValue)
+                  : (formatValue ? formatValue(previousValue) : (previousValue || 'N/A'))}
               </div>
             </Col>
             <Col xs={12} sm={6}>
               <div className="text-info-200 small">Current</div>
               <div className="text-info-100 fw-600 fs-6">
-                {isCurrency ? formatCurrency(currentValue) : (currentValue || 'N/A')}
+                {isCurrency
+                  ? formatCurrency(currentValue)
+                  : (formatValue ? formatValue(currentValue) : (currentValue || 'N/A'))}
               </div>
             </Col>
           </Row>
@@ -157,9 +171,10 @@ const BorrowerTriggersTab = (props = {}) => {
         <Col md={6}>
           <TriggerCard
             title="Change in Profit Margin"
-            previousValue={previousFinancial.profitMargin}
-            currentValue={currentForm.profitMargin}
+            previousValue={normalizeRatioDecimalToPercent(previousFinancial.profitMargin)}
+            currentValue={normalizeRatioDecimalToPercent(currentForm.profitMargin)}
             isCurrency={false}
+            formatValue={formatRatioPercentForDisplay}
           />
         </Col>
         <Col md={6}>

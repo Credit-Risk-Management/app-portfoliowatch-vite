@@ -16,6 +16,7 @@ import {
   faChevronLeft,
   faChevronRight,
   faSpinner,
+  faRecycle,
 } from '@fortawesome/free-solid-svg-icons';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -543,9 +544,9 @@ const DocumentsContainer = ({
               </option>
             )}
             {!isTaxReturnUploaded && (
-              <option value="debtServiceWorksheet">
+              <option value="debtScheduleWorksheet">
                 Debt Schedule
-                {documentsByType.debtServiceWorksheet.length > 0 ? ` (${documentsByType.debtServiceWorksheet.length})` : ''}
+                {documentsByType.debtScheduleWorksheet.length > 0 ? ` (${documentsByType.debtScheduleWorksheet.length})` : ''}
               </option>
             )}
             <option value="taxReturn">
@@ -734,26 +735,30 @@ const DocumentsContainer = ({
                 />
               </Col>
               <Col md={12} className="mb-16">
-                <UniversalInput
-                  label="Gross Profit Margin (%)"
-                  labelClassName="text-info-100"
-                  type="percentage"
-                  placeholder="15.5%"
-                  value={$borrowerFinancialsForm.value.profitMargin}
-                  name="profitMargin"
-                  signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizePercentageInput}
-                />
+                <Row className="align-items-end g-2">
+                  <Col>
+                    <UniversalInput
+                      label="Gross Profit Margin (%)"
+                      labelClassName="text-info-100"
+                      type="percentage"
+                      placeholder="15.5%"
+                      value={$borrowerFinancialsForm.value.profitMargin}
+                      name="profitMargin"
+                      signal={$borrowerFinancialsForm}
+                      inputFormatCallback={normalizePercentageInput}
+                    />
+                  </Col>
+                </Row>
               </Col>
             </Row>
           )}
 
           {/* Debt Schedule Fields */}
-          {documentType === 'debtServiceWorksheet' && (
+          {documentType === 'debtScheduleWorksheet' && (
             <Row>
               <Col md={12} className="mb-16">
                 <Form.Text className="text-info-300">
-                  Debt service worksheet functionality coming soon.
+                  Debt schedule worksheet functionality coming soon.
                 </Form.Text>
               </Col>
             </Row>
@@ -799,15 +804,152 @@ const DocumentsContainer = ({
                 />
               </Col>
               <Col md={12} className="mb-16">
+                <Row className="align-items-end g-2">
+                  <Col>
+                    <UniversalInput
+                      label="Gross Profit Margin (%)"
+                      labelClassName="text-info-100"
+                      type="percentage"
+                      placeholder="15.5%"
+                      value={$borrowerFinancialsForm.value.profitMargin}
+                      name="profitMargin"
+                      signal={$borrowerFinancialsForm}
+                      inputFormatCallback={normalizePercentageInput}
+                    />
+                  </Col>
+                  <Col xs="auto" className="mb-2">
+                    <Button
+                      type="button"
+                      variant="outline-secondary"
+                      size="sm"
+                      title="Recalculate from Net Income ÷ Gross Revenue"
+                      aria-label="Recalculate gross profit margin from net income and gross revenue"
+                      onClick={events.handleRecalculateProfitMargin}
+                    >
+                      <FontAwesomeIcon icon={faRecycle} />
+                    </Button>
+                  </Col>
+                </Row>
+              </Col>
+
+              <Col md={12} className="mb-16">
                 <UniversalInput
-                  label="Gross Profit Margin (%)"
+                  label="Equity"
                   labelClassName="text-info-100"
-                  type="percentage"
-                  placeholder="15.5%"
-                  value={$borrowerFinancialsForm.value.profitMargin}
-                  name="profitMargin"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.equity}
+                  name="equity"
                   signal={$borrowerFinancialsForm}
-                  inputFormatCallback={normalizePercentageInput}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Cash & Cash Equivalents"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.cashEquivalents}
+                  name="cashEquivalents"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Accounts Receivable"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.accountsReceivable}
+                  name="accountsReceivable"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Inventory"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.inventory}
+                  name="inventory"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Total Current Assets"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.totalCurrentAssets}
+                  name="totalCurrentAssets"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Total Assets"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.totalAssets}
+                  name="totalAssets"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Accounts Payable"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.accountsPayable}
+                  name="accountsPayable"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Total Current Liabilities"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.totalCurrentLiabilities}
+                  name="totalCurrentLiabilities"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Total Liabilities"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.totalLiabilities}
+                  name="totalLiabilities"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
+                />
+              </Col>
+              <Col md={12} className="mb-16">
+                <UniversalInput
+                  label="Liquidity"
+                  labelClassName="text-info-100"
+                  type="currency"
+                  placeholder="$ USD"
+                  value={$borrowerFinancialsForm.value.liquidity}
+                  name="liquidity"
+                  signal={$borrowerFinancialsForm}
+                  inputFormatCallback={normalizeCurrencyValueAllowNegative}
                 />
               </Col>
             </Row>

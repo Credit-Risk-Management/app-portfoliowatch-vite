@@ -11,6 +11,7 @@ import SignalSideNav from '@src/components/global/SignalSideNav/SignalSideNav';
 import SignalSideNavContent from '@src/components/global/SignalSideNav/SignalSideNavContent';
 import { $borrower } from '@src/consts/consts';
 import SubmitFinancialsModal from '@src/components/views/BorrowerDetails/_components/SubmitFinancialsModal';
+import ImpactQuestionnaireModal from '@src/components/views/BorrowerDetails/_components/ImpactQuestionnaireModal/ImpactQuestionnaireModal';
 import DeleteBorrowerDocumentModal from '@src/components/views/Borrowers/_components/DeleteBorrowerDocumentModal';
 import UniversalCard from '@src/components/global/UniversalCard';
 import { $borrowerDetailView } from './_helpers/borrowerDetail.consts';
@@ -27,6 +28,7 @@ import {
 } from './_components/TabContent';
 import { fetchBorrowerDetail, resetBorrowerRouteState } from './_helpers/borrowerDetail.resolvers';
 import EditBorrowerDetailModal from './_components/EditBorrowerDetailModal';
+import AddEditGuarantorModal from './_components/TabContent/BorrowerGuarantorsTab/_components/AddEditGuarantorModal';
 
 const tabs = [
   {
@@ -158,9 +160,12 @@ export function BorrowerDetailsContainer() {
 
         {/* Financial Modals  */}
         <SubmitFinancialsModal />
+        <ImpactQuestionnaireModal />
 
         {/* Edit Borrower Modal */}
         <EditBorrowerDetailModal />
+
+        <AddEditGuarantorModal />
 
         {/* Document Modals */}
         <DeleteBorrowerDocumentModal />

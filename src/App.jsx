@@ -45,7 +45,9 @@ function App() {
         <Routes>
           <Route element={<AppWrapper />}>
             {/* Public auth routes */}
-            <Route element={<PublicRoutes />}>x
+            {/* Always-public routes — accessible regardless of auth state */}
+
+            <Route element={<PublicRoutes />}>
               <Route path="/upload-financials/:token" element={<PublicFinancialUpload />} />
               <Route path="/login" element={<Login />} />
               <Route path="/accept-invitation" element={<AcceptInvitation />} />

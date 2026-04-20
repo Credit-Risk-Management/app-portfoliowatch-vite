@@ -207,7 +207,7 @@ const AddCreditMemoModal = () => {
                 {excelData.worksheetName} - {uploadedDocument?.fileName || 'Spreadsheet'}
               </h6>
             </div>
-            <Table striped bordered hover responsive className="mb-0" style={{ backgroundColor: 'transparent' }}>
+            <Table striped bordered hover responsive className="primary-table mb-0" style={{ backgroundColor: 'transparent' }}>
               <tbody>
                 {excelData.rows.map((row, rowIndex) => (
                   <tr key={rowIndex}>

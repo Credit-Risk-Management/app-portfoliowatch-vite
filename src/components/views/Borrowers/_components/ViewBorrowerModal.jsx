@@ -67,7 +67,7 @@ const ViewClientModal = () => {
               {$contacts.value.isLoading ? (
                 <p>Loading contacts...</p>
               ) : $contacts.value.list.length > 0 ? (
-                <Table striped bordered hover size="sm">
+                <Table striped bordered hover size="sm" className="primary-table text-info-100">
                   <thead>
                     <tr>
                       <th>Name</th>

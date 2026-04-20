@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Button, Badge } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChartLine, faCheck, faCopy, faTable } from '@fortawesome/free-solid-svg-icons';
+import { faChartLine, faCheck, faCopy } from '@fortawesome/free-solid-svg-icons';
 import SignalTable from '@src/components/global/SignalTable';
 import { $borrower } from '@src/consts/consts';
 import { $borrowerFinancials, $borrowerFinancialsView } from '@src/signals';
@@ -14,7 +14,6 @@ import * as resolvers from './_helpers/borrowerFinancialsTab.resolvers';
 import {
   FINANCIALS_TABLE_HEADERS,
   formatFinancialDate,
-  getUploadLinkUrl,
   FINANCIAL_DOC_TYPES,
 } from './_helpers/borrowerFinancialsTab.helpers';
 
@@ -58,7 +57,6 @@ export function BorrowerFinancialsTab() {
   );
 
   const isLoading = $borrowerFinancials.value?.isLoading && !$borrowerFinancials.value?.list?.length;
-  const uploadLinkUrl = getUploadLinkUrl();
 
   return (
     <div>
@@ -75,12 +73,21 @@ export function BorrowerFinancialsTab() {
           </Button>
           <Button
             variant={consts.$copiedLink.value ? 'success' : 'info-100'}
-            onClick={events.handleCopyPermanentLink}
-            disabled={!uploadLinkUrl}
+            onClick={() => events.handleCreateQ1TestUploadLink(borrowerId)}
+            className="me-8"
             size="sm"
           >
             <FontAwesomeIcon icon={consts.$copiedLink.value ? faCheck : faCopy} className="me-8" />
-            {consts.$copiedLink.value ? 'Copied!' : 'Copy Borrower Link'}
+            {consts.$copiedLink.value ? 'Copied!' : 'Quarterly Link'}
+          </Button>
+          <Button
+            variant={consts.$copiedAnnualLink.value ? 'success' : 'warning-100'}
+            onClick={() => events.handleCreateAnnualTestUploadLink(borrowerId)}
+            className="me-8"
+            size="sm"
+          >
+            <FontAwesomeIcon icon={consts.$copiedLink.value ? faCheck : faCopy} className="me-8" />
+            {consts.$copiedLink.value ? 'Copied!' : 'Annual Link'}
           </Button>
           <Button
             variant="info-100"
@@ -93,6 +100,16 @@ export function BorrowerFinancialsTab() {
           </Button>
           <Button
             variant="outline-primary-100"
+            onClick={() => $borrowerFinancialsView.update({ activeModalKey: 'impactQuaestionnaire' })}
+            size="sm"
+            className="me-8"
+          >
+            <FontAwesomeIcon icon={faCopy} className="me-8" />
+            Impact Questionnaire
+          </Button>
+
+          {/* <Button
+            variant="outline-primary-100"
             onClick={() => events.handleExportExcel(borrowerId)}
             disabled={consts.$isExportingExcel.value}
             size="sm"
@@ -100,7 +117,7 @@ export function BorrowerFinancialsTab() {
           >
             <FontAwesomeIcon icon={faTable} className="me-8" />
             {consts.$isExportingExcel.value ? 'Exporting...' : 'Export Spreadsheet'}
-          </Button>
+          </Button> */}
         </div>
       </div>
 

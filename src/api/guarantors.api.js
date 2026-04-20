@@ -28,8 +28,15 @@ export const guarantorsApiBase = {
   // Create guarantor
   create: async (data) => apiClient.post('/guarantors', data),
 
+  // Update guarantor
+  update: async (id, data) => apiClient.put(`/guarantors/${id}`, data),
+
   // Link guarantor to loan (GuarantorToLoan)
   linkToLoan: async (guarantorId, loanId) => apiClient.post('/guarantor-to-loans', { guarantorId, loanId }),
+
+  unlinkFromLoan: async (guarantorId, loanId) => apiClient.delete('/guarantor-to-loans', {
+    data: { guarantorId, loanId },
+  }),
 
   // Create PFS (personal financial statement) for guarantor
   createFinancial: async (guarantorId, data) => apiClient.post(`/guarantors-financials//guarantor/${guarantorId}`, data),
@@ -47,7 +54,9 @@ export const guarantorsApi = wrapApiWithDebounce(guarantorsApiBase, {
   getById: 300,
   getByManager: 350,
   create: 0,
+  update: 0,
   linkToLoan: 0,
+  unlinkFromLoan: 0,
   createFinancial: 300,
   updateFinancial: 300,
   getFinancialById: 300,

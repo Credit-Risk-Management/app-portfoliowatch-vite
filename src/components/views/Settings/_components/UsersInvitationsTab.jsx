@@ -142,7 +142,7 @@ const UsersInvitationsTab = () => {
             Invite User
           </Button>
         </div>
-        <Table hover responsive>
+        <Table hover striped responsive className="primary-table text-info-100">
           <thead>
             <tr>
               {consts.TABLE_HEADERS.map((header) => (
@@ -165,7 +165,7 @@ const UsersInvitationsTab = () => {
                   <td>{member.user?.name || '-'}</td>
                   <td>{member.user?.email || '-'}</td>
                   <td>
-                    <Badge bg={member.role === 'ADMIN' ? 'primary' : 'secondary'}>
+                    <Badge bg={member.role === 'ADMIN' ? 'primary' : 'warning-600'}>
                       {helpers.getRoleLabel(member.role)}
                     </Badge>
                   </td>
@@ -174,7 +174,7 @@ const UsersInvitationsTab = () => {
                     {member.isSuspended ? (
                       <Badge bg="danger">Suspended</Badge>
                     ) : (
-                      <Badge bg="success">Active</Badge>
+                      <Badge bg="success-700">Active</Badge>
                     )}
                   </td>
                   <td>
@@ -217,7 +217,7 @@ const UsersInvitationsTab = () => {
       </UniversalCard>
 
       <UniversalCard headerText="Pending Invitations">
-        <Table striped bordered hover responsive>
+        <Table striped bordered hover responsive className="primary-table text-info-100">
           <thead>
             <tr>
               {consts.INVITATION_TABLE_HEADERS.map((header) => (

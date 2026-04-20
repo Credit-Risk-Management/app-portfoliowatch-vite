@@ -82,7 +82,7 @@ const FinancialHistoryModal = () => {
                 Total Records: {$borrowerFinancials.value.totalCount}
               </Badge>
             </div>
-            <Table striped responsive className="text-info-100">
+            <Table striped responsive className="primary-table text-info-100">
               <thead className="bg-info-800">
                 <tr>
                   <th className="bg-info-700 text-info-50 fw-500">As Of Date</th>

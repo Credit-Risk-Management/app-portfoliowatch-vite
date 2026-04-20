@@ -1,4 +1,5 @@
 import { Row, Col, Alert, Card } from 'react-bootstrap';
+import { hasIncomeStatementAndBalanceSheet } from '@src/components/views/BorrowerDetails/_components/TabContent/BorrowerFinancialsTab/_helpers/borrowerFinancialsTab.helpers';
 
 const TriggersTab = ({ previousFinancial, currentForm, isLoadingPrevious }) => {
   const currentAsOfDate = currentForm?.asOfDate ? new Date(currentForm.asOfDate) : null;
@@ -27,6 +28,21 @@ const TriggersTab = ({ previousFinancial, currentForm, isLoadingPrevious }) => {
     return `${sign}${value.toFixed(2)}%`;
   };
 
+  const normalizeProfitMarginToPercent = (value) => {
+    if (value === null || value === undefined || value === '') return null;
+    const num = parseFloat(value);
+    if (Number.isNaN(num)) return null;
+    if (num > 0 && num <= 1) return num * 100;
+    return num;
+  };
+
+  const formatProfitMarginValue = (value) => {
+    if (value === null || value === undefined || value === '') return 'N/A';
+    const num = parseFloat(value);
+    if (Number.isNaN(num)) return 'N/A';
+    return `${num.toFixed(2)}%`;
+  };
+
   const formatPeriodDate = (dateValue) => {
     if (!dateValue) return 'N/A';
     const date = new Date(dateValue);
@@ -34,14 +50,18 @@ const TriggersTab = ({ previousFinancial, currentForm, isLoadingPrevious }) => {
     return date.toLocaleDateString('en-US');
   };
 
-  const isPeriodComparisonMismatched = currentAsOfDate
+  const bothHaveRequiredDocs = hasIncomeStatementAndBalanceSheet(currentForm)
+    && hasIncomeStatementAndBalanceSheet(previousFinancial);
+
+  const isPeriodComparisonMismatched = !bothHaveRequiredDocs
+    && currentAsOfDate
     && previousAsOfDate
     && (
       currentAsOfDate.getMonth() !== previousAsOfDate.getMonth()
       || currentAsOfDate.getDate() !== previousAsOfDate.getDate()
     );
 
-  const TriggerCard = ({ title, previousValue, currentValue, isCurrency = true }) => {
+  const TriggerCard = ({ title, previousValue, currentValue, isCurrency = true, formatValue }) => {
     const change = calculateChange(currentValue, previousValue);
     let changeColor = 'text-info-200';
     if (change > 0) {
@@ -49,6 +69,12 @@ const TriggersTab = ({ previousFinancial, currentForm, isLoadingPrevious }) => {
     } else if (change < 0) {
       changeColor = 'text-danger';
     }
+
+    const renderValue = (value) => {
+      if (isCurrency) return formatCurrency(value);
+      if (formatValue) return formatValue(value);
+      return value || 'N/A';
+    };
 
     return (
       <Card className="bg-info-700 mb-16">
@@ -58,13 +84,13 @@ const TriggersTab = ({ previousFinancial, currentForm, isLoadingPrevious }) => {
             <Col xs={12} sm={6} className="mb-12 mb-sm-0">
               <div className="text-info-200 small">Previous</div>
               <div className="text-info-100 fw-600">
-                {isCurrency ? formatCurrency(previousValue) : (previousValue || 'N/A')}
+                {renderValue(previousValue)}
               </div>
             </Col>
             <Col xs={12} sm={6}>
               <div className="text-info-200 small">Current</div>
               <div className="text-info-100 fw-600">
-                {isCurrency ? formatCurrency(currentValue) : (currentValue || 'N/A')}
+                {renderValue(currentValue)}
               </div>
             </Col>
           </Row>
@@ -138,9 +164,10 @@ const TriggersTab = ({ previousFinancial, currentForm, isLoadingPrevious }) => {
         <Col md={6}>
           <TriggerCard
             title="Change in Profit Margin"
-            previousValue={previousFinancial.profitMargin}
-            currentValue={currentForm.profitMargin}
+            previousValue={normalizeProfitMarginToPercent(previousFinancial.profitMargin)}
+            currentValue={normalizeProfitMarginToPercent(currentForm.profitMargin)}
             isCurrency={false}
+            formatValue={formatProfitMarginValue}
           />
         </Col>
         <Col md={6}>

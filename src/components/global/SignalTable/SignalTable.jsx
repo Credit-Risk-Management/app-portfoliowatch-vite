@@ -1,7 +1,7 @@
 /* eslint-disable no-nested-ternary */
 /* eslint-disable jsx-a11y/control-has-associated-label */
 
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { faSort, faSortDown, faSortUp, faGear, faCheck } from '@fortawesome/free-solid-svg-icons';
 import { filterValueToUrlSearchParams } from '@src/utils/tableFilterUrlParams';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -78,7 +78,7 @@ const SignalTable = ({
 
   return (
     <div className="p-0 overflow-hidden bg-info-800 border border-info-500" style={{ borderRadius: 12 }}>
-      <Table striped responsive style={{ fontSize: 16 }} hover>
+      <Table striped responsive style={{ fontSize: 16 }} hover className="primary-table">
         <thead>
           <tr>
             {hasCheckboxes && (

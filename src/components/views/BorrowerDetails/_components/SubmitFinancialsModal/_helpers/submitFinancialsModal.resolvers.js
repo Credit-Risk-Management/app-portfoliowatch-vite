@@ -94,16 +94,18 @@ export const handleFileUpload = async (ocrApplied, pdfUrl) => {
               profitMargin: extractedData.profitMargin,
               ebitda: extractedData.ebitda,
               rentalExpenses: extractedData.rentalExpenses,
-              debtService: extractedData.debtService,
+              // debtService (DSCR) is computed on submit from EBITDA + debt schedule history;
+              // do not pre-fill from OCR since the extracted value is a dollar amount, not a ratio
             });
           }
         }
         if (documentType === 'balanceSheet' && parsedDocument) {
           const extractedData = parseSingleDocResponse(parsedDocument, 'balanceSheet');
-          console.log('extractedData', extractedData.currentRatio);
-          if (extractedData) {
+          if (extractedData && !Array.isArray(extractedData)) {
             $borrowerFinancialsForm.update({
               asOfDate: extractedData.asOfDate,
+              totalAssets: extractedData.totalAssets,
+              totalLiabilities: extractedData.totalLiabilities,
               totalCurrentAssets: extractedData.totalCurrentAssets,
               totalCurrentLiabilities: extractedData.totalCurrentLiabilities,
               cash: extractedData.cash,
@@ -185,7 +187,7 @@ export const handleRemoveDocument = async (documentId) => {
       ...documentsByType,
       [documentType]: updatedDocs,
     };
-    const allEmpty = ['balanceSheet', 'incomeStatement', 'debtServiceWorksheet', 'taxReturn'].every(
+    const allEmpty = ['balanceSheet', 'incomeStatement', 'debtScheduleWorksheet', 'taxReturn'].every(
       (k) => !(updatedDocumentsByType[k] || []).length,
     );
 
@@ -193,7 +195,7 @@ export const handleRemoveDocument = async (documentId) => {
     const taxStillHasDocs = (updatedDocumentsByType.taxReturn || []).length > 0;
     const incomeStillHasDocs = (updatedDocumentsByType.incomeStatement || []).length > 0;
     if (documentType === 'incomeStatement' && updatedDocs.length === 0) {
-      clearedFields.debtService = '';
+      clearedFields.debtSchedule = '';
       if (!taxStillHasDocs) {
         clearedFields.grossRevenue = '';
         clearedFields.netIncome = '';
@@ -218,12 +220,26 @@ export const handleRemoveDocument = async (documentId) => {
       clearedFields.liquidityRatio = '';
       clearedFields.retainedEarnings = '';
     }
-    if (documentType === 'taxReturn' && updatedDocs.length === 0 && !incomeStillHasDocs) {
-      clearedFields.grossRevenue = '';
-      clearedFields.netIncome = '';
-      clearedFields.profitMargin = '';
-      clearedFields.ebitda = '';
-      clearedFields.rentalExpenses = '';
+    if (documentType === 'taxReturn' && updatedDocs.length === 0) {
+      if (!incomeStillHasDocs) {
+        clearedFields.grossRevenue = '';
+        clearedFields.netIncome = '';
+        clearedFields.profitMargin = '';
+        clearedFields.ebitda = '';
+        clearedFields.rentalExpenses = '';
+      }
+      clearedFields.equity = '';
+      clearedFields.cashEquivalents = '';
+      clearedFields.accountsReceivable = '';
+      clearedFields.inventory = '';
+      clearedFields.totalCurrentAssets = '';
+      clearedFields.totalAssets = '';
+      clearedFields.accountsPayable = '';
+      clearedFields.totalCurrentLiabilities = '';
+      clearedFields.totalLiabilities = '';
+      clearedFields.liquidity = '';
+      clearedFields.liquidityRatio = '';
+      clearedFields.retainedEarnings = '';
     }
     if (allEmpty) {
       clearedFields.asOfDate = '';
@@ -277,7 +293,7 @@ const loadDocumentsFromBackend = async (financialId) => {
       const documentsByType = {
         balanceSheet: [],
         incomeStatement: [],
-        debtServiceWorksheet: [],
+        debtScheduleWorksheet: [],
         taxReturn: [],
       };
       documents.forEach((doc) => {
@@ -305,7 +321,7 @@ const loadDocumentsFromBackend = async (financialId) => {
   return {
     balanceSheet: [],
     incomeStatement: [],
-    debtServiceWorksheet: [],
+    debtScheduleWorksheet: [],
     taxReturn: [],
   };
 };
@@ -317,7 +333,7 @@ const collectStoredIdsByType = (documentsByType) => ({
   incomeStatement: (documentsByType.incomeStatement || [])
     .filter((d) => d.isStored && d.id)
     .map((d) => d.id),
-  debtServiceWorksheet: (documentsByType.debtServiceWorksheet || [])
+  debtScheduleWorksheet: (documentsByType.debtScheduleWorksheet || [])
     .filter((d) => d.isStored && d.id)
     .map((d) => d.id),
   taxReturn: (documentsByType.taxReturn || [])
@@ -349,9 +365,12 @@ export const handleOpenEditMode = async (financial) => {
     grossRevenue: financial.grossRevenue?.toString() || '',
     netIncome: financial.netIncome?.toString() || '',
     ebitda: financial.ebitda?.toString() || '',
-    profitMargin: financial.profitMargin?.toString() || '',
+    // Stored as decimal (0-1); convert to percentage for the (%) form field
+    profitMargin: toDisplayPercentage(financial.profitMargin),
     totalCurrentAssets: financial.totalCurrentAssets?.toString() || '',
     totalCurrentLiabilities: financial.totalCurrentLiabilities?.toString() || '',
+    totalAssets: financial.totalAssets?.toString() || '',
+    totalLiabilities: financial.totalLiabilities?.toString() || '',
     cash: financial.cash?.toString() || '',
     cashEquivalents: financial.cashEquivalents?.toString() || '',
     equity: financial.equity?.toString() || '',
@@ -387,7 +406,7 @@ export const handleOpenEditMode = async (financial) => {
     currentDocumentIndex: {
       balanceSheet: 0,
       incomeStatement: 0,
-      debtServiceWorksheet: 0,
+      debtScheduleWorksheet: 0,
       taxReturn: 0,
       ...(firstDocType ? { [firstDocType]: 0 } : {}),
     },
@@ -402,12 +421,49 @@ const toNumberOrNull = (value) => {
 
 const roundTo4 = (value) => parseFloat(value.toFixed(4));
 
+/**
+ * Convert a stored profitMargin value to a percentage string for form display.
+ * Canonical storage format is percentage (0–100). Legacy records may have been
+ * saved as a decimal fraction (0–1); those are multiplied by 100 on load.
+ */
+const toDisplayPercentage = (value) => {
+  if (value == null || value === '') return '';
+  const num = parseFloat(value);
+  if (Number.isNaN(num)) return '';
+  if (num > 0 && num <= 1) return String(parseFloat((num * 100).toFixed(4)));
+  return String(num);
+};
+
 const computeDebtServiceRatio = (ebitda, totalMonthlyPayment) => {
   if (ebitda == null || totalMonthlyPayment == null) return null;
   if (totalMonthlyPayment <= 0) return null;
   const annualDebtService = totalMonthlyPayment * 12;
   if (annualDebtService <= 0) return null;
   return roundTo4(ebitda / annualDebtService);
+};
+
+/** Total current assets / total current liabilities (matches WATCH Weighted Exposure). */
+const computeCurrentRatio = (totalCurrentAssets, totalCurrentLiabilities) => {
+  if (totalCurrentAssets == null || totalCurrentLiabilities == null) return null;
+  if (totalCurrentLiabilities <= 0) return null;
+  return roundTo4(totalCurrentAssets / totalCurrentLiabilities);
+};
+
+/** Cash + cash equivalents (matches WATCH liquidity field). Either may be omitted; both null => no value. */
+const computeLiquidity = (cash, cashEquivalents) => {
+  if (cash == null && cashEquivalents == null) return null;
+  const sum = (cash ?? 0) + (cashEquivalents ?? 0);
+  return parseFloat(sum.toFixed(2));
+};
+
+/**
+ * Gross profit margin as percentage points (0–100), same as sensible OCR fallback and
+ * netIncome/grossRevenue when the margin field is omitted.
+ */
+const computeProfitMarginPercent = (netIncome, grossRevenue) => {
+  if (grossRevenue == null || grossRevenue <= 0) return null;
+  if (netIncome == null) return null;
+  return roundTo4((netIncome / grossRevenue) * 100);
 };
 
 export const handleSubmit = async (onCloseCallback) => {
@@ -433,6 +489,13 @@ export const handleSubmit = async (onCloseCallback) => {
     }
 
     const formEbitda = toNumberOrNull($borrowerFinancialsForm.value.ebitda);
+    const formGrossRevenue = toNumberOrNull($borrowerFinancialsForm.value.grossRevenue);
+    const formNetIncome = toNumberOrNull($borrowerFinancialsForm.value.netIncome);
+    const formTca = toNumberOrNull($borrowerFinancialsForm.value.totalCurrentAssets);
+    const formTcl = toNumberOrNull($borrowerFinancialsForm.value.totalCurrentLiabilities);
+    const formCash = toNumberOrNull($borrowerFinancialsForm.value.cash);
+    const formCashEq = toNumberOrNull($borrowerFinancialsForm.value.cashEquivalents);
+
     let computedDebtServiceRatio = null;
     try {
       const debtServiceResponse = await debtServiceHistoryApi.getLatestByBorrowerId(borrowerId);
@@ -444,6 +507,14 @@ export const handleSubmit = async (onCloseCallback) => {
       computedDebtServiceRatio = null;
     }
 
+    const computedCurrentRatio = computeCurrentRatio(formTca, formTcl);
+    const computedLiquidity = computeLiquidity(formCash, formCashEq);
+
+    const explicitProfitMargin = toNumberOrNull($borrowerFinancialsForm.value.profitMargin);
+    const resolvedProfitMargin = explicitProfitMargin != null
+      ? explicitProfitMargin
+      : computeProfitMarginPercent(formNetIncome, formGrossRevenue);
+
     const financialData = {
       borrowerId,
       asOfDate,
@@ -451,9 +522,11 @@ export const handleSubmit = async (onCloseCallback) => {
       grossRevenue: toNumberOrNull($borrowerFinancialsForm.value.grossRevenue),
       netIncome: toNumberOrNull($borrowerFinancialsForm.value.netIncome),
       ebitda: toNumberOrNull($borrowerFinancialsForm.value.ebitda),
-      profitMargin: toNumberOrNull($borrowerFinancialsForm.value.profitMargin),
+      profitMargin: resolvedProfitMargin,
       totalCurrentAssets: toNumberOrNull($borrowerFinancialsForm.value.totalCurrentAssets),
       totalCurrentLiabilities: toNumberOrNull($borrowerFinancialsForm.value.totalCurrentLiabilities),
+      totalAssets: toNumberOrNull($borrowerFinancialsForm.value.totalAssets),
+      totalLiabilities: toNumberOrNull($borrowerFinancialsForm.value.totalLiabilities),
       cash: toNumberOrNull($borrowerFinancialsForm.value.cash),
       cashEquivalents: toNumberOrNull($borrowerFinancialsForm.value.cashEquivalents),
       equity: toNumberOrNull($borrowerFinancialsForm.value.equity),
@@ -463,8 +536,9 @@ export const handleSubmit = async (onCloseCallback) => {
       // Always compute DSCR on submit when we have EBITDA + latest debt schedule.
       // Fallback to existing/form value only if compute inputs are unavailable.
       debtService: computedDebtServiceRatio ?? toNumberOrNull($borrowerFinancialsForm.value.debtService),
-      currentRatio: toNumberOrNull($borrowerFinancialsForm.value.currentRatio),
-      liquidity: toNumberOrNull($borrowerFinancialsForm.value.liquidity),
+      // Current ratio & liquidity from balance sheet fields when possible (same as WATCH formulas).
+      currentRatio: computedCurrentRatio ?? toNumberOrNull($borrowerFinancialsForm.value.currentRatio),
+      liquidity: computedLiquidity ?? toNumberOrNull($borrowerFinancialsForm.value.liquidity),
       liquidityRatio: toNumberOrNull($borrowerFinancialsForm.value.liquidityRatio),
       retainedEarnings: toNumberOrNull($borrowerFinancialsForm.value.retainedEarnings),
       notes: $borrowerFinancialsForm.value.notes || null,
