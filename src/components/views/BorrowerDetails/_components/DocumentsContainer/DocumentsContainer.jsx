@@ -16,7 +16,6 @@ import {
   faChevronLeft,
   faChevronRight,
   faSpinner,
-  faRecycle,
 } from '@fortawesome/free-solid-svg-icons';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -805,18 +804,6 @@ const DocumentsContainer = ({
                       signal={$borrowerFinancialsForm}
                       inputFormatCallback={normalizePercentageInput}
                     />
-                  </Col>
-                  <Col xs="auto" className="mb-2">
-                    <Button
-                      type="button"
-                      variant="outline-secondary"
-                      size="sm"
-                      title="Recalculate from Net Income ÷ Gross Revenue"
-                      aria-label="Recalculate gross profit margin from net income and gross revenue"
-                      onClick={events.handleRecalculateProfitMargin}
-                    >
-                      <FontAwesomeIcon icon={faRecycle} />
-                    </Button>
                   </Col>
                 </Row>
               </Col>
