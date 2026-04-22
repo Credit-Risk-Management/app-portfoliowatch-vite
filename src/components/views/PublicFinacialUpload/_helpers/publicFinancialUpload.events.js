@@ -16,6 +16,7 @@ import {
   $publicFinancialUploadView,
   UPLOADER_BY_SECTION,
   SECTION_ID_TO_DOCUMENT_TYPE,
+  DEBT_SCHEDULE_TEMPLATE_PDF_URL,
 } from './publicFinancialUpload.consts';
 
 /**
@@ -144,6 +145,11 @@ export const handleOpenPriorDebtSchedulePdf = async () => {
   } finally {
     $publicFinancialUploadView.update({ priorDebtOpening: false });
   }
+};
+
+/** Open debt schedule template (static asset or `VITE_DEBT_SCHEDULE_TEMPLATE_URL`). */
+export const handleOpenDebtScheduleTemplatePdf = () => {
+  window.open(DEBT_SCHEDULE_TEMPLATE_PDF_URL, '_blank', 'noopener,noreferrer');
 };
 
 export const setPublicFinancialAttestationAccepted = (accepted) => {

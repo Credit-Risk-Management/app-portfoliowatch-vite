@@ -27,6 +27,7 @@ import {
   clearError,
   clearPublicFinancialSectionFiles,
   handleOpenPriorDebtSchedulePdf,
+  handleOpenDebtScheduleTemplatePdf,
   openAttestationModal,
   closeAttestationModal,
 } from './_helpers/publicFinancialUpload.events';
@@ -212,23 +213,43 @@ const PublicFinancialUpload = () => {
                         >
                           <td className="px-16 py-8">
                             <div className="fw-semibold text-dark">{title}</div>
-                            {sectionId === 'debtSchedule' && linkData?.priorDebtSchedule && (
-                              <div className="mt-8 fw-semibold small text-dark">
-                                <div className="mb-4">
-                                  Previous schedule on file:
-                                  {' '}
-                                  <span className="text-dark">{linkData.priorDebtSchedule.fileName}</span>
-                                </div>
-                                <Button
-                                  type="button"
-                                  variant="dark"
-                                  size="sm"
-                                  className="px-12"
-                                  disabled={priorDebtOpening}
-                                  onClick={() => handleOpenPriorDebtSchedulePdf()}
-                                >
-                                  {priorDebtOpening ? 'Opening…' : 'Open previous PDF'}
-                                </Button>
+                            {sectionId === 'debtScheduleWorksheet' && (
+                              <div className="mt-8 small text-dark">
+                                {linkData?.priorDebtSchedule ? (
+                                  <>
+                                    <div className="mb-4 fw-semibold">
+                                      Previous schedule on file:
+                                      {' '}
+                                      <span className="text-dark">{linkData.priorDebtSchedule.fileName}</span>
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      variant="dark"
+                                      size="sm"
+                                      className="px-12"
+                                      disabled={priorDebtOpening}
+                                      onClick={() => handleOpenPriorDebtSchedulePdf()}
+                                    >
+                                      {priorDebtOpening ? 'Opening…' : 'Open previous PDF'}
+                                    </Button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <div className="mb-4 fw-semibold text-grey-600">
+                                      No prior debt schedule on file. Open the template to see the format we need,
+                                      then upload your completed PDF.
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      variant="dark"
+                                      size="sm"
+                                      className="px-12"
+                                      onClick={() => handleOpenDebtScheduleTemplatePdf()}
+                                    >
+                                      Open template PDF
+                                    </Button>
+                                  </>
+                                )}
                               </div>
                             )}
                           </td>
