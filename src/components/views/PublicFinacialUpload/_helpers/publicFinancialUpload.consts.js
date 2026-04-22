@@ -4,6 +4,20 @@ import { Signal } from '@fyclabs/tools-fyc-react/signals';
 export const DEFAULT_PUBLIC_ATTESTATION_TEXT =
   'Acting in my capacity as an authorized officer of the Borrower, I hereby certify and attest that the information, schedules, and calculations set forth in these financial statements are true, complete, and accurate in all material respects as of the date indicated. This submission is made with the full understanding that the Lender will rely upon the veracity of this data for the purpose of determining credit risk.';
 
+/**
+ * Public debt schedule template: served from `public/debt-schedule-template.pdf` unless
+ * `VITE_DEBT_SCHEDULE_TEMPLATE_URL` is set (e.g. CDN or public bucket URL).
+ */
+const resolveDebtScheduleTemplatePdfUrl = () => {
+  const envUrl = import.meta.env.VITE_DEBT_SCHEDULE_TEMPLATE_URL;
+  if (typeof envUrl === 'string' && envUrl.trim()) {
+    return envUrl.trim();
+  }
+  return '/debt-schedule-template.pdf';
+};
+
+export const DEBT_SCHEDULE_TEMPLATE_PDF_URL = resolveDebtScheduleTemplatePdfUrl();
+
 // Signal for public financial upload form data (optional fields; server applies defaults on submit).
 export const $publicFinancialForm = Signal({
   asOfDate: '',
@@ -39,6 +53,7 @@ export const $publicFinancialUploadView = Signal({
   activeModalKey: null,
   error: null,
   success: false,
+  priorDebtOpening: false,
 });
 
 export const UPLOADER_BY_SECTION = {
@@ -46,7 +61,7 @@ export const UPLOADER_BY_SECTION = {
   balanceSheet: $publicBalanceSheetUploader,
   incomeStatementQuarterly: $publicCashFlowUploader,
   businessTaxReturn: $publicOtherFinancialsUploader,
-  debtSchedule: $publicDebtScheduleUploader,
+  debtScheduleWorksheet: $publicDebtScheduleUploader,
   cashFlow: $publicCashFlowUploader,
   otherFinancials: $publicOtherFinancialsUploader,
 };
@@ -81,8 +96,8 @@ export const SECTION_DEF_BY_ID = {
     inputId: 'public-financial-tax-return',
     replaceButtonVariant: 'outline-secondary',
   },
-  debtSchedule: {
-    sectionId: 'debtSchedule',
+  debtScheduleWorksheet: {
+    sectionId: 'debtScheduleWorksheet',
     title: 'Debt schedule',
     helperText: 'Upload the debt schedule as a PDF. If a prior schedule was provided, you may download and update it.',
     inputId: 'public-financial-debt-schedule',
@@ -96,7 +111,7 @@ export const API_KEY_TO_SECTION_ID = {
   balanceSheet: 'balanceSheet',
   incomeStatementQuarterly: 'incomeStatementQuarterly',
   businessTaxReturn: 'businessTaxReturn',
-  debtSchedule: 'debtSchedule',
+  debtScheduleWorksheet: 'debtScheduleWorksheet',
 };
 
 /** Stored `document_type` on borrower financial documents (matches server REQUIRED_DOCUMENT_KEYS). */
@@ -105,7 +120,7 @@ export const SECTION_ID_TO_DOCUMENT_TYPE = {
   balanceSheet: 'balanceSheet',
   incomeStatementQuarterly: 'incomeStatementQuarterly',
   businessTaxReturn: 'businessTaxReturn',
-  debtSchedule: 'debtSchedule',
+  debtScheduleWorksheet: 'debtScheduleWorksheet',
   cashFlow: 'cashFlow',
   otherFinancials: 'otherFinancials',
 };
