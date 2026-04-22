@@ -7,7 +7,7 @@ const getGuarantorUploadLinkUrl = () => {
   const token = consts.$permanentUploadLink.value?.token;
   if (!token) return null;
   const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-  return `${baseUrl}/upload-pfs/${token}`;
+  return `${baseUrl}/upload-guarantor-financials/${token}`;
 };
 
 export default getGuarantorUploadLinkUrl;

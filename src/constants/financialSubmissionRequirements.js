@@ -44,3 +44,28 @@ export const ANNUAL_TEST_UPLOAD_LINK_OPTIONS = {
   lenderInstructions:
     'Annual package for FY 2025 (calendar year-end). Business tax return, debt schedule, and balance sheet as of 12/31/2025.',
 };
+
+/** Keys for public guarantor upload (must match API). */
+const GKeys = {
+  personalTaxReturn: 'personalTaxReturn',
+  personalFinancialStatement: 'personalFinancialStatement',
+  // businessTaxReturn: 'businessTaxReturn',
+  // debtScheduleWorksheet: 'debtScheduleWorksheet',
+};
+
+const priorCalendarYear = () => new Date().getFullYear() - 1;
+
+/**
+ * @returns {object} createGuarantorUploadLink options
+ */
+export const buildGuarantorAnnualUploadLinkOptions = () => {
+  const fy = priorCalendarYear();
+  return {
+    submissionCadence: 'ANNUAL',
+    reportingPeriodEndDate: `${fy}-12-31`,
+    fiscalYearEndMonth: 12,
+    requiredDocumentKeys: [GKeys.personalTaxReturn, GKeys.personalFinancialStatement],
+    periodLabel: `FY ${fy}`,
+    lenderInstructions: `Annual guarantor package for FY ${fy} (calendar year-end): personal tax return, PFS`,
+  };
+};
