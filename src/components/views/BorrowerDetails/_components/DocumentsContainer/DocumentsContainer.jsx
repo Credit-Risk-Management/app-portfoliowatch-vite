@@ -531,34 +531,23 @@ const DocumentsContainer = ({
             onChange={(e) => events.handleDocumentTypeChange(e, documentsByType, $modalState)}
             className="bg-info-800 text-info-100 border-info-600"
           >
-            {!isTaxReturnUploaded && (
-              <option value="balanceSheet">
-                Balance Sheet
-                {documentsByType.balanceSheet.length > 0 ? ` (${documentsByType.balanceSheet.length})` : ''}
-              </option>
-            )}
-            {!isTaxReturnUploaded && (
-              <option value="incomeStatement">
-                Income Statement
-                {documentsByType.incomeStatement.length > 0 ? ` (${documentsByType.incomeStatement.length})` : ''}
-              </option>
-            )}
-            {!isTaxReturnUploaded && (
-              <option value="debtScheduleWorksheet">
-                Debt Schedule
-                {documentsByType.debtScheduleWorksheet.length > 0 ? ` (${documentsByType.debtScheduleWorksheet.length})` : ''}
-              </option>
-            )}
+            <option value="balanceSheet">
+              Balance Sheet
+              {documentsByType.balanceSheet.length > 0 ? ` (${documentsByType.balanceSheet.length})` : ''}
+            </option>
+            <option value="incomeStatement">
+              Income Statement
+              {documentsByType.incomeStatement.length > 0 ? ` (${documentsByType.incomeStatement.length})` : ''}
+            </option>
+            <option value="debtScheduleWorksheet">
+              Debt Schedule
+              {documentsByType.debtScheduleWorksheet.length > 0 ? ` (${documentsByType.debtScheduleWorksheet.length})` : ''}
+            </option>
             <option value="taxReturn">
               Tax Return
               {documentsByType.taxReturn.length > 0 ? ` (${documentsByType.taxReturn.length})` : ''}
             </option>
           </Form.Select>
-          {isTaxReturnUploaded && (
-            <Form.Text className="text-warning-300">
-              Tax return uploaded. Other document types are hidden for this submission.
-            </Form.Text>
-          )}
           {documentsByType[documentType].length === 0 && (
             <Form.Text className="text-info-300">
               No documents uploaded for this type yet.
