@@ -6,7 +6,7 @@ import UniversalCard from '@src/components/global/UniversalCard';
 import { $borrower } from '@src/consts/consts';
 import { getHealthScoreColor, renderMarkdownLinks } from '@src/components/views/BorrowerDetails/_helpers/borrowerDetail.helpers';
 import { handleGenerateIndustryReport } from '@src/components/views/BorrowerDetails/_helpers/borrowerDetail.events';
-import { getResolvedIndustryTitle } from '@src/utils/naicsTitles';
+import getResolvedIndustryTitle from '@src/utils/naicsTitles';
 
 export function BorrowerIndustryTab() {
   const borrower = $borrower.value?.borrower;
