@@ -1,6 +1,5 @@
 /* eslint-disable react/no-danger */
 import { useState } from 'react';
-import { useSignals } from '@preact/signals-react/runtime';
 import { Button, Row, Col } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMagic } from '@fortawesome/free-solid-svg-icons';
@@ -11,7 +10,6 @@ import { handleGenerateIndustryReport } from '@src/components/views/BorrowerDeta
 import getResolvedIndustryTitle from '@src/utils/naicsTitles';
 
 export function BorrowerIndustryTab() {
-  useSignals();
   const [isGenerating, setIsGenerating] = useState(false);
   const borrower = $borrower.value?.borrower;
   const borrowerId = borrower?.id;
