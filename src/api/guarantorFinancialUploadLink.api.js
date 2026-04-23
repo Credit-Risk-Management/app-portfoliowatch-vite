@@ -44,4 +44,13 @@ export const submitGuarantorFinancialsViaToken = async (token, body) => publicCl
   body,
 );
 
+/**
+ * After PDFs are in Storage, start EXTRACT_GUARANTOR_FINANCIALS (Sensible).
+ * @param {string} taskId
+ */
+export const notifyGuarantorExtractReadyViaToken = async (token, taskId) => publicClient.post(
+  `/guarantor-financial-upload-links/public/${encodeURIComponent(token)}/extract-ready`,
+  { taskId },
+);
+
 export default getPermanentGuarantorUploadLink;

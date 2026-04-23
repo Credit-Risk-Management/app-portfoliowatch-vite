@@ -1,5 +1,9 @@
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
-import { submitGuarantorFinancialsViaToken, getGuarantorPublicPriorDebtScheduleDownload } from '@src/api/guarantorFinancialUploadLink.api';
+import {
+  submitGuarantorFinancialsViaToken,
+  getGuarantorPublicPriorDebtScheduleDownload,
+  notifyGuarantorExtractReadyViaToken,
+} from '@src/api/guarantorFinancialUploadLink.api';
 import { storage } from '@src/utils/firebase';
 import {
   $gPubPersonalTax,
@@ -7,7 +11,6 @@ import {
   $gPubBusinessTax,
   $gPubDebtSchedule,
   $publicGuarantorUploadView,
-  DEBT_SCHEDULE_TEMPLATE_PDF_URL,
   PFS_TEMPLATE_PDF_URL,
 } from './publicGuarantorFinancialUpload.consts';
 import {
@@ -79,6 +82,7 @@ export const handleGuarantorFileUpload = async () => {
 
     const submitResponse = await submitGuarantorFinancialsViaToken(token, { filesToUpload });
     const uploads = submitResponse?.data?.uploads ?? [];
+    const extractTaskId = submitResponse?.data?.extractTask?.id;
 
     await Promise.all(
       uploads.map(async (slot, i) => {
@@ -87,6 +91,10 @@ export const handleGuarantorFileUpload = async () => {
         await storageRef.put(file, { contentType: file.type });
       }),
     );
+
+    if (extractTaskId) {
+      await notifyGuarantorExtractReadyViaToken(token, extractTaskId);
+    }
 
     $publicGuarantorUploadView.update({ success: true });
     resetAllGuarantorUploaders();
@@ -119,7 +127,7 @@ export const handleOpenGuarantorPriorDebtSchedulePdf = async () => {
 };
 
 export const handleOpenDebtTemplatePdf = () => {
-  window.open(DEBT_SCHEDULE_TEMPLATE_PDF_URL, '_blank', 'noopener,noreferrer');
+  window.open(PFS_TEMPLATE_PDF_URL, '_blank', 'noopener,noreferrer');
 };
 
 export const handleOpenPfsTemplatePdf = () => {
