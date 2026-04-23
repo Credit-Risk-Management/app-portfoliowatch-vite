@@ -7,7 +7,7 @@ import {
   $borrowerFinancialsView,
   $borrowerFinancialsForm,
 } from '@src/signals';
-import borrowersApi from '@src/api/borrowers.api';
+import { borrowersApiBase } from '@src/api/borrowers.api';
 import contactsApi from '@src/api/contacts.api';
 import documentsApi from '@src/api/documents.api';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
@@ -34,7 +34,7 @@ export const fetchBorrowerDetail = async (borrowerId) => {
     $borrower.update({ isLoading: true });
 
     const [borrowerResponse, contactsResponse, managersResponse] = await Promise.all([
-      borrowersApi.getById(borrowerId),
+      borrowersApiBase.getById(borrowerId),
       contactsApi.getByBorrowerId(borrowerId),
       relationshipManagersApi.getAll(),
     ]);
