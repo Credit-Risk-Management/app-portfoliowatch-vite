@@ -34,8 +34,8 @@ export const handleGenerateIndustryReport = async (borrowerId) => {
 
     successAlert('Industry health report generated successfully!');
 
-    // Refresh the borrower detail to show updated data
-    await fetchBorrowerDetail(borrowerId);
+    // Refetch; prefer signal id so we never no-op on undefined param from a stale click handler
+    await fetchBorrowerDetail(borrower.id || borrowerId);
   } catch (error) {
     console.error('Error generating industry report:', error);
     dangerAlert(`Failed to generate industry report: ${error.message}`);
