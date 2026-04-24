@@ -76,3 +76,25 @@ const formatCategoryName = (name) => {
 };
 
 export const hasWatchScoreData = (loan) => loan?.currentWatchScore != null;
+
+/** Labels for breached financial covenants from watch-score-breakdown (matches loan detail). */
+export const getCovenantBreachLabels = (breakdown) => {
+  const cb = breakdown?.covenantBreach;
+  if (!cb) {
+    return [];
+  }
+  const labels = [];
+  if (cb.dscr) {
+    labels.push('DSCR');
+  }
+  if (cb.currentRatio) {
+    labels.push('Current ratio');
+  }
+  if (cb.liquidity) {
+    labels.push('Liquidity');
+  }
+  if (cb.liquidityRatio) {
+    labels.push('Liquidity ratio');
+  }
+  return labels;
+};
