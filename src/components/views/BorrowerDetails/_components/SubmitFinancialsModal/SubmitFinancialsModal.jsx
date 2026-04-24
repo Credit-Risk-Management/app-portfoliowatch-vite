@@ -14,12 +14,14 @@ import BorrowerTriggersTab from '@src/components/views/BorrowerDetails/_componen
 import BorrowerDebtServiceTab from '@src/components/views/BorrowerDetails/_components/TabContent/BorrowerDebtServiceTab';
 import WatchScoreResultsModal from '@src/components/views/Borrowers/_components/WatchScoreResultsModal';
 import DocumentsContainer from '@src/components/views/BorrowerDetails/_components/DocumentsContainer';
+import { hasAnyStagedDocument } from '@src/components/views/BorrowerDetails/_components/DocumentsContainer/_helpers/documents.helpers';
+import NewFinancialUploadTable from './NewFinancialUploadTable';
 import * as events from './_helpers/submitFinancialsModal.events';
 import * as resolvers from './_helpers/submitFinancialsModal.resolvers';
 import { $financialDocsUploader, $modalState } from './_helpers/submitFinancialsModal.consts';
 
 const SubmitFinancialsModal = () => {
-  const { activeTab } = $borrowerFinancialsForm.value;
+  const { activeTab, asOfDate: formAsOfDate } = $borrowerFinancialsForm.value;
   const { isEditMode, activeModalKey, editingFinancialId } = $borrowerFinancialsView.value;
   const {
     ocrApplied,
@@ -29,6 +31,7 @@ const SubmitFinancialsModal = () => {
     pdfUrl,
     previousFinancial,
     isLoadingPrevious,
+    documentsByType,
   } = $modalState.value;
 
   useEffect(() => {
@@ -81,6 +84,11 @@ const SubmitFinancialsModal = () => {
     }
   }, [activeTab, previousFinancial]);
 
+  const hasAsOfDate = Boolean(formAsOfDate && String(formAsOfDate).trim());
+  const hasAtLeastOneDocument = hasAnyStagedDocument(documentsByType);
+  const canSubmitNewFinancial = hasAsOfDate && hasAtLeastOneDocument;
+  const submitDisabled = isSubmitting || (!isEditMode && !canSubmitNewFinancial);
+
   const activeTabClass = 'bg-info-100 text-info-900';
   const inactiveTabClass = 'text-info-100';
   const modalTitle = isEditMode ? 'Edit Financial Data' : 'Submit Financial Data';
@@ -90,7 +98,7 @@ const SubmitFinancialsModal = () => {
 
   const handleCloseWithRevoke = async () => events.handleClose(pdfUrl);
   const handleSubmitClick = () => resolvers.handleSubmit(handleCloseWithRevoke);
-  const handleFileUploadClick = async () => resolvers.handleFileUpload(ocrApplied, pdfUrl);
+  const handleStageDocuments = () => resolvers.stageFinancialDocuments();
 
   return (
     <>
@@ -101,7 +109,7 @@ const SubmitFinancialsModal = () => {
         leftBtnText="Cancel"
         rightBtnText={submitButtonText}
         rightBtnOnClick={handleSubmitClick}
-        rightButtonDisabled={isSubmitting}
+        rightButtonDisabled={submitDisabled}
         size="fullscreen"
         closeButton
       >
@@ -143,38 +151,43 @@ const SubmitFinancialsModal = () => {
                 placeholder="Select Accountability Score"
               />
             </Col>
-            <Col xs={12} md={7} className="d-flex justify-content-end">
-              <ButtonGroup>
-                <Button
-                  variant={activeTab === 'documents' ? 'info' : 'outline-info'}
-                  className={activeTab === 'documents' ? activeTabClass : inactiveTabClass}
-                  onClick={() => events.setActiveTab('documents')}
-                >
-                  Documents
-                </Button>
-                <Button
-                  variant={activeTab === 'triggers' ? 'info' : 'outline-info'}
-                  className={activeTab === 'triggers' ? activeTabClass : inactiveTabClass}
-                  onClick={() => events.setActiveTab('triggers')}
-                >
-                  Triggers
-                </Button>
-                <Button
-                  variant={activeTab === 'debtService' ? 'info' : 'outline-info'}
-                  className={activeTab === 'debtService' ? activeTabClass : inactiveTabClass}
-                  onClick={() => events.setActiveTab('debtService')}
-                >
-                  Debt Service
-                </Button>
-              </ButtonGroup>
-            </Col>
+            {isEditMode && (
+              <Col xs={12} md={7} className="d-flex justify-content-end">
+                <ButtonGroup>
+                  <Button
+                    variant={activeTab === 'documents' ? 'info' : 'outline-info'}
+                    className={activeTab === 'documents' ? activeTabClass : inactiveTabClass}
+                    onClick={() => events.setActiveTab('documents')}
+                  >
+                    Documents
+                  </Button>
+                  <Button
+                    variant={activeTab === 'triggers' ? 'info' : 'outline-info'}
+                    className={activeTab === 'triggers' ? activeTabClass : inactiveTabClass}
+                    onClick={() => events.setActiveTab('triggers')}
+                  >
+                    Triggers
+                  </Button>
+                  <Button
+                    variant={activeTab === 'debtService' ? 'info' : 'outline-info'}
+                    className={activeTab === 'debtService' ? activeTabClass : inactiveTabClass}
+                    onClick={() => events.setActiveTab('debtService')}
+                  >
+                    Debt Service
+                  </Button>
+                </ButtonGroup>
+              </Col>
+            )}
           </Row>
           <div className="px-32 border-top border-info-100 pt-8">
-            {activeTab === 'documents' && (
+            {activeTab === 'documents' && !isEditMode && (
+              <NewFinancialUploadTable />
+            )}
+            {activeTab === 'documents' && isEditMode && (
               <DocumentsContainer
                 pdfUrl={pdfUrl}
                 ocrApplied={ocrApplied}
-                handleFileUpload={handleFileUploadClick}
+                handleFileUpload={handleStageDocuments}
                 refreshKey={refreshKey}
                 $financialDocsUploader={$financialDocsUploader}
                 $modalState={$modalState}
@@ -182,14 +195,14 @@ const SubmitFinancialsModal = () => {
                 handleSwitchDocument={(_$modalState, index) => resolvers.handleSwitchDocument(index)}
               />
             )}
-            {activeTab === 'triggers' && (
+            {isEditMode && activeTab === 'triggers' && (
               <BorrowerTriggersTab
                 currentForm={$borrowerFinancialsForm.value}
                 previousFinancial={previousFinancial}
                 isLoadingPrevious={isLoadingPrevious}
               />
             )}
-            {activeTab === 'debtService' && <BorrowerDebtServiceTab />}
+            {isEditMode && activeTab === 'debtService' && <BorrowerDebtServiceTab />}
           </div>
         </Loadable>
       </UniversalModal>

@@ -30,6 +30,16 @@ const borrowerFinancialsApiBase = {
 
   // Delete financial record
   delete: async (id) => apiClient.delete(`/borrower-financials/${id}`),
+
+  /**
+   * Queue EXTRACT_FINANCIALS for uploaded document ids (in-app; mirrors public upload flow after Storage PUTs).
+   * @param {string} financialId
+   * @param {string[]} documentIds
+   */
+  queueExtraction: async (financialId, documentIds) => apiClient.post(
+    `/borrower-financials/${financialId}/queue-extraction`,
+    { documentIds },
+  ),
 };
 
 // Wrap with debouncing - only debounce read operations that might be called repeatedly

@@ -47,6 +47,7 @@ const PublicFinancialUpload = () => {
     activeModalKey,
     error,
     success,
+    priorDebtOpening,
   } = $publicFinancialUploadView.value;
 
   const attestationText = linkData?.attestationText || DEFAULT_PUBLIC_ATTESTATION_TEXT;

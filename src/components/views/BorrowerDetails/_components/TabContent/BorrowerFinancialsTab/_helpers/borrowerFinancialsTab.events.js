@@ -15,6 +15,8 @@ export const openSubmitFinancials = (borrowerId) => {
   $borrowerFinancialsView.update({
     activeModalKey: 'submitFinancials',
     currentBorrowerId: borrowerId,
+    isEditMode: false,
+    editingFinancialId: null,
   });
 };
 
