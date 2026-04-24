@@ -3,7 +3,7 @@ import { $loan } from '@src/consts/consts';
 import { $user } from '@src/signals';
 import loanCollateralValueApi from '@src/api/loanCollateralValue.api';
 import { successAlert } from '@src/components/global/Alert/_helpers/alert.events';
-import { fetchLoanDetail } from '@src/components/views/Loans/_helpers/loans.resolvers';
+import { $loanDetailView } from '@src/components/views/Loans/_helpers/loans.consts';
 import { $loanCollateralView, $loanCollateralForm, $collateralDocUploader, $collateralModalState } from './submitCollateralModal.signals';
 
 /**
@@ -272,22 +272,15 @@ export const handleSubmit = async () => {
     // Success
     successAlert(`Collateral value ${isEditMode ? 'updated' : 'submitted'} successfully!`);
 
-    // Trigger refresh
     $loanCollateralView.update({
       refreshTrigger: $loanCollateralView.value.refreshTrigger + 1,
     });
 
-    // Refresh loan detail to get updated WATCH score
-    // The backend recomputes the WATCH score asynchronously after collateral submission
     if ($loan.value?.loan?.id === currentLoanId) {
-      // Refresh immediately to get any cached updates
-      fetchLoanDetail(currentLoanId);
-
-      // Refresh again after a short delay to ensure we get the recomputed WATCH score
-      // The backend processes the WATCH score computation asynchronously
-      setTimeout(() => {
-        fetchLoanDetail(currentLoanId);
-      }, 2000);
+      $loanDetailView.update({
+        refreshKey: $loanDetailView.value.refreshKey + 1,
+        fetchOptions: { repeatAfterMs: 2000 },
+      });
     }
 
     handleClose();

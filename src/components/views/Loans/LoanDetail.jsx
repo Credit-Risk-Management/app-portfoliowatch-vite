@@ -45,6 +45,7 @@ import {
   $loanDetailCollateral, $loanDetailCollateralAccordionExpanded,
   $industryReportGenerating,
   $loanDetailGuarantors,
+  $loanDetailView,
 } from './_helpers/loans.consts';
 import { fetchLoanDetail, resetLoanRouteState } from './_helpers/loans.resolvers';
 import {
@@ -57,6 +58,7 @@ const LoanDetail = () => {
   const location = useLocation();
   const fromBorrowerId = location.state?.fromBorrower;
   const showBackToBorrower = !!fromBorrowerId;
+  const loanDetailRefreshKey = $loanDetailView.value.refreshKey;
 
   useEffect(() => () => {
     resetLoanRouteState();
@@ -64,9 +66,13 @@ const LoanDetail = () => {
 
   useEffectAsync(async () => {
     if (loanId) {
-      await fetchLoanDetail(loanId);
+      const { fetchOptions } = $loanDetailView.value;
+      await fetchLoanDetail(loanId, fetchOptions);
+      if (fetchOptions && Object.keys(fetchOptions).length > 0) {
+        $loanDetailView.update({ fetchOptions: {} });
+      }
     }
-  }, [loanId]);
+  }, [loanId, loanDetailRefreshKey]);
 
   if ($loan.value?.isLoading || $watchScoreBreakdown.value?.isLoading) {
     return (

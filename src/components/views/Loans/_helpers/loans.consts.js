@@ -53,4 +53,7 @@ export const $industryReportGenerating = Signal(false);
 
 export const $loanDetailView = Signal({
   showEditLoanModal: false,
+  refreshKey: 0,
+  /** Options for `fetchLoanDetail` when `refreshKey` triggers a reload (e.g. `{ repeatAfterMs: 2000 }` for async WATCH). */
+  fetchOptions: {},
 });

@@ -29,6 +29,46 @@ import {
   $collateralModalState,
 } from '../_components/submitCollateralModal.signals';
 
+/** Prevents stale `fetchLoanDetail` completions from clearing loading while a newer fetch is in flight. */
+let loanDetailFetchGeneration = 0;
+
+/**
+ * Loads loan + related data into signals (comments, WATCH breakdown, financials, collateral, guarantors).
+ */
+const loadLoanDetailData = async (loanId) => {
+  const loanResponse = await loansApi.getById(loanId);
+  const loanData = loanResponse?.data || loanResponse;
+
+  const [commentsResponse, watchScoreResponse, documentsResponse, collateralResponse] =
+    await Promise.all([
+      commentsApi.getByLoan(loanId),
+      loansApi.getWatchScoreBreakdown(loanId),
+      documentsApi.getAll({ loanId, documentType: 'Financial Statement' }),
+      loanCollateralValueApi.getHistoryByLoanId(loanId).catch(() => ({ data: [] })), // Fail silently if no collateral
+    ]);
+
+  const guarantorsResponse = await guarantorsApi.getByLoanId(loanId);
+
+  $loan.update({ loan: loanData });
+  $comments.update({ list: commentsResponse?.data || commentsResponse || [] });
+  $watchScoreBreakdown.update({
+    breakdown: watchScoreResponse?.data || watchScoreResponse,
+    isLoading: false,
+  });
+
+  const financials = documentsResponse?.data || documentsResponse || [];
+  $loanDetailFinancials.value = financials.map(doc => ({
+    ...doc,
+    fileName: doc.documentName,
+  }));
+
+  const collateral = collateralResponse?.data || collateralResponse || [];
+  $loanDetailCollateral.value = Array.isArray(collateral) ? collateral : [];
+
+  const guarantors = guarantorsResponse?.data || guarantorsResponse || [];
+  $loanDetailGuarantors.value = Array.isArray(guarantors) ? guarantors : [];
+};
+
 const listFromApiResponse = (response) => {
   if (Array.isArray(response?.data)) return response.data;
   if (Array.isArray(response)) return response;
@@ -113,55 +153,43 @@ export const fetchAndSetLoans = async ({ isShowLoader = true }) => {
   }
 };
 
-export const fetchLoanDetail = async (loanId) => {
+/**
+ * @param {string} loanId
+ * @param {{ repeatAfterMs?: number }} [options] When set (e.g. after collateral submit), runs a second load after the delay under the same loading cycle so WATCH recomputation can finish server-side.
+ */
+export const fetchLoanDetail = async (loanId, options = {}) => {
   if (!loanId) return;
+
+  const { repeatAfterMs } = options;
+  const generation = ++loanDetailFetchGeneration;
 
   try {
     $loan.update({ isLoading: true });
     $watchScoreBreakdown.update({ isLoading: true });
 
-    const loanResponse = await loansApi.getById(loanId);
-    const loanData = loanResponse?.data || loanResponse;
+    await loadLoanDetailData(loanId);
 
-    const [commentsResponse, watchScoreResponse, documentsResponse, collateralResponse] =
-      await Promise.all([
-        commentsApi.getByLoan(loanId),
-        loansApi.getWatchScoreBreakdown(loanId),
-        documentsApi.getAll({ loanId, documentType: 'Financial Statement' }),
-        loanCollateralValueApi.getHistoryByLoanId(loanId).catch(() => ({ data: [] })), // Fail silently if no collateral
-      ]);
-
-    const guarantorsResponse = await guarantorsApi.getByLoanId(loanId);
-
-    $loan.update({ loan: loanData });
-    $comments.update({ list: commentsResponse?.data || commentsResponse || [] });
-    $watchScoreBreakdown.update({
-      breakdown: watchScoreResponse?.data || watchScoreResponse,
-      isLoading: false,
-    });
-
-    // Update financial documents list
-    const financials = documentsResponse?.data || documentsResponse || [];
-    $loanDetailFinancials.value = financials.map(doc => ({
-      ...doc,
-      fileName: doc.documentName,
-    }));
-
-    // Update collateral history list
-    const collateral = collateralResponse?.data || collateralResponse || [];
-    $loanDetailCollateral.value = Array.isArray(collateral) ? collateral : [];
-
-    // Update guarantors list
-    const guarantors = guarantorsResponse?.data || guarantorsResponse || [];
-    $loanDetailGuarantors.value = Array.isArray(guarantors) ? guarantors : [];
+    if (repeatAfterMs != null && generation === loanDetailFetchGeneration) {
+      await new Promise((resolve) => {
+        setTimeout(resolve, repeatAfterMs);
+      });
+      if (generation !== loanDetailFetchGeneration) {
+        return;
+      }
+      await loadLoanDetailData(loanId);
+    }
   } catch (error) {
     console.error('Failed to fetch loan detail:', error);
-    $loan.update({ loan: null, isLoading: false });
-    $watchScoreBreakdown.update({ breakdown: null, isLoading: false });
-    dangerAlert(`Failed to fetch loan detail: ${error?.message || 'Unknown error'}`);
+    if (generation === loanDetailFetchGeneration) {
+      $loan.update({ loan: null, isLoading: false });
+      $watchScoreBreakdown.update({ breakdown: null, isLoading: false });
+      dangerAlert(`Failed to fetch loan detail: ${error?.message || 'Unknown error'}`);
+    }
   } finally {
-    $loan.update({ isLoading: false });
-    $watchScoreBreakdown.update({ isLoading: false });
+    if (generation === loanDetailFetchGeneration) {
+      $loan.update({ isLoading: false });
+      $watchScoreBreakdown.update({ isLoading: false });
+    }
   }
 };
 
