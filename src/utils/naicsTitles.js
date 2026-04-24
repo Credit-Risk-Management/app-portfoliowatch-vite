@@ -69,6 +69,7 @@ const NAICS_6_TITLES = {
   561320: 'Temporary Help Services',
   561330: 'Professional Employer Organizations',
   561499: 'All Other Business Support Services',
+  561720: 'Janitorial Services',
   561621: 'Security Systems Services',
   561730: 'Landscaping Services',
   562111: 'Solid Waste Collection',

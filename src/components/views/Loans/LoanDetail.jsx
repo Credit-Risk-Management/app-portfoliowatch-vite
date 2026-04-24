@@ -22,6 +22,7 @@ import { formatCurrency } from '@src/utils/formatCurrency';
 import { GuarantorNetWorthWithMemoFlag } from '@src/utils/guarantorFinancialsSource';
 import Loadable from '@src/components/global/Loadable';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
+import getResolvedIndustryTitle from '@src/utils/naicsTitles';
 import SubmitCollateralModal from './_components/SubmitCollateralModal';
 import { $loanCollateralView } from './_components/submitCollateralModal.signals';
 import AddCreditMemoModal from './_components/AddCreditMemoModal';
@@ -88,6 +89,14 @@ const LoanDetail = () => {
       </Container>
     );
   }
+
+  const { loan: loanRecord } = $loan.value;
+  const industryDisplay =
+    getResolvedIndustryTitle(
+      loanRecord.naicsCode,
+      loanRecord.naicsDescription,
+      loanRecord.borrower?.industryType,
+    ) || 'N/A';
 
   const collateralEntries = ($loanDetailCollateral.value || [])
     .sort((a, b) => new Date(b.asOfDate || 0) - new Date(a.asOfDate || 0));
@@ -511,7 +520,7 @@ const LoanDetail = () => {
                   </div>
                   <div>
                     <span className="text-info-100 fw-200">Industry: </span>
-                    <span className="fw-bold">{$loan.value?.loan?.naicsDescription || 'N/A'}</span>
+                    <span className="fw-bold">{industryDisplay}</span>
                   </div>
                 </Col>
                 <Col xs={12} md={4} className="text-md-end">
