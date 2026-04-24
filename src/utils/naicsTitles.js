@@ -106,17 +106,25 @@ function resolveTitleFrom6DigitCode(code6) {
   return NAICS_2_SECTOR[prefix2];
 }
 
+function isGenericTwoDigitSectorDescription(desc, code6) {
+  const sector2 = NAICS_2_SECTOR[code6.slice(0, 2)];
+  return sector2 !== undefined && desc === sector2;
+}
+
 /**
- * Resolve a display title for Industry: prefer loan `naicsDescription`, then 6-digit title,
- * then 2-digit sector from the same code, then free-text `borrowerIndustryType` if not a bare code.
+ * Resolve a display title for Industry: prefer loan `naicsDescription` when specific,
+ * then 6-digit / 2-digit from `naicsCode`, then free-text `borrowerIndustryType` if not a bare code.
  */
 export default function getResolvedIndustryTitle(naicsCode, naicsDescription, borrowerIndustryType) {
   const desc = naicsDescription?.trim();
+  const fromLoan = normalizeNaics6(naicsCode);
+
   if (desc && !isNaicsCodePlaceholderLabel(desc)) {
-    return desc;
+    if (!fromLoan || !isGenericTwoDigitSectorDescription(desc, fromLoan)) {
+      return desc;
+    }
   }
 
-  const fromLoan = normalizeNaics6(naicsCode);
   if (fromLoan) {
     const t = resolveTitleFrom6DigitCode(fromLoan);
     if (t) return t;
@@ -131,7 +139,9 @@ export default function getResolvedIndustryTitle(naicsCode, naicsDescription, bo
         if (t) return t;
       }
     } else if (!/^\d{5,6}$/.test(bt)) {
-      return bt;
+      if (!fromLoan || !isGenericTwoDigitSectorDescription(bt, fromLoan)) {
+        return bt;
+      }
     }
   }
   if (bt && /^\d{5,6}$/.test(bt)) {
