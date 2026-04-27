@@ -5,8 +5,10 @@ export const DEFAULT_PUBLIC_ATTESTATION_TEXT =
   'Acting in my capacity as an authorized officer of the Borrower, I hereby certify and attest that the information, schedules, and calculations set forth in these financial statements are true, complete, and accurate in all material respects as of the date indicated. This submission is made with the full understanding that the Lender will rely upon the veracity of this data for the purpose of determining credit risk.';
 
 /**
- * Public debt schedule template: served from `public/debt-schedule-template.pdf` unless
- * `VITE_DEBT_SCHEDULE_TEMPLATE_URL` is set (e.g. CDN or public bucket URL).
+ * Public debt schedule template: `public/debt-schedule-template.pdf` (AcroForm fillable PDF)
+ * unless `VITE_DEBT_SCHEDULE_TEMPLATE_URL` is set (e.g. CDN or public bucket URL).
+ * Totals row (below row 8): only `totals_Current_Balance` and `totals_Monthly_Payment`.
+ * See `scripts/patch-debt-schedule-totals-row.mjs` (or `pnpm run patch:debt-schedule-pdf`) for layout maintenance.
  */
 const resolveDebtScheduleTemplatePdfUrl = () => {
   const envUrl = import.meta.env.VITE_DEBT_SCHEDULE_TEMPLATE_URL;
@@ -43,6 +45,43 @@ export const $publicCashFlowUploader = Signal({ financialDocs: [] });
 export const $publicOtherFinancialsUploader = Signal({ financialDocs: [] });
 /** Quarterly P&L slot (API key `incomeStatementQuarterly`); reuses cash-flow uploader signal. */
 export const $publicDebtScheduleUploader = Signal({ financialDocs: [] });
+
+/** Matches `Template - Debt Schedule.xlsx`: 6 data rows (R6–R11), 10 columns; footer signature line. */
+export const DEBT_SCHEDULE_XLSX_DATA_ROW_COUNT = 6;
+
+/** Field keys for one debt row (column order as in the XLSX header row). */
+export const DEBT_SCHEDULE_FORM_COLUMN_KEYS = [
+  'nameOfCreditor',
+  'originalAmountFinanced',
+  'lineOfCreditLimit',
+  'originalDateYear',
+  'currentBalance',
+  'interestRate',
+  'maturityDate',
+  'monthlyPayment',
+  'collateral',
+  'currentOrDelinquent',
+];
+
+export const debtScheduleFormField = (rowIdx, columnKey) => `r${rowIdx}_${columnKey}`;
+
+const createDefaultDebtScheduleWorksheetForm = () => {
+  const base = {
+    businessName: '',
+    asOfDate: '',
+    signatoryName: '',
+    signatoryTitle: '',
+    signDate: '',
+  };
+  for (let r = 0; r < DEBT_SCHEDULE_XLSX_DATA_ROW_COUNT; r += 1) {
+    DEBT_SCHEDULE_FORM_COLUMN_KEYS.forEach((k) => {
+      base[debtScheduleFormField(r, k)] = '';
+    });
+  }
+  return base;
+};
+
+export const $debtScheduleWorksheetForm = Signal(createDefaultDebtScheduleWorksheetForm());
 
 // Signal for component view state
 export const $publicFinancialUploadView = Signal({
@@ -99,7 +138,8 @@ export const SECTION_DEF_BY_ID = {
   debtScheduleWorksheet: {
     sectionId: 'debtScheduleWorksheet',
     title: 'Debt schedule',
-    helperText: 'Upload the debt schedule as a PDF. If a prior schedule was provided, you may download and update it.',
+    helperText:
+      'Upload the debt schedule as a PDF. Open the worksheet for a grid aligned with the Excel template; totals sum Current Balance and Monthly Payment from the six data rows. You can also open the fillable PDF from the worksheet.',
     inputId: 'public-financial-debt-schedule',
     replaceButtonVariant: 'outline-secondary',
   },

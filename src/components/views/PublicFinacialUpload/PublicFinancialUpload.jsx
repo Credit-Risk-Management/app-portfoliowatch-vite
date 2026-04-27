@@ -16,6 +16,7 @@ import sabreFinanceWordmark from '@src/assets/sabre_finance.svg?url';
 import { formatDate } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
 import { $publicFinancialUploadView, DEFAULT_PUBLIC_ATTESTATION_TEXT } from './_helpers/publicFinancialUpload.consts';
 import AttestationModal from './_components/AttestationModal';
+import DebtScheduleWorksheetModal from './_components/DebtScheduleWorksheetModal';
 import {
   getRequiredPdfSectionsForLink,
   hasPdfStagedForSection,
@@ -27,9 +28,9 @@ import {
   clearError,
   clearPublicFinancialSectionFiles,
   handleOpenPriorDebtSchedulePdf,
-  handleOpenDebtScheduleTemplatePdf,
   openAttestationModal,
   closeAttestationModal,
+  openDebtScheduleWorksheetModal,
 } from './_helpers/publicFinancialUpload.events';
 
 const PublicFinancialUpload = () => {
@@ -214,45 +215,6 @@ const PublicFinancialUpload = () => {
                         >
                           <td className="px-16 py-8">
                             <div className="fw-semibold text-dark">{title}</div>
-                            {sectionId === 'debtScheduleWorksheet' && (
-                              <div className="mt-8 small text-dark">
-                                {linkData?.priorDebtSchedule ? (
-                                  <>
-                                    <div className="mb-4 fw-semibold">
-                                      Previous schedule on file:
-                                      {' '}
-                                      <span className="text-dark">{linkData.priorDebtSchedule.fileName}</span>
-                                    </div>
-                                    <Button
-                                      type="button"
-                                      variant="dark"
-                                      size="sm"
-                                      className="px-12"
-                                      disabled={priorDebtOpening}
-                                      onClick={() => handleOpenPriorDebtSchedulePdf()}
-                                    >
-                                      {priorDebtOpening ? 'Opening…' : 'Open previous PDF'}
-                                    </Button>
-                                  </>
-                                ) : (
-                                  <>
-                                    <div className="mb-4 fw-semibold text-grey-600">
-                                      No prior debt schedule on file. Open the template to see the format we need,
-                                      then upload your completed PDF.
-                                    </div>
-                                    <Button
-                                      type="button"
-                                      variant="dark"
-                                      size="sm"
-                                      className="px-12"
-                                      onClick={() => handleOpenDebtScheduleTemplatePdf()}
-                                    >
-                                      Open template PDF
-                                    </Button>
-                                  </>
-                                )}
-                              </div>
-                            )}
                           </td>
                           <td className="px-16 py-8">
                             {hasPdf ? (
@@ -270,30 +232,79 @@ const PublicFinancialUpload = () => {
                             <div className="fw-semibold text-dark text-truncate">{hasPdf ? firstFileName : '—'}</div>
                           </td>
                           <td className="px-16 py-8 text-end">
-                            <div className="d-none">
-                              <FileUploader
-                                id={inputId}
-                                name="financialDocs"
-                                signal={uploaderSignal}
-                                acceptedTypes=".pdf"
-                              />
+                            {sectionId === 'debtScheduleWorksheet' && (
+                            <div className="mt-8 small text-dark d-flex flex-column align-items-end gap-8 text-end w-100">
+                              {linkData?.priorDebtSchedule && (
+                                <>
+                                  <div className="mb-0 fw-semibold w-100">
+                                    Previous schedule on file:
+                                    {' '}
+                                    <span className="text-dark">{linkData.priorDebtSchedule.fileName}</span>
+                                  </div>
+                                  <div className="d-flex flex-wrap justify-content-end gap-8 w-100">
+                                    <Button
+                                      type="button"
+                                      variant="dark"
+                                      size="sm"
+                                      className="px-12"
+                                      disabled={priorDebtOpening}
+                                      onClick={() => handleOpenPriorDebtSchedulePdf()}
+                                    >
+                                      {priorDebtOpening ? 'Opening…' : 'Open previous PDF'}
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      variant="outline-dark"
+                                      size="sm"
+                                      className="px-12"
+                                      onClick={() => openDebtScheduleWorksheetModal()}
+                                    >
+                                      Open worksheet
+                                    </Button>
+                                  </div>
+                                </>
+                              )}
+                              {!linkData?.priorDebtSchedule && (
+                                <Button
+                                  type="button"
+                                  variant="dark"
+                                  size="sm"
+                                  className="px-12"
+                                  onClick={() => openDebtScheduleWorksheetModal()}
+                                >
+                                  Open worksheet
+                                </Button>
+                              )}
                             </div>
-                            {hasPdf ? (
-                              <Button
-                                size="sm"
-                                variant="link"
-                                className="fw-bold text-dark p-0 text-decoration-none"
-                                onClick={() => clearPublicFinancialSectionFiles(sectionId)}
-                              >
-                                Remove
-                              </Button>
-                            ) : (
-
-                              <label htmlFor={inputId} className="fw-bold text-dark mb-0" style={{ cursor: 'pointer' }}>
-                                Upload
-                              </label>
+                            )}
+                            {sectionId !== 'debtScheduleWorksheet' && (
+                            <>
+                              <div className="d-none">
+                                <FileUploader
+                                  id={inputId}
+                                  name="financialDocs"
+                                  signal={uploaderSignal}
+                                  acceptedTypes=".pdf"
+                                />
+                              </div>
+                              {hasPdf ? (
+                                <Button
+                                  size="sm"
+                                  variant="link"
+                                  className="fw-bold text-dark p-0 text-decoration-none"
+                                  onClick={() => clearPublicFinancialSectionFiles(sectionId)}
+                                >
+                                  Remove
+                                </Button>
+                              ) : (
+                                <label htmlFor={inputId} className="fw-bold text-dark mb-0" style={{ cursor: 'pointer' }}>
+                                  Upload
+                                </label>
+                              )}
+                            </>
                             )}
                           </td>
+
                         </tr>
                       );
                     })}
@@ -325,6 +336,10 @@ const PublicFinancialUpload = () => {
           closeAttestationModal();
           handleFileUpload();
         }}
+      />
+      <DebtScheduleWorksheetModal
+        show={activeModalKey === 'debtSchedule'}
+        isSubmitting={isSubmitting}
       />
     </ContentWrapper>
   );

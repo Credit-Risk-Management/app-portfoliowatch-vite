@@ -6,8 +6,10 @@ import {
 } from '@src/api/borrowerFinancialUploadLink.api';
 import { storage } from '@src/utils/firebase';
 import { getRequiredPdfSectionsForLink } from './publicFinancialUpload.helpers';
+import { openDebtScheduleTemplateWithSummedTotals } from './publicFinancialUpload.resolvers';
 import {
   $publicFinancialForm,
+  $debtScheduleWorksheetForm,
   $publicIncomeStatementUploader,
   $publicBalanceSheetUploader,
   $publicCashFlowUploader,
@@ -16,7 +18,6 @@ import {
   $publicFinancialUploadView,
   UPLOADER_BY_SECTION,
   SECTION_ID_TO_DOCUMENT_TYPE,
-  DEBT_SCHEDULE_TEMPLATE_PDF_URL,
 } from './publicFinancialUpload.consts';
 
 /**
@@ -114,6 +115,7 @@ export const handleFileUpload = async () => {
 
     $publicFinancialUploadView.update({ success: true });
     $publicFinancialForm.reset();
+    $debtScheduleWorksheetForm.reset();
     resetAllPublicFinancialUploaders();
   } catch (error) {
     const message = error?.message || (typeof error === 'string' ? error : 'Request failed');
@@ -147,9 +149,9 @@ export const handleOpenPriorDebtSchedulePdf = async () => {
   }
 };
 
-/** Open debt schedule template (static asset or `VITE_DEBT_SCHEDULE_TEMPLATE_URL`). */
+/** Open debt schedule template: sums rows 1–8 into the totals line and opens a fillable tab. */
 export const handleOpenDebtScheduleTemplatePdf = () => {
-  window.open(DEBT_SCHEDULE_TEMPLATE_PDF_URL, '_blank', 'noopener,noreferrer');
+  openDebtScheduleTemplateWithSummedTotals().catch(() => {});
 };
 
 export const setPublicFinancialAttestationAccepted = (accepted) => {
@@ -161,6 +163,29 @@ export const openAttestationModal = () => {
 };
 
 export const closeAttestationModal = () => {
+  $publicFinancialUploadView.update({ activeModalKey: null });
+};
+
+/**
+ * Worksheet form aligned to `Template - Debt Schedule.xlsx`. Prefill borrower and period from the link when fields are empty.
+ */
+export const openDebtScheduleWorksheetModal = () => {
+  const { linkData } = $publicFinancialUploadView.value;
+  const name = (linkData?.borrower?.name || '').trim();
+  const end = linkData?.reportingPeriodEndDate;
+  const asOf = end
+    ? new Date(end).toISOString().slice(0, 10)
+    : '';
+  const cur = $debtScheduleWorksheetForm.value;
+  $debtScheduleWorksheetForm.update({
+    ...cur,
+    businessName: (cur.businessName && cur.businessName.trim()) ? cur.businessName : name,
+    asOfDate: cur.asOfDate || asOf,
+  });
+  $publicFinancialUploadView.update({ activeModalKey: 'debtSchedule' });
+};
+
+export const closeDebtScheduleWorksheetModal = () => {
   $publicFinancialUploadView.update({ activeModalKey: null });
 };
 

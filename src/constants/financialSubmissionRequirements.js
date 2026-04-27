@@ -20,12 +20,11 @@ export const Q1_TEST_UPLOAD_LINK_OPTIONS = {
   fiscalYearEndMonth: 12,
   requiredDocumentKeys: [
     REQUIRED_DOCUMENT_KEYS.BALANCE_SHEET,
-    REQUIRED_DOCUMENT_KEYS.INCOME_STATEMENT_YTD,
     REQUIRED_DOCUMENT_KEYS.INCOME_STATEMENT_QUARTERLY,
   ],
   periodLabel: 'Q1 2026',
   lenderInstructions:
-    'Quarterly package for Q1 2026 (calendar). Balance sheet as of 3/31/2026, YTD income through 3/31/2026, and quarterly P&L for 1/1/2026–3/31/2026.',
+    'Quarterly package for Q1 2026 (calendar).Balance Sheet - dated 3/31/2026 and Income Statement for 1/1/2026 - 3/31/2026',
 };
 
 /**
@@ -42,7 +41,7 @@ export const ANNUAL_TEST_UPLOAD_LINK_OPTIONS = {
   ],
   periodLabel: 'FY 2025',
   lenderInstructions:
-    'Annual package for FY 2025 (calendar year-end). Business tax return, debt schedule, and balance sheet as of 12/31/2025.',
+    'Annual package for FY 2025 (calendar year-end). Business tax return and debt schedule as of 12/31/2025.',
 };
 
 /** Keys for public guarantor upload (must match API). */

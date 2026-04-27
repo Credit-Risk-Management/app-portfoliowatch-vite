@@ -4,6 +4,8 @@ import {
   SECTION_DEF_BY_ID,
   DEFAULT_SECTION_IDS,
   API_KEY_TO_SECTION_ID,
+  DEBT_SCHEDULE_XLSX_DATA_ROW_COUNT,
+  debtScheduleFormField,
 } from './publicFinancialUpload.consts';
 
 /**
@@ -54,3 +56,36 @@ export const hasPdfStagedForSection = (sectionId) => {
 export const getPublicUploaderSignalForSection = (sectionId) => (
   UPLOADER_BY_SECTION[sectionId]
 );
+
+/** @param {string|undefined} raw */
+export const parseDebtScheduleNumeric = (raw) => {
+  if (raw == null || typeof raw !== 'string') return 0;
+  const t = raw.trim();
+  if (!t) return 0;
+  const n = parseFloat(t.replace(/[$,\s]/g, ''));
+  return Number.isFinite(n) ? n : 0;
+};
+
+/** @param {number} n */
+export const formatDebtScheduleCurrency = (n) => {
+  if (!Number.isFinite(n) || n === 0) return '';
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
+};
+
+/**
+ * Sums R6–R11 "Current Balance" and "Monthly Payment" like the XLSX TOTALS row (cols E and H).
+ * @param {Record<string, string>} form — `$debtScheduleWorksheetForm` value
+ */
+export const computeDebtWorksheetTotals = (form) => {
+  let totalBalance = 0;
+  let totalMonthly = 0;
+  for (let r = 0; r < DEBT_SCHEDULE_XLSX_DATA_ROW_COUNT; r += 1) {
+    totalBalance += parseDebtScheduleNumeric(
+      form[debtScheduleFormField(r, 'currentBalance')],
+    );
+    totalMonthly += parseDebtScheduleNumeric(
+      form[debtScheduleFormField(r, 'monthlyPayment')],
+    );
+  }
+  return { totalBalance, totalMonthly };
+};
