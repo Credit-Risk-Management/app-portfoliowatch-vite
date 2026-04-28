@@ -1,4 +1,5 @@
 import UniversalModal from '@src/components/global/UniversalModal';
+import { Spinner } from 'react-bootstrap';
 import { useParams } from 'react-router-dom';
 import { $borrowerFinancialsView } from '@src/signals';
 import * as events from '@src/components/views/BorrowerDetails/_components/TabContent/BorrowerFinancialsTab/_helpers/borrowerFinancialsTab.events';
@@ -7,17 +8,27 @@ import * as resolvers from '@src/components/views/BorrowerDetails/_components/Ta
 const DeleteBorrowerFinancialModal = () => {
   const { borrowerId } = useParams();
   const pending = $borrowerFinancialsView.value.pendingDeleteFinancial;
+  const isDeleting = $borrowerFinancialsView.value.isDeletingBorrowerFinancial;
 
   return (
     <UniversalModal
       show={$borrowerFinancialsView.value.activeModalKey === 'deleteFinancials'}
-      onHide={() => events.closeDeleteFinancialModal()}
+      onHide={() => {
+        if (!isDeleting) events.closeDeleteFinancialModal();
+      }}
       headerText="Delete financial record"
-      headerBgColor="danger"
       leftBtnText="Cancel"
-      rightBtnText="Delete"
-      rightBtnVariant="danger"
-      rightBtnClass="text-white"
+      leftButtonDisabled={isDeleting}
+      keyboard={!isDeleting}
+      backdrop={isDeleting ? 'static' : true}
+      rightBtnText={isDeleting ? (
+        <>
+          <Spinner animation="border" size="sm" className="me-2 align-middle" role="status" aria-hidden />
+          Deleting…
+        </>
+      ) : 'Delete'}
+      rightBtnClass="btn-danger text-white d-inline-flex align-items-center"
+      rightButtonDisabled={isDeleting}
       rightBtnOnClick={() => resolvers.confirmDeleteBorrowerFinancial(borrowerId)}
     >
       {pending ? (

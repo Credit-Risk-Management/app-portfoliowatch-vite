@@ -2,7 +2,6 @@ import { dangerAlert, successAlert } from '@src/components/global/Alert/_helpers
 import {
   submitFinancialsViaToken,
   notifyExtractReadyViaToken,
-  getPublicPriorDebtScheduleDownload,
 } from '@src/api/borrowerFinancialUploadLink.api';
 import { storage } from '@src/utils/firebase';
 import {
@@ -11,7 +10,6 @@ import {
   mergePriorWorksheetRowsIntoForm,
   validateDebtScheduleWorksheetForPdf,
 } from './publicFinancialUpload.helpers';
-import { openDebtScheduleTemplateWithSummedTotals } from './publicFinancialUpload.resolvers';
 import {
   $publicFinancialForm,
   $debtScheduleWorksheetForm,
@@ -25,6 +23,7 @@ import {
   UPLOADER_BY_SECTION,
   SECTION_ID_TO_DOCUMENT_TYPE,
 } from './publicFinancialUpload.consts';
+import { $debtScheduleWorksheetWrapCellEdit } from '../_components/DebtScheduleWorksheetModal/_helpers/debtScheduleWorksheetModal.consts';
 
 /**
  * Build a locked, system-standard file name: `borrowerName-documentType-YYYY-MM-DD.pdf`
@@ -166,44 +165,6 @@ export const handleFileUpload = async () => {
   }
 };
 
-/**
- * Open the borrower's prior debt schedule PDF (new tab) so they can update and re-upload.
- */
-export const handleOpenPriorDebtSchedulePdf = async () => {
-  const { token } = $publicFinancialUploadView.value;
-  if (!token) return;
-  $publicFinancialUploadView.update({ priorDebtOpening: true });
-  try {
-    const res = await getPublicPriorDebtScheduleDownload(token);
-    if (res?.status === 'success' && res?.data?.downloadUrl) {
-      window.open(res.data.downloadUrl, '_blank', 'noopener,noreferrer');
-    } else {
-      dangerAlert('Could not open prior debt schedule.');
-    }
-  } catch (error) {
-    dangerAlert(
-      error?.message || error?.error || 'Could not open prior debt schedule.',
-    );
-  } finally {
-    $publicFinancialUploadView.update({ priorDebtOpening: false });
-  }
-};
-
-/** Open debt schedule template: validates worksheet, then sums rows 1–8 into the totals line and opens a fillable tab. */
-export const handleOpenDebtScheduleTemplatePdf = () => {
-  const form = $debtScheduleWorksheetForm.value;
-  const { valid, errors } = validateDebtScheduleWorksheetForPdf(form);
-  if (!valid) {
-    $publicFinancialUploadView.update({ debtScheduleWorksheetErrors: errors });
-    dangerAlert(
-      'Enter your printed name and title, and add at least one debt with both current balance and monthly payment.',
-    );
-    return;
-  }
-  $publicFinancialUploadView.update({ debtScheduleWorksheetErrors: null });
-  openDebtScheduleTemplateWithSummedTotals().catch(() => {});
-};
-
 export const setPublicFinancialAttestationAccepted = (accepted) => {
   $publicFinancialUploadView.update({ attestationAccepted: Boolean(accepted) });
 };
@@ -255,6 +216,7 @@ export const openDebtScheduleWorksheetModal = () => {
 };
 
 export const closeDebtScheduleWorksheetModal = () => {
+  $debtScheduleWorksheetWrapCellEdit.update({ name: null });
   $publicFinancialUploadView.update({
     activeModalKey: null,
     debtScheduleWorksheetErrors: null,

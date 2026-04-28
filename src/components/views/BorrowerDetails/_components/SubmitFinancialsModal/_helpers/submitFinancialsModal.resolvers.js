@@ -162,6 +162,15 @@ export const handleRemoveDocument = async (documentId) => {
       $borrowerFinancialsForm.update(clearedFields);
     }
 
+    if (doc.isStored && doc.id && !String(doc.id).startsWith('temp-')) {
+      const prevIds = $borrowerFinancialsForm.value.documentIds || [];
+      if (prevIds.length > 0) {
+        $borrowerFinancialsForm.update({
+          documentIds: prevIds.filter((id) => id !== doc.id),
+        });
+      }
+    }
+
     $modalState.update({
       ...$modalState.value,
       documentsByType: updatedDocumentsByType,
@@ -279,6 +288,11 @@ const collectStoredIdsByType = (documentsByType) => ({
     .filter((d) => d.isStored && d.id)
     .map((d) => d.id),
 });
+
+/** Stored PDF rows currently shown in the modal (excludes temp staged uploads). */
+const flattenStoredDocumentIds = (documentsByType) => (
+  Object.values(collectStoredIdsByType(documentsByType || {})).flat()
+);
 
 export const handleOpenEditMode = async (financial) => {
   const { $modalState } = consts;
@@ -458,6 +472,13 @@ export const handleSubmit = async (onCloseCallback) => {
     const hasStagedNewUploads = stagedByType
       && Object.keys(stagedByType).some((k) => (stagedByType[k] || []).some((d) => d?.file && !d.isStored));
 
+    const fromModalIds = flattenStoredDocumentIds(stagedByType);
+    const fromFormIds = Array.isArray($borrowerFinancialsForm.value.documentIds)
+      ? $borrowerFinancialsForm.value.documentIds
+      : [];
+    // Never send [] on update when we still have stored docs in the modal (was clearing DB + breaking downstream).
+    const documentIds = fromModalIds.length > 0 ? fromModalIds : fromFormIds;
+
     const financialData = {
       borrowerId,
       asOfDate,
@@ -487,7 +508,7 @@ export const handleSubmit = async (onCloseCallback) => {
       notes: $borrowerFinancialsForm.value.notes || null,
       submittedBy: $user.value?.email || $user.value?.name || 'Unknown User',
       organizationId,
-      documentIds: [],
+      documentIds,
       ...(hasStagedNewUploads ? { skipWatchScoreRecomputation: true } : {}),
     };
 

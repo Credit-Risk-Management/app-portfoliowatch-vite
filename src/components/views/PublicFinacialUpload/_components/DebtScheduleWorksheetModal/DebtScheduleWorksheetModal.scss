@@ -1,0 +1,16 @@
+/* Fixed layout + colgroup: predictable column widths; wrap cells truncate inside their share. */
+.debt-schedule-worksheet-table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.debt-schedule-worksheet-wrap-cell {
+  vertical-align: top;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.debt-schedule-worksheet-select-cell {
+  min-width: 0;
+  vertical-align: top;
+}

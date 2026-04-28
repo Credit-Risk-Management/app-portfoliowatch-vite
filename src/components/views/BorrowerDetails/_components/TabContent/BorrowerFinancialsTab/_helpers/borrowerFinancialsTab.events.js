@@ -33,6 +33,7 @@ export const openDeleteFinancialModal = (financial) => {
   $borrowerFinancialsView.update({
     activeModalKey: 'deleteFinancials',
     pendingDeleteFinancial: financial,
+    isDeletingBorrowerFinancial: false,
   });
 };
 
@@ -40,6 +41,7 @@ export const closeDeleteFinancialModal = () => {
   $borrowerFinancialsView.update({
     activeModalKey: null,
     pendingDeleteFinancial: null,
+    isDeletingBorrowerFinancial: false,
   });
 };
 

@@ -92,6 +92,27 @@ export const computeDebtWorksheetTotals = (form) => {
 };
 
 /**
+ * API / DB often sends ISO dates (e.g. 2031-03-15). Worksheet mask + placeholder use MM/DD/YYYY.
+ * @param {unknown} raw
+ * @returns {string}
+ */
+export const normalizeIncomingDebtWorksheetMaturityDate = (raw) => {
+  if (raw == null) return '';
+  let s = String(raw).trim();
+  if (!s) return '';
+  if (s.includes('T')) {
+    [s] = s.split('T');
+    s = s.trim();
+  }
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (iso) {
+    const [, y, mo, d] = iso;
+    return `${mo}/${d}/${y}`;
+  }
+  return String(raw).trim();
+};
+
+/**
  * Merge API `worksheetRows` into a fresh default form plus header fields.
  * @param {Record<string, string>} baseForm — from `createDefaultDebtScheduleWorksheetForm()`
  * @param {Array<Record<string, string>>} worksheetRows
@@ -105,7 +126,10 @@ export const mergePriorWorksheetRowsIntoForm = (baseForm, worksheetRows, header)
     DEBT_SCHEDULE_FORM_COLUMN_KEYS.forEach((k) => {
       const v = row[k];
       if (v != null && String(v).trim() !== '') {
-        next[debtScheduleFormField(r, k)] = String(v);
+        const str = String(v);
+        next[debtScheduleFormField(r, k)] = k === 'maturityDate'
+          ? normalizeIncomingDebtWorksheetMaturityDate(str)
+          : str;
       }
     });
   }

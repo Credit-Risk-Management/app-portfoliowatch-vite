@@ -60,6 +60,8 @@ export const fetchFinancialHistory = async () => {
 export const confirmDeleteBorrowerFinancial = async (borrowerId) => {
   const pending = $borrowerFinancialsView.value.pendingDeleteFinancial;
   if (!borrowerId || !pending?.id) return;
+  if ($borrowerFinancialsView.value.isDeletingBorrowerFinancial) return;
+  $borrowerFinancialsView.update({ isDeletingBorrowerFinancial: true });
   try {
     await borrowerFinancialsApi.delete(pending.id);
     $borrowerFinancialsView.update({
@@ -71,6 +73,8 @@ export const confirmDeleteBorrowerFinancial = async (borrowerId) => {
     await fetchBorrowerDocuments(borrowerId);
   } catch (error) {
     dangerAlert(error?.message || 'Failed to delete financial record.');
+  } finally {
+    $borrowerFinancialsView.update({ isDeletingBorrowerFinancial: false });
   }
 };
 
