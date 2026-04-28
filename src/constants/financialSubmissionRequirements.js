@@ -21,10 +21,11 @@ export const Q1_TEST_UPLOAD_LINK_OPTIONS = {
   requiredDocumentKeys: [
     REQUIRED_DOCUMENT_KEYS.BALANCE_SHEET,
     REQUIRED_DOCUMENT_KEYS.INCOME_STATEMENT_QUARTERLY,
+    REQUIRED_DOCUMENT_KEYS.DEBT_SCHEDULE,
   ],
   periodLabel: 'Q1 2026',
   lenderInstructions:
-    'Quarterly package for Q1 2026 (calendar).Balance Sheet - dated 3/31/2026 and Income Statement for 1/1/2026 - 3/31/2026',
+    'Quarterly package for Q1 2026 (calendar).Balance Sheet - dated 3/31/2026 and Income Statement for 1/1/2026 - 3/31/2026 and Debt Schedule as of 3/31/2026',
 };
 
 /**
@@ -36,7 +37,7 @@ export const ANNUAL_TEST_UPLOAD_LINK_OPTIONS = {
   reportingPeriodEndDate: '2025-12-31',
   fiscalYearEndMonth: 12,
   requiredDocumentKeys: [
-    REQUIRED_DOCUMENT_KEYS.BUSINESS_TAX_RETURN,
+    // REQUIRED_DOCUMENT_KEYS.BUSINESS_TAX_RETURN,
     REQUIRED_DOCUMENT_KEYS.DEBT_SCHEDULE,
   ],
   periodLabel: 'FY 2025',

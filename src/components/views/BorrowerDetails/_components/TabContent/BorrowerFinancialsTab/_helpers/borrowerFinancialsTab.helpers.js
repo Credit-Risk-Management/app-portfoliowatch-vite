@@ -47,7 +47,7 @@ export const FINANCIALS_TABLE_HEADERS = [
   { key: 'currentRatio', value: 'Current Ratio', sortKey: 'currentRatio' },
   { key: 'liquidity', value: 'Liquidity', sortKey: 'liquidity' },
   { key: 'submittedBy', value: 'Submitted By', sortKey: 'submittedBy' },
-  { key: 'documents', value: 'Documents' },
+  { key: 'actions', value: 'Actions' },
 ];
 
 export const formatFinancialDate = formatDate;

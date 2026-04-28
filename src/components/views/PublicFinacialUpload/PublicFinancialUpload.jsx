@@ -14,21 +14,24 @@ import FileUploader from '@src/components/global/FileUploader';
 import ContentWrapper from '@src/components/global/ContentWrapper';
 import sabreFinanceWordmark from '@src/assets/sabre_finance.svg?url';
 import { formatDate } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
-import { $publicFinancialUploadView, DEFAULT_PUBLIC_ATTESTATION_TEXT } from './_helpers/publicFinancialUpload.consts';
+import {
+  $debtScheduleWorksheetForm,
+  $publicFinancialUploadView,
+  DEFAULT_PUBLIC_ATTESTATION_TEXT,
+} from './_helpers/publicFinancialUpload.consts';
 import AttestationModal from './_components/AttestationModal';
 import DebtScheduleWorksheetModal from './_components/DebtScheduleWorksheetModal';
 import {
   getRequiredPdfSectionsForLink,
   hasPdfStagedForSection,
   getPublicUploaderSignalForSection,
+  isSectionReadyForSubmit,
 } from './_helpers/publicFinancialUpload.helpers';
 import { fetchUploadLinkData } from './_helpers/publicFinancialUpload.resolvers';
 import {
   handleFileUpload,
   clearError,
-  clearPublicFinancialSectionFiles,
-  handleOpenPriorDebtSchedulePdf,
-  openAttestationModal,
+  clearPublicFinancialSectionFiles, openAttestationModal,
   closeAttestationModal,
   openDebtScheduleWorksheetModal,
 } from './_helpers/publicFinancialUpload.events';
@@ -41,6 +44,7 @@ const PublicFinancialUpload = () => {
   useEffect(() => {
     fetchUploadLinkData(token);
   }, [token]);
+
   const {
     linkData,
     isLoading,
@@ -48,10 +52,13 @@ const PublicFinancialUpload = () => {
     activeModalKey,
     error,
     success,
-    priorDebtOpening,
+    debtScheduleWorksheetSubmitting,
   } = $publicFinancialUploadView.value;
-
   const attestationText = linkData?.attestationText || DEFAULT_PUBLIC_ATTESTATION_TEXT;
+  const requiredPdfSections = getRequiredPdfSectionsForLink(linkData);
+  const debtWorksheetForm = $debtScheduleWorksheetForm.value;
+  const canRunExtraction = requiredPdfSections.length > 0
+    && requiredPdfSections.every(({ sectionId }) => isSectionReadyForSubmit(sectionId, debtWorksheetForm));
 
   if (isLoading) {
     return (
@@ -118,9 +125,6 @@ const PublicFinancialUpload = () => {
               <p className="text-info-300 mb-24">
                 Our system will extract the financial data from your uploaded PDFs shortly. Your lender will be notified once the extraction is complete.
               </p>
-              <Button variant="primary-100" onClick={() => navigate('/')}>
-                Go to Dashboard
-              </Button>
             </Card.Body>
           </Card>
         </Container>
@@ -128,9 +132,6 @@ const PublicFinancialUpload = () => {
     );
   }
 
-  const requiredPdfSections = getRequiredPdfSectionsForLink(linkData);
-  const canRunExtraction = requiredPdfSections.length > 0
-    && requiredPdfSections.every(({ sectionId }) => hasPdfStagedForSection(sectionId));
   return (
     <ContentWrapper fluid className="min-vh-100 bg-info-900">
       <Container className="py-16 py-md-24">
@@ -199,14 +200,22 @@ const PublicFinancialUpload = () => {
                       <th className=" fw-semibold text-uppercase  px-16" style={{ width: '32%', color: '#71717a', letterSpacing: '0.06em' }}>Document</th>
                       <th className=" fw-semibold text-uppercase  px-16" style={{ width: '18%', color: '#71717a', letterSpacing: '0.06em' }}>Status</th>
                       <th className=" fw-semibold text-uppercase  px-16" style={{ color: '#71717a', letterSpacing: '0.06em' }}>File</th>
-                      <th className=" fw-semibold text-uppercase  px-16 text-end" style={{ width: '12%', color: '#71717a', letterSpacing: '0.06em' }}>Action</th>
+                      <th className=" fw-semibold text-uppercase  px-16 text-end text-nowrap" style={{ width: '15%', minWidth: '152px', color: '#71717a', letterSpacing: '0.06em' }}>Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {requiredPdfSections.map(({ sectionId, title, inputId }, rowIndex) => {
                       const uploaderSignal = getPublicUploaderSignalForSection(sectionId);
-                      const hasPdf = hasPdfStagedForSection(sectionId);
-                      const firstFileName = (uploaderSignal.value.financialDocs || [])[0]?.name;
+                      const rowReady = isSectionReadyForSubmit(sectionId, debtWorksheetForm);
+                      const hasPdf = sectionId === 'debtScheduleWorksheet'
+                        ? rowReady
+                        : hasPdfStagedForSection(sectionId);
+                      let firstFileName;
+                      if (sectionId === 'debtScheduleWorksheet') {
+                        firstFileName = rowReady ? 'Worksheet complete (PDF generated on submit)' : '—';
+                      } else {
+                        firstFileName = (uploaderSignal.value.financialDocs || [])[0]?.name;
+                      }
                       const isLast = rowIndex === requiredPdfSections.length - 1;
                       return (
                         <tr
@@ -222,59 +231,29 @@ const PublicFinancialUpload = () => {
                                 <span className="me-4">
                                   <FontAwesomeIcon icon={faCheck} size="sm" className="text-success-700" />
                                 </span>
-                                Uploaded
+                                {sectionId === 'debtScheduleWorksheet' ? 'Complete' : 'Uploaded'}
                               </span>
                             ) : (
-                              <span className="text-grey-600 fw-normal">Not uploaded</span>
+                              <span className="text-grey-600 fw-normal">
+                                {sectionId === 'debtScheduleWorksheet' ? 'Worksheet not complete' : 'Not uploaded'}
+                              </span>
                             )}
                           </td>
-                          <td className="px-16 py-8 text- text-truncate" style={{ maxWidth: 0 }}>
+                          <td className="ps-16 py-8 text- text-truncate" style={{ maxWidth: 400 }}>
                             <div className="fw-semibold text-dark text-truncate">{hasPdf ? firstFileName : '—'}</div>
                           </td>
-                          <td className="px-16 py-8 text-end">
+                          <td className="pe-16 py-8 text-end">
                             {sectionId === 'debtScheduleWorksheet' && (
-                            <div className="mt-8 small text-dark d-flex flex-column align-items-end gap-8 text-end w-100">
-                              {linkData?.priorDebtSchedule && (
-                                <>
-                                  <div className="mb-0 fw-semibold w-100">
-                                    Previous schedule on file:
-                                    {' '}
-                                    <span className="text-dark">{linkData.priorDebtSchedule.fileName}</span>
-                                  </div>
-                                  <div className="d-flex flex-wrap justify-content-end gap-8 w-100">
-                                    <Button
-                                      type="button"
-                                      variant="dark"
-                                      size="sm"
-                                      className="px-12"
-                                      disabled={priorDebtOpening}
-                                      onClick={() => handleOpenPriorDebtSchedulePdf()}
-                                    >
-                                      {priorDebtOpening ? 'Opening…' : 'Open previous PDF'}
-                                    </Button>
-                                    <Button
-                                      type="button"
-                                      variant="outline-dark"
-                                      size="sm"
-                                      className="px-12"
-                                      onClick={() => openDebtScheduleWorksheetModal()}
-                                    >
-                                      Open worksheet
-                                    </Button>
-                                  </div>
-                                </>
-                              )}
-                              {!linkData?.priorDebtSchedule && (
-                                <Button
-                                  type="button"
-                                  variant="dark"
-                                  size="sm"
-                                  className="px-12"
-                                  onClick={() => openDebtScheduleWorksheetModal()}
-                                >
-                                  Open worksheet
-                                </Button>
-                              )}
+                            <div className="text-dark d-flex justify-content-end">
+                              <Button
+                                type="button"
+                                variant="dark"
+                                size="sm"
+                                className="text-nowrap"
+                                onClick={() => openDebtScheduleWorksheetModal()}
+                              >
+                                Open worksheet
+                              </Button>
                             </div>
                             )}
                             {sectionId !== 'debtScheduleWorksheet' && (
@@ -340,6 +319,7 @@ const PublicFinancialUpload = () => {
       <DebtScheduleWorksheetModal
         show={activeModalKey === 'debtSchedule'}
         isSubmitting={isSubmitting}
+        worksheetSubmitting={debtScheduleWorksheetSubmitting}
       />
     </ContentWrapper>
   );

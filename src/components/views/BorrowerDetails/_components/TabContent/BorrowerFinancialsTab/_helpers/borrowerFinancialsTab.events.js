@@ -29,6 +29,20 @@ export const onFinancialRowClick = (borrowerId, financial) => {
   });
 };
 
+export const openDeleteFinancialModal = (financial) => {
+  $borrowerFinancialsView.update({
+    activeModalKey: 'deleteFinancials',
+    pendingDeleteFinancial: financial,
+  });
+};
+
+export const closeDeleteFinancialModal = () => {
+  $borrowerFinancialsView.update({
+    activeModalKey: null,
+    pendingDeleteFinancial: null,
+  });
+};
+
 export const handleCopyPermanentLink = async (isAnnualLink = false) => {
   const url = getUploadLinkUrl();
   if (!url) return;

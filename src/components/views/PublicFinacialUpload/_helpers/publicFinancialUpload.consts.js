@@ -65,7 +65,7 @@ export const DEBT_SCHEDULE_FORM_COLUMN_KEYS = [
 
 export const debtScheduleFormField = (rowIdx, columnKey) => `r${rowIdx}_${columnKey}`;
 
-const createDefaultDebtScheduleWorksheetForm = () => {
+export const createDefaultDebtScheduleWorksheetForm = () => {
   const base = {
     businessName: '',
     asOfDate: '',
@@ -93,6 +93,15 @@ export const $publicFinancialUploadView = Signal({
   error: null,
   success: false,
   priorDebtOpening: false,
+  /** Worksheet modal validation (UI only; not submitted to API). */
+  debtScheduleWorksheetErrors: null,
+  /** True while building the worksheet PDF for upload. */
+  debtScheduleWorksheetSubmitting: false,
+  /**
+   * After one merge from `linkData.priorDebtScheduleWorksheet`, further opens keep the in-memory
+   * worksheet so the user can edit after save without being reset to the prior snapshot.
+   */
+  debtScheduleWorksheetHydratedFromPrior: false,
 });
 
 export const UPLOADER_BY_SECTION = {
@@ -139,7 +148,7 @@ export const SECTION_DEF_BY_ID = {
     sectionId: 'debtScheduleWorksheet',
     title: 'Debt schedule',
     helperText:
-      'Upload the debt schedule as a PDF. Open the worksheet for a grid aligned with the Excel template; totals sum Current Balance and Monthly Payment from the six data rows. You can also open the fillable PDF from the worksheet.',
+      'Open the worksheet, enter your debts and sign. Your lender receives one official PDF generated when you submit — you do not upload a separate debt schedule file.',
     inputId: 'public-financial-debt-schedule',
     replaceButtonVariant: 'outline-secondary',
   },

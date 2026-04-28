@@ -307,6 +307,7 @@ export const $borrowerFinancialsView = Signal({
   isEditMode: false,
   editingFinancialId: null,
   refreshTrigger: 0, // Used to trigger refresh after updates
+  pendingDeleteFinancial: null,
 });
 
 export const $borrowerFinancialsForm = Signal({

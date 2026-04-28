@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
-import { Button, Badge } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChartLine, faCheck, faCopy } from '@fortawesome/free-solid-svg-icons';
+import { faChartLine, faCheck, faCopy, faTrash } from '@fortawesome/free-solid-svg-icons';
 import SignalTable from '@src/components/global/SignalTable';
+import ContextMenu from '@src/components/global/ContextMenu';
 import { $borrower } from '@src/consts/consts';
 import { $borrowerFinancials, $borrowerFinancialsView } from '@src/signals';
 import { formatCurrency } from '@src/utils/formatCurrency';
@@ -46,10 +47,15 @@ export function BorrowerFinancialsTab() {
       currentRatio: financial.currentRatio ? parseFloat(financial.currentRatio).toFixed(2) : '-',
       liquidity: <span className="text-success-500 fw-500">{formatCurrency(financial.liquidity)}</span>,
       submittedBy: financial.submittedBy ?? '-',
-      documents: financial.documentIds?.length > 0 ? (
-        <Badge bg="info-100">{financial.documentIds.length} docs</Badge>
-      ) : (
-        <span className="text-info-100">-</span>
+      actions: (
+        <ContextMenu
+          items={[{ label: 'Delete', icon: faTrash, action: 'delete' }]}
+          onItemClick={(item) => {
+            if (item.action === 'delete') {
+              events.openDeleteFinancialModal(financial);
+            }
+          }}
+        />
       ),
     })),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- $borrowerFinancials is a signal; component re-renders on update

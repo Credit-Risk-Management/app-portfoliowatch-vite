@@ -1,7 +1,14 @@
 import { getUploadLinkByToken } from '@src/api/borrowerFinancialUploadLink.api';
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
-import { $publicFinancialUploadView, DEBT_SCHEDULE_TEMPLATE_PDF_URL } from './publicFinancialUpload.consts';
 import {
+  $publicFinancialUploadView,
+  DEBT_SCHEDULE_TEMPLATE_PDF_URL,
+  DEBT_SCHEDULE_XLSX_DATA_ROW_COUNT,
+  DEBT_SCHEDULE_FORM_COLUMN_KEYS,
+  debtScheduleFormField,
+} from './publicFinancialUpload.consts';
+import {
+  computeDebtWorksheetTotals,
   formatDebtScheduleCurrency,
   parseDebtScheduleNumeric,
 } from './publicFinancialUpload.helpers';
@@ -30,6 +37,7 @@ export const fetchUploadLinkData = async (token) => {
     $publicFinancialUploadView.update({
       linkData: response?.data ?? null,
       token,
+      debtScheduleWorksheetHydratedFromPrior: false,
     });
   } catch (err) {
     dangerAlert(err.message || 'Invalid or expired upload link');
@@ -127,4 +135,155 @@ export const openDebtScheduleTemplateWithSummedTotals = async () => {
     return;
   }
   setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+};
+
+const PDF_MARGIN = 48;
+const PDF_LINE = 12;
+const PDF_BODY = 9;
+const PDF_BOTTOM = 56;
+
+const DEBT_SCHEDULE_PDF_COLUMN_LABELS = [
+  'Creditor',
+  'Orig. financed',
+  'LOC limit',
+  'Orig. year',
+  'Curr. balance',
+  'Interest %',
+  'Maturity',
+  'Monthly pmt.',
+  'Collateral',
+  'Status',
+];
+
+function wrapTextByFontWidth(text, font, fontSize, maxWidth) {
+  const words = String(text).split(/\s+/).filter(Boolean);
+  const lines = [];
+  let line = '';
+  const flush = () => {
+    if (line) lines.push(line);
+    line = '';
+  };
+  words.forEach((w) => {
+    const next = line ? `${line} ${w}` : w;
+    if (font.widthOfTextAtSize(next, fontSize) <= maxWidth) {
+      line = next;
+    } else {
+      flush();
+      if (font.widthOfTextAtSize(w, fontSize) <= maxWidth) {
+        line = w;
+      } else {
+        let rest = w;
+        while (rest.length > 0) {
+          let len = rest.length;
+          while (len > 1 && font.widthOfTextAtSize(rest.slice(0, len), fontSize) > maxWidth) {
+            len -= 1;
+          }
+          lines.push(rest.slice(0, len));
+          rest = rest.slice(len);
+        }
+      }
+    }
+  });
+  flush();
+  return lines.length > 0 ? lines : [''];
+}
+
+/**
+ * Build a printable debt schedule PDF from the worksheet form (for public upload).
+ * @param {Record<string, string>} form — `$debtScheduleWorksheetForm` value
+ * @returns {Promise<Uint8Array>}
+ */
+export const buildDebtScheduleWorksheetPdfBytes = async (form) => {
+  const {
+    PDFDocument,
+    StandardFonts,
+    rgb,
+  } = await import('pdf-lib');
+
+  const pdfDoc = await PDFDocument.create();
+  let page = pdfDoc.addPage();
+  let pageHeight = page.getSize().height;
+  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const black = rgb(0, 0, 0);
+
+  const draw = (txt, x, yPos, size, f = font) => {
+    page.drawText(txt, { x, y: yPos, size, font: f, color: black });
+  };
+
+  let y = pageHeight - PDF_MARGIN;
+
+  const ensureSpace = (needed) => {
+    if (y - needed < PDF_BOTTOM) {
+      page = pdfDoc.addPage();
+      pageHeight = page.getSize().height;
+      y = pageHeight - PDF_MARGIN;
+    }
+  };
+
+  draw('Business debt schedule', PDF_MARGIN, y, 16, fontBold);
+  y -= PDF_LINE + 8;
+
+  const biz = String(form.businessName ?? '').trim() || '—';
+  const asOf = String(form.asOfDate ?? '').trim() || '—';
+  draw(`Business: ${biz}`, PDF_MARGIN, y, PDF_BODY, fontBold);
+  y -= PDF_LINE;
+  draw(`As of date: ${asOf}`, PDF_MARGIN, y, PDF_BODY, fontBold);
+  y -= PDF_LINE + 6;
+
+  for (let r = 0; r < DEBT_SCHEDULE_XLSX_DATA_ROW_COUNT; r += 1) {
+    const cells = DEBT_SCHEDULE_FORM_COLUMN_KEYS.map((k) => String(form[debtScheduleFormField(r, k)] ?? '').trim());
+    if (!cells.some((c) => c !== '')) continue;
+
+    ensureSpace(28 + DEBT_SCHEDULE_FORM_COLUMN_KEYS.length * (PDF_LINE - 1));
+    draw(`Debt line ${r + 1}`, PDF_MARGIN, y, PDF_BODY, fontBold);
+    y -= PDF_LINE + 2;
+
+    DEBT_SCHEDULE_FORM_COLUMN_KEYS.forEach((key, idx) => {
+      const val = String(form[debtScheduleFormField(r, key)] ?? '').trim() || '—';
+      const label = DEBT_SCHEDULE_PDF_COLUMN_LABELS[idx] || key;
+      const size = PDF_BODY - 0.5;
+      if (key === 'collateral') {
+        const pageW = page.getSize().width;
+        const maxW = pageW - 2 * PDF_MARGIN;
+        const prefix = `  ${label}: `;
+        const prefixW = font.widthOfTextAtSize(prefix, size);
+        const lines = wrapTextByFontWidth(val, font, size, Math.max(36, maxW - prefixW));
+        lines.forEach((line, li) => {
+          draw(li === 0 ? prefix + line : line, li === 0 ? PDF_MARGIN : PDF_MARGIN + prefixW, y, size);
+          y -= PDF_LINE - 1;
+        });
+      } else {
+        draw(`  ${label}: ${val}`, PDF_MARGIN, y, size);
+        y -= PDF_LINE - 1;
+      }
+    });
+    y -= 4;
+  }
+
+  const { totalBalance, totalMonthly } = computeDebtWorksheetTotals(form);
+  ensureSpace(36);
+  draw(
+    `Totals — Current balance: ${formatDebtScheduleCurrency(totalBalance) || '—'}; Monthly payment: ${formatDebtScheduleCurrency(totalMonthly) || '—'}`,
+    PDF_MARGIN,
+    y,
+    PDF_BODY,
+    fontBold,
+  );
+  y -= PDF_LINE + 8;
+
+  ensureSpace(48);
+  draw('Authorization', PDF_MARGIN, y, PDF_BODY, fontBold);
+  y -= PDF_LINE + 2;
+  draw(`Printed name: ${String(form.signatoryName ?? '').trim()}`, PDF_MARGIN, y, PDF_BODY);
+  y -= PDF_LINE;
+  draw(`Title: ${String(form.signatoryTitle ?? '').trim()}`, PDF_MARGIN, y, PDF_BODY);
+  y -= PDF_LINE;
+  const sigDate = String(form.signDate ?? '').trim();
+  if (sigDate) {
+    draw(`Date: ${sigDate}`, PDF_MARGIN, y, PDF_BODY);
+    y -= PDF_LINE;
+  }
+
+  return pdfDoc.save();
 };

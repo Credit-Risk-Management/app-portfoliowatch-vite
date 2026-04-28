@@ -5,6 +5,7 @@ import {
   DEFAULT_SECTION_IDS,
   API_KEY_TO_SECTION_ID,
   DEBT_SCHEDULE_XLSX_DATA_ROW_COUNT,
+  DEBT_SCHEDULE_FORM_COLUMN_KEYS,
   debtScheduleFormField,
 } from './publicFinancialUpload.consts';
 
@@ -88,4 +89,75 @@ export const computeDebtWorksheetTotals = (form) => {
     );
   }
   return { totalBalance, totalMonthly };
+};
+
+/**
+ * Merge API `worksheetRows` into a fresh default form plus header fields.
+ * @param {Record<string, string>} baseForm — from `createDefaultDebtScheduleWorksheetForm()`
+ * @param {Array<Record<string, string>>} worksheetRows
+ * @param {{ businessName: string, asOfDate: string }} header
+ */
+export const mergePriorWorksheetRowsIntoForm = (baseForm, worksheetRows, header) => {
+  const next = { ...baseForm, ...header };
+  const n = Math.min(worksheetRows.length, DEBT_SCHEDULE_XLSX_DATA_ROW_COUNT);
+  for (let r = 0; r < n; r += 1) {
+    const row = worksheetRows[r] || {};
+    DEBT_SCHEDULE_FORM_COLUMN_KEYS.forEach((k) => {
+      const v = row[k];
+      if (v != null && String(v).trim() !== '') {
+        next[debtScheduleFormField(r, k)] = String(v);
+      }
+    });
+  }
+  return next;
+};
+
+/**
+ * @param {Record<string, string>} form — `$debtScheduleWorksheetForm` value
+ * @returns {{ valid: boolean, errors: { signatoryName?: string, signatoryTitle?: string, debtRows?: string } }}
+ */
+export const validateDebtScheduleWorksheetForPdf = (form) => {
+  const errors = {};
+  if (!String(form?.signatoryName ?? '').trim()) {
+    errors.signatoryName = 'Printed name is required.';
+  }
+  if (!String(form?.signatoryTitle ?? '').trim()) {
+    errors.signatoryTitle = 'Title is required.';
+  }
+  let hasCompleteRow = false;
+  for (let r = 0; r < DEBT_SCHEDULE_XLSX_DATA_ROW_COUNT; r += 1) {
+    const balRaw = String(form[debtScheduleFormField(r, 'currentBalance')] ?? '').trim();
+    const payRaw = String(form[debtScheduleFormField(r, 'monthlyPayment')] ?? '').trim();
+    // eslint-disable-next-line no-continue
+    if (!balRaw || !payRaw) continue;
+    const bal = parseDebtScheduleNumeric(balRaw);
+    const pay = parseDebtScheduleNumeric(payRaw);
+    if (Number.isFinite(bal) && Number.isFinite(pay)) {
+      hasCompleteRow = true;
+      break;
+    }
+  }
+  if (!hasCompleteRow) {
+    errors.debtRows = 'Enter a current balance and monthly payment for at least one debt row.';
+  }
+  return { valid: Object.keys(errors).length === 0, errors };
+};
+
+/**
+ * Debt schedule row is satisfied by validated worksheet data (no PDF upload — server generates official PDF).
+ * @param {Record<string, string>} debtWorksheetForm — `$debtScheduleWorksheetForm.value`
+ */
+export const isDebtScheduleSectionReadyForSubmit = (debtWorksheetForm) => (
+  validateDebtScheduleWorksheetForPdf(debtWorksheetForm || {}).valid
+);
+
+/**
+ * @param {string} sectionId
+ * @param {Record<string, string>} debtWorksheetForm
+ */
+export const isSectionReadyForSubmit = (sectionId, debtWorksheetForm) => {
+  if (sectionId === 'debtScheduleWorksheet') {
+    return isDebtScheduleSectionReadyForSubmit(debtWorksheetForm);
+  }
+  return hasPdfStagedForSection(sectionId);
 };
