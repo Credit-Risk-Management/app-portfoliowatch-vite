@@ -32,8 +32,11 @@ export const handleClose = async (pdfUrlOrEvent) => {
     });
   });
 
+  /** Only delete GCS objects for ephemeral staging — never `isStored` rows (edit mode loads real paths from the API). */
   const tempPaths = Object.values(documentsByType || {}).flatMap(
-    (docs) => (docs || []).map((doc) => doc?.storagePath).filter(Boolean),
+    (docs) => (docs || [])
+      .filter((doc) => doc?.storagePath && !doc.isStored)
+      .map((doc) => doc.storagePath),
   );
   await Promise.all(tempPaths.map((path) => deleteStoragePath(path)));
 
