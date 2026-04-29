@@ -1,7 +1,18 @@
-/* Fixed layout + colgroup: predictable column widths; wrap cells truncate inside their share. */
+@import '@src/scss/_vars.scss';
+
+/* Stripe / Notion-style neutrals (explicit tokens for cross-stack parity with `debtWorksheetTheme.module.scss`). */
+$ds-border: #E5E7EB;
+$ds-text: #111827;
+$ds-muted: #9CA3AF;
+$ds-focus: #3B82F6;
+$ds-focus-ring: rgba(59, 130, 246, 0.18);
+$ds-row-hover: #F9FAFB;
+$ds-radius: 7px;
+
 .debt-schedule-worksheet-table {
-  table-layout: fixed;
-  width: 100%;
+  table-layout: auto;
+  width: auto;
+  min-width: 100%;
 }
 
 .debt-schedule-worksheet-wrap-cell {
@@ -13,4 +24,177 @@
 .debt-schedule-worksheet-select-cell {
   min-width: 0;
   vertical-align: top;
+}
+
+.debt-schedule-worksheet-modal {
+  /* Section hierarchy */
+  .debt-schedule-section-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: $ds-text;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.5rem;
+  }
+
+  .debt-schedule-section-helper {
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: $ds-muted;
+    margin-bottom: 1.25rem;
+    max-width: 48rem;
+  }
+
+  .debt-schedule-field-label {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: $ds-text;
+  }
+
+  /* Inputs: Bootstrap form-control spacing + worksheet chrome */
+  .form-control,
+  textarea.form-control {
+    background-color: $white !important;
+    color: $ds-text !important;
+    border: 1px solid $ds-border !important;
+    border-radius: $ds-radius !important;
+    box-shadow: none !important;
+    cursor: text;
+    padding: 0.5rem 0.875rem !important;
+    font-size: 1rem !important;
+    line-height: 1.5 !important;
+    min-height: calc(1.5em + 1rem + 2px);
+  }
+
+  /* Inline UniversalInput sets textarea min-height; keep first line aligned with other cells. */
+  textarea.form-control {
+    min-height: calc(1.5em + 1rem + 2px) !important;
+  }
+
+  .form-control::placeholder,
+  textarea.form-control::placeholder {
+    color: $ds-muted !important;
+    opacity: 1;
+  }
+
+  .form-control:focus,
+  textarea.form-control:focus {
+    border-color: $ds-focus !important;
+    box-shadow: 0 0 0 3px $ds-focus-ring !important;
+    outline: 0 !important;
+  }
+
+  .form-control.is-invalid,
+  .form-control.is-invalid:focus {
+    border-color: var(--bs-form-invalid-border-color) !important;
+    box-shadow: none !important;
+  }
+
+  /* Table: light grid, row dividers, hover (no heavy zebra) */
+  /* Horizontal scroll: gutter below table so totals aren’t covered by the scrollbar (incl. overlay scrollbars). */
+  .debt-schedule-worksheet-table-shell .debt-schedule-worksheet-table-responsive {
+    padding-bottom: 0.5rem;
+  }
+
+  .debt-schedule-worksheet-table-shell .debt-schedule-worksheet-table-responsive > .debt-schedule-worksheet-table {
+    margin-bottom: 0.5rem;
+  }
+
+  .debt-schedule-worksheet-table-shell {
+    background-color: $white !important;
+    border: 1px solid $ds-border !important;
+    border-radius: $ds-radius;
+    box-shadow: 0 1px 2px rgba(17, 24, 39, 0.04);
+  }
+
+  .debt-schedule-worksheet-table thead th {
+    background-color: $white !important;
+    color: $ds-text !important;
+    font-weight: 600;
+    font-size: 0.8125rem;
+    text-transform: none;
+    letter-spacing: 0;
+    border-bottom: 1px solid $ds-border !important;
+    vertical-align: bottom;
+    padding-top: 1rem;
+    padding-bottom: 0.75rem;
+    padding-left: 0.625rem;
+    padding-right: 0.625rem;
+  }
+
+  .debt-schedule-worksheet-row > td,
+  .debt-schedule-worksheet-row > th {
+    background-color: $white !important;
+    border-bottom: 1px solid $ds-border !important;
+    vertical-align: top;
+    padding-top: 0.625rem;
+    padding-bottom: 0.625rem;
+    padding-left: 0.625rem;
+    padding-right: 0.625rem;
+  }
+
+  .debt-schedule-worksheet-row:hover > td,
+  .debt-schedule-worksheet-row:hover > th {
+    background-color: $ds-row-hover !important;
+  }
+
+  .debt-schedule-worksheet-table tfoot td {
+    background-color: $white !important;
+    color: $ds-text !important;
+    /* One continuous rule above totals; no per-cell bottom/side borders (avoids “floating” segments on spacer cells). */
+    border-top: 1px solid $ds-border !important;
+    border-bottom: none !important;
+    border-left: none !important;
+    border-right: none !important;
+  }
+
+  .debt-schedule-worksheet-table tfoot td.bg-transparent {
+    background-color: $white !important;
+  }
+
+  /* Wrap-cell preview (reads as empty vs filled via text color only) */
+  .debt-schedule-wrap-preview-btn {
+    width: 100%;
+    text-align: start;
+    background-color: $white !important;
+    border: 1px solid $ds-border !important;
+    border-radius: $ds-radius !important;
+    box-shadow: none !important;
+    cursor: pointer;
+    transition: border-color 0.12s ease, box-shadow 0.12s ease;
+    padding: 0.5rem 0.875rem;
+    min-height: calc(1.5em + 1rem + 2px);
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+
+  .debt-schedule-wrap-preview-btn:hover {
+    border-color: #D1D5DB !important;
+  }
+
+  .debt-schedule-wrap-preview-btn:focus-visible {
+    outline: 0;
+    border-color: $ds-focus !important;
+    box-shadow: 0 0 0 3px $ds-focus-ring !important;
+  }
+
+  .debt-schedule-preview-text--filled {
+    color: $ds-text;
+  }
+
+  .debt-schedule-preview-text--empty {
+    color: $ds-muted;
+  }
+
+  /* react-select root: no double box */
+  .debt-schedule-worksheet-select-root {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+}
+
+.debt-schedule-worksheet-modal-footer {
+  background-color: $white !important;
+  border-top: 1px solid $ds-border !important;
+  color: $ds-text;
 }
