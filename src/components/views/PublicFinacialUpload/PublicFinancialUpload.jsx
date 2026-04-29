@@ -14,50 +14,6 @@ import FileUploader from '@src/components/global/FileUploader';
 import ContentWrapper from '@src/components/global/ContentWrapper';
 import sabreFinanceWordmark from '@src/assets/sabre_finance.svg?url';
 import { formatDate } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
-<<<<<<< HEAD
-<<<<<<<< HEAD:src/components/views/PublicFinacialUpload/PublicFinancialUpload.jsx
-import { $publicFinancialUploadView, DEFAULT_PUBLIC_ATTESTATION_TEXT } from './_helpers/publicFinancialUpload.consts';
-import AttestationModal from './_components/AttestationModal';
-========
-import AttestationModal from '@src/components/views/PublicFinacialUpload/_components/AttestationModal';
->>>>>>>> develop:src/components/views/PublicGuarantorFinancialUpload/PublicGuarantorFinancialUpload.jsx
-import {
-  $publicGuarantorUploadView,
-  DEFAULT_GUARANTOR_PUBLIC_ATTESTATION_TEXT,
-} from './_helpers/publicGuarantorFinancialUpload.consts';
-import {
-<<<<<<<< HEAD:src/components/views/PublicFinacialUpload/PublicFinancialUpload.jsx
-  handleFileUpload,
-  clearError,
-  clearPublicFinancialSectionFiles,
-  handleOpenPriorDebtSchedulePdf,
-  handleOpenDebtScheduleTemplatePdf,
-  openAttestationModal,
-  closeAttestationModal,
-} from './_helpers/publicFinancialUpload.events';
-========
-  getRequiredPdfSectionsForGuarantorLink,
-  hasGuarantorPdfStagedForKey,
-  getGuarantorUploaderForDocKey,
-} from './_helpers/publicGuarantorFinancialUpload.helpers';
-import { fetchGuarantorUploadLinkData } from './_helpers/publicGuarantorFinancialUpload.resolvers';
-import {
-  handleGuarantorFileUpload,
-  clearGuarantorError,
-  clearGuarantorSectionFiles, handleOpenPfsTemplatePdf,
-  openGuarantorAttestationModal,
-  closeGuarantorAttestationModal,
-} from './_helpers/publicGuarantorFinancialUpload.events';
->>>>>>>> develop:src/components/views/PublicGuarantorFinancialUpload/PublicGuarantorFinancialUpload.jsx
-
-const PublicGuarantorFinancialUpload = () => {
-  const { token } = useParams();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    fetchGuarantorUploadLinkData(token);
-  }, [token]);
-=======
 import {
   $debtScheduleWorksheetForm,
   $publicFinancialUploadView,
@@ -89,7 +45,6 @@ const PublicFinancialUpload = () => {
     fetchUploadLinkData(token);
   }, [token]);
 
->>>>>>> develop
   const {
     linkData,
     isLoading,
@@ -97,15 +52,6 @@ const PublicFinancialUpload = () => {
     activeModalKey,
     error,
     success,
-<<<<<<< HEAD
-  } = $publicGuarantorUploadView.value;
-
-<<<<<<<< HEAD:src/components/views/PublicFinacialUpload/PublicFinancialUpload.jsx
-  const attestationText = linkData?.attestationText || DEFAULT_PUBLIC_ATTESTATION_TEXT;
-========
-  const attestationText = linkData?.attestationText || DEFAULT_GUARANTOR_PUBLIC_ATTESTATION_TEXT;
->>>>>>>> develop:src/components/views/PublicGuarantorFinancialUpload/PublicGuarantorFinancialUpload.jsx
-=======
     debtScheduleWorksheetSubmitting,
   } = $publicFinancialUploadView.value;
   const attestationText = linkData?.attestationText || DEFAULT_PUBLIC_ATTESTATION_TEXT;
@@ -113,7 +59,6 @@ const PublicFinancialUpload = () => {
   const debtWorksheetForm = $debtScheduleWorksheetForm.value;
   const canRunExtraction = requiredPdfSections.length > 0
     && requiredPdfSections.every(({ sectionId }) => isSectionReadyForSubmit(sectionId, debtWorksheetForm));
->>>>>>> develop
 
   if (isLoading) {
     return (
@@ -145,10 +90,6 @@ const PublicFinancialUpload = () => {
   }
 
   if (linkData?.hasSubmitted) {
-<<<<<<< HEAD
-<<<<<<<< HEAD:src/components/views/PublicFinacialUpload/PublicFinancialUpload.jsx
-=======
->>>>>>> develop
     return (
       <ContentWrapper fluid className="min-vh-100 bg-info-900">
         <Container className="py-24">
@@ -171,22 +112,11 @@ const PublicFinancialUpload = () => {
   }
 
   if (success) {
-<<<<<<< HEAD
-========
->>>>>>>> develop:src/components/views/PublicGuarantorFinancialUpload/PublicGuarantorFinancialUpload.jsx
-    return (
-      <ContentWrapper fluid className="min-vh-100 bg-info-900">
-        <Container className="py-24">
-          <Card className="bg-info-800 border-secondary">
-            <Card.Body className="text-center py-32">
-<<<<<<<< HEAD:src/components/views/PublicFinacialUpload/PublicFinancialUpload.jsx
-=======
     return (
       <ContentWrapper fluid className="min-vh-100 bg-info-900">
         <Container className="py-24">
           <Card className="bg-info-800 ">
             <Card.Body className="text-center py-32">
->>>>>>> develop
               <FontAwesomeIcon icon={faCheckCircle} className="text-success mb-16" size="3x" />
               <h3 className="text-info-100 mb-16">Documents Submitted — Pending Extraction</h3>
               <p className="text-info-200 mb-8">
@@ -194,21 +124,7 @@ const PublicFinancialUpload = () => {
               </p>
               <p className="text-info-300 mb-24">
                 Our system will extract the financial data from your uploaded PDFs shortly. Your lender will be notified once the extraction is complete.
-<<<<<<< HEAD
-========
-              <FontAwesomeIcon icon={faCheckCircle} className="text-info-200 mb-16" size="3x" />
-              <h3 className="text-info-100 mb-16">Submission already received</h3>
-              <p className="text-info-200 mb-24">
-                This upload link has already been used. If you need to send updated files, contact your lender
-                for a new link.
->>>>>>>> develop:src/components/views/PublicGuarantorFinancialUpload/PublicGuarantorFinancialUpload.jsx
               </p>
-              <Button variant="primary-100" onClick={() => navigate('/')}>
-                Go to Home
-              </Button>
-=======
-              </p>
->>>>>>> develop
             </Card.Body>
           </Card>
         </Container>
@@ -216,43 +132,6 @@ const PublicFinancialUpload = () => {
     );
   }
 
-<<<<<<< HEAD
-<<<<<<<< HEAD:src/components/views/PublicFinacialUpload/PublicFinancialUpload.jsx
-  const requiredPdfSections = getRequiredPdfSectionsForLink(linkData);
-  const canRunExtraction = requiredPdfSections.length > 0
-    && requiredPdfSections.every(({ sectionId }) => hasPdfStagedForSection(sectionId));
-========
-  if (success) {
-    return (
-      <ContentWrapper fluid className="min-vh-100 bg-info-900">
-        <Container className="py-24">
-          <Card className="bg-info-800 ">
-            <Card.Body className="text-center py-32">
-              <FontAwesomeIcon icon={faCheckCircle} className="text-success mb-16" size="3x" />
-              <h3 className="text-info-100 mb-16">Documents Submitted</h3>
-              <p className="text-info-200 mb-8">
-                Thank you! Your guarantor financial documents have been received.
-              </p>
-              <p className="text-info-300 mb-24">
-                Your lender will review your files. If you have questions, contact your loan officer.
-              </p>
-              <Button variant="primary-100" onClick={() => navigate('/')}>
-                Go to Home
-              </Button>
-            </Card.Body>
-          </Card>
-        </Container>
-      </ContentWrapper>
-    );
-  }
-
-  const requiredPdfSections = getRequiredPdfSectionsForGuarantorLink(linkData);
-  const canSubmit = requiredPdfSections.length > 0
-    && requiredPdfSections.every((row) => hasGuarantorPdfStagedForKey(row.apiDocumentKey));
-
->>>>>>>> develop:src/components/views/PublicGuarantorFinancialUpload/PublicGuarantorFinancialUpload.jsx
-=======
->>>>>>> develop
   return (
     <ContentWrapper fluid className="min-vh-100 bg-info-900">
       <Container className="py-16 py-md-24">
@@ -260,51 +139,23 @@ const PublicFinancialUpload = () => {
           <Card.Header className=" border-0 border-bottom border-grey-200 px-16 px-md-24 py-20" style={{ backgroundColor: '#f5f5f5' }}>
             <div className="d-flex justify-content-between align-items-start gap-24">
               <div className="flex-grow-1 min-w-0">
-<<<<<<< HEAD
-                <h1 className="h4 fw-bold text-dark mb-8 lh-sm">Guarantor financial documents</h1>
-                {linkData && (
-                  <div className="d-flex flex-column gap-4">
-                    <div className="d-flex gap-8 fs-6">
-<<<<<<<< HEAD:src/components/views/PublicFinacialUpload/PublicFinancialUpload.jsx
-                      <span className="fw-semibold text-dark text-nowrap">Borrower</span>
-                      <span className="text-grey-600">{linkData.borrower.name}</span>
-========
-                      <span className="fw-semibold text-dark text-nowrap">Guarantor</span>
-                      <span className="text-grey-600">{linkData.guarantor.name}</span>
->>>>>>>> develop:src/components/views/PublicGuarantorFinancialUpload/PublicGuarantorFinancialUpload.jsx
-=======
                 <h1 className="h4 fw-bold text-dark mb-8 lh-sm">Submit Financial Data</h1>
                 {linkData && (
                   <div className="d-flex flex-column gap-4">
                     <div className="d-flex gap-8 fs-6">
                       <span className="fw-semibold text-dark text-nowrap">Borrower</span>
                       <span className="text-grey-600">{linkData.borrower.name}</span>
->>>>>>> develop
                     </div>
                     <div className="d-flex gap-8 fs-6">
                       <span className="fw-semibold text-dark text-nowrap">Organization</span>
                       <span className="text-grey-600">{linkData.organization.name}</span>
                     </div>
                     <div className="d-flex gap-8 fs-6">
-<<<<<<< HEAD
-<<<<<<<< HEAD:src/components/views/PublicFinacialUpload/PublicFinancialUpload.jsx
-=======
->>>>>>> develop
                       <span className="fw-semibold text-dark text-nowrap">Financial period</span>
                       <span className="text-grey-600">
                         {linkData.reportingPeriodEndDate
                           ? formatDate(new Date(linkData.reportingPeriodEndDate))
                           : 'N/A'}
-<<<<<<< HEAD
-========
-                      <span className="fw-semibold text-dark text-nowrap">Period</span>
-                      <span className="text-grey-600">
-                        {linkData.reportingPeriodEndDate
-                          ? formatDate(new Date(linkData.reportingPeriodEndDate))
-                          : (linkData.periodLabel || 'Annual')}
->>>>>>>> develop:src/components/views/PublicGuarantorFinancialUpload/PublicGuarantorFinancialUpload.jsx
-=======
->>>>>>> develop
                       </span>
                     </div>
                   </div>
@@ -329,38 +180,18 @@ const PublicFinancialUpload = () => {
           </Card.Header>
           <Card.Body className="px-16 px-md-24 py-20 py-md-24">
             {error && (
-<<<<<<< HEAD
-<<<<<<<< HEAD:src/components/views/PublicFinacialUpload/PublicFinancialUpload.jsx
               <Alert variant="danger" dismissible onClose={clearError} className="mb-24">
-========
-              <Alert variant="danger" dismissible onClose={clearGuarantorError} className="mb-24">
->>>>>>>> develop:src/components/views/PublicGuarantorFinancialUpload/PublicGuarantorFinancialUpload.jsx
-=======
-              <Alert variant="danger" dismissible onClose={clearError} className="mb-24">
->>>>>>> develop
                 {error}
               </Alert>
             )}
             <Card className="rounded p-16">
               <Card.Title className="h4 fw-bold text-dark mb-8 d-flex align-items-center gap-8">
                 <FontAwesomeIcon icon={faFileAlt} style={{ color: '#6b7280' }} />
-<<<<<<< HEAD
-                Required PDFs
-              </Card.Title>
-              <Card.Text className="fs-7 mb-24" style={{ color: '#6b7280' }}>
-                {linkData?.lenderInstructions
-<<<<<<<< HEAD:src/components/views/PublicFinacialUpload/PublicFinancialUpload.jsx
-                  || 'Upload each required PDF below. When every file is attached, certify and submit. Your lender will review your documents after they are received.'}
-========
-                  || 'Upload each required annual document below, then certify and submit. For debt schedule and PFS, you may use the templates or your prior year file to update.'}
->>>>>>>> develop:src/components/views/PublicGuarantorFinancialUpload/PublicGuarantorFinancialUpload.jsx
-=======
                 Upload financial documents
               </Card.Title>
               <Card.Text className="fs-7 mb-24" style={{ color: '#6b7280' }}>
                 {linkData?.lenderInstructions
                   || 'Upload each required PDF below. When every file is attached, certify and submit. Your lender will review your documents after they are received.'}
->>>>>>> develop
               </Card.Text>
               <div className="table-secondary overflow-hidden">
                 <table className="primary-table table table-hover mb-0 align-middle">
@@ -369,20 +200,6 @@ const PublicFinancialUpload = () => {
                       <th className=" fw-semibold text-uppercase  px-16" style={{ width: '32%', color: '#71717a', letterSpacing: '0.06em' }}>Document</th>
                       <th className=" fw-semibold text-uppercase  px-16" style={{ width: '18%', color: '#71717a', letterSpacing: '0.06em' }}>Status</th>
                       <th className=" fw-semibold text-uppercase  px-16" style={{ color: '#71717a', letterSpacing: '0.06em' }}>File</th>
-<<<<<<< HEAD
-                      <th className=" fw-semibold text-uppercase  px-16 text-end" style={{ width: '12%', color: '#71717a', letterSpacing: '0.06em' }}>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {requiredPdfSections.map(({
-                      sectionId, title, inputId, apiDocumentKey, helperText,
-                    }, rowIndex) => {
-                      const uploaderSignal = getGuarantorUploaderForDocKey(apiDocumentKey);
-                      const hasPdf = hasGuarantorPdfStagedForKey(apiDocumentKey);
-                      const firstFileName = (uploaderSignal?.value?.financialDocs || [])[0]?.name;
-                      const isLast = rowIndex === requiredPdfSections.length - 1;
-                      const isPfs = apiDocumentKey === 'personalFinancialStatement';
-=======
                       <th className=" fw-semibold text-uppercase  px-16 text-end text-nowrap" style={{ width: '15%', minWidth: '152px', color: '#71717a', letterSpacing: '0.06em' }}>Action</th>
                     </tr>
                   </thead>
@@ -400,7 +217,6 @@ const PublicFinancialUpload = () => {
                         firstFileName = (uploaderSignal.value.financialDocs || [])[0]?.name;
                       }
                       const isLast = rowIndex === requiredPdfSections.length - 1;
->>>>>>> develop
                       return (
                         <tr
                           key={sectionId}
@@ -408,69 +224,6 @@ const PublicFinancialUpload = () => {
                         >
                           <td className="px-16 py-8">
                             <div className="fw-semibold text-dark">{title}</div>
-<<<<<<< HEAD
-<<<<<<<< HEAD:src/components/views/PublicFinacialUpload/PublicFinancialUpload.jsx
-                            {sectionId === 'debtScheduleWorksheet' && (
-                              <div className="mt-8 small text-dark">
-                                {linkData?.priorDebtSchedule ? (
-                                  <>
-                                    <div className="mb-4 fw-semibold">
-                                      Previous schedule on file:
-                                      {' '}
-                                      <span className="text-dark">{linkData.priorDebtSchedule.fileName}</span>
-                                    </div>
-                                    <Button
-                                      type="button"
-                                      variant="dark"
-                                      size="sm"
-                                      className="px-12"
-                                      disabled={priorDebtOpening}
-                                      onClick={() => handleOpenPriorDebtSchedulePdf()}
-                                    >
-                                      {priorDebtOpening ? 'Opening…' : 'Open previous PDF'}
-                                    </Button>
-                                  </>
-                                ) : (
-                                  <>
-                                    <div className="mb-4 fw-semibold text-grey-600">
-                                      No prior debt schedule on file. Open the template to see the format we need,
-                                      then upload your completed PDF.
-                                    </div>
-                                    <Button
-                                      type="button"
-                                      variant="dark"
-                                      size="sm"
-                                      className="px-12"
-                                      onClick={() => handleOpenDebtScheduleTemplatePdf()}
-                                    >
-                                      Open template PDF
-                                    </Button>
-                                  </>
-                                )}
-========
-                            {helperText && (
-                              <div className="small text-grey-600 mt-4">{helperText}</div>
-                            )}
-                            {isPfs && (
-                              <div className="mt-8 small text-dark">
-                                <div className="mb-4 fw-semibold text-grey-600">
-                                  Use your standard PFS format or our template as a starting point.
-                                </div>
-                                <Button
-                                  type="button"
-                                  variant="dark"
-                                  size="sm"
-                                  className="px-12"
-                                  onClick={() => handleOpenPfsTemplatePdf()}
-                                >
-                                  Open PFS template PDF
-                                </Button>
->>>>>>>> develop:src/components/views/PublicGuarantorFinancialUpload/PublicGuarantorFinancialUpload.jsx
-                              </div>
-                            )}
-
-=======
->>>>>>> develop
                           </td>
                           <td className="px-16 py-8">
                             {hasPdf ? (
@@ -478,41 +231,6 @@ const PublicFinancialUpload = () => {
                                 <span className="me-4">
                                   <FontAwesomeIcon icon={faCheck} size="sm" className="text-success-700" />
                                 </span>
-<<<<<<< HEAD
-                                Uploaded
-                              </span>
-                            ) : (
-                              <span className="text-grey-600 fw-normal">Not uploaded</span>
-                            )}
-                          </td>
-                          <td className="px-16 py-8 text- text-truncate" style={{ maxWidth: 0 }}>
-                            <div className="fw-semibold text-dark text-truncate">{hasPdf ? firstFileName : '—'}</div>
-                          </td>
-                          <td className="px-16 py-8 text-end">
-                            <div className="d-none">
-                              <FileUploader
-                                id={inputId}
-                                name="financialDocs"
-                                signal={uploaderSignal}
-                                acceptedTypes=".pdf"
-                              />
-                            </div>
-                            {hasPdf ? (
-                              <Button
-                                size="sm"
-                                variant="link"
-                                className="fw-bold text-dark p-0 text-decoration-none"
-                                onClick={() => clearGuarantorSectionFiles(apiDocumentKey)}
-                              >
-                                Remove
-                              </Button>
-                            ) : (
-                              <label htmlFor={inputId} className="fw-bold text-dark mb-0" style={{ cursor: 'pointer' }}>
-                                Upload
-                              </label>
-                            )}
-                          </td>
-=======
                                 {sectionId === 'debtScheduleWorksheet' ? 'Complete' : 'Uploaded'}
                               </span>
                             ) : (
@@ -566,7 +284,6 @@ const PublicFinancialUpload = () => {
                             )}
                           </td>
 
->>>>>>> develop
                         </tr>
                       );
                     })}
@@ -578,23 +295,10 @@ const PublicFinancialUpload = () => {
                 <Button
                   className="px-20"
                   style={{ borderRadius: '0.375rem', backgroundColor: '#151517', borderColor: '#5e6470', color: '#fff' }}
-<<<<<<< HEAD
-<<<<<<<< HEAD:src/components/views/PublicFinacialUpload/PublicFinancialUpload.jsx
-=======
->>>>>>> develop
                   onClick={openAttestationModal}
                   disabled={!canRunExtraction || isSubmitting}
                 >
                   Submit Financials
-<<<<<<< HEAD
-========
-                  onClick={openGuarantorAttestationModal}
-                  disabled={!canSubmit || isSubmitting}
-                >
-                  Certify and submit
->>>>>>>> develop:src/components/views/PublicGuarantorFinancialUpload/PublicGuarantorFinancialUpload.jsx
-=======
->>>>>>> develop
                 </Button>
               </div>
             </Card>
@@ -606,24 +310,10 @@ const PublicFinancialUpload = () => {
         show={activeModalKey === 'attestation'}
         attestationText={attestationText}
         isSubmitting={isSubmitting}
-<<<<<<< HEAD
-<<<<<<<< HEAD:src/components/views/PublicFinacialUpload/PublicFinancialUpload.jsx
-=======
->>>>>>> develop
         onClose={closeAttestationModal}
         onConfirm={() => {
           closeAttestationModal();
           handleFileUpload();
-<<<<<<< HEAD
-========
-        onClose={closeGuarantorAttestationModal}
-        onConfirm={() => {
-          closeGuarantorAttestationModal();
-          handleGuarantorFileUpload();
->>>>>>>> develop:src/components/views/PublicGuarantorFinancialUpload/PublicGuarantorFinancialUpload.jsx
-        }}
-      />
-=======
         }}
       />
       <DebtScheduleWorksheetModal
@@ -631,13 +321,8 @@ const PublicFinancialUpload = () => {
         isSubmitting={isSubmitting}
         worksheetSubmitting={debtScheduleWorksheetSubmitting}
       />
->>>>>>> develop
     </ContentWrapper>
   );
 };
 
-<<<<<<< HEAD
-export default PublicGuarantorFinancialUpload;
-=======
 export default PublicFinancialUpload;
->>>>>>> develop
