@@ -2,160 +2,71 @@ import { $borrowerFinancialsView, $borrowerFinancialsForm, $user } from '@src/si
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
 import borrowerFinancialDocumentsApi from '@src/api/borrowerFinancialDocuments.api';
 import debtServiceHistoryApi from '@src/api/debtServiceHistory.api';
-import { dangerAlert, successAlert } from '@src/components/global/Alert/_helpers/alert.events';
-import postToSensibleApi, { initiateUploadToSensibleApi } from '@src/api/sensible.api';
+import { successAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import { storage } from '@src/utils/firebase';
-import { parseSingleDocResponse } from '@src/utils/sensibleParseApi';
 import * as consts from './submitFinancialsModal.consts';
 
-const SENSIBLE_DOCUMENT_TYPES = {
-  incomeStatement: 'income_statement',
-  balanceSheet: 'balance_sheet',
-  taxReturn: 'tax_return',
-};
-
-export const handleFileUpload = async (ocrApplied, pdfUrl) => {
+/**
+ * Stage files locally (preview). Document text extraction runs asynchronously server-side (EXTRACT_FINANCIALS task)
+ * after submit—users are not blocked on OCR in the browser.
+ * @param {string} [documentTypeKey] - When set (e.g. from upload list row), use this type; else use form `documentType`.
+ */
+export const stageFinancialDocuments = async (documentTypeKey) => {
   const { $financialDocsUploader, $modalState } = consts;
-  $modalState.update({ isLoading: true });
-  try {
-    const files = $financialDocsUploader.value.financialDocs || [];
-    if (!files.length) return;
+  $modalState.update({ error: null });
+  const raw = $financialDocsUploader.value.financialDocs || [];
+  if (!raw.length) return;
 
-    const [file] = files;
-    const { documentType } = $borrowerFinancialsForm.value;
+  const documentType = documentTypeKey || $borrowerFinancialsForm.value.documentType;
+  $borrowerFinancialsForm.update({ documentType });
+  const { documentsByType } = $modalState.value;
+  const files = Array.isArray(raw) ? raw : [raw];
+
+  let nextByType = { ...documentsByType };
+  files.forEach((file) => {
     const previewUrl = URL.createObjectURL(file);
     const newDoc = {
-      id: `temp-${Date.now()}`,
+      id: `temp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
       file,
       fileName: file.name,
       fileSize: file.size,
       mimeType: file.type,
+      documentType,
       previewUrl,
-      documentType,
       uploadedAt: new Date(),
+      extractionPending: true,
     };
-
-    const { documentsByType } = $modalState.value;
-    const updatedDocs = {
-      ...documentsByType,
-      [documentType]: [...(documentsByType[documentType] || []), newDoc],
+    const list = nextByType[documentType] || [];
+    nextByType = {
+      ...nextByType,
+      [documentType]: [...list, newDoc],
     };
-    const initiateUploadData = {
-      fileName: file.name,
-      contentType: file.type,
-      id: $borrowerFinancialsView.value.currentBorrowerId,
-      documentType,
-      uploadedBy: $user.value?.email || $user.value?.name || 'Unknown User',
-    };
-    const response = await initiateUploadToSensibleApi(initiateUploadData);
+  });
 
-    if (pdfUrl) {
-      URL.revokeObjectURL(pdfUrl);
-    }
+  const newList = nextByType[documentType] || [];
+  const newIndex = newList.length - 1;
+  const lastDoc = newList[newIndex];
+  $modalState.update({
+    documentsByType: nextByType,
+    currentDocumentIndex: {
+      ...$modalState.value.currentDocumentIndex,
+      [documentType]: newIndex,
+    },
+    pdfUrl: lastDoc?.previewUrl ?? null,
+  });
+  $financialDocsUploader.update({ financialDocs: [] });
+};
 
-    $modalState.update({
-      documentsByType: updatedDocs,
-      currentDocumentIndex: {
-        ...$modalState.value.currentDocumentIndex,
-        [documentType]: updatedDocs[documentType].length - 1,
-      },
-    });
+const documentIdFromUploadResult = (r) => {
+  if (!r) return null;
+  if (r.id) return r.id;
+  if (r.data?.id) return r.data.id;
+  return null;
+};
 
-    const storageRef = storage.ref(response.storagePath);
-    const uploadTask = await storageRef.put(file, { contentType: file.type });
-    const downloadURL = await uploadTask.ref.getDownloadURL();
-    if (!downloadURL) {
-      dangerAlert('Failed to upload file to storage');
-    }
-
-    $modalState.update({ downloadSensibleUrl: response.storagePath, pdfUrl: newDoc.previewUrl, isLoading: false });
-
-    const sensibleType = SENSIBLE_DOCUMENT_TYPES[documentType];
-    if (sensibleType && downloadURL) {
-      $modalState.update({ isLoadingInputData: true });
-      try {
-        const sensibleBody = {
-          url: downloadURL,
-          documentType: sensibleType,
-          configurationName: sensibleType,
-          environment: 'development',
-          documentName: file.name,
-        };
-        const sensibleResponse = await postToSensibleApi(sensibleBody);
-        const parsedDocument = sensibleResponse?.data?.parsed_document ?? sensibleResponse?.parsed_document ?? null;
-
-        if (documentType === 'incomeStatement' && parsedDocument) {
-          const extractedData = parseSingleDocResponse(parsedDocument, 'incomeStatement');
-          if (extractedData) {
-            $borrowerFinancialsForm.update({
-              asOfDate: extractedData.asOfDate,
-              grossRevenue: extractedData.grossRevenue,
-              netIncome: extractedData.netIncome,
-              profitMargin: extractedData.profitMargin,
-              ebitda: extractedData.ebitda,
-              rentalExpenses: extractedData.rentalExpenses,
-              // debtService (DSCR) is computed on submit from EBITDA + debt schedule history;
-              // do not pre-fill from OCR since the extracted value is a dollar amount, not a ratio
-            });
-          }
-        }
-        if (documentType === 'balanceSheet' && parsedDocument) {
-          const extractedData = parseSingleDocResponse(parsedDocument, 'balanceSheet');
-          if (extractedData && !Array.isArray(extractedData)) {
-            $borrowerFinancialsForm.update({
-              asOfDate: extractedData.asOfDate,
-              totalAssets: extractedData.totalAssets,
-              totalLiabilities: extractedData.totalLiabilities,
-              totalCurrentAssets: extractedData.totalCurrentAssets,
-              totalCurrentLiabilities: extractedData.totalCurrentLiabilities,
-              cash: extractedData.cash,
-              cashEquivalents: extractedData.cashEquivalents,
-              equity: extractedData.equity,
-              accountsReceivable: extractedData.accountsReceivable,
-              accountsPayable: extractedData.accountsPayable,
-              inventory: extractedData.inventory,
-              liquidity: extractedData.liquidity,
-              currentRatio: extractedData.currentRatio,
-            });
-          }
-        }
-        if (documentType === 'taxReturn' && parsedDocument) {
-          const extractedData = parseSingleDocResponse(parsedDocument, 'taxReturn');
-          if (extractedData) {
-            $borrowerFinancialsForm.update({
-              asOfDate: extractedData.asOfDate,
-              grossRevenue: extractedData.grossRevenue,
-              netIncome: extractedData.netIncome,
-              profitMargin: extractedData.profitMargin,
-              ebitda: extractedData.ebitda,
-              rentalExpenses: extractedData.rentalExpenses,
-            });
-          }
-        }
-
-        $modalState.update({
-          isLoadingInputData: false,
-          ocrApplied: true,
-          refreshKey: $modalState.value.refreshKey + 1,
-        });
-      } catch (sensibleError) {
-        if ($modalState.value.downloadSensibleUrl) {
-          const deleteStorageRef = storage.ref($modalState.value.downloadSensibleUrl);
-          await deleteStorageRef.delete();
-          $modalState.update({ downloadSensibleUrl: null });
-        }
-        throw new Error(sensibleError?.message ?? 'Sensible extraction failed');
-      }
-    }
-  } catch (error) {
-    consts.$modalState.update({
-      isLoading: false,
-      error: error?.message ?? 'Failed to upload file',
-    });
-  } finally {
-    consts.$modalState.update({ isLoading: false });
-    consts.$financialDocsUploader.update({ financialDocs: [] });
-  }
+/** @deprecated use stageFinancialDocuments */
+export const handleFileUpload = async () => {
+  await stageFinancialDocuments();
 };
 
 export const handleRemoveDocument = async (documentId) => {
@@ -177,10 +88,12 @@ export const handleRemoveDocument = async (documentId) => {
     if (newIndex >= updatedDocs.length) {
       newIndex = Math.max(0, updatedDocs.length - 1);
     }
-    const newPdfUrl = updatedDocs[newIndex]?.previewUrl || null;
-    if ($modalState.value.downloadSensibleUrl) {
-      const deleteStorageRef = storage.ref($modalState.value.downloadSensibleUrl);
-      await deleteStorageRef.delete();
+    const newPdfUrl = updatedDocs[newIndex]?.previewUrl
+      || updatedDocs[newIndex]?.storageUrl
+      || null;
+    if (doc.storagePath) {
+      const deleteStorageRef = storage.ref(doc.storagePath);
+      await deleteStorageRef.delete().catch(() => { });
     }
 
     const updatedDocumentsByType = {
@@ -249,6 +162,15 @@ export const handleRemoveDocument = async (documentId) => {
       $borrowerFinancialsForm.update(clearedFields);
     }
 
+    if (doc.isStored && doc.id && !String(doc.id).startsWith('temp-')) {
+      const prevIds = $borrowerFinancialsForm.value.documentIds || [];
+      if (prevIds.length > 0) {
+        $borrowerFinancialsForm.update({
+          documentIds: prevIds.filter((id) => id !== doc.id),
+        });
+      }
+    }
+
     $modalState.update({
       ...$modalState.value,
       documentsByType: updatedDocumentsByType,
@@ -268,6 +190,18 @@ export const handleRemoveDocument = async (documentId) => {
   } finally {
     $modalState.update({ isLoading: false });
   }
+};
+
+/**
+ * Remove all staged documents for one section (upload list: clear row).
+ */
+export const clearStagedSection = async (typeKey) => {
+  $borrowerFinancialsForm.update({ documentType: typeKey });
+  const initialIds = (consts.$modalState.value.documentsByType[typeKey] || []).map((d) => d.id);
+  await initialIds.reduce(
+    (p, id) => p.then(() => handleRemoveDocument(id)),
+    Promise.resolve(),
+  );
 };
 
 export const handleSwitchDocument = (index) => {
@@ -323,6 +257,7 @@ const loadDocumentsFromBackend = async (financialId) => {
             storageUrl: doc.storageUrl,
             isStored: true,
             previewUrl: doc.storageUrl,
+            extractionPending: false,
           });
         }
       });
@@ -353,6 +288,11 @@ const collectStoredIdsByType = (documentsByType) => ({
     .filter((d) => d.isStored && d.id)
     .map((d) => d.id),
 });
+
+/** Stored PDF rows currently shown in the modal (excludes temp staged uploads). */
+const flattenStoredDocumentIds = (documentsByType) => (
+  Object.values(collectStoredIdsByType(documentsByType || {})).flat()
+);
 
 export const handleOpenEditMode = async (financial) => {
   const { $modalState } = consts;
@@ -528,6 +468,17 @@ export const handleSubmit = async (onCloseCallback) => {
       ? explicitProfitMargin
       : computeProfitMarginPercent(formNetIncome, formGrossRevenue);
 
+    const { documentsByType: stagedByType } = $modalState.value;
+    const hasStagedNewUploads = stagedByType
+      && Object.keys(stagedByType).some((k) => (stagedByType[k] || []).some((d) => d?.file && !d.isStored));
+
+    const fromModalIds = flattenStoredDocumentIds(stagedByType);
+    const fromFormIds = Array.isArray($borrowerFinancialsForm.value.documentIds)
+      ? $borrowerFinancialsForm.value.documentIds
+      : [];
+    // Never send [] on update when we still have stored docs in the modal (was clearing DB + breaking downstream).
+    const documentIds = fromModalIds.length > 0 ? fromModalIds : fromFormIds;
+
     const financialData = {
       borrowerId,
       asOfDate,
@@ -557,7 +508,8 @@ export const handleSubmit = async (onCloseCallback) => {
       notes: $borrowerFinancialsForm.value.notes || null,
       submittedBy: $user.value?.email || $user.value?.name || 'Unknown User',
       organizationId,
-      documentIds: [],
+      documentIds,
+      ...(hasStagedNewUploads ? { skipWatchScoreRecomputation: true } : {}),
     };
 
     const { isEditMode } = $borrowerFinancialsView.value;
@@ -570,6 +522,7 @@ export const handleSubmit = async (onCloseCallback) => {
     }
 
     if (response?.success) {
+      let didQueueExtraction = false;
       const wasEditMode = $borrowerFinancialsView.value.isEditMode;
       const financialId = response.data?.id || response.data?.data?.id || editingId;
       const uploadBorrowerFinancialId = editingId ?? financialId;
@@ -592,8 +545,26 @@ export const handleSubmit = async (onCloseCallback) => {
             }
           });
         });
+        const newDocIds = [];
         if (uploadPromises.length > 0) {
-          await Promise.all(uploadPromises);
+          const uploadResults = await Promise.all(uploadPromises);
+          uploadResults.forEach((r) => {
+            const id = documentIdFromUploadResult(r);
+            if (id) newDocIds.push(id);
+          });
+        }
+        if (newDocIds.length > 0) {
+          const queueRes = await borrowerFinancialsApi.queueExtraction(
+            uploadBorrowerFinancialId,
+            newDocIds,
+          );
+          if (!queueRes?.success) {
+            $modalState.update({
+              error: queueRes?.error || 'Failed to queue document extraction. You can try again from the document list later.',
+            });
+            return;
+          }
+          didQueueExtraction = true;
         }
 
         if (editingId) {
@@ -624,8 +595,21 @@ export const handleSubmit = async (onCloseCallback) => {
 
       const updatedLoans = response.data?.updatedLoans || [];
       await onCloseCallback();
-      $modalState.update({ showWatchScoreResults: true, updatedLoans });
-      successAlert(wasEditMode ? 'Financial data updated successfully!' : 'Submitted new financials!', 'toast');
+      $modalState.update({
+        showWatchScoreResults: updatedLoans.length > 0,
+        updatedLoans,
+      });
+      let successMessage;
+      if (didQueueExtraction) {
+        successMessage = wasEditMode
+          ? 'Financials updated. Document extraction is running in the background.'
+          : 'Financials submitted. Document extraction is running in the background.';
+      } else {
+        successMessage = wasEditMode
+          ? 'Financial data updated successfully!'
+          : 'Submitted new financials!';
+      }
+      successAlert(successMessage, 'toast');
     } else {
       $modalState.update({ error: response?.error || response?.message || 'Failed to submit financial data' });
     }

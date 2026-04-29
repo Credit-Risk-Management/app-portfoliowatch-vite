@@ -1,4 +1,5 @@
 /* eslint-disable react/no-danger */
+import { useState } from 'react';
 import { Button, Row, Col } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMagic } from '@fortawesome/free-solid-svg-icons';
@@ -6,9 +7,10 @@ import UniversalCard from '@src/components/global/UniversalCard';
 import { $borrower } from '@src/consts/consts';
 import { getHealthScoreColor, renderMarkdownLinks } from '@src/components/views/BorrowerDetails/_helpers/borrowerDetail.helpers';
 import { handleGenerateIndustryReport } from '@src/components/views/BorrowerDetails/_helpers/borrowerDetail.events';
-import { getResolvedIndustryTitle } from '@src/utils/naicsTitles';
+import getResolvedIndustryTitle from '@src/utils/naicsTitles';
 
 export function BorrowerIndustryTab() {
+  const [isGenerating, setIsGenerating] = useState(false);
   const borrower = $borrower.value?.borrower;
   const borrowerId = borrower?.id;
   const loans = borrower?.loans || [];
@@ -28,10 +30,19 @@ export function BorrowerIndustryTab() {
             <Button
               variant="primary-100"
               size="sm"
-              onClick={() => handleGenerateIndustryReport(borrowerId)}
+              disabled={!borrowerId || isGenerating}
+              onClick={async () => {
+                if (!borrowerId) return;
+                setIsGenerating(true);
+                try {
+                  await handleGenerateIndustryReport(borrowerId);
+                } finally {
+                  setIsGenerating(false);
+                }
+              }}
             >
               <FontAwesomeIcon icon={faMagic} className="me-8" />
-              Generate Industry Report
+              {isGenerating ? 'Generating…' : 'Generate Industry Report'}
             </Button>
             <div className="mt-16">
               <span className="text-info-100 fw-200">NAICS Code: </span>

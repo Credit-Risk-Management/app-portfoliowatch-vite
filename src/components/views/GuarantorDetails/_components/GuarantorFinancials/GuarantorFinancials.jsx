@@ -14,7 +14,6 @@ import { $guarantorDetailView } from '../../_helpers/guarantorDetails.consts';
 import * as consts from './_helpers/guarantorFinancials.consts';
 import * as events from './_helpers/guarantorFinancials.events';
 import * as resolvers from './_helpers/guarantorFinancials.resolvers';
-import getGuarantorUploadLinkUrl from './_helpers/guarantorFinancials.helpers';
 
 const TABLE_HEADERS = [
   { key: 'asOfDate', value: 'As Of Date' },
@@ -29,14 +28,13 @@ const TABLE_HEADERS = [
 
 export function GuarantorFinancials() {
   const { guarantorId } = $guarantorDetailView.value;
-  const { financials } = $guarantorDetailsData.value;
+  const { financials, guarantorKind } = $guarantorDetailsData.value;
 
   useEffectAsync(async () => {
     if (!guarantorId) return;
     await resolvers.fetchPermanentUploadLink(guarantorId);
   }, [guarantorId]);
 
-  const uploadLinkUrl = getGuarantorUploadLinkUrl(guarantorId);
   const sortedFinancials = useMemo(
     () => [...(financials || [])].sort((a, b) => new Date(b.asOfDate) - new Date(a.asOfDate)),
     [financials],
@@ -81,13 +79,14 @@ export function GuarantorFinancials() {
             Submit Financials
           </Button>
           <Button
-            variant={consts.$copiedLink.value ? 'success' : 'info-100'}
-            onClick={events.handleCopyPermanentLink}
-            disabled={!uploadLinkUrl}
+            variant={consts.$copiedAnnualLink.value ? 'success' : 'warning-100'}
+            onClick={() => events.handleCreateGuarantorAnnualLink(guarantorId, guarantorKind)}
+            className="me-8"
             size="sm"
+            disabled={!guarantorId}
           >
-            <FontAwesomeIcon icon={consts.$copiedLink.value ? faCheck : faCopy} className="me-8" />
-            {consts.$copiedLink.value ? 'Copied!' : 'Copy Guarantor Link'}
+            <FontAwesomeIcon icon={consts.$copiedAnnualLink.value ? faCheck : faCopy} className="me-8" />
+            {consts.$copiedAnnualLink.value ? 'Copied!' : 'Annual link'}
           </Button>
           <Button
             variant="outline-primary-100"

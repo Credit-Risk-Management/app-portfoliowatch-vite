@@ -1,7 +1,7 @@
 import { wrapApiWithDebounce } from '@src/utils/debouncedApi';
 import apiClient from './client';
 
-const borrowersApiBase = {
+export const borrowersApiBase = {
   // Get all borrowers with optional filters
   getAll: async (filters = {}) => {
     const params = new URLSearchParams();

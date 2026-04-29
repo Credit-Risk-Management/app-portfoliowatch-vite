@@ -1,0 +1,19 @@
+@import "./_vars";
+
+/* SaaS-style worksheet palette (aligns with Stripe / Notion neutrals + blue focus). */
+:export {
+  white: $white;
+  dark: $dark;
+  grey50: $grey-50;
+  grey100: $grey-100;
+  grey200: $grey-200;
+  grey400: $grey-400;
+  grey600: $grey-600;
+  light100: $light-100;
+  borderNeutral: #E5E7EB;
+  textFilled: #111827;
+  textMuted: #9CA3AF;
+  focusBlue: #3B82F6;
+  focusRingBlue: rgba(59, 130, 246, 0.2);
+  rowHover: #F9FAFB;
+}

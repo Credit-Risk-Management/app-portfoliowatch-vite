@@ -4,8 +4,9 @@ import { $borrowerFinancials, $borrowerFinancialsView } from '@src/signals';
 import { getPermanentUploadLink } from '@src/api/borrowerFinancialUploadLink.api';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
 import { auth } from '@src/utils/firebase';
-import { successAlert } from '@src/components/global/Alert/_helpers/alert.events';
+import { successAlert, dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import { $borrowerFinancialsFilter, $borrowerFinancialsTableView } from '@src/components/views/BorrowerDetails/_helpers/borrowerDetail.consts';
+import { fetchBorrowerDocuments } from '@src/components/views/BorrowerDetails/_helpers/borrowerDetail.resolvers';
 import * as consts from './borrowerFinancialsTab.consts';
 
 export const fetchFinancialHistory = async () => {
@@ -53,6 +54,27 @@ export const fetchFinancialHistory = async () => {
     $borrowerFinancialsTableView.update({ isTableLoading: false });
     $borrowerFinancials.update({ isLoading: false });
     $borrowerFinancialsView.update({ refreshTrigger: 0 });
+  }
+};
+
+export const confirmDeleteBorrowerFinancial = async (borrowerId) => {
+  const pending = $borrowerFinancialsView.value.pendingDeleteFinancial;
+  if (!borrowerId || !pending?.id) return;
+  if ($borrowerFinancialsView.value.isDeletingBorrowerFinancial) return;
+  $borrowerFinancialsView.update({ isDeletingBorrowerFinancial: true });
+  try {
+    await borrowerFinancialsApi.delete(pending.id);
+    $borrowerFinancialsView.update({
+      activeModalKey: null,
+      pendingDeleteFinancial: null,
+    });
+    successAlert('Financial record and stored files were deleted.');
+    await fetchFinancialHistory();
+    await fetchBorrowerDocuments(borrowerId);
+  } catch (error) {
+    dangerAlert(error?.message || 'Failed to delete financial record.');
+  } finally {
+    $borrowerFinancialsView.update({ isDeletingBorrowerFinancial: false });
   }
 };
 

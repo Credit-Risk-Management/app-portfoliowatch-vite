@@ -1,7 +1,8 @@
-/* eslint-disable import/prefer-default-export */
 import { getUploadLinkByToken } from '@src/api/borrowerFinancialUploadLink.api';
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
-import { $publicFinancialUploadView } from './publicFinancialUpload.consts';
+import {
+  $publicFinancialUploadView,
+} from './publicFinancialUpload.consts';
 
 /**
  * Fetch upload link data by token
@@ -27,6 +28,7 @@ export const fetchUploadLinkData = async (token) => {
     $publicFinancialUploadView.update({
       linkData: response?.data ?? null,
       token,
+      debtScheduleWorksheetHydratedFromPrior: false,
     });
   } catch (err) {
     dangerAlert(err.message || 'Invalid or expired upload link');
@@ -41,3 +43,5 @@ export const fetchUploadLinkData = async (token) => {
     });
   }
 };
+
+export default fetchUploadLinkData;

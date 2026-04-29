@@ -8,7 +8,6 @@ import { $loan } from '@src/consts/consts';
 import { dangerAlert, successAlert, infoAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import {
   fetchAndSetLoans,
-  fetchLoanDetail,
   loadReferenceData,
 } from '@src/components/views/Loans/_helpers/loans.resolvers';
 import { auth } from '@src/utils/firebase';
@@ -19,6 +18,7 @@ import {
   $loanDetailNewCommentLoading,
   $loanDetailFinancials,
   $industryReportGenerating,
+  $loanDetailView,
 } from './loans.consts';
 
 export const handleAddLoan = async () => {
@@ -333,8 +333,10 @@ export const handleGenerateIndustryReport = async () => {
 
     successAlert('Industry health report generated successfully!');
 
-    // Refresh the loan detail to show updated borrower data
-    await fetchLoanDetail(loan.loanId);
+    $loanDetailView.update({
+      refreshKey: $loanDetailView.value.refreshKey + 1,
+      fetchOptions: { repeatAfterMs: 2000 },
+    });
   } catch (error) {
     console.error('Error generating industry report:', error);
     dangerAlert(`Failed to generate industry report: ${error.message}`);

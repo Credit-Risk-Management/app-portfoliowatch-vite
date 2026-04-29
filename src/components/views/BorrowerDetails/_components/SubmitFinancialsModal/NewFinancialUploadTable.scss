@@ -1,0 +1,40 @@
+// Optional-documents grid: fixed column shares + SignalTable `thead tr td` headers
+.new-financial-upload-table {
+  .primary-table {
+    table-layout: fixed;
+    width: 100%;
+  }
+
+  // 26+17+43+14=100. Start-align all columns so Action/Upload is not shoved to the right edge.
+  .primary-table thead tr td,
+  .primary-table tbody tr td {
+    text-align: start;
+    vertical-align: middle;
+  }
+
+  .primary-table thead tr td:nth-child(1),
+  .primary-table tbody tr td:nth-child(1) {
+    width: 26%;
+  }
+
+  .primary-table thead tr td:nth-child(2),
+  .primary-table tbody tr td:nth-child(2) {
+    width: 17%;
+  }
+
+  .primary-table thead tr td:nth-child(3),
+  .primary-table tbody tr td:nth-child(3) {
+    width: 43%;
+    min-width: 0;
+  }
+
+  .primary-table thead tr td:nth-child(4),
+  .primary-table tbody tr td:nth-child(4) {
+    width: 14%;
+    white-space: nowrap;
+  }
+
+  .new-financial-upload-table__row {
+    cursor: default !important;
+  }
+}

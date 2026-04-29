@@ -12,6 +12,7 @@ import {
   faFileAlt,
   faSync,
   faFlag,
+  faExclamationTriangle,
 } from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';
 import UniversalCard from '@src/components/global/UniversalCard';
@@ -22,6 +23,7 @@ import { formatCurrency } from '@src/utils/formatCurrency';
 import { GuarantorNetWorthWithMemoFlag } from '@src/utils/guarantorFinancialsSource';
 import Loadable from '@src/components/global/Loadable';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
+import getResolvedIndustryTitle from '@src/utils/naicsTitles';
 import SubmitCollateralModal from './_components/SubmitCollateralModal';
 import { $loanCollateralView } from './_components/submitCollateralModal.signals';
 import AddCreditMemoModal from './_components/AddCreditMemoModal';
@@ -43,6 +45,7 @@ import {
   $loanDetailCollateral, $loanDetailCollateralAccordionExpanded,
   $industryReportGenerating,
   $loanDetailGuarantors,
+  $loanDetailView,
 } from './_helpers/loans.consts';
 import { fetchLoanDetail, resetLoanRouteState } from './_helpers/loans.resolvers';
 import {
@@ -55,6 +58,7 @@ const LoanDetail = () => {
   const location = useLocation();
   const fromBorrowerId = location.state?.fromBorrower;
   const showBackToBorrower = !!fromBorrowerId;
+  const loanDetailRefreshKey = $loanDetailView.value.refreshKey;
 
   useEffect(() => () => {
     resetLoanRouteState();
@@ -62,9 +66,13 @@ const LoanDetail = () => {
 
   useEffectAsync(async () => {
     if (loanId) {
-      await fetchLoanDetail(loanId);
+      const { fetchOptions } = $loanDetailView.value;
+      await fetchLoanDetail(loanId, fetchOptions);
+      if (fetchOptions && Object.keys(fetchOptions).length > 0) {
+        $loanDetailView.update({ fetchOptions: {} });
+      }
     }
-  }, [loanId]);
+  }, [loanId, loanDetailRefreshKey]);
 
   if ($loan.value?.isLoading || $watchScoreBreakdown.value?.isLoading) {
     return (
@@ -88,6 +96,14 @@ const LoanDetail = () => {
       </Container>
     );
   }
+
+  const { loan: loanRecord } = $loan.value;
+  const industryDisplay =
+    getResolvedIndustryTitle(
+      loanRecord.naicsCode,
+      loanRecord.naicsDescription,
+      loanRecord.borrower?.industryType,
+    ) || 'N/A';
 
   const collateralEntries = ($loanDetailCollateral.value || [])
     .sort((a, b) => new Date(b.asOfDate || 0) - new Date(a.asOfDate || 0));
@@ -188,6 +204,27 @@ const LoanDetail = () => {
   const loanData = $loan.value?.loan;
   const normalizedWatchScore = Number(loanData?.watchScore);
   const watchScoreOption = WATCH_SCORE_OPTIONS[loanData?.watchScore] || WATCH_SCORE_OPTIONS.null;
+  const watchCovenantBreach = $watchScoreBreakdown.value?.breakdown?.covenantBreach;
+  const watchCovenantBreachLabels = (() => {
+    if (!watchCovenantBreach) {
+      return [];
+    }
+    const { dscr, currentRatio, liquidity, liquidityRatio } = watchCovenantBreach;
+    const labels = [];
+    if (dscr) {
+      labels.push('DSCR');
+    }
+    if (currentRatio) {
+      labels.push('Current ratio');
+    }
+    if (liquidity) {
+      labels.push('Liquidity');
+    }
+    if (liquidityRatio) {
+      labels.push('Liquidity ratio');
+    }
+    return labels;
+  })();
   const isDefaultWatchScore = normalizedWatchScore === 3
     && (loanData?.borrower?.financials?.length ?? 0) === 0;
 
@@ -259,28 +296,52 @@ const LoanDetail = () => {
         <PageHeader
           title={`${loanData?.borrowerName}`}
           AdditionalComponents={() => (
-            <div className="d-flex align-items-center gap-2">
-              {isDefaultWatchScore && (
-              <OverlayTrigger
-                placement="top"
-                trigger={['hover', 'focus']}
-                overlay={(
-                  <Tooltip id="default-watch-score-tooltip">
-                    Default Watch Score
-                  </Tooltip>
+            <div className="d-flex flex-column align-items-end text-end">
+              <div className="d-flex align-items-center gap-2">
+                {isDefaultWatchScore && (
+                <OverlayTrigger
+                  placement="top"
+                  trigger={['hover', 'focus']}
+                  overlay={(
+                    <Tooltip id="default-watch-score-tooltip">
+                      Default Watch Score
+                    </Tooltip>
                         )}
-              >
-                <Badge
-                  bg="warning-600"
-                  className="me-4"
-                  style={{ fontSize: '16px', padding: '6px 12px' }}
                 >
-                  <FontAwesomeIcon icon={faFlag} className="text-warning-50" />
-                </Badge>
-              </OverlayTrigger>
-              )}
-              <div className={`text-${watchScoreOption.color}-200`}>
-                <h4 className="mb-4">WATCH Score: {watchScoreOption.label}</h4>
+                  <Badge
+                    bg="warning-600"
+                    className="me-4"
+                    style={{ fontSize: '16px', padding: '6px 12px' }}
+                  >
+                    <FontAwesomeIcon icon={faFlag} className="text-warning-50" />
+                  </Badge>
+                </OverlayTrigger>
+                )}
+                {watchCovenantBreachLabels.length > 0 && (
+                  <OverlayTrigger
+                    placement="bottom"
+                    trigger={['hover', 'focus']}
+                    overlay={(
+                      <Tooltip id="watch-covenant-breach-tooltip">
+                        WATCH reflects a breached financial covenant: actual is below the loan requirement
+                        ({watchCovenantBreachLabels.join(', ')}). WATCH is set to at least 5 (High-Risk) when
+                        the unadjusted score was lower.
+                      </Tooltip>
+                    )}
+                  >
+                    <Badge
+                      bg="danger-600"
+                      className="me-4"
+                      style={{ fontSize: '14px', padding: '4px 10px' }}
+                    >
+                      <FontAwesomeIcon icon={faExclamationTriangle} className="me-4 text-danger-100" />
+                      Covenant
+                    </Badge>
+                  </OverlayTrigger>
+                )}
+                <div className={`text-${watchScoreOption.color}-200`}>
+                  <h4 className="mb-4">WATCH Score: {watchScoreOption.label}</h4>
+                </div>
               </div>
             </div>
           )}
@@ -511,7 +572,7 @@ const LoanDetail = () => {
                   </div>
                   <div>
                     <span className="text-info-100 fw-200">Industry: </span>
-                    <span className="fw-bold">{$loan.value?.loan?.naicsDescription || 'N/A'}</span>
+                    <span className="fw-bold">{industryDisplay}</span>
                   </div>
                 </Col>
                 <Col xs={12} md={4} className="text-md-end">

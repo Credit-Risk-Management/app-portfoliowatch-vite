@@ -19,6 +19,7 @@ import Settings from '@src/components/views/Settings';
 import OrganizationSettings from '@src/components/views/OrganizationSettings';
 import UsersSettings from '@src/components/views/UsersSettings';
 import PublicFinancialUpload from '@src/components/views/PublicFinacialUpload/PublicFinancialUpload';
+import PublicGuarantorFinancialUpload from '@src/components/views/PublicGuarantorFinancialUpload/PublicGuarantorFinancialUpload';
 import PublicRoutes from '@src/components/global/PublicRoutes';
 import PrivateRoutes from '@src/components/global/PrivateRoutes';
 import { initAuthListener } from '@src/utils/auth.utils';
@@ -47,6 +48,7 @@ function App() {
             {/* Public auth routes */}
             <Route element={<PublicRoutes />}>
               <Route path="/upload-financials/:token" element={<PublicFinancialUpload />} />
+              <Route path="/upload-guarantor-financials/:token" element={<PublicGuarantorFinancialUpload />} />
               <Route path="/login" element={<Login />} />
               <Route path="/accept-invitation" element={<AcceptInvitation />} />
             </Route>

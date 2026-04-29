@@ -1,16 +1,46 @@
 /**
  * Official NAICS 2022 6-digit titles (subset — extend as needed).
- * When `loan.naicsDescription` is empty, we still show a proper Industry label in UI.
+ * When `loan.naicsDescription` is empty, we use a 6-digit title from the table if present,
+ * otherwise a 2-digit sector label — never a placeholder like "NAICS 721110".
  * Kept in sync with api-portfoliowatch-express/src/utils/naicsTitles.ts
  */
+const NAICS_2_SECTOR = {
+  11: 'Agriculture, Forestry, Fishing and Hunting',
+  21: 'Mining, Quarrying, and Oil and Gas Extraction',
+  22: 'Utilities',
+  23: 'Construction',
+  31: 'Manufacturing',
+  32: 'Manufacturing',
+  33: 'Manufacturing',
+  42: 'Wholesale Trade',
+  44: 'Retail Trade',
+  45: 'Retail Trade',
+  48: 'Transportation and Warehousing',
+  49: 'Transportation and Warehousing',
+  51: 'Information',
+  52: 'Finance and Insurance',
+  53: 'Real Estate and Rental and Leasing',
+  54: 'Professional, Scientific, and Technical Services',
+  55: 'Management of Companies and Enterprises',
+  56: 'Administrative and Support and Waste Management and Remediation Services',
+  61: 'Educational Services',
+  62: 'Health Care and Social Assistance',
+  71: 'Arts, Entertainment, and Recreation',
+  72: 'Accommodation and Food Services',
+  81: 'Other Services (except Public Administration)',
+  92: 'Public Administration',
+};
+
 const NAICS_6_TITLES = {
   111110: 'Soybean Farming',
   236220: 'Commercial and Institutional Building Construction',
   236118: 'Residential Remodelers',
   311811: 'Retail Bakeries',
+  332710: 'Machine Shops',
   423120: 'Motor Vehicle Supplies and New Parts Merchant Wholesalers',
   441110: 'New Car Dealers',
   445110: 'Supermarkets and Other Grocery Retailers',
+  456120: 'Cosmetics, Beauty Supplies, and Perfume Retailers',
   511210: 'Software Publishers',
   512110: 'Motion Picture and Video Production',
   517311: 'Wired and Wireless Telecommunications Carriers',
@@ -39,6 +69,7 @@ const NAICS_6_TITLES = {
   561320: 'Temporary Help Services',
   561330: 'Professional Employer Organizations',
   561499: 'All Other Business Support Services',
+  561720: 'Janitorial Services',
   561621: 'Security Systems Services',
   561730: 'Landscaping Services',
   562111: 'Solid Waste Collection',
@@ -46,6 +77,7 @@ const NAICS_6_TITLES = {
   621111: 'Offices of Physicians',
   621210: 'Offices of Dentists',
   622110: 'General Medical and Surgical Hospitals',
+  721110: 'Hotels (except Casino Hotels) and Motels',
   722511: 'Full-Service Restaurants',
   722513: 'Limited-Service Restaurants',
   811111: 'General Automotive Repair',
@@ -62,32 +94,62 @@ function normalizeNaics6(code) {
   return digits.slice(0, 6);
 }
 
-/**
- * Resolve a display title for Industry: prefer loan description, then lookup by code,
- * then borrower text if it is not a bare NAICS code, else a readable NAICS label.
- */
-export function getResolvedIndustryTitle(naicsCode, naicsDescription, borrowerIndustryType) {
-  const desc = naicsDescription?.trim();
-  if (desc) return desc;
+function isNaicsCodePlaceholderLabel(s) {
+  return /^naics\s+\d{5,6}\s*$/i.test(s.trim());
+}
 
-  const code6 = normalizeNaics6(naicsCode);
-  if (code6 && NAICS_6_TITLES[code6]) {
+function resolveTitleFrom6DigitCode(code6) {
+  if (NAICS_6_TITLES[code6]) {
     return NAICS_6_TITLES[code6];
   }
+  const prefix2 = String(code6).slice(0, 2);
+  return NAICS_2_SECTOR[prefix2];
+}
 
-  const bt = borrowerIndustryType?.trim();
-  if (bt && !/^\d{5,6}$/.test(bt)) {
-    return bt;
-  }
-  if (bt && /^\d{5,6}$/.test(bt)) {
-    const fromBorrower = normalizeNaics6(bt);
-    if (fromBorrower && NAICS_6_TITLES[fromBorrower]) {
-      return NAICS_6_TITLES[fromBorrower];
+function isGenericTwoDigitSectorDescription(desc, code6) {
+  const sector2 = NAICS_2_SECTOR[code6.slice(0, 2)];
+  return sector2 !== undefined && desc === sector2;
+}
+
+/**
+ * Resolve a display title for Industry: prefer loan `naicsDescription` when specific,
+ * then 6-digit / 2-digit from `naicsCode`, then free-text `borrowerIndustryType` if not a bare code.
+ */
+export default function getResolvedIndustryTitle(naicsCode, naicsDescription, borrowerIndustryType) {
+  const desc = naicsDescription?.trim();
+  const fromLoan = normalizeNaics6(naicsCode);
+
+  if (desc && !isNaicsCodePlaceholderLabel(desc)) {
+    if (!fromLoan || !isGenericTwoDigitSectorDescription(desc, fromLoan)) {
+      return desc;
     }
   }
 
-  if (code6) {
-    return `NAICS ${code6}`;
+  if (fromLoan) {
+    const t = resolveTitleFrom6DigitCode(fromLoan);
+    if (t) return t;
+  }
+
+  const bt = borrowerIndustryType?.trim();
+  if (bt) {
+    if (isNaicsCodePlaceholderLabel(bt)) {
+      const c = normalizeNaics6(bt);
+      if (c) {
+        const t = resolveTitleFrom6DigitCode(c);
+        if (t) return t;
+      }
+    } else if (!/^\d{5,6}$/.test(bt)) {
+      if (!fromLoan || !isGenericTwoDigitSectorDescription(bt, fromLoan)) {
+        return bt;
+      }
+    }
+  }
+  if (bt && /^\d{5,6}$/.test(bt)) {
+    const fromBorrower = normalizeNaics6(bt);
+    if (fromBorrower) {
+      const t = resolveTitleFrom6DigitCode(fromBorrower);
+      if (t) return t;
+    }
   }
 
   return undefined;

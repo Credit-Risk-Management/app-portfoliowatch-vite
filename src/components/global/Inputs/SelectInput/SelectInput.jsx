@@ -18,6 +18,8 @@ const SelectInput = ({
   filterOption,
   menuMaxHeight = 280,
   noOptionsMessage,
+  styles: stylesProp,
+  ...rest
 }) => {
   if (!name) {
     throw new Error('SelectInput has no name');
@@ -29,7 +31,7 @@ const SelectInput = ({
   return (
     <Select
       id={name}
-      className={`bg-info-800 rounded-pill ${className}`}
+      className={className ?? 'bg-info-800 rounded-pill'}
       menuPortalTarget={isPortal ? document.body : undefined}
       value={isMulti
         ? options.filter((option) => value?.includes(option.value))
@@ -55,7 +57,8 @@ const SelectInput = ({
       maxMenuHeight={menuMaxHeight}
       noOptionsMessage={noOptionsMessage}
       placeholder={placeholder}
-      styles={reactSelectStyles}
+      styles={stylesProp ?? reactSelectStyles}
+      {...rest}
     />
   );
 };

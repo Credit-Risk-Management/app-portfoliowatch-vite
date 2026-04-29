@@ -6,7 +6,7 @@ import * as consts from '../_helpers/dashboard.consts';
 const WatchScoreLegend = ({ data = [], metric = 'totalAmount' }) => {
   const navigate = useNavigate();
   const overallAmount = data.reduce((sum, entry) => sum + (entry.value || 0), 0);
-  
+
   // Always show all 5 scores (1-5) in order
   const ratings = [1, 2, 3, 4, 5];
 
@@ -16,12 +16,12 @@ const WatchScoreLegend = ({ data = [], metric = 'totalAmount' }) => {
         // Find the data entry that matches this rating
         const dataEntry = data.find(entry => entry.rating === rating);
         const value = dataEntry?.value || 0;
-        
+
         // Calculate percentage, handling division by zero
         const percent = overallAmount > 0 ? ((value / overallAmount) * 100).toFixed(0) : '0';
 
         const label = WATCH_SCORE_OPTIONS[rating]?.label || `${rating} - Unknown`;
-        
+
         const handleClick = () => {
           if (rating >= 1 && rating <= 5) {
             navigate(`/loans?watchScore=${rating}`);

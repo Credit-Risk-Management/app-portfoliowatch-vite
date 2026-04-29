@@ -9,7 +9,12 @@ import { $borrower } from '@src/consts/consts';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import { $borrowerFinancialsView } from '@src/signals';
 import LoanMiniRadarChart from './_components/LoanMiniRadarChart';
-import { getWatchScoreDisplay, formatCategoryBreakdown, hasWatchScoreData } from './_helpers/loanCard.helpers';
+import {
+  getWatchScoreDisplay,
+  formatCategoryBreakdown,
+  hasWatchScoreData,
+  getCovenantBreachLabels,
+} from './_helpers/loanCard.helpers';
 import { $loanWatchScoreBreakdowns } from './_helpers/loanCard.consts';
 import { $borrowerFinancialsTableView } from '../../../_helpers/borrowerDetail.consts';
 import { fetchFinancialHistory } from '../BorrowerFinancialsTab/_helpers/borrowerFinancialsTab.resolvers';
@@ -57,6 +62,7 @@ const BorrowerLoansTab = () => {
         const watchScoreDisplay = getWatchScoreDisplay(loan?.currentWatchScore);
         const hasWatchScore = hasWatchScoreData(loan);
         const categories = formatCategoryBreakdown(breakdown);
+        const covenantBreachLabels = getCovenantBreachLabels(breakdown);
         const loanIdentifier = loan?.loanId || loan?.loanNumber || loan?.id || 'N/A';
         const isMissingFinancials = loan?.hasFinancialCoverage === false;
         const isDefaultWatchScore = Number(loan?.currentWatchScore) === 3 && borrower.financials?.length === 0;
@@ -89,6 +95,28 @@ const BorrowerLoansTab = () => {
                         <FontAwesomeIcon icon={faFlag} className="text-warning-50" />
                       </Badge>
                     </OverlayTrigger>
+                    )}
+                    {covenantBreachLabels.length > 0 && (
+                      <OverlayTrigger
+                        placement="top"
+                        trigger={['hover', 'focus']}
+                        overlay={(
+                          <Tooltip id={`watch-covenant-breach-tooltip-${loan.id}`}>
+                            WATCH reflects a breached financial covenant: actual is below the loan requirement
+                            ({covenantBreachLabels.join(', ')}). WATCH is set to at least 5 (High-Risk) when
+                            the unadjusted score was lower.
+                          </Tooltip>
+                        )}
+                      >
+                        <Badge
+                          bg="danger-600"
+                          className="ms-1"
+                          style={{ fontSize: '14px', padding: '4px 10px' }}
+                        >
+                          <FontAwesomeIcon icon={faExclamationTriangle} className="me-4 text-danger-100" />
+                          Covenant
+                        </Badge>
+                      </OverlayTrigger>
                     )}
                     {hasWatchScore && (
                       <Badge
