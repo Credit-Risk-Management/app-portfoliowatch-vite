@@ -16,7 +16,6 @@ import {
   faChevronLeft,
   faChevronRight,
   faSpinner,
-  faRecycle,
 } from '@fortawesome/free-solid-svg-icons';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -40,6 +39,7 @@ const DocumentsContainer = ({
   pdfUrl,
   ocrApplied,
   handleFileUpload,
+  onRunExtraction,
   refreshKey,
   $financialDocsUploader,
   $modalState,
@@ -47,7 +47,8 @@ const DocumentsContainer = ({
   handleSwitchDocument,
 }) => {
   const { documentType } = $borrowerFinancialsForm.value;
-  const { documentsByType, currentDocumentIndex } = $modalState.value;
+  const { documentsByType, currentDocumentIndex, isLoading: modalDocLoading } = $modalState.value;
+  const hasPendingExtraction = helpers.hasPendingExtraction(documentsByType);
   const fileInputRef = useRef(null);
 
   const currentDocs = documentsByType[documentType] || [];
@@ -139,7 +140,11 @@ const DocumentsContainer = ({
             </div>
           ) : (
             <p className="text-info-200 small mb-16">
-              Upload financial statements (PDF, Excel, etc.). Our system will automatically extract financial data.
+              Upload your documents for this type, then add other types as needed. When you are done attaching files, use
+              {' '}
+              <strong>Extract financial data</strong>
+              {' '}
+              to run OCR; you can also enter or edit values manually.
             </p>
           )}
           <FileUploader
@@ -463,48 +468,66 @@ const DocumentsContainer = ({
   return (
     <Row>
       <Col md={7} className="ps-0">
-        <div className="d-flex justify-content-between align-items-center mb-16">
+        <div className="d-flex justify-content-between align-items-center mb-12 flex-wrap gap-8">
           <h5 className="text-info-100 mb-0 fw-600">
             {pdfUrl ? 'Uploaded Document' : 'Upload Financial Documents'}
           </h5>
-
-          {pdfUrl && (
-            <div className="d-flex align-items-center gap-2">
-              {hasMultipleDocs && (
-                <Form.Select
+          <div className="d-flex align-items-center gap-2 flex-wrap justify-content-end">
+            {onRunExtraction && (
+              <Button
+                variant="info"
+                size="sm"
+                className="text-nowrap"
+                disabled={!hasPendingExtraction || modalDocLoading}
+                onClick={onRunExtraction}
+              >
+                {modalDocLoading ? 'Extracting...' : 'Extract financial data'}
+              </Button>
+            )}
+            {pdfUrl && (
+              <>
+                {hasMultipleDocs && (
+                  <Form.Select
+                    size="sm"
+                    value={currentIndex}
+                    onChange={(e) => events.handleDocumentSelectChange(e, handleSwitchDocument, $modalState)}
+                    className="bg-info-800 text-info-100 border-info-600 me-4 rounded-pill"
+                    style={{ width: 'auto', minWidth: '150px' }}
+                  >
+                    {currentDocs.map((doc, idx) => (
+                      <option key={doc.id} value={idx}>
+                        Document {idx + 1} of {currentDocs.length}
+                      </option>
+                    ))}
+                  </Form.Select>
+                )}
+                <Button
+                  variant="outline-danger-300"
                   size="sm"
-                  value={currentIndex}
-                  onChange={(e) => events.handleDocumentSelectChange(e, handleSwitchDocument, $modalState)}
-                  className="bg-info-800 text-info-100 border-info-600 me-4 rounded-pill"
-                  style={{ width: 'auto', minWidth: '150px' }}
+                  onClick={() => events.handleRemove(currentDoc, handleRemoveDocument, $modalState)}
+                  className="me-4"
                 >
-                  {currentDocs.map((doc, idx) => (
-                    <option key={doc.id} value={idx}>
-                      Document {idx + 1} of {currentDocs.length}
-                    </option>
-                  ))}
-                </Form.Select>
-              )}
-              <Button
-                variant="outline-danger-300"
-                size="sm"
-                onClick={() => events.handleRemove(currentDoc, handleRemoveDocument, $modalState)}
-                className="me-4"
-              >
-                <FontAwesomeIcon icon={faTrash} className="me-4" />
-                Remove
-              </Button>
-              <Button
-                variant="outline-success-300"
-                size="sm"
-                onClick={() => events.handleAddFileClick(fileInputRef)}
-              >
-                <FontAwesomeIcon icon={faPlus} className="me-4" />
-                Add File
-              </Button>
-            </div>
-          )}
+                  <FontAwesomeIcon icon={faTrash} className="me-4" />
+                  Remove
+                </Button>
+                <Button
+                  variant="outline-success-300"
+                  size="sm"
+                  onClick={() => events.handleAddFileClick(fileInputRef)}
+                >
+                  <FontAwesomeIcon icon={faPlus} className="me-4" />
+                  Add File
+                </Button>
+              </>
+            )}
+          </div>
         </div>
+        {hasPendingExtraction && onRunExtraction && (
+          <Alert variant="secondary" className="text-info-100 small mb-16 py-8 border-info-600">
+            Document files are ready. When all types are added, run extraction to pre-fill the form, or continue without
+            it and submit manually.
+          </Alert>
+        )}
 
         {/* Hidden File Input */}
         <input
@@ -531,34 +554,23 @@ const DocumentsContainer = ({
             onChange={(e) => events.handleDocumentTypeChange(e, documentsByType, $modalState)}
             className="bg-info-800 text-info-100 border-info-600"
           >
-            {!isTaxReturnUploaded && (
-              <option value="balanceSheet">
-                Balance Sheet
-                {documentsByType.balanceSheet.length > 0 ? ` (${documentsByType.balanceSheet.length})` : ''}
-              </option>
-            )}
-            {!isTaxReturnUploaded && (
-              <option value="incomeStatement">
-                Income Statement
-                {documentsByType.incomeStatement.length > 0 ? ` (${documentsByType.incomeStatement.length})` : ''}
-              </option>
-            )}
-            {!isTaxReturnUploaded && (
-              <option value="debtScheduleWorksheet">
-                Debt Schedule
-                {documentsByType.debtScheduleWorksheet.length > 0 ? ` (${documentsByType.debtScheduleWorksheet.length})` : ''}
-              </option>
-            )}
+            <option value="balanceSheet">
+              Balance Sheet
+              {documentsByType.balanceSheet.length > 0 ? ` (${documentsByType.balanceSheet.length})` : ''}
+            </option>
+            <option value="incomeStatement">
+              Income Statement
+              {documentsByType.incomeStatement.length > 0 ? ` (${documentsByType.incomeStatement.length})` : ''}
+            </option>
+            <option value="debtScheduleWorksheet">
+              Debt Schedule
+              {documentsByType.debtScheduleWorksheet.length > 0 ? ` (${documentsByType.debtScheduleWorksheet.length})` : ''}
+            </option>
             <option value="taxReturn">
               Tax Return
               {documentsByType.taxReturn.length > 0 ? ` (${documentsByType.taxReturn.length})` : ''}
             </option>
           </Form.Select>
-          {isTaxReturnUploaded && (
-            <Form.Text className="text-warning-300">
-              Tax return uploaded. Other document types are hidden for this submission.
-            </Form.Text>
-          )}
           {documentsByType[documentType].length === 0 && (
             <Form.Text className="text-info-300">
               No documents uploaded for this type yet.
@@ -816,18 +828,6 @@ const DocumentsContainer = ({
                       signal={$borrowerFinancialsForm}
                       inputFormatCallback={normalizePercentageInput}
                     />
-                  </Col>
-                  <Col xs="auto" className="mb-2">
-                    <Button
-                      type="button"
-                      variant="outline-secondary"
-                      size="sm"
-                      title="Recalculate from Net Income ÷ Gross Revenue"
-                      aria-label="Recalculate gross profit margin from net income and gross revenue"
-                      onClick={events.handleRecalculateProfitMargin}
-                    >
-                      <FontAwesomeIcon icon={faRecycle} />
-                    </Button>
                   </Col>
                 </Row>
               </Col>

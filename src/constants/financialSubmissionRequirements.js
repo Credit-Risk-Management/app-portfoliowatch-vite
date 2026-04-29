@@ -7,7 +7,7 @@ export const REQUIRED_DOCUMENT_KEYS = {
   INCOME_STATEMENT_YTD: 'incomeStatementYtd',
   INCOME_STATEMENT_QUARTERLY: 'incomeStatementQuarterly',
   BUSINESS_TAX_RETURN: 'businessTaxReturn',
-  DEBT_SCHEDULE: 'debtSchedule',
+  DEBT_SCHEDULE: 'debtScheduleWorksheet',
 };
 
 /**
@@ -20,12 +20,12 @@ export const Q1_TEST_UPLOAD_LINK_OPTIONS = {
   fiscalYearEndMonth: 12,
   requiredDocumentKeys: [
     REQUIRED_DOCUMENT_KEYS.BALANCE_SHEET,
-    REQUIRED_DOCUMENT_KEYS.INCOME_STATEMENT_YTD,
     REQUIRED_DOCUMENT_KEYS.INCOME_STATEMENT_QUARTERLY,
+    REQUIRED_DOCUMENT_KEYS.DEBT_SCHEDULE,
   ],
   periodLabel: 'Q1 2026',
   lenderInstructions:
-    'Quarterly package for Q1 2026 (calendar). Balance sheet as of 3/31/2026, YTD income through 3/31/2026, and quarterly P&L for 1/1/2026–3/31/2026.',
+    'Quarterly package for Q1 2026 (calendar).Balance Sheet - dated 3/31/2026 and Income Statement for 1/1/2026 - 3/31/2026 and Debt Schedule as of 3/31/2026',
 };
 
 /**
@@ -37,10 +37,35 @@ export const ANNUAL_TEST_UPLOAD_LINK_OPTIONS = {
   reportingPeriodEndDate: '2025-12-31',
   fiscalYearEndMonth: 12,
   requiredDocumentKeys: [
-    REQUIRED_DOCUMENT_KEYS.BUSINESS_TAX_RETURN,
+    // REQUIRED_DOCUMENT_KEYS.BUSINESS_TAX_RETURN,
     REQUIRED_DOCUMENT_KEYS.DEBT_SCHEDULE,
   ],
   periodLabel: 'FY 2025',
   lenderInstructions:
-    'Annual package for FY 2025 (calendar year-end). Business tax return, debt schedule, and balance sheet as of 12/31/2025.',
+    'Annual package for FY 2025 (calendar year-end). Business tax return and debt schedule as of 12/31/2025.',
+};
+
+/** Keys for public guarantor upload (must match API). */
+const GKeys = {
+  personalTaxReturn: 'personalTaxReturn',
+  personalFinancialStatement: 'personalFinancialStatement',
+  // businessTaxReturn: 'businessTaxReturn',
+  // debtScheduleWorksheet: 'debtScheduleWorksheet',
+};
+
+const priorCalendarYear = () => new Date().getFullYear() - 1;
+
+/**
+ * @returns {object} createGuarantorUploadLink options
+ */
+export const buildGuarantorAnnualUploadLinkOptions = () => {
+  const fy = priorCalendarYear();
+  return {
+    submissionCadence: 'ANNUAL',
+    reportingPeriodEndDate: `${fy}-12-31`,
+    fiscalYearEndMonth: 12,
+    requiredDocumentKeys: [GKeys.personalTaxReturn, GKeys.personalFinancialStatement],
+    periodLabel: `FY ${fy}`,
+    lenderInstructions: `Annual guarantor package for FY ${fy} (calendar year-end): personal tax return, PFS`,
+  };
 };

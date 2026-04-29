@@ -15,6 +15,8 @@ export const openSubmitFinancials = (borrowerId) => {
   $borrowerFinancialsView.update({
     activeModalKey: 'submitFinancials',
     currentBorrowerId: borrowerId,
+    isEditMode: false,
+    editingFinancialId: null,
   });
 };
 
@@ -24,6 +26,22 @@ export const onFinancialRowClick = (borrowerId, financial) => {
     isEditMode: true,
     currentBorrowerId: borrowerId,
     editingFinancialId: financial?.id,
+  });
+};
+
+export const openDeleteFinancialModal = (financial) => {
+  $borrowerFinancialsView.update({
+    activeModalKey: 'deleteFinancials',
+    pendingDeleteFinancial: financial,
+    isDeletingBorrowerFinancial: false,
+  });
+};
+
+export const closeDeleteFinancialModal = () => {
+  $borrowerFinancialsView.update({
+    activeModalKey: null,
+    pendingDeleteFinancial: null,
+    isDeletingBorrowerFinancial: false,
   });
 };
 

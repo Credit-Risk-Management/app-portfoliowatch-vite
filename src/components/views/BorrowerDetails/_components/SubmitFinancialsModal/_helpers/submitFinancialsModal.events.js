@@ -6,6 +6,12 @@ import * as consts from './submitFinancialsModal.consts';
  * Close the modal and reset all state.
  * @param {string} [pdfUrlOrEvent] - Blob URL to revoke; React-Bootstrap may pass a synthetic event from onHide — ignored for revoke in that case.
  */
+const deleteStoragePath = async (path) => {
+  if (!path) return;
+  const deleteRef = storage.ref(path);
+  await deleteRef.delete().catch(() => { });
+};
+
 export const handleClose = async (pdfUrlOrEvent) => {
   const { $financialDocsUploader, $modalState } = consts;
   const { documentsByType, downloadSensibleUrl, pdfUrl: statePdfUrl } = $modalState.value;
@@ -26,9 +32,13 @@ export const handleClose = async (pdfUrlOrEvent) => {
     });
   });
 
+  const tempPaths = Object.values(documentsByType || {}).flatMap(
+    (docs) => (docs || []).map((doc) => doc?.storagePath).filter(Boolean),
+  );
+  await Promise.all(tempPaths.map((path) => deleteStoragePath(path)));
+
   if (downloadSensibleUrl) {
-    const deleteStorageRef = storage.ref(downloadSensibleUrl);
-    await deleteStorageRef.delete().catch(() => { });
+    await deleteStoragePath(downloadSensibleUrl);
   }
 
   if (pdfUrlToRevoke) {

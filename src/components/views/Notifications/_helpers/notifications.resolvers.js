@@ -30,8 +30,10 @@ export const markNotificationAsRead = async (notificationId) => {
     await notificationsApi.markAsRead(notificationId);
 
     // Update local state
+    const patchRead = (items) => (items || []).map((n) => (n.id === notificationId ? { ...n, isRead: true } : n));
     $notifications.update({
-      list: $notifications.value.list.map((n) => (n.id === notificationId ? { ...n, isRead: true } : n)),
+      list: patchRead($notifications.value.list),
+      bellPreview: patchRead($notifications.value.bellPreview),
       unreadCount: Math.max(0, $notifications.value.unreadCount - 1),
     });
   } catch (error) {
@@ -46,6 +48,7 @@ export const markAllNotificationsAsRead = async () => {
     // Update local state
     $notifications.update({
       list: $notifications.value.list.map((n) => ({ ...n, isRead: true })),
+      bellPreview: ($notifications.value.bellPreview || []).map((n) => ({ ...n, isRead: true })),
       unreadCount: 0,
     });
   } catch (error) {

@@ -30,3 +30,17 @@ export const getFileIcon = (doc) => {
   if (mimeType.includes('word') || fileName.match(/\.docx?$/i)) return 'file-word';
   return 'file';
 };
+
+/** True if any local file is staged and still needs upload + Sensible (Submit Financials modal). */
+export const hasPendingExtraction = (documentsByType) => {
+  if (!documentsByType) return false;
+  return Object.values(documentsByType).some(
+    (docs) => (docs || []).some((d) => d.extractionPending && d.file),
+  );
+};
+
+/** True if at least one document is attached in any section (new financial upload list). */
+export const hasAnyStagedDocument = (documentsByType) => {
+  if (!documentsByType) return false;
+  return Object.values(documentsByType).some((docs) => (docs || []).length > 0);
+};
