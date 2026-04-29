@@ -185,10 +185,11 @@ export const handleRemoveDocument = async (documentId) => {
     if (newIndex >= updatedDocs.length) {
       newIndex = Math.max(0, updatedDocs.length - 1);
     }
-    const newPdfUrl = updatedDocs[newIndex]?.previewUrl || null;
-    if ($submitPFSModalDetails.value.downloadSensibleUrl) {
+    const newPdfUrl = updatedDocs[newIndex]?.previewUrl || updatedDocs[newIndex]?.storageUrl || null;
+    /** `downloadSensibleUrl` is only for ephemeral Sensible staging uploads — not for persisted (`isStored`) rows. */
+    if ($submitPFSModalDetails.value.downloadSensibleUrl && !doc.isStored) {
       const deleteStorageRef = storage.ref($submitPFSModalDetails.value.downloadSensibleUrl);
-      await deleteStorageRef.delete();
+      await deleteStorageRef.delete().catch(() => { });
     }
 
     const updatedDocumentsByType = {
@@ -326,6 +327,7 @@ export const handleOpenEditMode = async (financial) => {
     const firstDoc = firstDocType ? documentsByType[firstDocType][0] : null;
 
     $submitPFSModalDetails.update({
+      downloadSensibleUrl: false,
       asOfDate: formatDateForInput(financial.asOfDate),
       totalAssets: financial.totalAssets?.toString() || '',
       totalLiabilities: financial.totalLiabilities?.toString() || '',
@@ -488,12 +490,21 @@ export const handleSubmit = async (onCloseCallback) => {
         }
       }
 
-      if (downloadSensibleUrl) {
-        try {
-          const deleteStorageRef = storage.ref(downloadSensibleUrl);
-          await deleteStorageRef.delete();
-        } finally {
-          $submitPFSModalDetails.update({ downloadSensibleUrl: null });
+      if (downloadSensibleUrl && typeof downloadSensibleUrl === 'string') {
+        const persistedPaths = new Set(
+          Object.values($submitPFSModalDetails.value.documentsByType || {}).flatMap((docs) => (docs || [])
+            .filter((d) => d?.isStored && d?.storagePath)
+            .map((d) => d.storagePath)),
+        );
+        if (!persistedPaths.has(downloadSensibleUrl)) {
+          try {
+            const deleteStorageRef = storage.ref(downloadSensibleUrl);
+            await deleteStorageRef.delete();
+          } finally {
+            $submitPFSModalDetails.update({ downloadSensibleUrl: false });
+          }
+        } else {
+          $submitPFSModalDetails.update({ downloadSensibleUrl: false });
         }
       }
 

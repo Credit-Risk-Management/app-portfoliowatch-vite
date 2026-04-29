@@ -27,7 +27,17 @@ export const handleClose = async (pdfUrlOrEvent) => {
     });
   });
 
-  if (downloadSensibleUrl) {
+  /** Staging path from initiate-upload / Sensible prep — never delete persisted DB-backed `storagePath` values. */
+  const persistedStoragePaths = new Set(
+    Object.values(documentsByType || {}).flatMap((docs) => (docs || [])
+      .filter((d) => d?.isStored && d?.storagePath)
+      .map((d) => d.storagePath)),
+  );
+  if (
+    downloadSensibleUrl
+    && typeof downloadSensibleUrl === 'string'
+    && !persistedStoragePaths.has(downloadSensibleUrl)
+  ) {
     const deleteStorageRef = storage.ref(downloadSensibleUrl);
     await deleteStorageRef.delete().catch(() => { });
   }
