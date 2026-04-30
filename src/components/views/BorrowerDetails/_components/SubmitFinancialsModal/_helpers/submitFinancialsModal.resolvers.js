@@ -57,13 +57,6 @@ export const stageFinancialDocuments = async (documentTypeKey) => {
   $financialDocsUploader.update({ financialDocs: [] });
 };
 
-const documentIdFromUploadResult = (r) => {
-  if (!r) return null;
-  if (r.id) return r.id;
-  if (r.data?.id) return r.data.id;
-  return null;
-};
-
 /** @deprecated use stageFinancialDocuments */
 export const handleFileUpload = async () => {
   await stageFinancialDocuments();
@@ -419,6 +412,22 @@ const computeProfitMarginPercent = (netIncome, grossRevenue) => {
   return roundTo4((netIncome / grossRevenue) * 100);
 };
 
+/** Stored doc IDs removed from the modal since load (edit submit → API deletes after queue). */
+const computeRemovedStoredDocumentIds = (documentsByType, initialStoredDocumentIdsByType, editingId) => {
+  if (!editingId || !initialStoredDocumentIdsByType || !documentsByType) return [];
+  const removed = [];
+  Object.keys(initialStoredDocumentIdsByType).forEach((docType) => {
+    const docs = documentsByType[docType] || [];
+    const currentStoredIds = new Set(
+      docs.filter((d) => d.isStored && d.id).map((d) => d.id),
+    );
+    (initialStoredDocumentIdsByType[docType] || []).forEach((id) => {
+      if (!currentStoredIds.has(id)) removed.push(id);
+    });
+  });
+  return removed;
+};
+
 export const handleSubmit = async (onCloseCallback) => {
   const { $modalState } = consts;
   try {
@@ -456,7 +465,6 @@ export const handleSubmit = async (onCloseCallback) => {
       const totalMonthlyPayment = toNumberOrNull(latestDebtService?.totalMonthlyPayment);
       computedDebtServiceRatio = computeDebtServiceRatio(formEbitda, totalMonthlyPayment);
     } catch (error) {
-      // Non-blocking fallback: if debt service history is unavailable, keep current/form value.
       computedDebtServiceRatio = null;
     }
 
@@ -476,7 +484,6 @@ export const handleSubmit = async (onCloseCallback) => {
     const fromFormIds = Array.isArray($borrowerFinancialsForm.value.documentIds)
       ? $borrowerFinancialsForm.value.documentIds
       : [];
-    // Never send [] on update when we still have stored docs in the modal (was clearing DB + breaking downstream).
     const documentIds = fromModalIds.length > 0 ? fromModalIds : fromFormIds;
 
     const financialData = {
@@ -497,10 +504,7 @@ export const handleSubmit = async (onCloseCallback) => {
       accountsReceivable: toNumberOrNull($borrowerFinancialsForm.value.accountsReceivable),
       accountsPayable: toNumberOrNull($borrowerFinancialsForm.value.accountsPayable),
       inventory: toNumberOrNull($borrowerFinancialsForm.value.inventory),
-      // Always compute DSCR on submit when we have EBITDA + latest debt schedule.
-      // Fallback to existing/form value only if compute inputs are unavailable.
       debtService: computedDebtServiceRatio ?? toNumberOrNull($borrowerFinancialsForm.value.debtService),
-      // Current ratio & liquidity from balance sheet fields when possible (same as WATCH formulas).
       currentRatio: computedCurrentRatio ?? toNumberOrNull($borrowerFinancialsForm.value.currentRatio),
       liquidity: computedLiquidity ?? toNumberOrNull($borrowerFinancialsForm.value.liquidity),
       liquidityRatio: toNumberOrNull($borrowerFinancialsForm.value.liquidityRatio),
@@ -514,80 +518,54 @@ export const handleSubmit = async (onCloseCallback) => {
 
     const { isEditMode } = $borrowerFinancialsView.value;
     const editingId = $borrowerFinancialsView.value.editingFinancialId;
+    const removedDocumentIds = computeRemovedStoredDocumentIds(
+      stagedByType,
+      $modalState.value.initialStoredDocumentIdsByType,
+      editingId,
+    );
+
     let response;
-    if (isEditMode && editingId) {
-      response = await borrowerFinancialsApi.update(editingId, financialData);
+    let didQueueExtraction = false;
+
+    if (hasStagedNewUploads) {
+      const formData = new FormData();
+      const documentMeta = [];
+      Object.keys(stagedByType || {}).forEach((docType) => {
+        const docs = stagedByType[docType] || [];
+        docs.forEach((doc) => {
+          if (doc?.file && !doc.isStored) {
+            formData.append('documents', doc.file);
+            documentMeta.push({ documentType: docType });
+          }
+        });
+      });
+
+      const financialPayload = {
+        ...financialData,
+        ...(isEditMode && editingId && removedDocumentIds.length > 0
+          ? { removedDocumentIds }
+          : {}),
+      };
+      formData.append('financial', JSON.stringify(financialPayload));
+      formData.append('documentMeta', JSON.stringify(documentMeta));
+
+      if (isEditMode && editingId) {
+        response = await borrowerFinancialsApi.updateMultipart(editingId, formData);
+      } else {
+        response = await borrowerFinancialsApi.createMultipart(formData);
+      }
+      didQueueExtraction = documentMeta.length > 0;
+    } else if (isEditMode && editingId) {
+      response = await borrowerFinancialsApi.update(editingId, {
+        ...financialData,
+        ...(removedDocumentIds.length > 0 ? { removedDocumentIds } : {}),
+      });
     } else {
       response = await borrowerFinancialsApi.create(financialData);
     }
 
     if (response?.success) {
-      let didQueueExtraction = false;
       const wasEditMode = $borrowerFinancialsView.value.isEditMode;
-      const financialId = response.data?.id || response.data?.data?.id || editingId;
-      const uploadBorrowerFinancialId = editingId ?? financialId;
-
-      if (uploadBorrowerFinancialId && $modalState.value.documentsByType) {
-        const { documentsByType } = $modalState.value;
-        const uploadPromises = [];
-        Object.keys(documentsByType || {}).forEach((docType) => {
-          const docs = documentsByType[docType] || [];
-          docs.forEach((doc) => {
-            if (doc?.file && !doc.isStored) {
-              uploadPromises.push(
-                borrowerFinancialDocumentsApi.uploadFile({
-                  borrowerFinancialId: uploadBorrowerFinancialId,
-                  file: doc.file,
-                  documentType: docType,
-                  uploadedBy: $user.value?.email || $user.value?.name || 'Unknown User',
-                }).catch(() => null),
-              );
-            }
-          });
-        });
-        const newDocIds = [];
-        if (uploadPromises.length > 0) {
-          const uploadResults = await Promise.all(uploadPromises);
-          uploadResults.forEach((r) => {
-            const id = documentIdFromUploadResult(r);
-            if (id) newDocIds.push(id);
-          });
-        }
-        if (newDocIds.length > 0) {
-          const queueRes = await borrowerFinancialsApi.queueExtraction(
-            uploadBorrowerFinancialId,
-            newDocIds,
-          );
-          if (!queueRes?.success) {
-            $modalState.update({
-              error: queueRes?.error || 'Failed to queue document extraction. You can try again from the document list later.',
-            });
-            return;
-          }
-          didQueueExtraction = true;
-        }
-
-        if (editingId) {
-          const { initialStoredDocumentIdsByType } = $modalState.value;
-          const deletePromises = [];
-          Object.keys(initialStoredDocumentIdsByType || {}).forEach((docType) => {
-            const docs = documentsByType[docType] || [];
-            const currentStoredIds = new Set(
-              docs.filter((d) => d.isStored && d.id).map((d) => d.id),
-            );
-            (initialStoredDocumentIdsByType[docType] || []).forEach((id) => {
-              if (!currentStoredIds.has(id)) {
-                deletePromises.push(
-                  borrowerFinancialDocumentsApi.delete(id).catch(() => null),
-                );
-              }
-            });
-          });
-          if (deletePromises.length > 0) {
-            await Promise.all(deletePromises);
-          }
-        }
-      }
 
       $borrowerFinancialsView.update({
         refreshTrigger: $borrowerFinancialsView.value.refreshTrigger + 1,
