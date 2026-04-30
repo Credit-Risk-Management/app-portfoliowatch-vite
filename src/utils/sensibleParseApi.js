@@ -1,4 +1,10 @@
 /* eslint-disable no-nested-ternary */
+import {
+  deriveProfitMarginPercentFromIncomeScalars,
+  getVal,
+  parseApiNumber,
+} from './sensibleExtractPrimitives';
+
 /**
  * Normalizes a date string from the API to YYYY-MM-DD (or null if invalid).
  * Handles "September 30, 2025", "05/01/1984", "2025-09-30", "09/30/2025".
@@ -17,14 +23,6 @@ const asOfDateFromApi = (dateStr) => {
   return `${y}-${m}-${d}`;
 };
 
-const parseApiNumber = (str) => {
-  if (str == null || str === '') return NaN;
-  const cleaned = String(str).replace(/[$,\s]/g, '');
-  return Number(cleaned);
-};
-
-const getVal = (obj) => (obj && typeof obj.value !== 'undefined' ? obj.value : null);
-
 const extractMonthlyDebtFromNotes = (rawNotes) => {
   if (!rawNotes || typeof rawNotes !== 'string') return 0;
   const matches = rawNotes.match(/\b\d{2,5}\b/g) || [];
@@ -33,6 +31,27 @@ const extractMonthlyDebtFromNotes = (rawNotes) => {
     .filter((n) => Number.isFinite(n) && n < 5000)
     .reduce((sum, n) => sum + n, 0);
 };
+
+/** First candidate that yields a valid calendar date string for PFS rows. */
+function resolvePfsAsOfDateString(row) {
+  const candidates = [
+    getDateFromRow(row, 'signatureDate'),
+    getVal(row.asOfDate),
+    getVal(row.reportDate),
+    getDateFromRow(row, 'periodEnd'),
+    getDateFromRow(row, 'periodStart'),
+  ]
+    .filter((c) => c != null && String(c).trim())
+    .map((c) => {
+      const s = String(c).trim();
+      const isoGuess = asOfDateFromApi(s);
+      if (isoGuess) return isoGuess;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(new Date(s).getTime())) return s;
+      return '';
+    });
+  return candidates.find(Boolean) || '';
+}
+
 // source: 'bs' | 'is' | 'pfs' | 'tax' | 'personalTax',
 export function extractDataFromApiResponse(
   parsedDocument,
@@ -92,21 +111,12 @@ export function extractDataFromApiResponse(
     const ebitda = explicitEbitda !== undefined
       ? explicitEbitda
       : (ebitdaFromParts !== 0 ? ebitdaFromParts : undefined);
-    const pmRaw = numOrUndefined(getVal(parsedDocument.profitMargin));
-    let profitMargin;
-    if (pmRaw !== undefined) {
-      // Canonical format is percentage (0–100). Convert decimal fractions (0–1) to percentage points.
-      profitMargin = pmRaw > 0 && pmRaw <= 1
-        ? parseFloat((pmRaw * 100).toFixed(4))
-        : parseFloat(pmRaw.toFixed(4));
-    } else if (grossRevenue !== undefined && grossRevenue > 0) {
-      const totalIncomeRaw = numOrUndefined(
-        getVal(parsedDocument.totalIncome) ?? getVal(parsedDocument.total_income),
-      );
-      if (totalIncomeRaw !== undefined) {
-        profitMargin = parseFloat(((totalIncomeRaw / grossRevenue) * 100).toFixed(4));
-      }
-    }
+
+    const profitMargin = deriveProfitMarginPercentFromIncomeScalars(parsedDocument, {
+      getVal,
+      grossRevenue,
+    });
+
     return {
       asOfDate,
       grossRevenue,
@@ -192,7 +202,7 @@ export function extractDataFromApiResponse(
 
   return null;
 }
-// export function getDateFromRow(row: RowRecord, dateKey: 'asOfDate' | 'periodEnd' | 'periodStart' | 'signatureDate'): string {
+
 export function getDateFromRow(row, dateKey) {
   const val = getVal(row[dateKey]);
   return val != null && String(val).trim() ? String(val).trim() : '';
@@ -212,13 +222,7 @@ export function parseSingleDocResponse(parsed, docType) {
     dateStr = getDateFromRow(row, 'periodEnd') || getDateFromRow(row, 'periodStart');
   } else if (docType === 'personalFinancialStatement') {
     source = 'pfs';
-    dateStr = asOfDateFromApi(
-      getDateFromRow(row, 'signatureDate'),
-      getVal(row.asOfDate),
-      getVal(row.reportDate),
-      getDateFromRow(row, 'periodEnd'),
-      getDateFromRow(row, 'periodStart'),
-    );
+    dateStr = resolvePfsAsOfDateString(row);
   } else if (docType === 'taxReturn') {
     source = 'tax';
     const y = getVal(row.taxYear);
@@ -248,3 +252,6 @@ export function parseSingleDocResponse(parsed, docType) {
   };
 }
 export default parseSingleDocResponse;
+
+// Re-export primitives for callers that only need scalar parsing
+export { getVal, parseApiNumber } from './sensibleExtractPrimitives';

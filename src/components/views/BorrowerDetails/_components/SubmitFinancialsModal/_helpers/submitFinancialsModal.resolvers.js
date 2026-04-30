@@ -4,6 +4,7 @@ import borrowerFinancialDocumentsApi from '@src/api/borrowerFinancialDocuments.a
 import debtServiceHistoryApi from '@src/api/debtServiceHistory.api';
 import { successAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import { storage } from '@src/utils/firebase';
+import { profitMarginPercentFromNetIncome } from '@src/utils/sensibleExtractPrimitives';
 import * as consts from './submitFinancialsModal.consts';
 
 /**
@@ -402,16 +403,6 @@ const computeLiquidity = (cash, cashEquivalents) => {
   return parseFloat(sum.toFixed(2));
 };
 
-/**
- * Gross profit margin as percentage points (0–100), same as sensible OCR fallback and
- * netIncome/grossRevenue when the margin field is omitted.
- */
-const computeProfitMarginPercent = (netIncome, grossRevenue) => {
-  if (grossRevenue == null || grossRevenue <= 0) return null;
-  if (netIncome == null) return null;
-  return roundTo4((netIncome / grossRevenue) * 100);
-};
-
 /** Stored doc IDs removed from the modal since load (edit submit → API deletes after queue). */
 const computeRemovedStoredDocumentIds = (documentsByType, initialStoredDocumentIdsByType, editingId) => {
   if (!editingId || !initialStoredDocumentIdsByType || !documentsByType) return [];
@@ -474,7 +465,7 @@ export const handleSubmit = async (onCloseCallback) => {
     const explicitProfitMargin = toNumberOrNull($borrowerFinancialsForm.value.profitMargin);
     const resolvedProfitMargin = explicitProfitMargin != null
       ? explicitProfitMargin
-      : computeProfitMarginPercent(formNetIncome, formGrossRevenue);
+      : profitMarginPercentFromNetIncome(formNetIncome, formGrossRevenue);
 
     const { documentsByType: stagedByType } = $modalState.value;
     const hasStagedNewUploads = stagedByType
