@@ -114,6 +114,87 @@ export const normalizeCurrencyValueNoCents = (value) => {
   return normalized;
 };
 
+/**
+ * Strips $/commas; keeps digits, a single ".", and up to 2 digits after the decimal.
+ * Preserves a trailing "." while typing (e.g. "12.").
+ */
+export const normalizeCurrencyCentsInput = (value) => {
+  if (value === null || value === undefined) return '';
+  let s = String(value).trim().replace(/[$,\s]/g, '');
+  if (s === '') return '';
+
+  let neg = false;
+  if (s.startsWith('-')) {
+    neg = true;
+    s = s.slice(1);
+  }
+  if (s === '') return neg ? '-' : '';
+
+  s = s.replace(/[^\d.]/g, '');
+  const firstDot = s.indexOf('.');
+  if (firstDot !== -1) {
+    s = s.slice(0, firstDot + 1) + s.slice(firstDot + 1).replace(/\./g, '');
+  }
+
+  const hasDot = firstDot !== -1;
+  const intRaw = hasDot ? s.slice(0, firstDot) : s;
+  const fracRaw = hasDot ? s.slice(firstDot + 1).slice(0, 2) : null;
+
+  let intStr;
+  if (intRaw === '') {
+    intStr = hasDot ? '0' : '';
+  } else {
+    const trimmed = intRaw.replace(/^0+(?=\d)/, '');
+    intStr = trimmed === '' ? '0' : trimmed;
+  }
+
+  if (!hasDot) {
+    if (intStr === '') return neg ? '-' : '';
+    return neg ? `-${intStr}` : intStr;
+  }
+
+  const trailingDot = fracRaw === '' && s.endsWith('.');
+  const body = trailingDot ? `${intStr}.` : `${intStr}.${fracRaw}`;
+  return neg ? `-${body}` : body;
+};
+
+// Format a normalized numeric string for display as currency with optional cents (max 2 fractional digits).
+// Negative amounts show as -$1,234.56 for natural typing and readability.
+export const formatCurrencyDisplayWithCents = (value, currency = '$') => {
+  if (value === null || value === undefined || value === '') return '';
+
+  const stringValue = `${value}`.trim();
+  if (stringValue === '-') return '-';
+
+  const strippedFull = stringValue.replace(/[$,\s]/g, '');
+  if (strippedFull === '' || strippedFull === '-') return strippedFull === '-' ? '-' : '';
+
+  const neg = strippedFull.startsWith('-');
+  const stripped = neg ? strippedFull.slice(1) : strippedFull;
+
+  const dotIdx = stripped.indexOf('.');
+  const intPartRaw = dotIdx === -1 ? stripped : stripped.slice(0, dotIdx);
+  const fracPart = dotIdx === -1 ? null : stripped.slice(dotIdx + 1);
+
+  const nWhole = intPartRaw === '' ? 0 : Number(intPartRaw);
+  if (intPartRaw !== '' && Number.isNaN(nWhole)) return '';
+
+  const wholeAbs = Math.abs(Number.isNaN(nWhole) ? 0 : nWhole);
+  const wholeFmt = wholeAbs.toLocaleString();
+
+  if (dotIdx === -1) {
+    return neg ? `-${currency}${wholeFmt}` : `${currency}${wholeFmt}`;
+  }
+
+  const trailingDot = fracPart === '' && stripped.endsWith('.');
+  if (trailingDot) {
+    return neg ? `-${currency}${wholeFmt}.` : `${currency}${wholeFmt}.`;
+  }
+
+  const dec = fracPart ?? '';
+  return neg ? `-${currency}${wholeFmt}.${dec}` : `${currency}${wholeFmt}.${dec}`;
+};
+
 // Format a normalized numeric string for display as currency (whole numbers only, no cents).
 // Negative amounts show as -$1,234 (not $-1,234) for natural typing and readability.
 export const formatCurrencyDisplay = (value, currency = '$') => {
@@ -122,9 +203,14 @@ export const formatCurrencyDisplay = (value, currency = '$') => {
   const stringValue = `${value}`.trim();
   if (stringValue === '-') return '-';
 
-  const intValue = stringValue.includes('.')
-    ? Math.round(parseFloat(stringValue)).toString()
-    : stringValue;
+  // Stored value may already be formatted (e.g. "$1,234") when the input's onChange
+  // forwards e.target.value from a controlled field — Number("$18") is NaN and breaks typing.
+  const stripped = stringValue.replace(/[$,\s]/g, '');
+  if (stripped === '' || stripped === '-') return stripped === '-' ? '-' : '';
+
+  const intValue = stripped.includes('.')
+    ? Math.round(parseFloat(stripped)).toString()
+    : stripped;
 
   const intNumber = Number(intValue);
 

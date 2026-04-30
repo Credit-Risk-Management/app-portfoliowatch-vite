@@ -1,5 +1,5 @@
-import { $financialDocsUploader } from './submitFinancialsModal.consts';
-import * as resolvers from './submitFinancialsModal.resolvers';
+import { $financialDocsUploader } from '../../../_helpers/submitFinancialsModal.consts';
+import * as resolvers from '../../../_helpers/submitFinancialsModal.resolvers';
 
 export const handleRowFileChange = (e, sectionId) => {
   const files = Array.from(e.target.files || []);

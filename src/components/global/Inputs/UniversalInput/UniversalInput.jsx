@@ -11,6 +11,8 @@ import {
   formatTime,
   isEmailValid,
   formatCurrencyDisplay,
+  formatCurrencyDisplayWithCents,
+  normalizeCurrencyCentsInput,
   formatPercentageInputValue,
   canonicalizePercentageToPoints,
 } from './_helpers/universalinput.events';
@@ -110,6 +112,8 @@ const UniversalInput = ({
   signal = $form,
   variant = 'form-control', // || form-control-border
   className,
+  /** When set, replaces default control classes (`bg-info-800`, `text-info-100`). Use on light surfaces (e.g. public forms). */
+  controlClassName,
   placeholder,
   inputFormatCallback,
   value,
@@ -295,7 +299,14 @@ const UniversalInput = ({
     phone: { valid: val?.length === 14, invalid: val?.length < 14 },
   };
 
+  const effectiveInputFormatCallback = type === 'currencyCents'
+    ? (inputFormatCallback || normalizeCurrencyCentsInput)
+    : inputFormatCallback;
+
   const formatValue = () => {
+    if (type === 'currencyCents') {
+      return formatCurrencyDisplayWithCents(val || value || '');
+    }
     if (type === 'currency') {
       return formatCurrencyDisplay(val || value || '');
     }
@@ -331,15 +342,21 @@ const UniversalInput = ({
     onBlurProp?.(e);
   };
 
+  const resolvedControlClassName = controlClassName !== undefined
+    ? controlClassName
+    : `bg-info-800 border-0 text-info-100 ${className || ''}`;
+
   const controlShared = {
     type: inputType,
     value: formatValue(),
     placeholder,
-    className: `bg-info-800 border-0 text-info-100 ${className || ''}`,
+    className: resolvedControlClassName.trim(),
     name,
     autoComplete,
     onChange: customOnChange || ((e) => signal.update({
-      [name]: inputFormatCallback ? inputFormatCallback(e.target.value) : e.target.value,
+      [name]: effectiveInputFormatCallback
+        ? effectiveInputFormatCallback(e.target.value)
+        : e.target.value,
     })),
     isValid: validation[type] ? validation[type].valid : isValid,
     isInvalid: validation[type] ? val && validation[type].invalid : isInvalid,

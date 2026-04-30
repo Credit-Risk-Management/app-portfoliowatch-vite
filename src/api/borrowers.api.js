@@ -33,6 +33,10 @@ export const borrowersApiBase = {
 
   // Generate industry health report
   generateIndustryReport: async (borrowerId, loanId) => apiClient.post(`/borrowers/${borrowerId}/generate-industry-report`, { loanId }),
+
+  /** Mint or return Impact Questionnaire public token (same encoding as upload links). */
+  ensureImpactQuestionnaireLink: async (borrowerId) =>
+    apiClient.post(`/borrowers/${borrowerId}/impact-questionnaire-link`),
 };
 
 // Wrap with debouncing - only debounce read operations that might be called repeatedly

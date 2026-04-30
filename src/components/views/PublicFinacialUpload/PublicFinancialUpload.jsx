@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
-  Container, Button, Alert, Card,
+  Container, Button, Alert, Card, Spinner,
 } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -38,7 +38,6 @@ import {
 
 const PublicFinancialUpload = () => {
   const { token } = useParams();
-  const navigate = useNavigate();
 
   // Fetch upload link data on mount
   useEffect(() => {
@@ -62,9 +61,15 @@ const PublicFinancialUpload = () => {
 
   if (isLoading) {
     return (
-      <ContentWrapper fluid className="min-vh-100 bg-info-900">
-        <Container className="py-24">
-          <div className="text-center text-info-100">Loading...</div>
+      <ContentWrapper
+        fluid
+        className="bg-white min-vh-100 d-flex align-items-center justify-content-center py-20 py-md-24"
+      >
+        <Container className="py-24 d-flex flex-column align-items-center justify-content-center gap-12">
+          <Spinner animation="border" role="status" variant="dark" aria-busy="true">
+            <span className="visually-hidden">Loading upload link…</span>
+          </Spinner>
+          <p className="text-dark-700 fs-6 text-center mb-0">Loading…</p>
         </Container>
       </ContentWrapper>
     );
@@ -72,16 +77,13 @@ const PublicFinancialUpload = () => {
 
   if (error && !linkData) {
     return (
-      <ContentWrapper fluid className="min-vh-100 bg-info-900">
+      <ContentWrapper fluid className="min-vh-100 bg-white">
         <Container className="py-24">
-          <Card className="bg-info-800 border-danger">
+          <Card className="bg-grey-50 border-grey">
             <Card.Body className="text-center py-32">
-              <FontAwesomeIcon icon={faExclamationTriangle} className="text-danger mb-16" size="3x" />
-              <h3 className="text-info-100 mb-16">Upload Link Error</h3>
-              <p className="text-info-200 mb-24">{error}</p>
-              <Button variant="primary-100" onClick={() => navigate('/')}>
-                Go to Home
-              </Button>
+              <FontAwesomeIcon icon={faExclamationTriangle} className="text-dark-700 mb-16" size="3x" />
+              <h3 className="text-dark-900 mb-16">Upload Link Error</h3>
+              <p className="text-dark-800 mb-24">{error}</p>
             </Card.Body>
           </Card>
         </Container>
@@ -91,19 +93,16 @@ const PublicFinancialUpload = () => {
 
   if (linkData?.hasSubmitted) {
     return (
-      <ContentWrapper fluid className="min-vh-100 bg-info-900">
+      <ContentWrapper fluid className="min-vh-100 bg-white">
         <Container className="py-24">
-          <Card className="bg-info-800 border-secondary">
+          <Card className="bg-grey-50 border-grey">
             <Card.Body className="text-center py-32">
-              <FontAwesomeIcon icon={faCheckCircle} className="text-info-200 mb-16" size="3x" />
-              <h3 className="text-info-100 mb-16">Submission already received</h3>
-              <p className="text-info-200 mb-24">
+              <FontAwesomeIcon icon={faCheckCircle} className="text-dark-700 mb-16" size="3x" />
+              <h3 className="text-dark-900 mb-16">Submission already received</h3>
+              <p className="text-dark-800 mb-24">
                 This upload link has already been used to submit financial documents. If you need to send
                 updated files, contact your lender for a new link.
               </p>
-              <Button variant="primary-100" onClick={() => navigate('/')}>
-                Go to Home
-              </Button>
             </Card.Body>
           </Card>
         </Container>
@@ -113,16 +112,16 @@ const PublicFinancialUpload = () => {
 
   if (success) {
     return (
-      <ContentWrapper fluid className="min-vh-100 bg-info-900">
+      <ContentWrapper fluid className="min-vh-100 bg-white">
         <Container className="py-24">
-          <Card className="bg-info-800 ">
+          <Card className="bg-grey-50  border-grey">
             <Card.Body className="text-center py-32">
-              <FontAwesomeIcon icon={faCheckCircle} className="text-success mb-16" size="3x" />
-              <h3 className="text-info-100 mb-16">Documents Submitted — Pending Extraction</h3>
-              <p className="text-info-200 mb-8">
+              <FontAwesomeIcon icon={faCheckCircle} className="text-dark-700 mb-16" size="3x" />
+              <h3 className="text-dark-900 mb-16">Documents Submitted — Pending Extraction</h3>
+              <p className="text-dark-800 mb-8">
                 Thank you! Your financial documents have been received.
               </p>
-              <p className="text-info-300 mb-24">
+              <p className="text-dark-700 mb-24">
                 Our system will extract the financial data from your uploaded PDFs shortly. Your lender will be notified once the extraction is complete.
               </p>
             </Card.Body>
@@ -133,7 +132,10 @@ const PublicFinancialUpload = () => {
   }
 
   return (
-    <ContentWrapper fluid className="min-vh-100 bg-info-900">
+    <ContentWrapper
+      fluid
+      className="bg-white min-vh-100 d-flex align-items-center justify-content-center py-20 py-md-24"
+    >
       <Container className="py-16 py-md-24">
         <Card className="shadow-sm">
           <Card.Header className=" border-0 border-bottom border-grey-200 px-16 px-md-24 py-20" style={{ backgroundColor: '#f5f5f5' }}>

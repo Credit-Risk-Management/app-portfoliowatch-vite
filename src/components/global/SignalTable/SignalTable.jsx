@@ -26,6 +26,8 @@ const SignalTable = ({
   paginationMaxButtonAmount = 5,
   itemsPerPageAmount = 10,
   rowClassName = '',
+  /** Table row `cursor` (inline). Use `'default'` when rows are not clickable. */
+  rowCursor = 'pointer',
   filterToUrlParams,
 }) => {
   const handleToggleColumn = (header) => {
@@ -169,7 +171,7 @@ const SignalTable = ({
             <tr
               key={rowIdx}
               onClick={() => onRowClick(row)}
-              style={{ cursor: 'pointer', visibility: $view?.value?.isTableLoading ? 'hidden' : 'visible' }}
+              style={{ cursor: rowCursor, visibility: $view?.value?.isTableLoading ? 'hidden' : 'visible' }}
               className={rowClassName}
             >
               {hasCheckboxes && (

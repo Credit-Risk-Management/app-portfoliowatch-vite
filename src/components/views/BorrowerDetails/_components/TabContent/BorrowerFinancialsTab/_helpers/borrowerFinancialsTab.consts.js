@@ -6,6 +6,9 @@ export const $copiedLink = Signal(false);
 /** True when "Copy Annual Link" was just used (show "Copied!") */
 export const $copiedAnnualLink = Signal(false);
 
+/** True when Impact Questionnaire public link was just copied */
+export const $copiedImpactQuestionnaireLink = Signal(false);
+
 /** True while Excel export is in progress */
 export const $isExportingExcel = Signal(false);
 
