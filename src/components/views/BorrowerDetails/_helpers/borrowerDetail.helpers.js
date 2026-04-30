@@ -85,3 +85,37 @@ export const getManagerOptions = (managers) => managers.map((m) => ({
   value: m.id,
   label: m.name,
 }));
+
+/** True when borrower has stored impact questionnaire workforce fields (internal or public submit). */
+export const hasImpactQuestionnaireWorkforceData = (borrower) => {
+  if (!borrower) return false;
+  return (
+    borrower.currentEmployees != null
+    && borrower.currentEmployees !== ''
+    && borrower.averageMonthlyFte != null
+    && borrower.averageMonthlyFte !== ''
+    && borrower.averageEmployeeWage != null
+    && borrower.averageEmployeeWage !== ''
+  );
+};
+
+export const formatImpactQuestionnaireEmployees = (value) => {
+  if (value == null || value === '') return '—';
+  const n = typeof value === 'string' ? parseInt(value, 10) : Number(value);
+  if (!Number.isFinite(n)) return '—';
+  return n.toLocaleString('en-US', { maximumFractionDigits: 0 });
+};
+
+export const formatImpactQuestionnaireFte = (value) => {
+  if (value == null || value === '') return '—';
+  const n = typeof value === 'string' ? parseFloat(value) : Number(value);
+  if (!Number.isFinite(n)) return '—';
+  return n.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 0 });
+};
+
+export const formatImpactQuestionnaireWagePerHour = (value) => {
+  if (value == null || value === '') return '—';
+  const n = typeof value === 'string' ? parseFloat(value) : Number(value);
+  if (!Number.isFinite(n)) return '—';
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
+};

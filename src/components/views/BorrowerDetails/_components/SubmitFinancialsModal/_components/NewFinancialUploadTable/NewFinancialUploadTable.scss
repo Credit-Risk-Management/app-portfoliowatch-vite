@@ -1,11 +1,12 @@
-// Optional-documents grid: fixed column shares + SignalTable `thead tr td` headers
+// Optional-documents grid for SignalTable: fixed column % (26+17+43+14 = 100).
+// No Bootstrap utility covers `table-layout: fixed` + per-column widths on these cells
+// (see .cursorrules: utilities first; custom CSS when no utility matches).
 .new-financial-upload-table {
   .primary-table {
     table-layout: fixed;
     width: 100%;
   }
 
-  // 26+17+43+14=100. Start-align all columns so Action/Upload is not shoved to the right edge.
   .primary-table thead tr td,
   .primary-table tbody tr td {
     text-align: start;
@@ -34,7 +35,7 @@
     white-space: nowrap;
   }
 
-  .new-financial-upload-table__row {
-    cursor: default !important;
+  &__upload-label {
+    cursor: pointer;
   }
 }

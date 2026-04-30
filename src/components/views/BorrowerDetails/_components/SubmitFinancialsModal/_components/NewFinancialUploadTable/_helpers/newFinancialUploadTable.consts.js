@@ -6,7 +6,7 @@ export const NEW_FINANCIAL_SECTION_ROWS = [
   { sectionId: 'taxReturn', title: 'Tax return' },
 ];
 
-/** Keys align with `SignalTable` row objects built in `NewFinancialUploadTable`. */
+/** Keys align with `SignalTable` row objects from `buildUploadTableRows`. */
 export const NEW_FINANCIAL_UPLOAD_TABLE_HEADERS = [
   { key: 'document', value: 'Document' },
   { key: 'status', value: 'Status' },

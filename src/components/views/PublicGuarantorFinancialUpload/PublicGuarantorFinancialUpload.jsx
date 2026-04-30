@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
-  Container, Button, Alert, Card,
+  Container, Button, Alert, Card, Spinner,
 } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -35,7 +35,6 @@ import {
 
 const PublicGuarantorFinancialUpload = () => {
   const { token } = useParams();
-  const navigate = useNavigate();
 
   useEffect(() => {
     fetchGuarantorUploadLinkData(token);
@@ -54,9 +53,15 @@ const PublicGuarantorFinancialUpload = () => {
 
   if (isLoading) {
     return (
-      <ContentWrapper fluid className="min-vh-100 bg-info-900">
-        <Container className="py-24">
-          <div className="text-center text-info-100">Loading...</div>
+      <ContentWrapper
+        fluid
+        className="bg-white min-vh-100 d-flex align-items-center justify-content-center py-20 py-md-24"
+      >
+        <Container className="py-24 d-flex flex-column align-items-center justify-content-center gap-12">
+          <Spinner animation="border" role="status" variant="dark" aria-busy="true">
+            <span className="visually-hidden">Loading guarantor upload link…</span>
+          </Spinner>
+          <p className="text-dark-700 fs-6 text-center mb-0">Loading…</p>
         </Container>
       </ContentWrapper>
     );
@@ -64,16 +69,13 @@ const PublicGuarantorFinancialUpload = () => {
 
   if (error && !linkData) {
     return (
-      <ContentWrapper fluid className="min-vh-100 bg-info-900">
+      <ContentWrapper fluid className="min-vh-100 bg-white">
         <Container className="py-24">
-          <Card className="bg-info-800 border-danger">
+          <Card className="bg-grey-50 border-grey">
             <Card.Body className="text-center py-32">
-              <FontAwesomeIcon icon={faExclamationTriangle} className="text-danger mb-16" size="3x" />
-              <h3 className="text-info-100 mb-16">Upload Link Error</h3>
-              <p className="text-info-200 mb-24">{error}</p>
-              <Button variant="primary-100" onClick={() => navigate('/')}>
-                Go to Home
-              </Button>
+              <FontAwesomeIcon icon={faExclamationTriangle} className="text-dark-700 mb-16" size="3x" />
+              <h3 className="text-dark-900 mb-16">Upload Link Error</h3>
+              <p className="text-dark-800 mb-24">{error}</p>
             </Card.Body>
           </Card>
         </Container>
@@ -83,19 +85,16 @@ const PublicGuarantorFinancialUpload = () => {
 
   if (linkData?.hasSubmitted) {
     return (
-      <ContentWrapper fluid className="min-vh-100 bg-info-900">
+      <ContentWrapper fluid className="min-vh-100 bg-white">
         <Container className="py-24">
-          <Card className="bg-info-800 border-secondary">
+          <Card className="bg-grey-50 border-grey">
             <Card.Body className="text-center py-32">
-              <FontAwesomeIcon icon={faCheckCircle} className="text-info-200 mb-16" size="3x" />
-              <h3 className="text-info-100 mb-16">Submission already received</h3>
-              <p className="text-info-200 mb-24">
+              <FontAwesomeIcon icon={faCheckCircle} className="text-dark-700 mb-16" size="3x" />
+              <h3 className="text-dark-900 mb-16">Submission already received</h3>
+              <p className="text-dark-800 mb-24">
                 This upload link has already been used. If you need to send updated files, contact your lender
                 for a new link.
               </p>
-              <Button variant="primary-100" onClick={() => navigate('/')}>
-                Go to Home
-              </Button>
             </Card.Body>
           </Card>
         </Container>
@@ -105,21 +104,18 @@ const PublicGuarantorFinancialUpload = () => {
 
   if (success) {
     return (
-      <ContentWrapper fluid className="min-vh-100 bg-info-900">
+      <ContentWrapper fluid className="min-vh-100 bg-white">
         <Container className="py-24">
-          <Card className="bg-info-800 ">
+          <Card className="bg-grey-50 border-grey">
             <Card.Body className="text-center py-32">
-              <FontAwesomeIcon icon={faCheckCircle} className="text-success mb-16" size="3x" />
-              <h3 className="text-info-100 mb-16">Documents Submitted</h3>
-              <p className="text-info-200 mb-8">
+              <FontAwesomeIcon icon={faCheckCircle} className="text-dark-700 mb-16" size="3x" />
+              <h3 className="text-dark-900 mb-16">Documents Submitted</h3>
+              <p className="text-dark-800 mb-8">
                 Thank you! Your guarantor financial documents have been received.
               </p>
-              <p className="text-info-300 mb-24">
+              <p className="text-dark-700 mb-24">
                 Your lender will review your files. If you have questions, contact your loan officer.
               </p>
-              <Button variant="primary-100" onClick={() => navigate('/')}>
-                Go to Home
-              </Button>
             </Card.Body>
           </Card>
         </Container>
@@ -132,7 +128,10 @@ const PublicGuarantorFinancialUpload = () => {
     && requiredPdfSections.every((row) => hasGuarantorPdfStagedForKey(row.apiDocumentKey));
 
   return (
-    <ContentWrapper fluid className="min-vh-100 bg-info-900">
+    <ContentWrapper
+      fluid
+      className="bg-white min-vh-100 d-flex align-items-center justify-content-center py-20 py-md-24"
+    >
       <Container className="py-16 py-md-24">
         <Card className="shadow-sm">
           <Card.Header className=" border-0 border-bottom border-grey-200 px-16 px-md-24 py-20" style={{ backgroundColor: '#f5f5f5' }}>
@@ -199,7 +198,7 @@ const PublicGuarantorFinancialUpload = () => {
                       <th className=" fw-semibold text-uppercase  px-16" style={{ width: '32%', color: '#71717a', letterSpacing: '0.06em' }}>Document</th>
                       <th className=" fw-semibold text-uppercase  px-16" style={{ width: '18%', color: '#71717a', letterSpacing: '0.06em' }}>Status</th>
                       <th className=" fw-semibold text-uppercase  px-16" style={{ color: '#71717a', letterSpacing: '0.06em' }}>File</th>
-                      <th className=" fw-semibold text-uppercase  px-16 text-end" style={{ width: '12%', color: '#71717a', letterSpacing: '0.06em' }}>Action</th>
+                      <th className=" fw-semibold text-uppercase  px-16 text-end text-nowrap" style={{ width: '15%', minWidth: '152px', color: '#71717a', letterSpacing: '0.06em' }}>Action</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -251,10 +250,10 @@ const PublicGuarantorFinancialUpload = () => {
                               <span className="text-grey-600 fw-normal">Not uploaded</span>
                             )}
                           </td>
-                          <td className="px-16 py-8 text- text-truncate" style={{ maxWidth: 0 }}>
+                          <td className="ps-16 py-8 text- text-truncate" style={{ maxWidth: 400 }}>
                             <div className="fw-semibold text-dark text-truncate">{hasPdf ? firstFileName : '—'}</div>
                           </td>
-                          <td className="px-16 py-8 text-end">
+                          <td className="pe-16 py-8 text-end">
                             <div className="d-none">
                               <FileUploader
                                 id={inputId}
