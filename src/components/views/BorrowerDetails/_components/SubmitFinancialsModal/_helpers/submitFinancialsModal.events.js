@@ -6,6 +6,12 @@ import * as consts from './submitFinancialsModal.consts';
  * Close the modal and reset all state.
  * @param {string} [pdfUrlOrEvent] - Blob URL to revoke; React-Bootstrap may pass a synthetic event from onHide — ignored for revoke in that case.
  */
+const deleteStoragePath = async (path) => {
+  if (!path) return;
+  const deleteRef = storage.ref(path);
+  await deleteRef.delete().catch(() => { });
+};
+
 export const handleClose = async (pdfUrlOrEvent) => {
   const { $financialDocsUploader, $modalState } = consts;
   const { documentsByType, downloadSensibleUrl, pdfUrl: statePdfUrl } = $modalState.value;
@@ -26,9 +32,16 @@ export const handleClose = async (pdfUrlOrEvent) => {
     });
   });
 
+  /** Only delete GCS objects for ephemeral staging — never `isStored` rows (edit mode loads real paths from the API). */
+  const tempPaths = Object.values(documentsByType || {}).flatMap(
+    (docs) => (docs || [])
+      .filter((doc) => doc?.storagePath && !doc.isStored)
+      .map((doc) => doc.storagePath),
+  );
+  await Promise.all(tempPaths.map((path) => deleteStoragePath(path)));
+
   if (downloadSensibleUrl) {
-    const deleteStorageRef = storage.ref(downloadSensibleUrl);
-    await deleteStorageRef.delete().catch(() => { });
+    await deleteStoragePath(downloadSensibleUrl);
   }
 
   if (pdfUrlToRevoke) {
@@ -53,19 +66,22 @@ export const handleClose = async (pdfUrlOrEvent) => {
     updatedLoans: [],
     documentsByType: {
       balanceSheet: [],
-      incomeStatement: [],
+      incomeStatementQuarterly: [],
+      incomeStatementYtd: [],
       debtScheduleWorksheet: [],
       taxReturn: [],
     },
     currentDocumentIndex: {
       balanceSheet: 0,
-      incomeStatement: 0,
+      incomeStatementQuarterly: 0,
+      incomeStatementYtd: 0,
       debtScheduleWorksheet: 0,
       taxReturn: 0,
     },
     initialStoredDocumentIdsByType: {
       balanceSheet: [],
-      incomeStatement: [],
+      incomeStatementQuarterly: [],
+      incomeStatementYtd: [],
       debtScheduleWorksheet: [],
       taxReturn: [],
     },

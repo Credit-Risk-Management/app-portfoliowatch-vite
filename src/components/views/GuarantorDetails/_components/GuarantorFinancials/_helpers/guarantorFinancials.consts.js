@@ -1,7 +1,7 @@
 import { Signal } from '@fyclabs/tools-fyc-react/signals';
 
-/** True when "Copy Guarantor Link" was just used (show "Copied!") */
-export const $copiedLink = Signal(false);
+/** True when "Annual" one-off copy was just used */
+export const $copiedAnnualLink = Signal(false);
 
 /** True while Excel export is in progress */
 export const $isExportingExcel = Signal(false);

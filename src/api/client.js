@@ -24,6 +24,17 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
+/** Let axios set multipart boundary (do not force application/json from defaults). */
+apiClient.interceptors.request.use((config) => {
+  if (config.data instanceof FormData) {
+    const { headers } = config;
+    if (headers && typeof headers === 'object' && 'Content-Type' in headers) {
+      delete headers['Content-Type'];
+    }
+  }
+  return config;
+});
+
 // Response interceptor for error handling
 apiClient.interceptors.response.use(
   (response) => response.data,

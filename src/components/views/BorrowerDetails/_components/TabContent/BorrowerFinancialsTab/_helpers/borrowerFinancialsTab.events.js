@@ -1,5 +1,6 @@
 import { $borrowerFinancialsView } from '@src/signals';
 import { successAlert, dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
+import borrowersApi from '@src/api/borrowers.api';
 import { createUploadLink } from '@src/api/borrowerFinancialUploadLink.api';
 import {
   Q1_TEST_UPLOAD_LINK_OPTIONS,
@@ -15,6 +16,8 @@ export const openSubmitFinancials = (borrowerId) => {
   $borrowerFinancialsView.update({
     activeModalKey: 'submitFinancials',
     currentBorrowerId: borrowerId,
+    isEditMode: false,
+    editingFinancialId: null,
   });
 };
 
@@ -24,6 +27,22 @@ export const onFinancialRowClick = (borrowerId, financial) => {
     isEditMode: true,
     currentBorrowerId: borrowerId,
     editingFinancialId: financial?.id,
+  });
+};
+
+export const openDeleteFinancialModal = (financial) => {
+  $borrowerFinancialsView.update({
+    activeModalKey: 'deleteFinancials',
+    pendingDeleteFinancial: financial,
+    isDeletingBorrowerFinancial: false,
+  });
+};
+
+export const closeDeleteFinancialModal = () => {
+  $borrowerFinancialsView.update({
+    activeModalKey: null,
+    pendingDeleteFinancial: null,
+    isDeletingBorrowerFinancial: false,
   });
 };
 
@@ -61,7 +80,8 @@ export const handleCopyPermanentLink = async (isAnnualLink = false) => {
   }
 };
 
-const copyToClipboard = async (url, isAnnualLink = false) => {
+/** @param {'quarterly'|'annual'|'impact'} linkKind */
+const copyToClipboard = async (url, linkKind = 'quarterly') => {
   if (navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(url);
   } else {
@@ -74,9 +94,12 @@ const copyToClipboard = async (url, isAnnualLink = false) => {
     document.execCommand('copy');
     document.body.removeChild(tempInput);
   }
-  if (isAnnualLink) {
+  if (linkKind === 'annual') {
     consts.$copiedAnnualLink.update(true);
     setTimeout(() => consts.$copiedAnnualLink.update(false), COPIED_RESET_MS);
+  } else if (linkKind === 'impact') {
+    consts.$copiedImpactQuestionnaireLink.update(true);
+    setTimeout(() => consts.$copiedImpactQuestionnaireLink.update(false), COPIED_RESET_MS);
   } else {
     consts.$copiedLink.update(true);
     setTimeout(() => consts.$copiedLink.update(false), COPIED_RESET_MS);
@@ -92,7 +115,7 @@ export const handleCreateQ1TestUploadLink = async (borrowerId) => {
     if (response?.status === 'success' && url) {
       const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
       const quarterlyUrl = `${baseUrl}/upload-financials/${data?.token}`;
-      await copyToClipboard(quarterlyUrl);
+      await copyToClipboard(quarterlyUrl, 'quarterly');
       successAlert('Quarterly link copied to clipboard!', 'toast');
     } else {
       dangerAlert('Could not create quarterly upload link.');
@@ -111,13 +134,32 @@ export const handleCreateAnnualTestUploadLink = async (borrowerId) => {
     if (response?.status === 'success' && url) {
       const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
       const annualUrl = `${baseUrl}/upload-financials/${data?.token}`;
-      await copyToClipboard(annualUrl, true);
+      await copyToClipboard(annualUrl, 'annual');
       successAlert('Annual link copied to clipboard!', 'toast');
     } else {
       dangerAlert('Could not create annual upload link.');
     }
   } catch (error) {
     dangerAlert(error?.message || 'Failed to create annual upload link.');
+  }
+};
+
+export const handleCreateImpactQuestionnairePublicLink = async (borrowerId) => {
+  if (!borrowerId) return;
+  try {
+    const response = await borrowersApi.ensureImpactQuestionnaireLink(borrowerId);
+    const data = response?.data ?? response;
+    const token = data?.token;
+    if (response?.success && token) {
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+      const publicUrl = `${baseUrl}/impact-questionnaire/${token}`;
+      await copyToClipboard(publicUrl, 'impact');
+      successAlert('Impact questionnaire link copied to clipboard!', 'toast');
+    } else {
+      dangerAlert('Could not create impact questionnaire link.');
+    }
+  } catch (error) {
+    dangerAlert(error?.message || 'Failed to create impact questionnaire link.');
   }
 };
 

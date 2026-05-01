@@ -18,7 +18,9 @@ import Profile from '@src/components/views/Profile';
 import Settings from '@src/components/views/Settings';
 import OrganizationSettings from '@src/components/views/OrganizationSettings';
 import UsersSettings from '@src/components/views/UsersSettings';
-import PublicFinancialUpload from '@src/components/views/Borrowers/PublicFinancialUpload';
+import PublicFinancialUpload from '@src/components/views/PublicFinacialUpload/PublicFinancialUpload';
+import PublicGuarantorFinancialUpload from '@src/components/views/PublicGuarantorFinancialUpload/PublicGuarantorFinancialUpload';
+import PublicImpactQuestionnaire from '@src/components/views/PublicImpactQuestionnaire/PublicImpactQuestionnaire';
 import PublicRoutes from '@src/components/global/PublicRoutes';
 import PrivateRoutes from '@src/components/global/PrivateRoutes';
 import { initAuthListener } from '@src/utils/auth.utils';
@@ -45,10 +47,10 @@ function App() {
         <Routes>
           <Route element={<AppWrapper />}>
             {/* Public auth routes */}
-            {/* Always-public routes — accessible regardless of auth state */}
-
             <Route element={<PublicRoutes />}>
               <Route path="/upload-financials/:token" element={<PublicFinancialUpload />} />
+              <Route path="/upload-guarantor-financials/:token" element={<PublicGuarantorFinancialUpload />} />
+              <Route path="/impact-questionnaire/:token" element={<PublicImpactQuestionnaire />} />
               <Route path="/login" element={<Login />} />
               <Route path="/accept-invitation" element={<AcceptInvitation />} />
             </Route>
@@ -74,11 +76,6 @@ function App() {
               <Route path="/settings" element={<Settings />} />
               <Route path="/organization-settings" element={<OrganizationSettings />} />
               <Route path="/users-settings" element={<UsersSettings />} />
-            </Route>
-
-            {/* Public routes */}
-            <Route element={<PublicRoutes />}>
-              <Route path="/public" element={<h1>Public Route</h1>} />
             </Route>
 
             {/* 404 catch-all */}

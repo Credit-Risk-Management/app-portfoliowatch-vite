@@ -5,15 +5,15 @@ import {
   $submitPFSModalView,
   $submitPFSModalDetails,
   $financialDocsUploader,
-} from '../_components/SubmitPFSModal/_helpers/submitPFSModal.const';
-import { $documentsContainerView } from '../_components/PFSDocumentsContainer/_helpers/pfsDocuments.consts';
+} from '../_components/SubmitGuarantorFinancialsModal/_helpers/submitGuarantorFinancialsModal.const';
+import { $documentsContainerView } from '../_components/SubmitGuarantorFinancialsModal/_components/GuarantorFinancialsDocumentsContainer/_helpers/guarantorFinancialsDocumentsContainer.consts';
 import {
   $guarantorDocumentsView,
   $guarantorDocumentsDetails,
   $guarantorDocumentsFilter,
 } from '../_components/GuarantorDocuments/_helpers/guarantorDocuments.consts';
 import {
-  $copiedLink,
+  $copiedAnnualLink,
   $isExportingExcel,
   $permanentUploadLink,
 } from '../_components/GuarantorFinancials/_helpers/guarantorFinancials.consts';
@@ -35,6 +35,7 @@ export const fetchGuarantorDetail = async (guarantorId) => {
       email: guarantorData.email,
       phone: guarantorData.phone,
       borrowerId: guarantorData.borrowerId ?? null,
+      guarantorKind: guarantorData.guarantorKind ?? 'BUSINESS',
       financials: guarantorData.financials,
       loans: guarantorData.guarantorToLoans.map((loan) => loan.loan),
       borrowerLoans: guarantorData.borrower?.loans || [],
@@ -70,7 +71,7 @@ export const resetGuarantorRouteState = () => {
   $guarantorDocumentsView.reset();
   $guarantorDocumentsDetails.reset();
   $guarantorDocumentsFilter.reset();
-  $copiedLink.reset();
+  $copiedAnnualLink.reset();
   $isExportingExcel.reset();
   $permanentUploadLink.reset();
   $guarantorsLoansView.reset();

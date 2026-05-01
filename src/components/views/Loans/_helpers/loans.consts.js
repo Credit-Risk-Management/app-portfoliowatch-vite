@@ -36,6 +36,8 @@ export const RISK_RATING_LABELS = {
 };
 
 export const $loanDetailCollateral = Signal([]);
+/** Latest borrower debt worksheet row (for loan global cash-flow); loaded with loan detail. */
+export const $loanDetailLatestDebtSchedule = Signal(null);
 export const $loanDetailGuarantors = Signal([]);
 export const loanCollateralDateOptions = $loanDetailCollateral.value.map((e) => ({ value: e.asOfDate ?? '', label: formatDate(e.asOfDate) }));
 

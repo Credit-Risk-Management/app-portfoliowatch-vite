@@ -10,6 +10,10 @@ import {
   formatAddress,
   formatPhoneNumber,
   formatEmail,
+  hasImpactQuestionnaireWorkforceData,
+  formatImpactQuestionnaireEmployees,
+  formatImpactQuestionnaireFte,
+  formatImpactQuestionnaireWagePerHour,
 } from '../../../_helpers/borrowerDetail.helpers';
 
 export function BorrowerDetailsTab() {
@@ -65,6 +69,25 @@ export function BorrowerDetailsTab() {
         <>
           <div className="text-info-100 fw-200 mt-16">Business Start Date</div>
           <div className="text-info-50 lead fw-500">{formatDate(borrower?.businessStartDate)}</div>
+        </>
+        )}
+
+        {hasImpactQuestionnaireWorkforceData(borrower) && (
+        <>
+          <hr className="my-16" />
+          <div className="lead mb-12">Impact questionnaire (workforce)</div>
+          <div className="text-info-100 fw-200 mt-8">Current number of employees</div>
+          <div className="text-info-50 lead fw-500">
+            {formatImpactQuestionnaireEmployees(borrower.currentEmployees)}
+          </div>
+          <div className="text-info-100 fw-200 mt-16">Average monthly FTE</div>
+          <div className="text-info-50 lead fw-500">
+            {formatImpactQuestionnaireFte(borrower.averageMonthlyFte)}
+          </div>
+          <div className="text-info-100 fw-200 mt-16">Average employee wage – per hour</div>
+          <div className="text-info-50 lead fw-500">
+            {formatImpactQuestionnaireWagePerHour(borrower.averageEmployeeWage)}
+          </div>
         </>
         )}
 

@@ -1,1 +1,0 @@
-// onClick, onMouseEnter, isValid

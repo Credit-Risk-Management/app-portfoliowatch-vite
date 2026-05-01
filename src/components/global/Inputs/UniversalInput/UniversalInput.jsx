@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react';
 import { Form, InputGroup } from 'react-bootstrap';
 import Select from 'react-select';
 import Signal from '@fyclabs/tools-fyc-react/signals/Signal';
@@ -10,11 +11,99 @@ import {
   formatTime,
   isEmailValid,
   formatCurrencyDisplay,
+  formatCurrencyDisplayWithCents,
+  normalizeCurrencyCentsInput,
   formatPercentageInputValue,
   canonicalizePercentageToPoints,
 } from './_helpers/universalinput.events';
 
 const $select = Signal({});
+
+function UniversalTextareaField({
+  label,
+  labelClassName,
+  className,
+  name,
+  signal,
+  textVal,
+  placeholder,
+  autoComplete,
+  customOnChange,
+  inputFormatCallback,
+  isValid,
+  isInvalid,
+  disabled,
+  controlStyle,
+  textareaRest,
+  rows,
+  autoSize,
+  onBlurProp,
+}) {
+  const ref = useRef(null);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || !autoSize) return;
+    el.style.height = 'auto';
+    el.style.height = `${el.scrollHeight}px`;
+  }, [textVal, autoSize]);
+
+  const handleChange = (e) => {
+    if (customOnChange) {
+      customOnChange(e);
+    } else {
+      signal.update({
+        [name]: inputFormatCallback ? inputFormatCallback(e.target.value) : e.target.value,
+      });
+    }
+    if (autoSize) {
+      const el = e.target;
+      requestAnimationFrame(() => {
+        el.style.height = 'auto';
+        el.style.height = `${el.scrollHeight}px`;
+      });
+    }
+  };
+
+  return (
+    <div>
+      {label && <Form.Label className={labelClassName}>{label}</Form.Label>}
+      <Form.Control
+        ref={ref}
+        as="textarea"
+        rows={autoSize ? 1 : (rows ?? 3)}
+        value={textVal}
+        placeholder={placeholder}
+        className={`bg-info-800 border-0 text-info-100 ${className || ''}`}
+        name={name}
+        autoComplete={autoComplete}
+        onChange={handleChange}
+        onBlur={onBlurProp}
+        isValid={isValid}
+        isInvalid={isInvalid}
+        disabled={disabled}
+        {...textareaRest}
+        style={{
+          whiteSpace: 'pre-wrap',
+          overflowWrap: 'anywhere',
+          wordBreak: 'break-word',
+          ...(autoSize
+            ? {
+              minHeight: '2.75rem',
+              maxHeight: 'none',
+              resize: 'vertical',
+              overflow: 'hidden',
+            }
+            : {
+              resize: 'vertical',
+              minHeight: '2.75rem',
+            }),
+          ...controlStyle,
+        }}
+      />
+    </div>
+  );
+}
 
 const UniversalInput = ({
   label,
@@ -23,6 +112,8 @@ const UniversalInput = ({
   signal = $form,
   variant = 'form-control', // || form-control-border
   className,
+  /** When set, replaces default control classes (`bg-info-800`, `text-info-100`). Use on light surfaces (e.g. public forms). */
+  controlClassName,
   placeholder,
   inputFormatCallback,
   value,
@@ -37,10 +128,41 @@ const UniversalInput = ({
   disabled,
   labelClassName,
   onBlur: onBlurProp,
+  rows,
+  /** When true with type textarea, height grows with content (no fixed row cap). */
+  autoSize = false,
   ...props
 }) => {
   if ((!signal || !name) && !customOnChange && type !== 'select') {
     throw new Error(`Universal Input has no signal or name (Name: ${name})`);
+  }
+
+  if (type === 'textarea') {
+    const { style: controlStyle, ...textareaRest } = props;
+    const { [name]: val } = signal.value;
+    const textVal = val || value || '';
+    return (
+      <UniversalTextareaField
+        label={label}
+        labelClassName={labelClassName}
+        className={className}
+        name={name}
+        signal={signal}
+        textVal={textVal}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        customOnChange={customOnChange}
+        inputFormatCallback={inputFormatCallback}
+        isValid={isValid}
+        isInvalid={isInvalid}
+        disabled={disabled}
+        controlStyle={controlStyle}
+        textareaRest={textareaRest}
+        rows={rows}
+        autoSize={autoSize}
+        onBlurProp={onBlurProp}
+      />
+    );
   }
 
   if (type === 'inputBoxGroup') {
@@ -177,7 +299,14 @@ const UniversalInput = ({
     phone: { valid: val?.length === 14, invalid: val?.length < 14 },
   };
 
+  const effectiveInputFormatCallback = type === 'currencyCents'
+    ? (inputFormatCallback || normalizeCurrencyCentsInput)
+    : inputFormatCallback;
+
   const formatValue = () => {
+    if (type === 'currencyCents') {
+      return formatCurrencyDisplayWithCents(val || value || '');
+    }
     if (type === 'currency') {
       return formatCurrencyDisplay(val || value || '');
     }
@@ -213,15 +342,21 @@ const UniversalInput = ({
     onBlurProp?.(e);
   };
 
+  const resolvedControlClassName = controlClassName !== undefined
+    ? controlClassName
+    : `bg-info-800 border-0 text-info-100 ${className || ''}`;
+
   const controlShared = {
     type: inputType,
     value: formatValue(),
     placeholder,
-    className: `bg-info-800 border-0 text-info-100 ${className || ''}`,
+    className: resolvedControlClassName.trim(),
     name,
     autoComplete,
     onChange: customOnChange || ((e) => signal.update({
-      [name]: inputFormatCallback ? inputFormatCallback(e.target.value) : e.target.value,
+      [name]: effectiveInputFormatCallback
+        ? effectiveInputFormatCallback(e.target.value)
+        : e.target.value,
     })),
     isValid: validation[type] ? validation[type].valid : isValid,
     isInvalid: validation[type] ? val && validation[type].invalid : isInvalid,

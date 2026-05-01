@@ -8,7 +8,10 @@ import * as consts from './borrowerFinancialsTab.consts';
 export const hasIncomeStatementAndBalanceSheet = (financial) => {
   const docs = financial?.documents || [];
   const hasIncomeStatement = docs.some(
-    (d) => d.documentType === 'incomeStatement' || d.documentType === 'income_statement',
+    (d) => d.documentType === 'incomeStatement'
+      || d.documentType === 'income_statement'
+      || d.documentType === 'incomeStatementQuarterly'
+      || d.documentType === 'incomeStatementYtd',
   );
   const hasTaxReturn = docs.some(
     (d) => d.documentType === 'taxReturn' || d.documentType === 'tax_return',
@@ -25,10 +28,13 @@ export const FINANCIAL_DOC_TYPES = [
   { value: 'personal_financial_statement', label: 'Personal Financial Statement' },
   { value: 'incomeStatement', label: 'Income Statement' },
   { value: 'income_statement', label: 'Income Statement' },
+  { value: 'incomeStatementQuarterly', label: 'Income Statement (Quarterly)' },
+  { value: 'incomeStatementYtd', label: 'Income Statement (YTD)' },
   { value: 'balanceSheet', label: 'Balance Sheet' },
   { value: 'balance_sheet', label: 'Balance Sheet' },
   { value: 'debtScheduleWorksheet', label: 'Debt Schedule' },
   { value: 'taxReturn', label: 'Tax Return' },
+  { value: 'businessTaxReturn', label: 'Tax Return' },
   { value: 'tax_return', label: 'Tax Return' },
 ];
 
@@ -44,7 +50,7 @@ export const FINANCIALS_TABLE_HEADERS = [
   { key: 'currentRatio', value: 'Current Ratio', sortKey: 'currentRatio' },
   { key: 'liquidity', value: 'Liquidity', sortKey: 'liquidity' },
   { key: 'submittedBy', value: 'Submitted By', sortKey: 'submittedBy' },
-  { key: 'documents', value: 'Documents' },
+  { key: 'actions', value: 'Actions' },
 ];
 
 export const formatFinancialDate = formatDate;

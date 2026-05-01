@@ -10,6 +10,7 @@ const UniversalModal = ({
   leftBtnClass = 'text-decoration-none bg-grey-200 border-grey-900',
   leftBtnText = 'Close',
   leftBtnOnClick = onHide,
+  leftButtonDisabled = false,
   rightBtnClass = 'bg-success-200 border-success-900 text-success-900',
   rightBtnText = 'Save',
   rightButtonDisabled = false,
@@ -18,6 +19,7 @@ const UniversalModal = ({
   size = 'lg',
   children = null,
   backdrop = true,
+  keyboard = true,
 }) => {
   const isFullscreen = size === 'fullscreen';
 
@@ -30,6 +32,7 @@ const UniversalModal = ({
       dialogClassName={isFullscreen ? 'modal-fullscreen-custom' : ''}
       className={isFullscreen ? '' : 'pt-32 text-info-200'}
       backdrop={backdrop}
+      keyboard={keyboard}
     >
       <Modal.Header
         className={`bg-info-600 lead border-0 d-flex justify-content-between ${isFullscreen ? 'modal-fullscreen-header pt-16 border-bottom border-info' : ''}`}
@@ -54,6 +57,7 @@ const UniversalModal = ({
         <Button
           className={leftBtnClass}
           onClick={leftBtnOnClick}
+          disabled={leftButtonDisabled}
         >
           {leftBtnText}
         </Button>

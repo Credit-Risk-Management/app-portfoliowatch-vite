@@ -54,7 +54,7 @@ export const loadDashboardData = async () => {
     for (let score = 1; score <= 5; score++) {
       const metric = metricsMap.get(score);
       const label = WATCH_SCORE_OPTIONS[score]?.label || `${score} - Unknown`;
-      
+
       watchScoreCountData.push({
         name: label,
         value: metric?.count || 0,

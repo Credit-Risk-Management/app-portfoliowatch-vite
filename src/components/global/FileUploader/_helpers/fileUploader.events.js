@@ -21,15 +21,15 @@ export const handleDrop = (e, signal, signalName, onUpload) => {
 
 export const handleFileSelection = (e, signal, signalName, onUpload) => {
   const tempArray = signal.value?.[signalName] || [];
-  const fileList = Array.from(e.target.files);
+  const files = Array.from(e.target.files || []);
   const filesToUpload = signal.value?.[`${signalName}ToUpload`] || [];
   signal.update({
-    [signalName]: [...tempArray, ...fileList],
-    [`${signalName}ToUpload`]: [...filesToUpload, ...fileList],
+    [signalName]: [...tempArray, ...files],
+    [`${signalName}ToUpload`]: [...filesToUpload, ...files],
   });
 
   // Auto-upload if callback is provided
-  if (onUpload && fileList.length > 0) {
+  if (onUpload && files.length > 0) {
     onUpload();
   }
 };

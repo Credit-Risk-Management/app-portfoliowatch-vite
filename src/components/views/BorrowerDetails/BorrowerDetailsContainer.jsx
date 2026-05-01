@@ -13,6 +13,7 @@ import { $borrower } from '@src/consts/consts';
 import SubmitFinancialsModal from '@src/components/views/BorrowerDetails/_components/SubmitFinancialsModal';
 import ImpactQuestionnaireModal from '@src/components/views/BorrowerDetails/_components/ImpactQuestionnaireModal/ImpactQuestionnaireModal';
 import DeleteBorrowerDocumentModal from '@src/components/views/Borrowers/_components/DeleteBorrowerDocumentModal';
+import DeleteBorrowerFinancialModal from '@src/components/views/BorrowerDetails/_components/DeleteBorrowerFinancialModal';
 import UniversalCard from '@src/components/global/UniversalCard';
 import { $borrowerDetailView } from './_helpers/borrowerDetail.consts';
 import { handleGenerateAnnualReview } from './_helpers/borrowerDetail.events';
@@ -161,6 +162,7 @@ export function BorrowerDetailsContainer() {
         {/* Financial Modals  */}
         <SubmitFinancialsModal />
         <ImpactQuestionnaireModal />
+        <DeleteBorrowerFinancialModal />
 
         {/* Edit Borrower Modal */}
         <EditBorrowerDetailModal />

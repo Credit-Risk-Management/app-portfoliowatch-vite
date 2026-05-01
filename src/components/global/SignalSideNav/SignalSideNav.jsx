@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Collapse, Offcanvas, Button } from 'react-bootstrap';
 import { useSearchParams } from 'react-router-dom';

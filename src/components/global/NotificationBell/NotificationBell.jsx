@@ -16,12 +16,10 @@ const NotificationBell = () => {
   const pollIntervalRef = useRef(null);
 
   useEffect(() => {
-    // Fetch initial unread count
-    resolvers.fetchUnreadCount();
+    resolvers.refreshBellState();
 
-    // Set up polling for unread count
     pollIntervalRef.current = setInterval(
-      resolvers.fetchUnreadCount,
+      resolvers.refreshBellState,
       consts.POLL_INTERVAL_MS,
     );
 
@@ -40,7 +38,7 @@ const NotificationBell = () => {
   }, [show]);
 
   const unreadCount = $notifications.value.unreadCount || 0;
-  const notifications = $notifications.value.list || [];
+  const notifications = $notifications.value.bellPreview || [];
 
   return (
     <Dropdown

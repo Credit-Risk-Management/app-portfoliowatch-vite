@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
-import { Button, Badge } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChartLine, faCheck, faCopy } from '@fortawesome/free-solid-svg-icons';
+import { faChartLine, faCheck, faCopy, faTrash } from '@fortawesome/free-solid-svg-icons';
 import SignalTable from '@src/components/global/SignalTable';
+import ContextMenu from '@src/components/global/ContextMenu';
 import { $borrower } from '@src/consts/consts';
 import { $borrowerFinancials, $borrowerFinancialsView } from '@src/signals';
 import { formatCurrency } from '@src/utils/formatCurrency';
@@ -11,6 +12,7 @@ import { $borrowerFinancialsFilter, $borrowerFinancialsTableView } from '@src/co
 import * as consts from './_helpers/borrowerFinancialsTab.consts';
 import * as events from './_helpers/borrowerFinancialsTab.events';
 import * as resolvers from './_helpers/borrowerFinancialsTab.resolvers';
+import * as impactQuestionnaireModalEvents from '../../ImpactQuestionnaireModal/_helpers/impactQuestionnaireModal.events';
 import {
   FINANCIALS_TABLE_HEADERS,
   formatFinancialDate,
@@ -46,10 +48,15 @@ export function BorrowerFinancialsTab() {
       currentRatio: financial.currentRatio ? parseFloat(financial.currentRatio).toFixed(2) : '-',
       liquidity: <span className="text-success-500 fw-500">{formatCurrency(financial.liquidity)}</span>,
       submittedBy: financial.submittedBy ?? '-',
-      documents: financial.documentIds?.length > 0 ? (
-        <Badge bg="info-100">{financial.documentIds.length} docs</Badge>
-      ) : (
-        <span className="text-info-100">-</span>
+      actions: (
+        <ContextMenu
+          items={[{ label: 'Delete', icon: faTrash, action: 'delete' }]}
+          onItemClick={(item) => {
+            if (item.action === 'delete') {
+              events.openDeleteFinancialModal(financial);
+            }
+          }}
+        />
       ),
     })),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- $borrowerFinancials is a signal; component re-renders on update
@@ -86,17 +93,25 @@ export function BorrowerFinancialsTab() {
             className="me-8"
             size="sm"
           >
-            <FontAwesomeIcon icon={consts.$copiedLink.value ? faCheck : faCopy} className="me-8" />
-            {consts.$copiedLink.value ? 'Copied!' : 'Annual Link'}
+            <FontAwesomeIcon icon={consts.$copiedAnnualLink.value ? faCheck : faCopy} className="me-8" />
+            {consts.$copiedAnnualLink.value ? 'Copied!' : 'Annual Link'}
           </Button>
           <Button
-            variant="outline-primary-100"
-            onClick={() => $borrowerFinancialsView.update({ activeModalKey: 'impactQuaestionnaire' })}
+            variant={consts.$copiedImpactQuestionnaireLink.value ? 'success' : 'outline-primary-100'}
+            onClick={() => events.handleCreateImpactQuestionnairePublicLink(borrowerId)}
             size="sm"
             className="me-8"
           >
-            <FontAwesomeIcon icon={faCopy} className="me-8" />
-            Impact Questionnaire
+            <FontAwesomeIcon icon={consts.$copiedImpactQuestionnaireLink.value ? faCheck : faCopy} className="me-8" />
+            {consts.$copiedImpactQuestionnaireLink.value ? 'Copied!' : 'Impact Questionnaire Link'}
+          </Button>
+          <Button
+            variant="link"
+            className="text-info-100 small py-0 text-decoration-underline border-0"
+            size="sm"
+            onClick={() => impactQuestionnaireModalEvents.openImpactQuestionnaire()}
+          >
+            Enter in app
           </Button>
 
           {/* <Button
