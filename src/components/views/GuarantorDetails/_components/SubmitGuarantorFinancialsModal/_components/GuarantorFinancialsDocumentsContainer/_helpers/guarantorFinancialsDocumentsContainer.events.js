@@ -1,5 +1,5 @@
-import { $submitPFSModalView, $submitPFSModalDetails } from '../../SubmitPFSModal/_helpers/submitPFSModal.const';
-import { $documentsContainerView } from './pfsDocuments.consts';
+import { $submitPFSModalView, $submitPFSModalDetails } from '../../../_helpers/submitGuarantorFinancialsModal.const';
+import { $documentsContainerView } from './guarantorFinancialsDocumentsContainer.consts';
 
 export const handleDocumentTypeChange = (e, documentsByType) => {
   const newType = e.target.value;

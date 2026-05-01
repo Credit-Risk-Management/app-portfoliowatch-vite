@@ -7,7 +7,8 @@ import { storage } from '@src/utils/firebase';
 import { fetchGuarantorDetail } from '@src/components/views/GuarantorDetails/_helpers/guarantorDetails.resolvers';
 import { parseSingleDocResponse } from '@src/utils/sensibleParseApi';
 import { normalizeRatioDecimalToPercent } from '@src/utils/ratioPercent';
-import { $submitPFSModalView, $submitPFSModalDetails } from './submitPFSModal.const';
+import { computeDebtToIncomeRatio } from '../../../_utils/guarantorDebtToIncome';
+import { $submitPFSModalView, $submitPFSModalDetails } from './submitGuarantorFinancialsModal.const';
 
 const SENSIBLE_DOCUMENT_TYPES = {
   personalFinancialStatement: 'personal_financial_statement',
@@ -20,21 +21,6 @@ const toNumberOrNull = (value) => {
     ? Number(value.replace(/[^0-9.-]/g, ''))
     : Number(value);
   return Number.isFinite(parsed) ? parsed : null;
-};
-
-const roundTo4 = (value) => parseFloat(value.toFixed(4));
-
-/**
- * DTI = monthly debt service ÷ monthly income.
- * Form captures annual figures: derive monthly, then divide (same as annual ÷ annual).
- */
-const computeDebtToIncomeRatio = (annualDebtService, adjustedGrossIncome) => {
-  if (annualDebtService == null || adjustedGrossIncome == null) return null;
-  if (adjustedGrossIncome <= 0) return null;
-  const monthlyDebt = annualDebtService / 12;
-  const monthlyIncome = adjustedGrossIncome / 12;
-  if (monthlyIncome <= 0) return null;
-  return roundTo4(monthlyDebt / monthlyIncome);
 };
 
 export const handleFileUpload = async ($financialDocsUploader, $modalState, ocrApplied, pdfUrl) => {

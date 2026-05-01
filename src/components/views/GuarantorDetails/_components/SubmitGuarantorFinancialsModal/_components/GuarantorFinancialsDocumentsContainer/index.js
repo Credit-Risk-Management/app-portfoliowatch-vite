@@ -1,0 +1,3 @@
+import GuarantorFinancialsDocumentsContainer from './GuarantorFinancialsDocumentsContainer';
+
+export default GuarantorFinancialsDocumentsContainer;

@@ -17,22 +17,37 @@ export const $modalState = Signal({
   isLoadingPrevious: false,
   documentsByType: {
     balanceSheet: [],
-    incomeStatement: [],
+    incomeStatementQuarterly: [],
+    incomeStatementYtd: [],
     debtScheduleWorksheet: [],
     taxReturn: [],
   },
   currentDocumentIndex: {
     balanceSheet: 0,
-    incomeStatement: 0,
+    incomeStatementQuarterly: 0,
+    incomeStatementYtd: 0,
     debtScheduleWorksheet: 0,
     taxReturn: 0,
   },
   initialStoredDocumentIdsByType: {
     balanceSheet: [],
-    incomeStatement: [],
+    incomeStatementQuarterly: [],
+    incomeStatementYtd: [],
     debtScheduleWorksheet: [],
     taxReturn: [],
   },
   showWatchScoreResults: false,
   updatedLoans: [],
 });
+
+/** Modal `documentsByType` keys (order used for empty checks and multipart staging). */
+export const MODAL_FINANCIAL_DOCUMENT_BUCKET_KEYS = [
+  'balanceSheet',
+  'incomeStatementQuarterly',
+  'incomeStatementYtd',
+  'debtScheduleWorksheet',
+  'taxReturn',
+];
+
+/** Quarterly vs YTD income: at most one may have files; staging clears the other. */
+export const INCOME_STATEMENT_MODAL_KEYS = ['incomeStatementQuarterly', 'incomeStatementYtd'];

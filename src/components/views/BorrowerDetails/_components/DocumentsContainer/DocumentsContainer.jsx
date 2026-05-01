@@ -558,9 +558,13 @@ const DocumentsContainer = ({
               Balance Sheet
               {documentsByType.balanceSheet.length > 0 ? ` (${documentsByType.balanceSheet.length})` : ''}
             </option>
-            <option value="incomeStatement">
-              Income Statement
-              {documentsByType.incomeStatement.length > 0 ? ` (${documentsByType.incomeStatement.length})` : ''}
+            <option value="incomeStatementQuarterly">
+              Quarterly income statement (P&L)
+              {documentsByType.incomeStatementQuarterly.length > 0 ? ` (${documentsByType.incomeStatementQuarterly.length})` : ''}
+            </option>
+            <option value="incomeStatementYtd">
+              YTD income statement
+              {documentsByType.incomeStatementYtd.length > 0 ? ` (${documentsByType.incomeStatementYtd.length})` : ''}
             </option>
             <option value="debtScheduleWorksheet">
               Debt Schedule
@@ -708,7 +712,7 @@ const DocumentsContainer = ({
           )}
 
           {/* Income Statement Fields */}
-          {documentType === 'incomeStatement' && (
+          {(documentType === 'incomeStatementQuarterly' || documentType === 'incomeStatementYtd') && (
             <Row>
               <Col md={12} className="mb-16">
                 <UniversalInput

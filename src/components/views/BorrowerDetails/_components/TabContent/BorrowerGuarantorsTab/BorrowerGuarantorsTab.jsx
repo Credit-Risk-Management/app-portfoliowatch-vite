@@ -5,7 +5,8 @@ import { faArrowRight, faPlus, faEdit } from '@fortawesome/free-solid-svg-icons'
 import { useNavigate } from 'react-router-dom';
 import { $borrower } from '@src/consts/consts';
 import { formatCurrency } from '@src/utils/formatCurrency';
-import { GuarantorNetWorthWithMemoFlag, getLatestGuarantorFinancial } from '@src/utils/guarantorFinancialsSource';
+import { GuarantorNetWorthWithMemoFlag } from '@src/components/views/GuarantorDetails/_utils/GuarantorNetWorthWithMemoFlag';
+import { getLatestGuarantorFinancial } from '@src/components/views/GuarantorDetails/_utils/guarantorFinancialsSource.helpers';
 import * as guarantorModalEvents from './_helpers/guarantorModal.events';
 
 export function BorrowerGuarantorsTab() {

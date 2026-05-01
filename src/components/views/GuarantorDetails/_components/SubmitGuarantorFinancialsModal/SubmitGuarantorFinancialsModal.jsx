@@ -6,12 +6,12 @@ import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import Loadable from '@src/components/global/Loadable';
 import guarantorsApi from '@src/api/guarantors.api';
 import { useEffect } from 'react';
-import { $submitPFSModalView, $submitPFSModalDetails, $financialDocsUploader } from './_helpers/submitPFSModal.const';
-import DocumentsContainer from '../PFSDocumentsContainer/PFSDocumentsContainer';
-import * as events from './_helpers/submitPFSModal.events';
-import * as resolvers from './_helpers/submitPFSModal.resolvers';
+import { $submitPFSModalView, $submitPFSModalDetails, $financialDocsUploader } from './_helpers/submitGuarantorFinancialsModal.const';
+import GuarantorFinancialsDocumentsContainer from './_components/GuarantorFinancialsDocumentsContainer';
+import * as events from './_helpers/submitGuarantorFinancialsModal.events';
+import * as resolvers from './_helpers/submitGuarantorFinancialsModal.resolvers';
 
-const SubmitPFSModal = () => {
+const SubmitGuarantorFinancialsModal = () => {
   // Read loading state so this component subscribes and re-renders when resolvers set isLoading
   const { isEditMode, isSubmitting, activeModalKey } = $submitPFSModalView.value;
 
@@ -91,7 +91,7 @@ const SubmitPFSModal = () => {
         <div className="px-32 border-top border-info-100 pt-8">
           <Row>
             <Col xs={12} md={12}>
-              <DocumentsContainer
+              <GuarantorFinancialsDocumentsContainer
                 pdfUrl={$submitPFSModalDetails.value.pdfUrl}
                 ocrApplied={$submitPFSModalDetails.value.ocrApplied}
                 handleFileUpload={handleFileUploadClick}
@@ -109,4 +109,4 @@ const SubmitPFSModal = () => {
   );
 };
 
-export default SubmitPFSModal;
+export default SubmitGuarantorFinancialsModal;

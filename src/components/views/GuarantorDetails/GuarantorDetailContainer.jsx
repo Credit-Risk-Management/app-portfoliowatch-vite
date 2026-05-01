@@ -9,17 +9,19 @@ import UniversalCard from '@src/components/global/UniversalCard';
 import Loadable from '@src/components/global/Loadable';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faEdit } from '@fortawesome/free-solid-svg-icons';
-import { formatCurrency } from '@src/utils/formatCurrency';
-import { GuarantorNetWorthWithMemoFlag, getLatestGuarantorFinancial } from '@src/utils/guarantorFinancialsSource';
 import { calculateAnnualDebtServiceFromLoans } from '@src/utils/currency';
 import AddEditGuarantorModal from '@src/components/views/BorrowerDetails/_components/TabContent/BorrowerGuarantorsTab/_components/AddEditGuarantorModal';
 import * as guarantorModalEvents from '@src/components/views/BorrowerDetails/_components/TabContent/BorrowerGuarantorsTab/_helpers/guarantorModal.events';
+import { formatCurrency } from '@src/utils/formatCurrency';
+import { getLatestGuarantorFinancial } from './_utils/guarantorFinancialsSource.helpers';
+import { GuarantorNetWorthWithMemoFlag } from './_utils/GuarantorNetWorthWithMemoFlag';
+import { computeDebtToIncomeRatio, formatDebtToIncomeDisplay } from './_utils/guarantorDebtToIncome';
 import * as resolvers from './_helpers/guarantorDetails.resolvers';
 import * as guarantorEvents from './_helpers/guarantorDetails.events';
 import GuarantorFinancials from './_components/GuarantorFinancials';
 import GuarantorDocuments from './_components/GuarantorDocuments';
 import { $guarantorDetailView, $guarantorDetailsData } from './_helpers/guarantorDetails.consts';
-import SubmitPFSModal from './_components/SubmitPFSModal/SubmitPFSModal';
+import SubmitPFSModal from './_components/SubmitGuarantorFinancialsModal/SubmitGuarantorFinancialsModal';
 import GuarantorLoans from './_components/GuarantorLoans';
 
 export function GuarantorDetailContainer() {
@@ -72,6 +74,17 @@ export function GuarantorDetailContainer() {
 
   const latestFinancial = getLatestGuarantorFinancial($guarantorDetailsData.value?.financials);
 
+  const annualDebtResolved = latestFinancial?.annualDebtService != null && latestFinancial?.annualDebtService !== ''
+    ? Number(latestFinancial.annualDebtService)
+    : calculateAnnualDebtServiceFromLoans($guarantorDetailsData.value?.loans || []);
+  const annualDebtForDisplay = Number.isFinite(annualDebtResolved) ? annualDebtResolved : null;
+
+  const agiForDti = latestFinancial?.adjustedGrossIncome != null && latestFinancial?.adjustedGrossIncome !== ''
+    ? Number(latestFinancial.adjustedGrossIncome)
+    : null;
+  const agiParsed = Number.isFinite(agiForDti) ? agiForDti : null;
+  const debtToIncomeRatio = computeDebtToIncomeRatio(annualDebtForDisplay, agiParsed);
+
   return (
     <Loadable signal={$guarantorDetailView} template="fullscreen">
       <Container className="py-16 py-md-24">
@@ -91,7 +104,7 @@ export function GuarantorDetailContainer() {
         <PageHeader title={$guarantorDetailsData.value?.name} />
 
         <Row>
-          <Col xs={6} md={4} className="mb-12 mb-md-16">
+          <Col xs={12} className="mb-12 mb-md-16">
             <UniversalCard
               headerText="Guarantor Details"
               headerRight={(
@@ -115,55 +128,70 @@ export function GuarantorDetailContainer() {
                   Edit
                 </Button>
               )}
+              bodyContainer="container-fluid"
             >
-              <Col>
-                <div className="text-info-200 fw-300 fs-6 mt-8">Net Worth</div>
-                <GuarantorNetWorthWithMemoFlag
-                  netWorth={latestFinancial?.netWorth}
-                  notes={latestFinancial?.notes}
-                />
-                <div className="text-info-200 fw-300 fs-6 mt-8">Email</div>
-                <div className="text-info-50 fw-500 fs-5">
-                  {$guarantorDetailsData.value?.email || 'N/A'}
-                </div>
-                <div className="text-info-200 fw-300 fs-6 mt-8">Phone</div>
-                <div className="text-info-50 fw-500 fs-5">
-                  {$guarantorDetailsData.value?.phone || 'N/A'}
-                </div>
-              </Col>
+              <Row className="g-3 mt-8">
+                <Col xs={12} md={6}>
+                  <div className="text-info-200 fw-300 fs-6">Net Worth</div>
+                  <GuarantorNetWorthWithMemoFlag
+                    netWorth={latestFinancial?.netWorth}
+                    notes={latestFinancial?.notes}
+                  />
+                </Col>
+                <Col xs={12} md={6}>
+                  <div className="text-info-200 fw-300 fs-6">Debt to Income</div>
+                  <div className="text-info-50 fw-500 fs-5">
+                    {formatDebtToIncomeDisplay(debtToIncomeRatio)}
+                  </div>
+                </Col>
+              </Row>
+              <Row className="g-3 mt-12">
+                <Col xs={12} md={6}>
+                  <div className="text-info-200 fw-300 fs-6">Email</div>
+                  <div className="text-info-50 fw-500 fs-5">
+                    {$guarantorDetailsData.value?.email || 'N/A'}
+                  </div>
+                </Col>
+                <Col xs={12} md={6}>
+                  <div className="text-info-200 fw-300 fs-6">Phone</div>
+                  <div className="text-info-50 fw-500 fs-5">
+                    {$guarantorDetailsData.value?.phone || 'N/A'}
+                  </div>
+                </Col>
+              </Row>
             </UniversalCard>
           </Col>
-          <Col xs={6} md={8} className="mb-12 mb-md-16">
-            <UniversalCard headerText="Latest Financials" bodyContainer="container-fluid">
-              <Row className="g-2 justify-content-between mt-8">
-                <Col xs={6} md={4}>
+        </Row>
+
+        <Row>
+          <Col xs={12} className="mb-12 mb-md-16">
+            <UniversalCard
+              headerText="Latest Financials"
+              bodyContainer="container-fluid"
+            >
+              <Row className="g-3 mt-12 justify-content-between">
+                <Col xs={6} md={3}>
                   <div className="text-info-200 small fw-300">Total Assets</div>
                   <div className="text-info-50 fw-500 fs-5">
                     {formatCurrency(latestFinancial?.totalAssets || 'N/A')}
                   </div>
                 </Col>
-                <Col xs={6} md={4}>
+                <Col xs={6} md={3}>
                   <div className="text-info-200 small fw-300">Total Liabilities</div>
                   <div className="text-info-50 fw-500 fs-5">
                     {formatCurrency(latestFinancial?.totalLiabilities || 'N/A')}
                   </div>
                 </Col>
-
-              </Row>
-              <Row className="mt-8 g-2 justify-content-between">
-                <Col xs={12} md={4}>
+                <Col xs={6} md={3}>
                   <div className="text-info-200 small fw-300">Liquidity</div>
                   <div className="text-info-50 fw-500 fs-5">
                     {formatCurrency(latestFinancial?.liquidity || 'N/A')}
                   </div>
                 </Col>
-                <Col xs={12} md={4}>
+                <Col xs={6} md={3}>
                   <div className="text-info-200 small fw-300">Annual Debt Service</div>
                   <div className="text-info-50 fw-500 fs-5">
-                    {formatCurrency(
-                      latestFinancial?.annualDebtService
-                      ?? calculateAnnualDebtServiceFromLoans($guarantorDetailsData.value?.loans || []),
-                    )}
+                    {formatCurrency(annualDebtForDisplay ?? 'N/A')}
                   </div>
                 </Col>
               </Row>

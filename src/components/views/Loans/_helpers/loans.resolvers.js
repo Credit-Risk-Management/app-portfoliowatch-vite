@@ -8,10 +8,12 @@ import commentsApi from '@src/api/comments.api';
 import documentsApi from '@src/api/documents.api';
 import loanCollateralValueApi from '@src/api/loanCollateralValue.api';
 import guarantorsApi from '@src/api/guarantors.api';
+import debtServiceHistoryApi from '@src/api/debtServiceHistory.api';
 import { mapBorrowersToPickerOptions } from './loans.helpers';
 import {
   $loanDetailFinancials,
   $loanDetailCollateral,
+  $loanDetailLatestDebtSchedule,
   $loanDetailGuarantors,
   $loanDetailNewComment,
   $loanDetailNewCommentLoading,
@@ -48,6 +50,19 @@ const loadLoanDetailData = async (loanId) => {
     ]);
 
   const guarantorsResponse = await guarantorsApi.getByLoanId(loanId);
+
+  const borrowerId = loanData?.borrower?.id ?? loanData?.borrowerId;
+  $loanDetailLatestDebtSchedule.value = null;
+  if (borrowerId) {
+    try {
+      const debtLatestResponse = await debtServiceHistoryApi.getLatestByBorrowerId(borrowerId);
+      if (debtLatestResponse?.success && debtLatestResponse.data) {
+        $loanDetailLatestDebtSchedule.value = debtLatestResponse.data;
+      }
+    } catch {
+      // Optional — worksheet may not exist yet
+    }
+  }
 
   $loan.update({ loan: loanData });
   $comments.update({ list: commentsResponse?.data || commentsResponse || [] });
@@ -204,6 +219,7 @@ export const resetLoanRouteState = () => {
   $comments.update({ list: [], isLoading: false });
   $loanDetailFinancials.value = [];
   $loanDetailCollateral.value = [];
+  $loanDetailLatestDebtSchedule.value = null;
   $loanDetailGuarantors.value = [];
   $loanDetailNewComment.value = '';
   $loanDetailNewCommentLoading.value = false;
