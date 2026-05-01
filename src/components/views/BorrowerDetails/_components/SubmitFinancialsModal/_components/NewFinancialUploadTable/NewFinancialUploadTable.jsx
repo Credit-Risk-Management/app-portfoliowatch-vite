@@ -77,8 +77,9 @@ export default function NewFinancialUploadTable() {
       <div className="mb-16">
         <h5 className="text-info-100 fw-600 mb-4">Upload financial documents</h5>
         <p className="text-info-200 small mb-0">
-          Add at least one file, set your as of date above, then submit. Extraction will be handled by the system
-          after you submit.
+          Add at least one file, set your as of date above, then submit. For income, upload either a{' '}
+          <strong className="text-info-100">quarterly</strong> or <strong className="text-info-100">YTD</strong>{' '}
+          statement (not both). Extraction will run after you submit.
         </p>
       </div>
 

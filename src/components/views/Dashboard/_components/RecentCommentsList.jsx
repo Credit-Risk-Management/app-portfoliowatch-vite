@@ -16,7 +16,6 @@ const RecentCommentsList = ({ comments }) => {
       {comments.map((comment) => {
         // Get loan ID from comment - it might be in different places depending on the API response
         const loanId = comment.loanId || comment.loan?.id;
-        
         // If we have a loan ID, wrap the comment in a link
         if (loanId) {
           return (

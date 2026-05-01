@@ -85,8 +85,11 @@ const SubmitFinancialsModal = () => {
   }, [activeTab, previousFinancial]);
 
   const hasAsOfDate = Boolean(formAsOfDate && String(formAsOfDate).trim());
+  const hasQuarterlyIncome = (documentsByType.incomeStatementQuarterly || []).length > 0;
+  const hasYtdIncome = (documentsByType.incomeStatementYtd || []).length > 0;
+  const incomeBucketsExclusive = !(hasQuarterlyIncome && hasYtdIncome);
   const hasAtLeastOneDocument = hasAnyStagedDocument(documentsByType);
-  const canSubmitNewFinancial = hasAsOfDate && hasAtLeastOneDocument;
+  const canSubmitNewFinancial = hasAsOfDate && hasAtLeastOneDocument && incomeBucketsExclusive;
   const submitDisabled = isSubmitting || (!isEditMode && !canSubmitNewFinancial);
 
   const activeTabClass = 'bg-info-100 text-info-900';

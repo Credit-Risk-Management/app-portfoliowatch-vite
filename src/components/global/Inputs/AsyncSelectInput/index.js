@@ -1,1 +1,3 @@
-export { default } from './AsyncSelectInput';
+import AsyncSelectInput from './AsyncSelectInput';
+
+export default AsyncSelectInput;

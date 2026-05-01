@@ -1,12 +1,11 @@
 import { $loan } from '@src/consts/consts';
 import { $user, $organization } from '@src/signals';
-import loansApi from '@src/api/loans.api';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
 import documentsApi from '@src/api/documents.api';
 import { successAlert, dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
+import { storage } from '@src/utils/firebase';
 import { $creditMemoView, $creditMemoForm, $creditMemoDocsUploader, $creditMemoModalState } from './addCreditMemoModal.signals';
 import generateMockCreditMemoData from '../_helpers/creditMemo.helpers';
-import { storage } from '@src/utils/firebase';
 import { fetchLoanDetail } from '../_helpers/loans.resolvers';
 
 /**
@@ -62,7 +61,7 @@ export const handleOpenModal = async () => {
 
     // Load document if available
     const documents = documentsResponse?.data || documentsResponse || [];
-    
+
     // Get the most recent document (they're already sorted by uploadedAt desc)
     const mostRecentDoc = documents.length > 0 ? documents[0] : null;
 
@@ -275,7 +274,7 @@ export const handleSubmit = async () => {
       const { uploadedDocument } = $creditMemoModalState.value;
       if (uploadedDocument && uploadedDocument.file) {
         let documentId = null;
-        
+
         try {
           const userId = currentUser?.email || currentUser?.name || 'Unknown User';
 
@@ -315,7 +314,7 @@ export const handleSubmit = async () => {
           }
         } catch (uploadError) {
           console.error('Error uploading credit memo document:', uploadError);
-          
+
           // If we created a document record, mark it as failed
           if (documentId) {
             try {
@@ -324,7 +323,7 @@ export const handleSubmit = async () => {
               console.error('Error marking upload as failed:', markFailedError);
             }
           }
-          
+
           dangerAlert('Credit memo data saved, but document upload failed. Please try uploading the document again.', 'toast');
         }
       }

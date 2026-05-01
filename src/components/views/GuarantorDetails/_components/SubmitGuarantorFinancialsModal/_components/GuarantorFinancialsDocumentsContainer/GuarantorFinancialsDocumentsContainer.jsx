@@ -16,16 +16,16 @@ import 'react-pdf/dist/Page/TextLayer.css';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import { normalizeCurrencyValue } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
 import FileUploader from '@src/components/global/FileUploader';
-import { $submitPFSModalDetails } from '../SubmitPFSModal/_helpers/submitPFSModal.const';
-import { $documentsContainerView } from './_helpers/pfsDocuments.consts';
-import * as events from './_helpers/pfsDocuments.events';
-import * as helpers from './_helpers/pfsDocuments.helpers';
-import * as resolvers from './_helpers/pfsDocuments.resolvers';
+import { $submitPFSModalDetails } from '../../_helpers/submitGuarantorFinancialsModal.const';
+import { $documentsContainerView } from './_helpers/guarantorFinancialsDocumentsContainer.consts';
+import * as events from './_helpers/guarantorFinancialsDocumentsContainer.events';
+import * as helpers from './_helpers/guarantorFinancialsDocumentsContainer.helpers';
+import * as resolvers from './_helpers/guarantorFinancialsDocumentsContainer.resolvers';
 
 // Configure PDF.js worker - using jsdelivr CDN which has proper CORS headers
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
-const DocumentsContainer = ({
+const GuarantorFinancialsDocumentsContainer = ({
   pdfUrl,
   ocrApplied,
   handleFileUpload,
@@ -671,4 +671,4 @@ const DocumentsContainer = ({
   );
 };
 
-export default DocumentsContainer;
+export default GuarantorFinancialsDocumentsContainer;

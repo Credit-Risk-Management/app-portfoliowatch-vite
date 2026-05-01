@@ -5,8 +5,8 @@ import {
   $submitPFSModalView,
   $submitPFSModalDetails,
   $financialDocsUploader,
-} from '../_components/SubmitPFSModal/_helpers/submitPFSModal.const';
-import { $documentsContainerView } from '../_components/PFSDocumentsContainer/_helpers/pfsDocuments.consts';
+} from '../_components/SubmitGuarantorFinancialsModal/_helpers/submitGuarantorFinancialsModal.const';
+import { $documentsContainerView } from '../_components/SubmitGuarantorFinancialsModal/_components/GuarantorFinancialsDocumentsContainer/_helpers/guarantorFinancialsDocumentsContainer.consts';
 import {
   $guarantorDocumentsView,
   $guarantorDocumentsDetails,

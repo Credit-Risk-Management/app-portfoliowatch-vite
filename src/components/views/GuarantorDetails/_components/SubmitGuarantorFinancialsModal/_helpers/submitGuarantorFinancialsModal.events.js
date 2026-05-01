@@ -1,5 +1,5 @@
 import { storage } from '@src/utils/firebase';
-import { $submitPFSModalView, $submitPFSModalDetails } from './submitPFSModal.const';
+import { $submitPFSModalView, $submitPFSModalDetails } from './submitGuarantorFinancialsModal.const';
 /**
  * Close the modal and reset all state.
  * @param {string} [pdfUrlOrEvent] - Blob URL to revoke; React-Bootstrap may pass a synthetic event from onHide — ignored for revoke in that case.

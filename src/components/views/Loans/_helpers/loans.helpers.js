@@ -139,3 +139,89 @@ export const renderMarkdownLinks = (text) => {
   // Replace [text](url) with <a> tags
   return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
 };
+
+const latestGuarantorFinancialForLoanDetail = (financials) => {
+  if (!Array.isArray(financials) || financials.length === 0) return null;
+  return [...financials].sort(
+    (a, b) => new Date(b.asOfDate || 0) - new Date(a.asOfDate || 0),
+  )[0];
+};
+
+/**
+ * Annual dollar debt service from latest borrower debt worksheet (matches BorrowerDebtServiceTab).
+ * @param {null|{ totalMonthlyPayment?: number|string|null }} row
+ */
+export const annualDebtServiceFromWorksheetRow = (row) => {
+  if (!row || row.totalMonthlyPayment == null || row.totalMonthlyPayment === '') return null;
+  const m = Number(row.totalMonthlyPayment);
+  if (!Number.isFinite(m)) return null;
+  return Math.floor(m) * 12;
+};
+
+const sumLoanGuarantorsLatestField = (guarantors, field) => {
+  if (!Array.isArray(guarantors)) return null;
+  let sum = 0;
+  let has = false;
+  guarantors.forEach((g) => {
+    const snap = latestGuarantorFinancialForLoanDetail(g.financials);
+    if (!snap || snap[field] == null || snap[field] === '') return;
+    const n = Number(snap[field]);
+    if (!Number.isFinite(n)) return;
+    has = true;
+    sum += n;
+  });
+  return has ? sum : null;
+};
+
+/**
+ * Global cash flow: business EBITDA + personal AGI vs business + personal debt service;
+ * global DSCR = combined income ÷ combined debt service; excess = income − combined debt service.
+ */
+export const computeLoanGlobalCashFlowAnalysis = ({
+  borrowerEbitda,
+  latestDebtScheduleRow,
+  loanGuarantors,
+}) => {
+  const businessEbitda = borrowerEbitda != null && borrowerEbitda !== ''
+    ? Number(borrowerEbitda)
+    : null;
+  const bizEbitdaFin = Number.isFinite(businessEbitda) ? businessEbitda : null;
+
+  const businessDebtServiceAnnual = annualDebtServiceFromWorksheetRow(latestDebtScheduleRow ?? null);
+
+  const personalAgi = sumLoanGuarantorsLatestField(loanGuarantors, 'adjustedGrossIncome');
+  const personalDebtServiceAnnual = sumLoanGuarantorsLatestField(loanGuarantors, 'annualDebtService');
+
+  const hasIncomePiece = bizEbitdaFin != null || personalAgi != null;
+  const combinedIncome = hasIncomePiece
+    ? (bizEbitdaFin ?? 0) + (personalAgi ?? 0)
+    : null;
+
+  const hasDebtPiece = businessDebtServiceAnnual != null || personalDebtServiceAnnual != null;
+  const combinedDebtService = hasDebtPiece
+    ? (businessDebtServiceAnnual ?? 0) + (personalDebtServiceAnnual ?? 0)
+    : null;
+
+  let globalDebtServiceCoverageRatio = null;
+  if (
+    combinedDebtService != null
+    && combinedDebtService > 0
+    && combinedIncome != null
+  ) {
+    globalDebtServiceCoverageRatio = combinedIncome / combinedDebtService;
+  }
+
+  let excessCashFlow = null;
+  if (combinedIncome != null && combinedDebtService != null) {
+    excessCashFlow = combinedIncome - combinedDebtService;
+  }
+
+  return {
+    businessEbitda: bizEbitdaFin,
+    businessDebtServiceAnnual,
+    personalAgi,
+    personalDebtServiceAnnual,
+    globalDebtServiceCoverageRatio,
+    excessCashFlow,
+  };
+};

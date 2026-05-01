@@ -1,5 +1,5 @@
 import ExcelJS from 'exceljs';
-import { $documentsContainerView } from './pfsDocuments.consts';
+import { $documentsContainerView } from './guarantorFinancialsDocumentsContainer.consts';
 
 export const parseExcelFile = async (currentDoc) => {
   if (!currentDoc) {

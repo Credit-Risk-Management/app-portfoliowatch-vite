@@ -30,4 +30,3 @@ export const $creditMemoModalState = Signal({
   uploadedDocument: null,
   refreshKey: 0, // Used to force component re-render
 });
-

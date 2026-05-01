@@ -7,6 +7,36 @@ import { storage } from '@src/utils/firebase';
 import { profitMarginPercentFromNetIncome } from '@src/utils/sensibleExtractPrimitives';
 import * as consts from './submitFinancialsModal.consts';
 
+const { MODAL_FINANCIAL_DOCUMENT_BUCKET_KEYS, INCOME_STATEMENT_MODAL_KEYS } = consts;
+
+function revokePreviewUrlsForDocs(docs) {
+  (docs || []).forEach((doc) => {
+    if (doc?.previewUrl) {
+      try {
+        URL.revokeObjectURL(doc.previewUrl);
+      } catch {
+        // no-op
+      }
+    }
+  });
+}
+
+/**
+ * When staging quarterly or YTD income, drop the other income bucket (one or the other).
+ */
+function clearOppositeIncomeBucket(documentsByType, keepKey) {
+  if (!INCOME_STATEMENT_MODAL_KEYS.includes(keepKey)) return documentsByType;
+  const otherKey = keepKey === 'incomeStatementQuarterly'
+    ? 'incomeStatementYtd'
+    : 'incomeStatementQuarterly';
+  const toClear = documentsByType[otherKey] || [];
+  revokePreviewUrlsForDocs(toClear);
+  return {
+    ...documentsByType,
+    [otherKey]: [],
+  };
+}
+
 /**
  * Stage files locally (preview). Document text extraction runs asynchronously server-side (EXTRACT_FINANCIALS task)
  * after submit—users are not blocked on OCR in the browser.
@@ -23,7 +53,7 @@ export const stageFinancialDocuments = async (documentTypeKey) => {
   const { documentsByType } = $modalState.value;
   const files = Array.isArray(raw) ? raw : [raw];
 
-  let nextByType = { ...documentsByType };
+  let nextByType = clearOppositeIncomeBucket({ ...documentsByType }, documentType);
   files.forEach((file) => {
     const previewUrl = URL.createObjectURL(file);
     const newDoc = {
@@ -47,11 +77,17 @@ export const stageFinancialDocuments = async (documentTypeKey) => {
   const newList = nextByType[documentType] || [];
   const newIndex = newList.length - 1;
   const lastDoc = newList[newIndex];
+  const indexPatch = { [documentType]: newIndex };
+  if (documentType === 'incomeStatementQuarterly') {
+    indexPatch.incomeStatementYtd = 0;
+  } else if (documentType === 'incomeStatementYtd') {
+    indexPatch.incomeStatementQuarterly = 0;
+  }
   $modalState.update({
     documentsByType: nextByType,
     currentDocumentIndex: {
       ...$modalState.value.currentDocumentIndex,
-      [documentType]: newIndex,
+      ...indexPatch,
     },
     pdfUrl: lastDoc?.previewUrl ?? null,
   });
@@ -94,14 +130,19 @@ export const handleRemoveDocument = async (documentId) => {
       ...documentsByType,
       [documentType]: updatedDocs,
     };
-    const allEmpty = ['balanceSheet', 'incomeStatement', 'debtScheduleWorksheet', 'taxReturn'].every(
+    const allEmpty = MODAL_FINANCIAL_DOCUMENT_BUCKET_KEYS.every(
       (k) => !(updatedDocumentsByType[k] || []).length,
     );
 
     const clearedFields = {};
     const taxStillHasDocs = (updatedDocumentsByType.taxReturn || []).length > 0;
-    const incomeStillHasDocs = (updatedDocumentsByType.incomeStatement || []).length > 0;
-    if (documentType === 'incomeStatement' && updatedDocs.length === 0) {
+    const incomeStillHasDocs = (
+      (updatedDocumentsByType.incomeStatementQuarterly || []).length > 0
+      || (updatedDocumentsByType.incomeStatementYtd || []).length > 0
+    );
+    const isIncomeModalBucket = documentType === 'incomeStatementQuarterly'
+      || documentType === 'incomeStatementYtd';
+    if (isIncomeModalBucket && updatedDocs.length === 0) {
       clearedFields.debtSchedule = '';
       if (!taxStillHasDocs) {
         clearedFields.grossRevenue = '';
@@ -215,9 +256,9 @@ export const handleSwitchDocument = (index) => {
 
 /** Stored API `document_type` → modal `documentsByType` key (tabs use short names). */
 const API_DOCUMENT_TYPE_TO_MODAL_BUCKET = {
-  incomeStatementYtd: 'incomeStatement',
-  incomeStatementQuarterly: 'incomeStatement',
-  incomeStatement: 'incomeStatement',
+  incomeStatementYtd: 'incomeStatementYtd',
+  incomeStatementQuarterly: 'incomeStatementQuarterly',
+  incomeStatement: 'incomeStatementQuarterly',
   businessTaxReturn: 'taxReturn',
   debtSchedule: 'debtScheduleWorksheet',
 };
@@ -233,7 +274,8 @@ const loadDocumentsFromBackend = async (financialId) => {
     if (documents?.length > 0) {
       const documentsByType = {
         balanceSheet: [],
-        incomeStatement: [],
+        incomeStatementQuarterly: [],
+        incomeStatementYtd: [],
         debtScheduleWorksheet: [],
         taxReturn: [],
       };
@@ -262,7 +304,8 @@ const loadDocumentsFromBackend = async (financialId) => {
   }
   return {
     balanceSheet: [],
-    incomeStatement: [],
+    incomeStatementQuarterly: [],
+    incomeStatementYtd: [],
     debtScheduleWorksheet: [],
     taxReturn: [],
   };
@@ -272,7 +315,10 @@ const collectStoredIdsByType = (documentsByType) => ({
   balanceSheet: (documentsByType.balanceSheet || [])
     .filter((d) => d.isStored && d.id)
     .map((d) => d.id),
-  incomeStatement: (documentsByType.incomeStatement || [])
+  incomeStatementQuarterly: (documentsByType.incomeStatementQuarterly || [])
+    .filter((d) => d.isStored && d.id)
+    .map((d) => d.id),
+  incomeStatementYtd: (documentsByType.incomeStatementYtd || [])
     .filter((d) => d.isStored && d.id)
     .map((d) => d.id),
   debtScheduleWorksheet: (documentsByType.debtScheduleWorksheet || [])
@@ -352,7 +398,8 @@ export const handleOpenEditMode = async (financial) => {
     pdfUrl: firstDoc?.previewUrl || firstDoc?.storageUrl || null,
     currentDocumentIndex: {
       balanceSheet: 0,
-      incomeStatement: 0,
+      incomeStatementQuarterly: 0,
+      incomeStatementYtd: 0,
       debtScheduleWorksheet: 0,
       taxReturn: 0,
       ...(firstDocType ? { [firstDocType]: 0 } : {}),

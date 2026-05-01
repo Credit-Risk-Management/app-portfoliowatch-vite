@@ -8,7 +8,10 @@ import * as consts from './borrowerFinancialsTab.consts';
 export const hasIncomeStatementAndBalanceSheet = (financial) => {
   const docs = financial?.documents || [];
   const hasIncomeStatement = docs.some(
-    (d) => d.documentType === 'incomeStatement' || d.documentType === 'income_statement',
+    (d) => d.documentType === 'incomeStatement'
+      || d.documentType === 'income_statement'
+      || d.documentType === 'incomeStatementQuarterly'
+      || d.documentType === 'incomeStatementYtd',
   );
   const hasTaxReturn = docs.some(
     (d) => d.documentType === 'taxReturn' || d.documentType === 'tax_return',
