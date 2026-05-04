@@ -493,61 +493,6 @@ const LoanDetail = () => {
         </Row>
         <Row>
           <Col xs={12} md={12}>
-            <UniversalCard headerText="Guarantors" bodyContainer="container-fluid" className="mt-12 mt-md-16">
-              <Row className="mt-12 mb-12">
-
-                <SignalTable
-                  headers={guarantorsTableHeaders}
-                  rows={guarantorsTableRows}
-                  className="shadow"
-                  onRowClick={(guarantor) => navigate(`/guarantors/${guarantor.id}`)}
-                />
-              </Row>
-            </UniversalCard>
-            <UniversalCard
-              headerText="Global Cash Flow Analysis"
-              bodyContainer="container-fluid"
-              className="mt-12 mt-md-16"
-            >
-              <Row className="g-3 mt-12 mb-12">
-                <Col xs={12} md={6} lg={4}>
-                  <div className="text-info-100 fw-200 mb-4">Business EBITDA</div>
-                  <div className="text-info-50 fw-500 fs-5">
-                    {formatCurrency(globalCashFlowMetrics.businessEbitda)}
-                  </div>
-                </Col>
-                <Col xs={12} md={6} lg={4}>
-                  <div className="text-info-100 fw-200 mb-4">Business Debt Service</div>
-                  <div className="text-info-50 fw-500 fs-5">
-                    {formatCurrency(globalCashFlowMetrics.businessDebtServiceAnnual)}
-                  </div>
-                </Col>
-                <Col xs={12} md={6} lg={4}>
-                  <div className="text-info-100 fw-200 mb-4">Personal AGI</div>
-                  <div className="text-info-50 fw-500 fs-5">
-                    {formatCurrency(globalCashFlowMetrics.personalAgi)}
-                  </div>
-                </Col>
-                <Col xs={12} md={6} lg={4}>
-                  <div className="text-info-100 fw-200 mb-4">Personal Debt Service</div>
-                  <div className="text-info-50 fw-500 fs-5">
-                    {formatCurrency(globalCashFlowMetrics.personalDebtServiceAnnual)}
-                  </div>
-                </Col>
-                <Col xs={12} md={6} lg={4}>
-                  <div className="text-info-100 fw-200 mb-4">Global Debt Service Coverage Ratio (DSCR)</div>
-                  <div className="text-info-50 fw-500 fs-5">
-                    {formatRatio(globalCashFlowMetrics.globalDebtServiceCoverageRatio)}
-                  </div>
-                </Col>
-                <Col xs={12} md={6} lg={4}>
-                  <div className="text-info-100 fw-200 mb-4">Excess Cash Flow</div>
-                  <div className="text-info-50 fw-500 fs-5">
-                    {formatCurrency(globalCashFlowMetrics.excessCashFlow)}
-                  </div>
-                </Col>
-              </Row>
-            </UniversalCard>
             <UniversalCard headerText="Covenants" bodyContainer="container-fluid" className="mt-12 mt-md-16">
               <Row>
                 <Col xs={12} md={6} className="mb-12 mb-md-0">
@@ -596,6 +541,93 @@ const LoanDetail = () => {
                   </div>
                 </Col>
               </Row>
+            </UniversalCard>
+            <UniversalCard
+              headerText="Global Cash Flow Analysis"
+              bodyContainer="container-fluid"
+              className="mt-12 mt-md-16"
+            >
+              <Row className="g-3 mt-12 mb-12">
+                <Col xs={12} md={6} lg={4}>
+                  <div className="text-info-100 fw-200 mb-4">Business EBITDA</div>
+                  <div className="text-info-50 fw-500 fs-5">
+                    {formatCurrency(globalCashFlowMetrics.businessEbitda)}
+                  </div>
+                </Col>
+                <Col xs={12} md={6} lg={4}>
+                  <div className="text-info-100 fw-200 mb-4">Business Debt Service</div>
+                  <div className="text-info-50 fw-500 fs-5">
+                    {formatCurrency(globalCashFlowMetrics.businessDebtServiceAnnual)}
+                  </div>
+                </Col>
+                <Col xs={12} md={6} lg={4}>
+                  <div className="text-info-100 fw-200 mb-4">Global Debt Service Coverage Ratio (DSCR)</div>
+                  <div className="text-info-50 fw-500 fs-5">
+                    {formatRatio(globalCashFlowMetrics.globalDebtServiceCoverageRatio)}
+                  </div>
+                </Col>
+                <Col xs={12} md={6} lg={4}>
+                  <div className="text-info-100 fw-200 mb-4">Personal AGI</div>
+                  <div className="text-info-50 fw-500 fs-5">
+                    {formatCurrency(globalCashFlowMetrics.personalAgi)}
+                  </div>
+                </Col>
+                <Col xs={12} md={6} lg={4}>
+                  <div className="text-info-100 fw-200 mb-4">Personal Debt Service</div>
+                  <div className="text-info-50 fw-500 fs-5">
+                    {formatCurrency(globalCashFlowMetrics.personalDebtServiceAnnual)}
+                  </div>
+                </Col>
+                <Col xs={12} md={6} lg={4}>
+                  <div className="text-info-100 fw-200 mb-4">Excess Cash Flow</div>
+                  <div className="text-info-50 fw-500 fs-5">
+                    {formatCurrency(globalCashFlowMetrics.excessCashFlow)}
+                  </div>
+                </Col>
+              </Row>
+            </UniversalCard>
+            <UniversalCard headerText="Guarantors" bodyContainer="container-fluid" className="mt-12 mt-md-16">
+              <Row className="mt-12 mb-12">
+
+                <SignalTable
+                  headers={guarantorsTableHeaders}
+                  rows={guarantorsTableRows}
+                  className="shadow"
+                  onRowClick={(guarantor) => navigate(`/guarantors/${guarantor.id}`)}
+                />
+              </Row>
+            </UniversalCard>
+            <UniversalCard headerText="Collateral Values" className="mt-12 mt-md-16">
+              {$loanDetailCollateral.value && $loanDetailCollateral.value.length > 0 ? (
+                <div className="mt-16">
+                  <SignalAccordion
+                    items={collateralAccordionItems}
+                    defaultExpandedId={collateralAccordionItems[0]?.id}
+                    $expandedId={$loanDetailCollateralAccordionExpanded}
+                    footer={{
+                      netValueLabel: 'Net Value',
+                      netValue: formatCurrency(footerNetValue),
+                      coverageLabel: 'Coverage Ratio',
+                      coverageValue: formatRatio(footerCoverage),
+                    }}
+                  />
+                  <div className="mt-16 pt-16 border-top d-flex justify-content-center">
+                    <Button
+                      variant="info"
+                      size="sm"
+                      disabled
+                      style={{ opacity: 0.7 }}
+                    >
+                      <FontAwesomeIcon icon={faSync} className="me-8" />
+                      Update Collateral (Coming soon...)
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-info-100 fw-200 fst-italic py-16">
+                  No collateral values submitted yet. Click the &quot;Submit Collateral Value&quot; button above to add collateral.
+                </div>
+              )}
             </UniversalCard>
             <UniversalCard headerText="Industry Analysis" className="mt-12 mt-md-16">
               <Row>
@@ -652,38 +684,6 @@ const LoanDetail = () => {
                   </div>
                 </Col>
               </Row>
-            </UniversalCard>
-            <UniversalCard headerText="Collateral Values" className="mt-12 mt-md-16">
-              {$loanDetailCollateral.value && $loanDetailCollateral.value.length > 0 ? (
-                <div className="mt-16">
-                  <SignalAccordion
-                    items={collateralAccordionItems}
-                    defaultExpandedId={collateralAccordionItems[0]?.id}
-                    $expandedId={$loanDetailCollateralAccordionExpanded}
-                    footer={{
-                      netValueLabel: 'Net Value',
-                      netValue: formatCurrency(footerNetValue),
-                      coverageLabel: 'Coverage Ratio',
-                      coverageValue: formatRatio(footerCoverage),
-                    }}
-                  />
-                  <div className="mt-16 pt-16 border-top d-flex justify-content-center">
-                    <Button
-                      variant="info"
-                      size="sm"
-                      disabled
-                      style={{ opacity: 0.7 }}
-                    >
-                      <FontAwesomeIcon icon={faSync} className="me-8" />
-                      Update Collateral (Coming soon...)
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-info-100 fw-200 fst-italic py-16">
-                  No collateral values submitted yet. Click the &quot;Submit Collateral Value&quot; button above to add collateral.
-                </div>
-              )}
             </UniversalCard>
             <UniversalCard headerText="Comments" className="mt-12 mt-md-16">
               <LoanComments loanId={loanId} />
