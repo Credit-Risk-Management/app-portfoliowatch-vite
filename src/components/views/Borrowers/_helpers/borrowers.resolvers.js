@@ -58,6 +58,8 @@ const facetParamsFromBorrowersFilter = () => {
     searchTerm: bf?.searchTerm,
     borrowerType,
     relationshipManager,
+    quarterlyPackageComplete: bf?.quarterlyPackageComplete,
+    impactQuestionnaireComplete: bf?.impactQuestionnaireComplete,
   };
 };
 

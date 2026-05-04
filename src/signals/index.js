@@ -43,7 +43,10 @@ export const $borrowersFilter = Signal({
   searchTerm: '',
   borrowerType: [],
   relationshipManager: [],
-  riskRating: '',
+  /** '' | 'true' | 'false' — quarterly package on file for current reporting period */
+  quarterlyPackageComplete: '',
+  /** '' | 'true' | 'false' — any submitted impact questionnaire link */
+  impactQuestionnaireComplete: '',
 });
 
 export const $borrowersView = Signal({

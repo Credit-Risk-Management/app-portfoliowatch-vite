@@ -77,6 +77,8 @@ export const handleBorrowerFilterChange = async () => {
       searchTerm: $borrowersFilter.value.searchTerm,
       borrowerType: borrowerTypeValue,
       relationshipManager: relationshipManagerValue,
+      quarterlyPackageComplete: $borrowersFilter.value.quarterlyPackageComplete,
+      impactQuestionnaireComplete: $borrowersFilter.value.impactQuestionnaireComplete,
     };
 
     await resolvers.fetchAndSetBorrowerData(filters);

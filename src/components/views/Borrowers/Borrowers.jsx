@@ -1,6 +1,13 @@
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Container, Row, Col } from 'react-bootstrap';
+import {
+  Container,
+  Row,
+  Col,
+  Badge,
+  OverlayTrigger,
+  Tooltip,
+} from 'react-bootstrap';
 import { faEdit, faEye, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';
 import SignalTable from '@src/components/global/SignalTable';
@@ -43,6 +50,8 @@ const Borrowers = () => {
       const sortDirection = searchParams.get('sortDirection') || 'asc';
       const borrowerTypeParam = searchParams.get('borrowerType');
       const relationshipManagerParam = searchParams.get('relationshipManager');
+      const quarterlyPackageParam = searchParams.get('quarterlyPackageComplete') || '';
+      const impactQuestionnaireParam = searchParams.get('impactQuestionnaireComplete') || '';
       $borrowersFilter.update({
         searchTerm,
         page: parsedPage,
@@ -50,6 +59,8 @@ const Borrowers = () => {
         sortDirection,
         borrowerType: borrowerTypeParam ? borrowerTypeParam.split(',').filter(Boolean) : [],
         relationshipManager: relationshipManagerParam ? relationshipManagerParam.split(',').filter(Boolean) : [],
+        quarterlyPackageComplete: ['true', 'false'].includes(quarterlyPackageParam) ? quarterlyPackageParam : '',
+        impactQuestionnaireComplete: ['true', 'false'].includes(impactQuestionnaireParam) ? impactQuestionnaireParam : '',
       });
     }
 
@@ -84,10 +95,49 @@ const Borrowers = () => {
     $borrowersFilter.value.page,
     $borrowersFilter.value.sortKey,
     $borrowersFilter.value.sortDirection,
+    $borrowersFilter.value.quarterlyPackageComplete,
+    $borrowersFilter.value.impactQuestionnaireComplete,
   ]);
 
   const rows = $borrowers.value.list.map((borrower) => ({
     ...borrower,
+    name: () => (
+      <span className="d-inline-flex align-items-center flex-wrap">
+        <span className="text-break me-4">{borrower.name}</span>
+        <span className="d-inline-flex align-items-center flex-shrink-0 gap-2">
+          {borrower.quarterlyPackageComplete ? (
+            <OverlayTrigger
+              placement="top"
+              trigger={['hover', 'focus']}
+              overlay={(
+                <Tooltip id={`borrower-${borrower.id}-quarterly-badge`}>
+                  Quarterly financial package on file for the current reporting period.
+                </Tooltip>
+              )}
+            >
+              <Badge bg="success-600" pill className="me-4 text-dark">
+                Q1
+              </Badge>
+            </OverlayTrigger>
+          ) : null}
+          {borrower.impactQuestionnaireComplete ? (
+            <OverlayTrigger
+              placement="top"
+              trigger={['hover', 'focus']}
+              overlay={(
+                <Tooltip id={`borrower-${borrower.id}-impact-badge`}>
+                  Borrower impact questionnaire has been submitted.
+                </Tooltip>
+              )}
+            >
+              <Badge bg="info-600" pill className="text-dark">
+                I-Q
+              </Badge>
+            </OverlayTrigger>
+          ) : null}
+        </span>
+      </span>
+    ),
     borrowerType: borrower.borrowerType || '-',
     clientRiskRating: () => <StatusBadge status={borrower.clientRiskRating} type="risk" />,
     relationshipManager: borrower.relationshipManager?.name || '-',
@@ -132,8 +182,8 @@ const Borrowers = () => {
         onActionClick={() => $borrowersView.update({ showAddModal: true })}
       />
 
-      <Row className="mb-12 mb-md-16">
-        <Col xs={12} md={6} className="mb-12 mb-md-0">
+      <Row className="mb-12 mb-md-16 align-items-end">
+        <Col xs={12} md={4} className="mb-12 mb-md-0">
           <Search
             placeholder="Search borrowers..."
             value={$borrowersFilter.value.searchTerm}
@@ -151,7 +201,7 @@ const Borrowers = () => {
             name="searchTerm"
           />
         </Col>
-        <Col xs={12} md={3} className="mb-12 mb-md-0">
+        <Col xs={12} sm={6} md={2} className="mb-12 mb-md-0">
           <SelectInput
             options={[{ value: '', label: 'All Types' }, ...consts.CLIENT_TYPE_OPTIONS]}
             value={$borrowersFilter.value.borrowerType}
@@ -165,7 +215,7 @@ const Borrowers = () => {
             isMulti
           />
         </Col>
-        <Col xs={12} md={3} className="mb-12 mb-md-0">
+        <Col xs={12} sm={6} md={2} className="mb-12 mb-md-0">
           <SelectInput
             options={[{ value: '', label: 'All Managers' }, ...relationshipManagerOptions]}
             value={$borrowersFilter.value.relationshipManager}
@@ -179,8 +229,39 @@ const Borrowers = () => {
             isMulti
           />
         </Col>
+        <Col xs={12} sm={6} md={2} className="mb-12 mb-md-0">
+          <SelectInput
+            options={[{ value: '', label: 'All (quarterly package)' }, ...consts.QUARTERLY_PACKAGE_FILTER_OPTIONS]}
+            value={$borrowersFilter.value.quarterlyPackageComplete}
+            onChange={() => {
+              handleBorrowerFilterChange();
+              setSearchParams(borrowersFilterToUrlParams($borrowersFilter.value));
+              $borrowersFilter.update({ page: 1 });
+            }}
+            placeholder="Quarterly (Q)"
+            signal={$borrowersFilter}
+            name="quarterlyPackageComplete"
+            isMulti={false}
+            isSearchable={false}
+          />
+        </Col>
+        <Col xs={12} sm={6} md={2} className="mb-12 mb-md-0">
+          <SelectInput
+            options={[{ value: '', label: 'All (impact questionnaire)' }, ...consts.IMPACT_QUESTIONNAIRE_FILTER_OPTIONS]}
+            value={$borrowersFilter.value.impactQuestionnaireComplete}
+            onChange={() => {
+              handleBorrowerFilterChange();
+              setSearchParams(borrowersFilterToUrlParams($borrowersFilter.value));
+              $borrowersFilter.update({ page: 1 });
+            }}
+            placeholder="Impact (I-Q)"
+            signal={$borrowersFilter}
+            name="impactQuestionnaireComplete"
+            isMulti={false}
+            isSearchable={false}
+          />
+        </Col>
       </Row>
-
       <AddBorrowerModal />
       <EditBorrowerModal />
       <DeleteBorrowerModal />

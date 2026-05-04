@@ -5,10 +5,16 @@ export const CLIENT_TYPE_OPTIONS = [
   { value: 'CRE', label: 'CRE' },
 ];
 
-export const RISK_RATING_OPTIONS = [
-  { value: 'Low', label: 'Low' },
-  { value: 'Medium', label: 'Medium' },
-  { value: 'High', label: 'High' },
+/** Borrowers list: quarterly package badge filter (matches API `quarterlyPackageComplete`). */
+export const QUARTERLY_PACKAGE_FILTER_OPTIONS = [
+  { value: 'true', label: 'On file (current period)' },
+  { value: 'false', label: 'Not on file' },
+];
+
+/** Borrowers list: impact questionnaire badge filter (matches API `impactQuestionnaireComplete`). */
+export const IMPACT_QUESTIONNAIRE_FILTER_OPTIONS = [
+  { value: 'true', label: 'Submitted' },
+  { value: 'false', label: 'Not submitted' },
 ];
 
 export const INDUSTRY_TYPE_OPTIONS = [
