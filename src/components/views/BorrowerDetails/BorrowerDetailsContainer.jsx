@@ -39,16 +39,16 @@ const tabs = [
     component: <BorrowerDetailsTab />,
   },
   {
-    key: 'triggers',
-    title: 'Triggers',
-    icon: faBell,
-    component: <BorrowerTriggersTab />,
-  },
-  {
     key: 'loans',
     title: 'Loans',
     icon: faMoneyBillWave,
     component: <BorrowerLoansTab />,
+  },
+  {
+    key: 'triggers',
+    title: 'Triggers',
+    icon: faBell,
+    component: <BorrowerTriggersTab />,
   },
   {
     key: 'financials',
