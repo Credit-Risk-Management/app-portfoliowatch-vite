@@ -113,7 +113,7 @@ const PublicFinancialUpload = () => {
     );
   }
 
-  if (!success) {
+  if (success) {
     const showImpactOffer = linkData?.impactQuestionnaireUrl
       && !impactQuestionnairePromptDismissed;
 
