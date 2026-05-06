@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import {
-  Container, Button, Alert, Card, Spinner,
+  Container, Button, Alert, Card, Spinner, Modal,
 } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -34,6 +34,8 @@ import {
   clearPublicFinancialSectionFiles, openAttestationModal,
   closeAttestationModal,
   openDebtScheduleWorksheetModal,
+  dismissImpactQuestionnairePrompt,
+  goToImpactQuestionnaireFromPublicUpload,
 } from './_helpers/publicFinancialUpload.events';
 
 const PublicFinancialUpload = () => {
@@ -52,6 +54,7 @@ const PublicFinancialUpload = () => {
     error,
     success,
     debtScheduleWorksheetSubmitting,
+    impactQuestionnairePromptDismissed,
   } = $publicFinancialUploadView.value;
   const attestationText = linkData?.attestationText || DEFAULT_PUBLIC_ATTESTATION_TEXT;
   const requiredPdfSections = getRequiredPdfSectionsForLink(linkData);
@@ -110,7 +113,10 @@ const PublicFinancialUpload = () => {
     );
   }
 
-  if (success) {
+  if (!success) {
+    const showImpactOffer = linkData?.impactQuestionnaireUrl
+      && !impactQuestionnairePromptDismissed;
+
     return (
       <ContentWrapper fluid className="min-vh-100 bg-white">
         <Container className="py-24">
@@ -127,6 +133,39 @@ const PublicFinancialUpload = () => {
             </Card.Body>
           </Card>
         </Container>
+
+        <Modal
+          show={showImpactOffer}
+          onHide={dismissImpactQuestionnairePrompt}
+          centered
+        >
+          <Modal.Header closeButton closeVariant="white" className="border-0 bg-grey-50 text-dark">
+            <Modal.Title className="h5 fw-bold mb-0">One more thing?</Modal.Title>
+          </Modal.Header>
+          <Modal.Body className="px-20 py-24">
+            <p className="text-dark-800 mb-16 mb-md-20">
+              Please take a moment to complete this short questionnaire about your business.
+            </p>
+            <div className="d-flex flex-column flex-sm-row gap-8 justify-content-end">
+              <Button
+                type="button"
+                variant="white"
+                className="order-2 order-sm-1"
+                onClick={dismissImpactQuestionnairePrompt}
+              >
+                Not now
+              </Button>
+              <Button
+                type="button"
+                variant="dark"
+                className="order-1 order-sm-2"
+                onClick={goToImpactQuestionnaireFromPublicUpload}
+              >
+                Yes, continue
+              </Button>
+            </div>
+          </Modal.Body>
+        </Modal>
       </ContentWrapper>
     );
   }

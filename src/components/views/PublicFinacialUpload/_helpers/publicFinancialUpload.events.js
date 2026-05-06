@@ -265,3 +265,15 @@ export const patchDebtScheduleWorksheetForm = (patch) => {
 export const clearError = () => {
   $publicFinancialUploadView.update({ error: null });
 };
+
+export const dismissImpactQuestionnairePrompt = () => {
+  $publicFinancialUploadView.update({ impactQuestionnairePromptDismissed: true });
+};
+
+/** Navigates to the borrower’s public impact questionnaire (same token pool as `borrower_impact_questionnaire_links`). */
+export const goToImpactQuestionnaireFromPublicUpload = () => {
+  const url = $publicFinancialUploadView.value.linkData?.impactQuestionnaireUrl;
+  if (url && typeof window !== 'undefined') {
+    window.location.assign(url);
+  }
+};

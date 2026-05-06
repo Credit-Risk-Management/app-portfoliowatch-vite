@@ -92,6 +92,8 @@ export const $publicFinancialUploadView = Signal({
   activeModalKey: null,
   error: null,
   success: false,
+  /** After success: user closed "take impact questionnaire?" or chose Not now */
+  impactQuestionnairePromptDismissed: false,
   priorDebtOpening: false,
   /** Worksheet modal validation (UI only; not submitted to API). */
   debtScheduleWorksheetErrors: null,

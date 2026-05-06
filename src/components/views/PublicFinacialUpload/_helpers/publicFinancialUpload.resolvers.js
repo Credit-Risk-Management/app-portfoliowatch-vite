@@ -29,6 +29,7 @@ export const fetchUploadLinkData = async (token) => {
       linkData: response?.data ?? null,
       token,
       debtScheduleWorksheetHydratedFromPrior: false,
+      impactQuestionnairePromptDismissed: false,
     });
   } catch (err) {
     dangerAlert(err.message || 'Invalid or expired upload link');
