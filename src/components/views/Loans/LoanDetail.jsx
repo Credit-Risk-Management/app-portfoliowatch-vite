@@ -363,7 +363,7 @@ const LoanDetail = () => {
                 <div className="text-info-100 fw-200 mt-8">Last Submitted Financials</div>
                 <div className="text-info-50 lead fw-500">{formatDate($loan.value?.loan?.lastFinancialStatement)}</div>
                 <div className="text-info-100 fw-200 mt-8">Financial Submission Frequency</div>
-                <div className="text-info-50 lead fw-500">Monthly</div>
+                <div className="text-info-50 lead fw-500">Quarterly</div>
                 <div className="text-info-100 fw-200 mt-8">Next Financials Due</div>
                 <div className="text-info-50 lead fw-500">12/20/2025</div>
                 <div className="text-info-100 fw-200 mt-8">Interest Rate</div>
