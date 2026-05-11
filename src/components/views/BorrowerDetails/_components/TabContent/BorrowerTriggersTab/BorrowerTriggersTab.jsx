@@ -7,6 +7,7 @@ import {
   normalizeRatioDecimalToPercent,
   formatRatioPercentForDisplay,
 } from '@src/utils/ratioPercent';
+import { annualizedEbitdaForCovenantDisplay } from '@src/utils/ebitdaIncomePeriod';
 import { $modalState } from '../../SubmitFinancialsModal/_helpers/submitFinancialsModal.consts';
 import { fetchFinancialHistory } from '../BorrowerFinancialsTab/_helpers/borrowerFinancialsTab.resolvers';
 import { hasIncomeStatementAndBalanceSheet } from '../BorrowerFinancialsTab/_helpers/borrowerFinancialsTab.helpers';
@@ -69,6 +70,15 @@ const BorrowerTriggersTab = (props = {}) => {
       currentAsOfDate.getMonth() !== previousAsOfDate.getMonth()
       || currentAsOfDate.getDate() !== previousAsOfDate.getDate()
     );
+
+  const curQ = Boolean(currentForm.incomeStatementPackageQuarterly);
+  const prevQ = Boolean(previousFinancial?.incomeStatementPackageQuarterly);
+  const useEbitdaRunRate = curQ || prevQ;
+  const prevEbitdaComparable = annualizedEbitdaForCovenantDisplay(previousFinancial?.ebitda, prevQ);
+  const curEbitdaComparable = annualizedEbitdaForCovenantDisplay(currentForm.ebitda, curQ);
+  const storedEbitdaChange = currentForm.changeInEbitda != null && String(currentForm.changeInEbitda).trim() !== ''
+    ? parseFloat(currentForm.changeInEbitda)
+    : null;
 
   const TriggerCard = ({ title, previousValue, currentValue, isCurrency = true, formatValue }) => {
     const change = calculateChange(currentValue, previousValue);
@@ -141,6 +151,12 @@ const BorrowerTriggersTab = (props = {}) => {
       <h5 className="text-info-100 mb-24 fw-600">
         Trigger Analysis - Change from Previous Period
       </h5>
+      {useEbitdaRunRate && (
+        <Alert variant="secondary" className="mb-16 small text-info-200 border-info-100">
+          <strong>Reported</strong> uses EBITDA as filed on the statements. <strong>Estimated</strong> annualizes quarterly
+          amounts (×4) for an illustration only—it is not a forecast, and WATCH applies its own rules to the stored metrics.
+        </Alert>
+      )}
       {isPeriodComparisonMismatched && (
         <Alert variant="warning" className="mb-16">
           <div className="fw-600">Default indicator: period mismatch detected</div>
@@ -162,11 +178,38 @@ const BorrowerTriggersTab = (props = {}) => {
           />
         </Col>
         <Col md={6}>
-          <TriggerCard
-            title="Change in EBITDA"
-            previousValue={previousFinancial.ebitda}
-            currentValue={currentForm.ebitda}
-          />
+          {useEbitdaRunRate ? (
+            <div>
+              <TriggerCard
+                title="Change in EBITDA (reported amounts)"
+                previousValue={previousFinancial.ebitda}
+                currentValue={currentForm.ebitda}
+              />
+              <TriggerCard
+                title="Change in EBITDA (estimated, annual run-rate)"
+                previousValue={prevEbitdaComparable}
+                currentValue={curEbitdaComparable}
+              />
+              <div className="text-info-300 small fst-italic mb-16 px-8">
+                Estimated view uses ×4 as a rough annualization for discussion only, not a projection of actual results.
+                {storedEbitdaChange != null && Number.isFinite(storedEbitdaChange) ? (
+                  <>
+                    {' '}
+                    WATCH stored change in EBITDA:
+                    {' '}
+                    {formatPercentage(storedEbitdaChange)}
+                    .
+                  </>
+                ) : null}
+              </div>
+            </div>
+          ) : (
+            <TriggerCard
+              title="Change in EBITDA"
+              previousValue={previousFinancial.ebitda}
+              currentValue={currentForm.ebitda}
+            />
+          )}
         </Col>
         <Col md={6}>
           <TriggerCard

@@ -351,6 +351,7 @@ export const $borrowerFinancialsForm = Signal({
   changeInProfitMargin: '',
   changeInInventory: '',
   changeInAccountsPayable: '',
+  incomeStatementPackageQuarterly: false,
   // Other
   notes: '',
   documentIds: [],
