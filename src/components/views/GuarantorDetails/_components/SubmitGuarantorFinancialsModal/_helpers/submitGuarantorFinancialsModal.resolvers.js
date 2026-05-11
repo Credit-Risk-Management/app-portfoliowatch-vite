@@ -1,4 +1,5 @@
-import { $user } from '@src/signals';
+import { $user, $organization } from '@src/signals';
+import { sensibleConfigurationNameForSegment } from '@src/utils/organizationNameToSensibleSlug';
 import guarantorsApi from '@src/api/guarantors.api';
 import guarantorFinancialDocumentsApi from '@src/api/guarantorFinancialDocuments.api';
 import { dangerAlert, successAlert } from '@src/components/global/Alert/_helpers/alert.events';
@@ -94,10 +95,14 @@ export const handleFileUpload = async ($financialDocsUploader, $modalState, ocrA
     if (sensibleType && downloadURL) {
       $modalState.update({ isLoadingInputData: true });
       try {
+        const configurationName = sensibleConfigurationNameForSegment(
+          $organization.value?.name,
+          sensibleType,
+        );
         const sensibleBody = {
           url: downloadURL,
           documentType: sensibleType,
-          configurationName: sensibleType,
+          configurationName,
           environment: 'development',
           documentName: file.name,
         };
