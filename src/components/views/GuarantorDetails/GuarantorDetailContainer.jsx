@@ -8,7 +8,7 @@ import PageHeader from '@src/components/global/PageHeader';
 import UniversalCard from '@src/components/global/UniversalCard';
 import Loadable from '@src/components/global/Loadable';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { calculateAnnualDebtServiceFromLoans } from '@src/utils/currency';
 import AddEditGuarantorModal from '@src/components/views/BorrowerDetails/_components/TabContent/BorrowerGuarantorsTab/_components/AddEditGuarantorModal';
 import * as guarantorModalEvents from '@src/components/views/BorrowerDetails/_components/TabContent/BorrowerGuarantorsTab/_helpers/guarantorModal.events';
@@ -23,6 +23,7 @@ import GuarantorDocuments from './_components/GuarantorDocuments';
 import { $guarantorDetailView, $guarantorDetailsData } from './_helpers/guarantorDetails.consts';
 import SubmitPFSModal from './_components/SubmitGuarantorFinancialsModal/SubmitGuarantorFinancialsModal';
 import GuarantorLoans from './_components/GuarantorLoans';
+import DeleteGuarantorConfirmModal from './_components/DeleteGuarantorConfirmModal';
 
 export function GuarantorDetailContainer() {
   const { guarantorId } = useParams();
@@ -87,6 +88,9 @@ export function GuarantorDetailContainer() {
 
   return (
     <Loadable signal={$guarantorDetailView} template="fullscreen">
+      <span className="visually-hidden" aria-hidden="true">
+        {$guarantorDetailView.value?.guarantorDeleteModalNonce}
+      </span>
       <Container className="py-16 py-md-24">
         <div className="d-flex justify-content-between align-items-center flex-wrap gap-8 mb-12 mb-md-16">
           <Button
@@ -108,25 +112,41 @@ export function GuarantorDetailContainer() {
             <UniversalCard
               headerText="Guarantor Details"
               headerRight={(
-                <Button
-                  type="button"
-                  variant="outline-primary-100"
-                  className="flex-shrink-0"
-                  size="sm"
-                  onClick={() => guarantorModalEvents.openEditBorrowerGuarantorModal({
-                    id: $guarantorDetailView.value?.guarantorId,
-                    borrowerId: $guarantorDetailsData.value?.borrowerId,
-                    name: $guarantorDetailsData.value?.name,
-                    email: $guarantorDetailsData.value?.email,
-                    phone: $guarantorDetailsData.value?.phone,
-                    loans: $guarantorDetailsData.value?.loans,
-                    borrowerLoans: $guarantorDetailsData.value?.borrowerLoans,
-                  })}
-                  aria-label={`Edit ${$guarantorDetailsData.value?.name || 'guarantor'}`}
-                >
-                  <FontAwesomeIcon icon={faEdit} className="me-8" />
-                  Edit
-                </Button>
+                <div className="d-flex align-items-center gap-2 flex-shrink-0">
+                  <Button
+                    type="button"
+                    variant="outline-primary-100"
+                    size="sm"
+                    className="me-4"
+                    onClick={() => guarantorModalEvents.openEditBorrowerGuarantorModal({
+                      id: $guarantorDetailView.value?.guarantorId,
+                      borrowerId: $guarantorDetailsData.value?.borrowerId,
+                      name: $guarantorDetailsData.value?.name,
+                      email: $guarantorDetailsData.value?.email,
+                      phone: $guarantorDetailsData.value?.phone,
+                      loans: $guarantorDetailsData.value?.loans,
+                      borrowerLoans: $guarantorDetailsData.value?.borrowerLoans,
+                    })}
+                    aria-label={`Edit ${$guarantorDetailsData.value?.name || 'guarantor'}`}
+                  >
+                    <FontAwesomeIcon icon={faEdit} className="me-8" />
+                    Edit
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline-danger"
+                    size="sm"
+                    onClick={() => guarantorEvents.openDeleteGuarantorConfirmModal(navigate, {
+                      guarantorId: $guarantorDetailView.value?.guarantorId,
+                      borrowerId: $guarantorDetailsData.value?.borrowerId,
+                      name: $guarantorDetailsData.value?.name,
+                    })}
+                    aria-label={`Delete ${$guarantorDetailsData.value?.name || 'guarantor'}`}
+                  >
+                    <FontAwesomeIcon icon={faTrash} className="me-8" />
+                    Delete
+                  </Button>
+                </div>
               )}
               bodyContainer="container-fluid"
             >
@@ -228,6 +248,7 @@ export function GuarantorDetailContainer() {
       </Container>
       <SubmitPFSModal />
       <AddEditGuarantorModal />
+      <DeleteGuarantorConfirmModal />
     </Loadable>
   );
 }

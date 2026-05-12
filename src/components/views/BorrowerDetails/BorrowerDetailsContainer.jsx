@@ -15,6 +15,7 @@ import ImpactQuestionnaireModal from '@src/components/views/BorrowerDetails/_com
 import DeleteBorrowerDocumentModal from '@src/components/views/Borrowers/_components/DeleteBorrowerDocumentModal';
 import DeleteBorrowerFinancialModal from '@src/components/views/BorrowerDetails/_components/DeleteBorrowerFinancialModal';
 import UniversalCard from '@src/components/global/UniversalCard';
+import DeleteGuarantorConfirmModal from '@src/components/views/GuarantorDetails/_components/DeleteGuarantorConfirmModal';
 import { $borrowerDetailView } from './_helpers/borrowerDetail.consts';
 import { handleGenerateAnnualReview } from './_helpers/borrowerDetail.events';
 import {
@@ -104,6 +105,9 @@ export function BorrowerDetailsContainer() {
 
   return (
     <Loadable signal={$borrower} template="fullscreen">
+      <span className="visually-hidden" aria-hidden="true">
+        {$borrowerDetailView.value?.guarantorDeleteModalNonce}
+      </span>
       <Container className="fluid py-16 py-md-24">
         <div className="d-flex justify-content-between align-items-center flex-wrap">
           <Button
@@ -168,6 +172,7 @@ export function BorrowerDetailsContainer() {
         <EditBorrowerDetailModal />
 
         <AddEditGuarantorModal />
+        <DeleteGuarantorConfirmModal />
 
         {/* Document Modals */}
         <DeleteBorrowerDocumentModal />

@@ -7,6 +7,8 @@ export const $guarantorDetailView = Signal({
   guarantor: null,
   isLoading: false,
   error: null,
+  /** Bumped when delete-confirm modal opens so the page re-renders while the modal signal updates. */
+  guarantorDeleteModalNonce: 0,
 });
 
 export const $guarantorDetailsData = Signal({

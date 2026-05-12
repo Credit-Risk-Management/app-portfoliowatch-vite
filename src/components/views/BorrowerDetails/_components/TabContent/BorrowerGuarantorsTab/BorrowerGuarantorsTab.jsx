@@ -1,12 +1,13 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { Card, Row, Col, Button } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowRight, faPlus, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faPlus, faEdit, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router-dom';
 import { $borrower } from '@src/consts/consts';
 import { formatCurrency } from '@src/utils/formatCurrency';
 import { GuarantorNetWorthWithMemoFlag } from '@src/components/views/GuarantorDetails/_utils/GuarantorNetWorthWithMemoFlag';
 import { getLatestGuarantorFinancial } from '@src/components/views/GuarantorDetails/_utils/guarantorFinancialsSource.helpers';
+import { openDeleteGuarantorConfirmFromBorrowerTab } from '@src/components/views/GuarantorDetails/_helpers/guarantorDetails.events';
 import * as guarantorModalEvents from './_helpers/guarantorModal.events';
 
 export function BorrowerGuarantorsTab() {
@@ -77,20 +78,35 @@ export function BorrowerGuarantorsTab() {
           <Col key={guarantor.id} xs={12} lg={6} className="mb-3">
             <Card className="bg-info-800 border-info-600 h-100">
               <Card.Body className="d-flex flex-column">
-                <div className="d-flex justify-content-between align-items-center mb-12 gap-8">
+                <div className="d-flex justify-content-between align-items-center mb-12 gap-8 flex-wrap">
                   <h5 className="text-info-50 mb-0 fw-bold text-break">
                     Guarantor: {guarantor.name}
                   </h5>
-                  <Button
-                    variant="outline-primary-100"
-                    size="sm"
-                    className="flex-shrink-0"
-                    onClick={() => guarantorModalEvents.openEditBorrowerGuarantorModal(guarantor)}
-                    aria-label={`Edit ${guarantor.name}`}
-                  >
-                    <FontAwesomeIcon icon={faEdit} className="me-8" />
-                    Edit
-                  </Button>
+                  <div className="d-flex align-items-center gap-2 flex-shrink-0">
+                    <Button
+                      variant="outline-primary-100"
+                      size="sm"
+                      className="me-4"
+                      onClick={() => guarantorModalEvents.openEditBorrowerGuarantorModal(guarantor)}
+                      aria-label={`Edit ${guarantor.name}`}
+                    >
+                      <FontAwesomeIcon icon={faEdit} className="me-8" />
+                      Edit
+                    </Button>
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      onClick={() => openDeleteGuarantorConfirmFromBorrowerTab({
+                        guarantorId: guarantor.id,
+                        borrowerId: borrower.id,
+                        name: guarantor.name,
+                      })}
+                      aria-label={`Delete ${guarantor.name}`}
+                    >
+                      <FontAwesomeIcon icon={faTrash} className="me-8" />
+                      Delete
+                    </Button>
+                  </div>
                 </div>
 
                 <Row className="mb-16 g-2  justify-content-between">
