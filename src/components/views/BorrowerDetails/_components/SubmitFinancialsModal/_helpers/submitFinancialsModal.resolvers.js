@@ -466,22 +466,6 @@ const computeRemovedStoredDocumentIds = (documentsByType, initialStoredDocumentI
   return removed;
 };
 
-/** Stored doc IDs removed from the modal since load (edit submit → API deletes after queue). */
-const computeRemovedStoredDocumentIds = (documentsByType, initialStoredDocumentIdsByType, editingId) => {
-  if (!editingId || !initialStoredDocumentIdsByType || !documentsByType) return [];
-  const removed = [];
-  Object.keys(initialStoredDocumentIdsByType).forEach((docType) => {
-    const docs = documentsByType[docType] || [];
-    const currentStoredIds = new Set(
-      docs.filter((d) => d.isStored && d.id).map((d) => d.id),
-    );
-    (initialStoredDocumentIdsByType[docType] || []).forEach((id) => {
-      if (!currentStoredIds.has(id)) removed.push(id);
-    });
-  });
-  return removed;
-};
-
 export const handleSubmit = async (onCloseCallback) => {
   const { $modalState } = consts;
   try {
