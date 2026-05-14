@@ -8,7 +8,12 @@ import {
   $publicImpactQuestionnaireView,
 } from './publicImpactQuestionnaire.consts';
 
-export const loadImpactQuestionnairePublic = async (token) => {
+/**
+ * @param {string} token
+ * @param {{ suppressDangerAlert?: boolean }} [options]
+ */
+export const loadImpactQuestionnairePublic = async (token, options = {}) => {
+  const { suppressDangerAlert = false } = options;
   if (!token) {
     $publicImpactQuestionnaireView.update({
       isLoading: false,
@@ -34,7 +39,9 @@ export const loadImpactQuestionnairePublic = async (token) => {
     });
   } catch (err) {
     const message = err?.message || err?.error || 'Invalid or expired link';
-    dangerAlert(typeof message === 'string' ? message : 'Invalid link');
+    if (!suppressDangerAlert) {
+      dangerAlert(typeof message === 'string' ? message : 'Invalid link');
+    }
     $publicImpactQuestionnaireView.update({
       isLoading: false,
       error: typeof message === 'string' ? message : 'Invalid link',
@@ -43,7 +50,12 @@ export const loadImpactQuestionnairePublic = async (token) => {
   }
 };
 
-export const submitImpactQuestionnairePublicForm = async (token) => {
+/**
+ * @param {string} token
+ * @param {{ suppressDangerAlert?: boolean }} [options]
+ */
+export const submitImpactQuestionnairePublicForm = async (token, options = {}) => {
+  const { suppressDangerAlert = false } = options;
   const form = $publicImpactQuestionnaireForm.value;
   const currentEmployees = parseInt(String(form.currentEmployees).trim(), 10);
   const averageMonthlyFte = parseFloat(String(form.averageMonthlyFte).trim());
@@ -58,7 +70,13 @@ export const submitImpactQuestionnairePublicForm = async (token) => {
     || !Number.isFinite(averageEmployeeWage)
     || averageEmployeeWage <= 0
   ) {
-    dangerAlert('Please enter valid positive numbers for all fields.');
+    if (!suppressDangerAlert) {
+      dangerAlert('Please enter valid positive numbers for all fields.');
+    } else {
+      $publicImpactQuestionnaireView.update({
+        error: 'Please enter valid positive numbers for all fields.',
+      });
+    }
     return;
   }
 
@@ -79,7 +97,9 @@ export const submitImpactQuestionnairePublicForm = async (token) => {
     });
   } catch (err) {
     const message = err?.message || err?.error || 'Submission failed';
-    dangerAlert(typeof message === 'string' ? message : 'Submission failed');
+    if (!suppressDangerAlert) {
+      dangerAlert(typeof message === 'string' ? message : 'Submission failed');
+    }
     $publicImpactQuestionnaireView.update({
       isSubmitting: false,
       error: typeof message === 'string' ? message : null,

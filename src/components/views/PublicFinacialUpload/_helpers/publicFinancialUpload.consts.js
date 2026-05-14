@@ -90,10 +90,12 @@ export const $publicFinancialUploadView = Signal({
   isLoading: true,
   isSubmitting: false,
   activeModalKey: null,
+  /** Parsed from `linkData.impactQuestionnaireUrl` while the impact questionnaire modal is open. */
+  impactQuestionnaireToken: null,
   error: null,
   success: false,
-  /** After success: user closed "take impact questionnaire?" or chose Not now */
-  impactQuestionnairePromptDismissed: false,
+  /** True after successful public impact questionnaire submit (or link already submitted). */
+  impactQuestionnairePublicComplete: false,
   priorDebtOpening: false,
   /** Worksheet modal validation (UI only; not submitted to API). */
   debtScheduleWorksheetErrors: null,
@@ -152,6 +154,14 @@ export const SECTION_DEF_BY_ID = {
     helperText:
       'Open the worksheet, enter your debts and sign. Your lender receives one official PDF generated when you submit — you do not upload a separate debt schedule file.',
     inputId: 'public-financial-debt-schedule',
+    replaceButtonVariant: 'outline-secondary',
+  },
+  impactQuestionnaire: {
+    sectionId: 'impactQuestionnaire',
+    title: 'Impact questionnaire',
+    helperText:
+      'Open the questionnaire and answer all fields. Your lender requires this for portfolio reporting before you can submit your financials.',
+    inputId: 'public-financial-impact-questionnaire',
     replaceButtonVariant: 'outline-secondary',
   },
 };

@@ -1,0 +1,97 @@
+---
+description: Bootstrap 5, SCSS vars, utilities, and design-token discipline
+alwaysApply: true
+---
+
+# Bootstrap 5 / utility-first CSS
+
+## Stack
+
+- Bootstrap 5 (latest) is always available.
+- Project has `_vars.scss` (or equivalent) with custom spacers, color banks, and design tokens.
+- Sass/SCSS is the preprocessor.
+
+---
+
+## Rule 1 — Check vars before writing any value
+
+Before hardcoding ANY value (color, spacing, border-radius, font size, shadow, etc.):
+
+1. Open the vars file (`_vars.scss`, `variables.scss`, `_tokens.scss`, or similar).
+2. Look for a matching custom variable or spacer.
+3. If a match exists → use it.
+4. If no match → fall back to a Bootstrap variable (`$primary`, `$spacer`, `$border-radius`, etc.).
+5. Only write a raw value (e.g. `#3a86ff`, `1.25rem`) if neither exists.
+
+**Always search for:** custom color maps / `$colors` banks, custom `$spacers` entries (e.g. `map-get($spacers, 6)`), any `$custom-*` or project tokens.
+
+---
+
+## Rule 2 — Utility classes before custom CSS
+
+Priority:
+
+1. **Bootstrap utilities** — spacing (`mb-3`), color (`text-primary`), display, flex, typography, borders, etc.
+2. **Bootstrap component classes** — `card`, `btn`, `badge`, `alert`, etc.
+3. **CSS custom properties / vars** — e.g. scoped rules referencing vars, or `--bs-*` overrides where appropriate.
+4. **New custom CSS** — only when utilities cannot achieve the result.
+
+When adding custom CSS, call it out: *"No Bootstrap utility covers this — adding custom CSS for [reason]."*
+
+---
+
+## Rule 3 — Ask before changing vars or utility maps
+
+Never silently add to the vars file or extend Bootstrap utilities.
+
+- **Missing color (not in bank, not a Bootstrap semantic):** ask to add and name it.
+- **Could be a `$utilities` extension:** ask before adding map entries vs one-off CSS.
+- **Missing spacer:** ask before extending `$spacers`.
+- **General:** never silently modify vars or utility config unless the user explicitly says to add/extend in the prompt.
+
+---
+
+## Rule 4 — Bootstrap overrides live in the vars file
+
+- Do not override Bootstrap defaults inline or in component files.
+- Put `$primary`, `$font-size-base`, `$border-radius`, etc. in the vars file before the Bootstrap import.
+- New tokens: define once in vars, reference by variable everywhere.
+
+---
+
+## Rule 5 — Spacer discipline
+
+- Custom spacers continue Bootstrap’s naming (`6`, `7`, `8` → `mb-6`, `px-7`, etc.).
+- Read the full `$spacers` map before picking spacing; use utilities or `map-get($spacers, n)`, not raw `px`/`rem` when a spacer exists.
+- If no spacer exists, ask (Rule 3).
+
+---
+
+## Rule 6 — Color discipline
+
+- Color bank in vars is the source of truth for brand/UI colors.
+- Use Bootstrap semantic colors (`$success`, `$danger`, etc.) for status unless vars override them.
+- Do not introduce a new hex without checking the color bank.
+
+---
+
+## Workflow (styling tasks)
+
+1. Read vars → list tokens.
+2. Bootstrap utility? → use it.
+3. Bootstrap component class? → use it.
+4. Var/token? → reference it.
+5. Bootstrap variable? → reference it.
+6. New token/color/utility? → **ask** before adding.
+7. User confirmed and nothing fits → minimal custom CSS + why.
+
+---
+
+## Anti-patterns
+
+- Hardcoded hex outside the vars file.
+- Inline `style=""` with raw values (prefer utilities or CSS vars).
+- Duplicating spacing or color values across files.
+- Custom CSS that duplicates an existing Bootstrap utility.
+- Overriding Bootstrap variables outside the vars file.
+- Using `!important` to beat Bootstrap — fix the selector instead.

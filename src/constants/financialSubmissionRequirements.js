@@ -25,7 +25,7 @@ export const Q1_TEST_UPLOAD_LINK_OPTIONS = {
   ],
   periodLabel: 'Q1 2026',
   lenderInstructions:
-    'Quarterly package for Q1 2026 (calendar).Balance Sheet - dated 3/31/2026 and Income Statement for 1/1/2026 - 3/31/2026 and Debt Schedule as of 3/31/2026',
+    'Quarterly package for Q1 2026 (calendar). Balance sheet dated 3/31/2026, income statement for 1/1/2026–3/31/2026, debt schedule as of 3/31/2026, and the impact questionnaire (open from the table before submit).',
 };
 
 /**
