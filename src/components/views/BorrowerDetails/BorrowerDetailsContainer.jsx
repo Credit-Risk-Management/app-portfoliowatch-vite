@@ -1,4 +1,3 @@
-/* eslint-disable react/no-danger */
 import { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';

@@ -5,7 +5,6 @@ export const handleRowFileChange = (e, sectionId) => {
   const files = Array.from(e.target.files || []);
   const { target } = e;
   if (target) {
-    // eslint-disable-next-line no-param-reassign
     target.value = '';
   }
   if (files.length === 0) return;

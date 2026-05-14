@@ -60,7 +60,7 @@ const PublicFinancialUpload = () => {
   const debtWorksheetForm = $debtScheduleWorksheetForm.value;
   const canRunExtraction = requiredPdfSections.length > 0
     && requiredPdfSections.every(({ sectionId }) => isSectionReadyForSubmit(sectionId, debtWorksheetForm));
-  console.log('canRunExtraction', canRunExtraction);
+
   if (isLoading) {
     return (
       <ContentWrapper

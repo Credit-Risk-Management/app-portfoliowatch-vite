@@ -1,5 +1,5 @@
 /* eslint-disable no-nested-ternary */
-/* eslint-disable no-return-await */
+
 import { useEffect } from 'react';
 import { Alert, ButtonGroup, Button, Row, Col, Form } from 'react-bootstrap';
 import UniversalModal from '@src/components/global/UniversalModal';
