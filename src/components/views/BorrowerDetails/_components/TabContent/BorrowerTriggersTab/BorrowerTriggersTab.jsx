@@ -7,10 +7,13 @@ import {
   normalizeRatioDecimalToPercent,
   formatRatioPercentForDisplay,
 } from '@src/utils/ratioPercent';
-import { annualizedEbitdaForCovenantDisplay } from '@src/utils/ebitdaIncomePeriod';
 import { $modalState } from '../../SubmitFinancialsModal/_helpers/submitFinancialsModal.consts';
 import { fetchFinancialHistory } from '../BorrowerFinancialsTab/_helpers/borrowerFinancialsTab.resolvers';
 import { hasIncomeStatementAndBalanceSheet } from '../BorrowerFinancialsTab/_helpers/borrowerFinancialsTab.helpers';
+import {
+  buildEbitdaTriggerComparison,
+  formatSummaryCurrency,
+} from '../BorrowerDebtServiceTab/_helpers/debtService.helpers';
 
 const BorrowerTriggersTab = (props = {}) => {
   const list = $borrowerFinancials.value?.list || [];
@@ -39,12 +42,8 @@ const BorrowerTriggersTab = (props = {}) => {
   };
 
   const formatCurrency = (value) => {
-    if (!value) return 'N/A';
-    const num = parseFloat(value);
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-    }).format(num);
+    if (value == null || value === '') return 'N/A';
+    return formatSummaryCurrency(value);
   };
 
   const formatPercentage = (value) => {
@@ -71,51 +70,114 @@ const BorrowerTriggersTab = (props = {}) => {
       || currentAsOfDate.getDate() !== previousAsOfDate.getDate()
     );
 
-  const curQ = Boolean(currentForm.incomeStatementPackageQuarterly);
-  const prevQ = Boolean(previousFinancial?.incomeStatementPackageQuarterly);
-  const useEbitdaRunRate = curQ || prevQ;
-  const prevEbitdaComparable = annualizedEbitdaForCovenantDisplay(previousFinancial?.ebitda, prevQ);
-  const curEbitdaComparable = annualizedEbitdaForCovenantDisplay(currentForm.ebitda, curQ);
+  const ebitdaComparison = buildEbitdaTriggerComparison({
+    financialsList: list,
+    currentFinancial: currentForm,
+    previousFinancial,
+  });
   const storedEbitdaChange = currentForm.changeInEbitda != null && String(currentForm.changeInEbitda).trim() !== ''
     ? parseFloat(currentForm.changeInEbitda)
     : null;
 
+  const changeColorClass = (change) => {
+    if (change > 0) return 'text-success-500';
+    if (change < 0) return 'text-danger-700';
+    return 'text-info-200';
+  };
+
+  const ChangeIndicator = ({ change }) => (
+    <div className={`mt-12 fw-bold fs-6 ${changeColorClass(change)}`}>
+      Change: {formatPercentage(change)}
+      {change !== null && change > 0 && ' ↑'}
+      {change !== null && change < 0 && ' ↓'}
+    </div>
+  );
+
+  const ValuePair = ({ previousValue, currentValue, isCurrency = true, formatValue }) => (
+    <Row>
+      <Col xs={12} sm={6} className="mb-12 mb-sm-0">
+        <div className="text-info-200 small">Previous</div>
+        <div className="text-info-100 fw-600 fs-6">
+          {isCurrency
+            ? formatCurrency(previousValue)
+            : (formatValue ? formatValue(previousValue) : (previousValue || 'N/A'))}
+        </div>
+      </Col>
+      <Col xs={12} sm={6}>
+        <div className="text-info-200 small">Current</div>
+        <div className="text-info-100 fw-600 fs-6">
+          {isCurrency
+            ? formatCurrency(currentValue)
+            : (formatValue ? formatValue(currentValue) : (currentValue || 'N/A'))}
+        </div>
+      </Col>
+    </Row>
+  );
+
+  const EbitdaTriggerCard = () => {
+    const reportedChange = calculateChange(
+      ebitdaComparison.reportedCurrent,
+      ebitdaComparison.reportedPrevious,
+    );
+    const estimatedChange = calculateChange(
+      ebitdaComparison.estimatedCurrent,
+      ebitdaComparison.estimatedPrevious,
+    );
+
+    return (
+      <Card className="bg-info-700 mb-16">
+        <Card.Body>
+          <h6 className="text-info-100 fw-600 mb-16">Change in EBITDA</h6>
+
+          <div className="mb-20 pb-20 border-bottom border-info-500">
+            <div className="text-info-200 small fw-600 mb-12">{ebitdaComparison.reportedSectionTitle}</div>
+            <ValuePair
+              previousValue={ebitdaComparison.reportedPrevious}
+              currentValue={ebitdaComparison.reportedCurrent}
+            />
+            <ChangeIndicator change={reportedChange} />
+          </div>
+
+          <div>
+            <div className="text-info-200 small fw-600 mb-12">{ebitdaComparison.estimatedSectionTitle}</div>
+            <ValuePair
+              previousValue={ebitdaComparison.estimatedPrevious}
+              currentValue={ebitdaComparison.estimatedCurrent}
+            />
+            <ChangeIndicator change={estimatedChange} />
+          </div>
+
+          <p className="text-info-300 small fst-italic mb-0 mt-20">
+            EBITDA figures use the same calculations as the Debt Service summary.
+            {storedEbitdaChange != null && Number.isFinite(storedEbitdaChange) ? (
+              <>
+                {' '}
+                WATCH stored change in EBITDA:
+                {' '}
+                {formatPercentage(storedEbitdaChange)}
+                .
+              </>
+            ) : null}
+          </p>
+        </Card.Body>
+      </Card>
+    );
+  };
+
   const TriggerCard = ({ title, previousValue, currentValue, isCurrency = true, formatValue }) => {
     const change = calculateChange(currentValue, previousValue);
-    let changeColor = 'text-info-200';
-    if (change > 0) {
-      changeColor = 'text-success-500';
-    } else if (change < 0) {
-      changeColor = 'text-danger-700';
-    }
 
     return (
       <Card className="bg-info-700 mb-16">
         <Card.Body>
           <h6 className="text-info-100 fw-600 mb-16">{title}</h6>
-          <Row>
-            <Col xs={12} sm={6} className="mb-12 mb-sm-0">
-              <div className="text-info-200 small">Previous</div>
-              <div className="text-info-100 fw-600 fs-6">
-                {isCurrency
-                  ? formatCurrency(previousValue)
-                  : (formatValue ? formatValue(previousValue) : (previousValue || 'N/A'))}
-              </div>
-            </Col>
-            <Col xs={12} sm={6}>
-              <div className="text-info-200 small">Current</div>
-              <div className="text-info-100 fw-600 fs-6">
-                {isCurrency
-                  ? formatCurrency(currentValue)
-                  : (formatValue ? formatValue(currentValue) : (currentValue || 'N/A'))}
-              </div>
-            </Col>
-          </Row>
-          <div className={`mt-16 fw-bold fs-6 ${changeColor}`}>
-            Change: {formatPercentage(change)}
-            {change !== null && change > 0 && ' ↑'}
-            {change !== null && change < 0 && ' ↓'}
-          </div>
+          <ValuePair
+            previousValue={previousValue}
+            currentValue={currentValue}
+            isCurrency={isCurrency}
+            formatValue={formatValue}
+          />
+          <ChangeIndicator change={change} />
         </Card.Body>
       </Card>
     );
@@ -151,12 +213,6 @@ const BorrowerTriggersTab = (props = {}) => {
       <h5 className="text-info-100 mb-24 fw-600">
         Trigger Analysis - Change from Previous Period
       </h5>
-      {useEbitdaRunRate && (
-        <Alert variant="secondary" className="mb-16 small text-info-200 border-info-100">
-          <strong>Reported</strong> uses EBITDA as filed on the statements. <strong>Estimated</strong> annualizes quarterly
-          amounts (×4) for an illustration only—it is not a forecast, and WATCH applies its own rules to the stored metrics.
-        </Alert>
-      )}
       {isPeriodComparisonMismatched && (
         <Alert variant="warning" className="mb-16">
           <div className="fw-600">Default indicator: period mismatch detected</div>
@@ -177,40 +233,27 @@ const BorrowerTriggersTab = (props = {}) => {
             currentValue={currentForm.cash || currentForm.liquidity}
           />
         </Col>
-        <Col md={6}>
-          {useEbitdaRunRate ? (
-            <div>
+        {ebitdaComparison.showEbitdaCard ? (
+          <Col md={6}>
+            {ebitdaComparison.useDscrComparison ? (
               <TriggerCard
-                title="Change in EBITDA (reported amounts)"
-                previousValue={previousFinancial.ebitda}
-                currentValue={currentForm.ebitda}
+                title="Change in Debt Service Coverage"
+                previousValue={ebitdaComparison.previousDscr}
+                currentValue={ebitdaComparison.currentDscr}
+                isCurrency={false}
+                formatValue={(value) => (value == null ? 'N/A' : Number(value).toFixed(2))}
               />
+            ) : ebitdaComparison.useQuarterlySections ? (
+              <EbitdaTriggerCard />
+            ) : (
               <TriggerCard
-                title="Change in EBITDA (estimated, annual run-rate)"
-                previousValue={prevEbitdaComparable}
-                currentValue={curEbitdaComparable}
+                title="Change in EBITDA"
+                previousValue={ebitdaComparison.reportedPrevious}
+                currentValue={ebitdaComparison.reportedCurrent}
               />
-              <div className="text-info-300 small fst-italic mb-16 px-8">
-                Estimated view uses ×4 as a rough annualization for discussion only, not a projection of actual results.
-                {storedEbitdaChange != null && Number.isFinite(storedEbitdaChange) ? (
-                  <>
-                    {' '}
-                    WATCH stored change in EBITDA:
-                    {' '}
-                    {formatPercentage(storedEbitdaChange)}
-                    .
-                  </>
-                ) : null}
-              </div>
-            </div>
-          ) : (
-            <TriggerCard
-              title="Change in EBITDA"
-              previousValue={previousFinancial.ebitda}
-              currentValue={currentForm.ebitda}
-            />
-          )}
-        </Col>
+            )}
+          </Col>
+        ) : null}
         <Col md={6}>
           <TriggerCard
             title="Change in Profit Margin"

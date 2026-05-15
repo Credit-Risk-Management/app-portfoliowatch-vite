@@ -38,6 +38,7 @@ export const $borrowers = Signal({
 
 export const $borrowersFilter = Signal({
   page: 1,
+  limit: 10,
   sortKey: 'name',
   sortDirection: 'asc',
   searchTerm: '',
@@ -85,6 +86,7 @@ export const $loans = Signal({
 
 export const $loansFilter = Signal({
   page: 1,
+  limit: 10,
   sortKey: undefined,
   sortDirection: undefined,
   searchTerm: '',

@@ -1,6 +1,7 @@
 import { $borrowersView, $borrowersFilter, $borrowersForm } from '@src/signals';
 import borrowersApi from '@src/api/borrowers.api';
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
+import { resolvePageLimit } from '@src/consts/consts';
 import * as resolvers from './borrowers.resolvers';
 
 export const handleAddBorrower = async () => {
@@ -79,6 +80,7 @@ export const handleBorrowerFilterChange = async () => {
       relationshipManager: relationshipManagerValue,
       quarterlyPackageComplete: $borrowersFilter.value.quarterlyPackageComplete,
       impactQuestionnaireComplete: $borrowersFilter.value.impactQuestionnaireComplete,
+      limit: resolvePageLimit($borrowersFilter.value.limit),
     };
 
     await resolvers.fetchAndSetBorrowerData(filters);
