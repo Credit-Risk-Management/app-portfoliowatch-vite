@@ -17,7 +17,11 @@ import {
 import { formatCurrency } from '@src/utils/formatCurrency';
 import { AddLoanModal, DeleteLoanModal, EditLoanModal, SaveReportModal } from '@src/components/views/Loans/_components';
 import SelectInput from '@src/components/global/Inputs/SelectInput';
-import { WATCH_SCORE_OPTIONS } from '@src/consts/consts';
+import {
+  WATCH_SCORE_OPTIONS,
+  PAGE_LIMIT_OPTIONS,
+  resolvePageLimit,
+} from '@src/consts/consts';
 import { handleSaveToReports, handleComputeWatchScores } from './_helpers/loans.events';
 import { loadReferenceData, fetchAndSetLoans } from './_helpers/loans.resolvers';
 import { formatDate, getRelationshipManagerOptions } from './_helpers/loans.helpers';
@@ -56,6 +60,7 @@ const Loans = () => {
     $loansFilter.value.watchScore,
     $loansFilter.value.relationshipManager,
     $loansFilter.value.page,
+    $loansFilter.value.limit,
     $loansFilter.value.sortKey,
     $loansFilter.value.sortDirection,
   ]);
@@ -172,7 +177,27 @@ const Loans = () => {
           </Col>
         </Row>
 
-        <Row>
+        <Row className="mb-8 align-items-center justify-content-end">
+          <Col xs="auto" className="d-flex align-items-center gap-2">
+            <span className="text-info-100 text-nowrap small me-4">Rows per page</span>
+            <SelectInput
+              options={PAGE_LIMIT_OPTIONS}
+              value={$loansFilter.value.limit}
+              onChange={(selectedOption) => {
+                const limit = resolvePageLimit(selectedOption?.value);
+                $loansFilter.update({ limit, page: 1 });
+              }}
+              placeholder="Limit"
+              signal={$loansFilter}
+              name="limit"
+              isMulti={false}
+              isSearchable={false}
+              notClearable
+            />
+          </Col>
+        </Row>
+
+        <Row className="mb-8">
           <Col xs={12}>
             <SignalTable
               $filter={$loansFilter}
@@ -181,7 +206,8 @@ const Loans = () => {
               rows={rows}
               totalCount={$loans.value?.totalCount || 0}
               currentPage={$loansFilter.value.page}
-              itemsPerPageAmount={10}
+              currentPageItemsCount={($loans.value?.list || []).length}
+              itemsPerPageAmount={resolvePageLimit($loansFilter.value.limit)}
               onRowClick={(loan) => navigate(`/loans/${loan.id}`)}
             />
           </Col>

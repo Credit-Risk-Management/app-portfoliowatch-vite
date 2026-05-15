@@ -24,6 +24,10 @@ import { GuarantorNetWorthWithMemoFlag } from '@src/components/views/GuarantorDe
 import Loadable from '@src/components/global/Loadable';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import getResolvedIndustryTitle from '@src/utils/naicsTitles';
+import {
+  hasFourConsecutiveQuartersWithEbitdaThroughLastYearend,
+  resolveLoanDetailDebtServiceActual,
+} from '@src/components/views/BorrowerDetails/_components/TabContent/BorrowerDebtServiceTab/_helpers/debtService.helpers';
 import SubmitCollateralModal from './_components/SubmitCollateralModal';
 import { $loanCollateralView } from './_components/submitCollateralModal.signals';
 import AddCreditMemoModal from './_components/AddCreditMemoModal';
@@ -227,8 +231,16 @@ const LoanDetail = () => {
     }
     return labels;
   })();
+  const borrowerFinancials = loanData?.borrower?.financials ?? [];
+  const hasFourQuarterEbitdaChain = hasFourConsecutiveQuartersWithEbitdaThroughLastYearend(
+    borrowerFinancials,
+  );
+  const covenantDebtServiceActual = resolveLoanDetailDebtServiceActual(
+    borrowerFinancials,
+    loanData?.debtService,
+  );
   const isDefaultWatchScore = normalizedWatchScore === 3
-    && (loanData?.borrower?.financials?.length ?? 0) === 0;
+    && (borrowerFinancials.length === 0);
 
   const globalCashFlowMetrics = computeLoanGlobalCashFlowAnalysis({
     borrowerEbitda: loanData?.ebitda,
@@ -499,10 +511,20 @@ const LoanDetail = () => {
                   <div className="text-info-100 fw-200 mt-16 mb-4">Debt Service Coverage</div>
                   <div>
                     <span className="text-info-50 fw-500 me-8">Actual:</span>
-                    <span className={`fs-5 fw-bold text-${getCovenantStatus($loan.value?.loan?.debtService, $loan.value?.loan?.debtServiceCovenant).variant}`}>
-                      {formatRatio($loan.value?.loan?.debtService)}
+                    <span className={`fs-5 fw-bold text-${getCovenantStatus(covenantDebtServiceActual, $loan.value?.loan?.debtServiceCovenant).variant}`}>
+                      {formatRatio(covenantDebtServiceActual)}
                     </span>
                   </div>
+                  {!hasFourQuarterEbitdaChain && covenantDebtServiceActual != null && (
+                    <div className="text-info-300 small mt-4">
+                      Based on last annual (yearend) financial — quarterly TTM path requires four consecutive quarters.
+                    </div>
+                  )}
+                  {!hasFourQuarterEbitdaChain && covenantDebtServiceActual == null && (
+                    <div className="text-info-300 small mt-4">
+                      No stored DSCR on the last yearend financial; add annual filing or complete four consecutive quarters.
+                    </div>
+                  )}
                   <div className="mb-8">
                     <span className="text-info-50 fw-500 me-8">Covenant:</span>
                     <span className="fs-5 fw-bold text-secondary-200">

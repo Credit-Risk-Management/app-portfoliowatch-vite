@@ -1,5 +1,5 @@
 import { $borrower } from '@src/consts/consts';
-import { $debtServiceHistory } from '@src/signals';
+import { $debtServiceHistory, $borrowerFinancials } from '@src/signals';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
 import debtServiceHistoryApi from '@src/api/debtServiceHistory.api';
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
@@ -45,28 +45,39 @@ export const fetchFinancialHistory = async () => {
   if (!$borrower.value?.borrower?.id) return;
 
   const borrowerId = $borrower.value.borrower.id;
+  const existingFinancials = $borrowerFinancials.value?.list || [];
 
   try {
+    let financialsList = existingFinancials;
+
+    if (financialsList.length === 0) {
+      const pageResp = await borrowerFinancialsApi.getByBorrowerId(borrowerId, {
+        sortKey: 'asOfDate',
+        sortDirection: 'desc',
+        limit: 24,
+      });
+      if (pageResp.success && pageResp.data?.length > 0) {
+        financialsList = pageResp.data;
+      }
+    }
+
     // Always use server 'latest for DSCR': newest submitted row with non-null EBITDA
     // (see borrowerFinancials.getLatestByBorrowerId — not the same as newest asOfDate only).
     const latestResp = await borrowerFinancialsApi.getLatestByBorrowerId(borrowerId);
     if (latestResp.success && latestResp.data) {
-      $debtServiceContainerDetails.update({ latestFinancial: latestResp.data });
+      $debtServiceContainerDetails.update({
+        latestFinancial: latestResp.data,
+        financialsList,
+      });
       return;
     }
 
     // No row with EBITDA yet: fall back to most recent statement by as-of date
-    const pageResp = await borrowerFinancialsApi.getByBorrowerId(borrowerId, {
-      sortKey: 'asOfDate',
-      sortDirection: 'desc',
-      limit: 1,
+    const latestFromList = financialsList[0] ?? null;
+    $debtServiceContainerDetails.update({
+      latestFinancial: latestFromList,
+      financialsList,
     });
-
-    if (pageResp.success && pageResp.data?.length > 0) {
-      $debtServiceContainerDetails.update({ latestFinancial: pageResp.data[0] });
-    } else {
-      $debtServiceContainerDetails.update({ latestFinancial: null });
-    }
   } catch (error) {
     console.error('Error fetching financial history:', error);
     // Fail silently - not critical

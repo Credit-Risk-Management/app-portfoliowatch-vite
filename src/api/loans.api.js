@@ -66,4 +66,9 @@ export const loansApi = wrapApiWithDebounce(loansApiBase, {
   // Note: create, update, delete, and compute operations are NOT debounced
 });
 
+/**
+ * Non-debounced getAll for the loans list table (limit/page changes must not share debounced responses).
+ */
+export const loansSearchGetAll = (filters) => loansApiBase.getAll(filters);
+
 export default loansApi;

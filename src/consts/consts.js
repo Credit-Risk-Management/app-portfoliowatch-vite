@@ -1,5 +1,21 @@
 import { Signal } from '@fyclabs/tools-fyc-react/signals';
 
+export const DEFAULT_PAGE_LIMIT = 10;
+
+export const PAGE_LIMIT_OPTIONS = [
+  { value: 5, label: '5' },
+  { value: 10, label: '10' },
+  { value: 25, label: '25' },
+  { value: 50, label: '50' },
+  { value: 100, label: '100' },
+];
+
+export const resolvePageLimit = (rawLimit) => {
+  const limit = Number(rawLimit);
+  const allowed = PAGE_LIMIT_OPTIONS.map((option) => option.value);
+  return allowed.includes(limit) ? limit : DEFAULT_PAGE_LIMIT;
+};
+
 export const WATCH_SCORE_OPTIONS = {
   null: {
     value: null,
