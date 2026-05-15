@@ -23,6 +23,11 @@ import {
 import SelectInput from '@src/components/global/Inputs/SelectInput';
 import { formatCurrency } from '@src/utils/formatCurrency';
 import { borrowersFilterToUrlParams } from '@src/utils/tableFilterUrlParams';
+import {
+  DEFAULT_PAGE_LIMIT,
+  PAGE_LIMIT_OPTIONS,
+  resolvePageLimit,
+} from '@src/consts/consts';
 import { useRef } from 'react';
 import * as consts from './_helpers/borrowers.consts';
 import * as resolvers from './_helpers/borrowers.resolvers';
@@ -52,9 +57,15 @@ const Borrowers = () => {
       const relationshipManagerParam = searchParams.get('relationshipManager');
       const quarterlyPackageParam = searchParams.get('quarterlyPackageComplete') || '';
       const impactQuestionnaireParam = searchParams.get('impactQuestionnaireComplete') || '';
+      const limitParam = searchParams.get('limit');
+      const parsedLimit = limitParam ? Number(limitParam) : DEFAULT_PAGE_LIMIT;
+      const limit = PAGE_LIMIT_OPTIONS.some((option) => option.value === parsedLimit)
+        ? parsedLimit
+        : DEFAULT_PAGE_LIMIT;
       $borrowersFilter.update({
         searchTerm,
         page: parsedPage,
+        limit,
         sortKey,
         sortDirection,
         borrowerType: borrowerTypeParam ? borrowerTypeParam.split(',').filter(Boolean) : [],
@@ -85,6 +96,7 @@ const Borrowers = () => {
       borrowerType: borrowerTypeValue,
       relationshipManager: relationshipManagerValue,
       page: $borrowersFilter.value.page,
+      limit: resolvePageLimit($borrowersFilter.value.limit),
     };
 
     await resolvers.fetchAndSetBorrowerData(filters);
@@ -93,6 +105,7 @@ const Borrowers = () => {
     $borrowersFilter.value.borrowerType,
     $borrowersFilter.value.relationshipManager,
     $borrowersFilter.value.page,
+    $borrowersFilter.value.limit,
     $borrowersFilter.value.sortKey,
     $borrowersFilter.value.sortDirection,
     $borrowersFilter.value.quarterlyPackageComplete,
@@ -266,7 +279,27 @@ const Borrowers = () => {
       <EditBorrowerModal />
       <DeleteBorrowerModal />
 
-      <Row>
+      <Row className="mb-8 align-items-center justify-content-end">
+        <Col xs="auto" className="d-flex align-items-center gap-2">
+          <span className="text-info-100 text-nowrap small me-4">Rows per page</span>
+          <SelectInput
+            options={PAGE_LIMIT_OPTIONS}
+            value={$borrowersFilter.value.limit}
+            onChange={(selectedOption) => {
+              const limit = resolvePageLimit(selectedOption?.value);
+              $borrowersFilter.update({ limit, page: 1 });
+              setSearchParams(borrowersFilterToUrlParams($borrowersFilter.value));
+            }}
+            placeholder="Limit"
+            signal={$borrowersFilter}
+            name="limit"
+            isMulti={false}
+            isSearchable={false}
+            notClearable
+          />
+        </Col>
+      </Row>
+      <Row className="mb-8">
         <Col xs={12}>
           <div style={$borrowersView.value.showAllMode ? { maxHeight: '70vh', overflowY: 'auto' } : undefined}>
             <SignalTable
@@ -276,7 +309,8 @@ const Borrowers = () => {
               rows={rows}
               totalCount={$borrowers.value.totalCount}
               currentPage={$borrowersFilter.value.page}
-              itemsPerPageAmount={10}
+              currentPageItemsCount={$borrowers.value.list.length}
+              itemsPerPageAmount={resolvePageLimit($borrowersFilter.value.limit)}
               hasPagination={!$borrowersView.value.showAllMode}
               className="shadow"
               onRowClick={(borrower) => {

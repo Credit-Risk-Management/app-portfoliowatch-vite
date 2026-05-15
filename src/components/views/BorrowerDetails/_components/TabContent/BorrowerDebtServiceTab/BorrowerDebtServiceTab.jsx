@@ -1,11 +1,10 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useMemo } from 'react';
-import { Button, Row, Col } from 'react-bootstrap';
+import { Button } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faTrash, faEdit, faDollarSign, faEye } from '@fortawesome/free-solid-svg-icons';
 import SignalTable from '@src/components/global/SignalTable';
 import ContextMenu from '@src/components/global/ContextMenu';
-import UniversalCard from '@src/components/global/UniversalCard';
 import { $debtServiceHistory, $debtServiceHistoryView, $borrowerFinancials } from '@src/signals';
 import { $borrower } from '@src/consts/consts';
 import { formatCurrency } from '@src/utils/formatCurrency';
@@ -16,6 +15,8 @@ import { handleAddNew, handleEdit, handleDelete, handleViewDetails, handleCloseM
 import DebtServiceModalUpsert from './_components/DebtServiceModalUpsert';
 import DebtServiceModalView from './_components/DebtServiceModalView';
 import DebtServiceModalDelete from './_components/DebtServiceModalDelete';
+import DebtServiceQuarterlySummary from './_components/DebtServiceQuarterlySummary';
+import { buildQuarterlyDebtServiceSummary } from './_helpers/debtService.helpers';
 
 export function BorrowerDebtServiceTab() {
   // Fetch debt service history and financials when tab loads
@@ -25,64 +26,25 @@ export function BorrowerDebtServiceTab() {
     await fetchFinancialHistory();
   }, [$debtServiceHistoryView.value.refreshTrigger]);
 
-  // Calculate summary metrics
-  const summaryMetrics = useMemo(() => {
-    // Use latestFinancial from state, or try to get from $borrowerFinancials if available
-    const financialsList = $borrowerFinancials.value?.list || [];
-    let financialToUse = $debtServiceContainerDetails.value?.latestFinancial;
+  const quarterlySummary = useMemo(() => {
+    const financialsList = $debtServiceContainerDetails.value?.financialsList?.length
+      ? $debtServiceContainerDetails.value.financialsList
+      : ($borrowerFinancials.value?.list || []);
 
-    // Resolver normally fills latestFinancial from /latest (newest with EBITDA). If missing, prefer the
-    // most recent as-of date that has EBITDA; else newest row (same ordering as Financials tab).
-    if (!financialToUse && financialsList.length > 0) {
-      const sortedFinancials = [...financialsList].sort(
-        (a, b) => new Date(b.asOfDate) - new Date(a.asOfDate),
-      );
-      financialToUse = sortedFinancials.find(
-        (f) => f.ebitda != null && f.ebitda !== '',
-      ) ?? sortedFinancials[0] ?? null;
-    }
-
-    // Get EBITDA from latest financial - use same approach as Financials tab
-    const ebitda = financialToUse?.ebitda != null ? Number(financialToUse.ebitda) : null;
-
-    // Convert monthly to annual (multiply by 12)
     const debtServiceHistoryList = $debtServiceHistory.value?.list || [];
-    const totalDebtService = debtServiceHistoryList[0]?.totalMonthlyPayment != null ? Math.floor(Number(debtServiceHistoryList[0]?.totalMonthlyPayment)) * 12 : null;
+    const totalMonthlyPayment = debtServiceHistoryList[0]?.totalMonthlyPayment ?? null;
 
-    // Calculate Current DSCR: EBITDA / Annual Debt Service
-    let currentDSCR = null;
-    if (ebitda != null && totalDebtService != null && totalDebtService > 0) {
-      currentDSCR = ebitda / totalDebtService;
-    }
-
-    // Get Covenant DSCR from loans (most restrictive)
-    const loans = $borrower.value?.borrower?.loans || [];
-    let covenantDSCR = null;
-    loans.forEach((loan) => {
-      if (loan.debtServiceCovenant != null && loan.debtServiceCovenant !== '') {
-        const value = parseFloat(loan.debtServiceCovenant);
-        if (!Number.isNaN(value) && (!covenantDSCR || value < covenantDSCR)) {
-          covenantDSCR = value;
-        }
-      }
+    return buildQuarterlyDebtServiceSummary({
+      financialsList,
+      totalMonthlyPayment,
+      loans: $borrower.value?.borrower?.loans || [],
     });
-
-    // Determine DSCR color class
-    let dscrColorClass = 'text-info-100';
-    if (currentDSCR !== null && covenantDSCR !== null && currentDSCR >= covenantDSCR) {
-      dscrColorClass = 'text-success-500';
-    } else if (currentDSCR !== null) {
-      dscrColorClass = 'text-danger-500';
-    }
-
-    return {
-      ebitda,
-      totalDebtService,
-      currentDSCR,
-      covenantDSCR,
-      dscrColorClass,
-    };
-  }, [$debtServiceContainerDetails.value?.latestFinancial, $borrowerFinancials.value?.list, $debtServiceContainerDetails.value?.latestDebtService, $borrower.value?.borrower?.loans]);
+  }, [
+    $debtServiceContainerDetails.value?.financialsList,
+    $borrowerFinancials.value?.list,
+    $debtServiceHistory.value?.list,
+    $borrower.value?.borrower?.loans,
+  ]);
 
   // Table headers
   const tableHeaders = [
@@ -155,35 +117,7 @@ export function BorrowerDebtServiceTab() {
 
   return (
     <div>
-      {/* Summary Metrics */}
-      <UniversalCard headerText="Debt Service Summary" className="mb-16">
-        <Row>
-          <Col xs={12} md={3} className="mb-12 mb-md-0">
-            <div className="text-info-100 fw-200 mb-4">EBITDA</div>
-            <div className="text-success-500 fs-4 fw-bold">
-              {summaryMetrics.ebitda !== null ? formatCurrency(summaryMetrics.ebitda) : '-'}
-            </div>
-          </Col>
-          <Col xs={12} md={3} className="mb-12 mb-md-0">
-            <div className="text-info-100 fw-200 mb-4">Total Debt Service</div>
-            <div className="text-warning-500 fs-4 fw-bold">
-              {summaryMetrics.totalDebtService !== null ? formatCurrency(summaryMetrics.totalDebtService) : '-'}
-            </div>
-          </Col>
-          <Col xs={12} md={3} className="mb-12 mb-md-0">
-            <div className="text-info-100 fw-200 mb-4">Current DSCR</div>
-            <div className={`fs-4 fw-bold ${summaryMetrics.dscrColorClass}`}>
-              {summaryMetrics.currentDSCR !== null ? summaryMetrics.currentDSCR.toFixed(2) : '-'}
-            </div>
-          </Col>
-          <Col xs={12} md={3} className="mb-12 mb-md-0">
-            <div className="text-info-100 fw-200 mb-4">Covenant DSCR</div>
-            <div className="text-secondary-200 fs-4 fw-bold">
-              {summaryMetrics.covenantDSCR !== null ? summaryMetrics.covenantDSCR.toFixed(2) : '-'}
-            </div>
-          </Col>
-        </Row>
-      </UniversalCard>
+      <DebtServiceQuarterlySummary sections={quarterlySummary.sections} />
 
       <div className="d-flex justify-content-between align-items-center mb-16">
         <h4 className="text-info-50">Debt Service History</h4>

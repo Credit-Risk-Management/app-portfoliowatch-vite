@@ -1,7 +1,8 @@
 import { $relationshipManagers, $borrowers, $borrowersView, $borrowersFilter } from '@src/signals';
 import relationshipManagersApi from '@src/api/relationshipManagers.api';
-import borrowersApi from '@src/api/borrowers.api';
+import { borrowersSearchGetAll } from '@src/api/borrowers.api';
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
+import { resolvePageLimit } from '@src/consts/consts';
 
 /** Reset list filters when opening Borrowers with a clean URL (avoids stale search/facets after nav or back). */
 export const resetBorrowersListFilters = () => {
@@ -66,14 +67,15 @@ const facetParamsFromBorrowersFilter = () => {
 export const fetchAndSetBorrowerData = async (filters = {}) => {
   $borrowersView.update({ isTableLoading: true });
   try {
+    const pageLimit = resolvePageLimit($borrowersFilter.value?.limit);
     const paginationAndSortParams = {
       page: $borrowersFilter.value?.page || 1,
-      limit: 10,
+      limit: pageLimit,
       sortKey: $borrowersFilter.value?.sortKey || 'name',
       sortDirection: $borrowersFilter.value?.sortDirection || 'asc',
     };
 
-    const response = await borrowersApi.getAll({
+    const response = await borrowersSearchGetAll({
       ...facetParamsFromBorrowersFilter(),
       ...filters,
       ...paginationAndSortParams,

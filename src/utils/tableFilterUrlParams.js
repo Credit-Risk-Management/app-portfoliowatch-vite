@@ -1,3 +1,5 @@
+import { DEFAULT_PAGE_LIMIT } from '@src/consts/consts';
+
 /**
  * Build URL query params from a table $filter signal value.
  * Omits empty strings, arrays, objects, and undefined so URLs stay clean
@@ -40,6 +42,11 @@ export function filterValueToUrlSearchParams(filterValue) {
 export function borrowersFilterToUrlParams(filterValue) {
   const params = filterValueToUrlSearchParams(filterValue);
   if (!filterValue || typeof filterValue !== 'object') return params;
+
+  const limit = Number(filterValue.limit);
+  if (!limit || limit === DEFAULT_PAGE_LIMIT) {
+    params.delete('limit');
+  }
 
   const bt = filterValue.borrowerType;
   if (Array.isArray(bt) && bt.length) {

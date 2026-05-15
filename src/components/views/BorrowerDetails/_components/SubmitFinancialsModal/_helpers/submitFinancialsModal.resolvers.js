@@ -383,6 +383,7 @@ export const handleOpenEditMode = async (financial) => {
     changeInAccountsPayable: financial.changeInAccountsPayable?.toString() || '',
     notes: financial.notes || '',
     documentIds: financial.documentIds || [],
+    incomeStatementPackageQuarterly: Boolean(financial.incomeStatementPackageQuarterly),
   });
 
   $borrowerFinancialsView.update({
@@ -428,12 +429,22 @@ const toDisplayPercentage = (value) => {
   return String(num);
 };
 
-const computeDebtServiceRatio = (ebitda, totalMonthlyPayment) => {
+const computeDebtServiceRatio = (ebitda, totalMonthlyPayment, incomeStatementPackageQuarterly = false) => {
   if (ebitda == null || totalMonthlyPayment == null) return null;
   if (totalMonthlyPayment <= 0) return null;
   const annualDebtService = totalMonthlyPayment * 12;
   if (annualDebtService <= 0) return null;
-  return roundTo4(ebitda / annualDebtService);
+  const ebitdaForRatio = incomeStatementPackageQuarterly ? ebitda * 4 : ebitda;
+  return roundTo4(ebitdaForRatio / annualDebtService);
+};
+
+/** True when staged or stored income docs imply a quarterly P&L package (aligns with API / WATCH). */
+const inferQuarterlyIncomeForSubmit = (stagedByType) => {
+  const quarterly = stagedByType?.incomeStatementQuarterly || [];
+  if (quarterly.some((d) => d?.file || d?.isStored)) return true;
+  const ytd = stagedByType?.incomeStatementYtd || [];
+  if (ytd.some((d) => d?.file || d?.isStored)) return false;
+  return Boolean($borrowerFinancialsForm.value.incomeStatementPackageQuarterly);
 };
 
 /** Total current assets / total current liabilities (matches WATCH Weighted Exposure). */
@@ -496,12 +507,19 @@ export const handleSubmit = async (onCloseCallback) => {
     const formCash = toNumberOrNull($borrowerFinancialsForm.value.cash);
     const formCashEq = toNumberOrNull($borrowerFinancialsForm.value.cashEquivalents);
 
+    const { documentsByType: stagedByType } = $modalState.value;
+
     let computedDebtServiceRatio = null;
     try {
       const debtServiceResponse = await debtServiceHistoryApi.getLatestByBorrowerId(borrowerId);
       const latestDebtService = debtServiceResponse?.data ?? null;
       const totalMonthlyPayment = toNumberOrNull(latestDebtService?.totalMonthlyPayment);
-      computedDebtServiceRatio = computeDebtServiceRatio(formEbitda, totalMonthlyPayment);
+      const quarterlyForDscr = inferQuarterlyIncomeForSubmit(stagedByType);
+      computedDebtServiceRatio = computeDebtServiceRatio(
+        formEbitda,
+        totalMonthlyPayment,
+        quarterlyForDscr,
+      );
     } catch (error) {
       computedDebtServiceRatio = null;
     }
@@ -514,7 +532,6 @@ export const handleSubmit = async (onCloseCallback) => {
       ? explicitProfitMargin
       : profitMarginPercentFromNetIncome(formNetIncome, formGrossRevenue);
 
-    const { documentsByType: stagedByType } = $modalState.value;
     const hasStagedNewUploads = stagedByType
       && Object.keys(stagedByType).some((k) => (stagedByType[k] || []).some((d) => d?.file && !d.isStored));
 
