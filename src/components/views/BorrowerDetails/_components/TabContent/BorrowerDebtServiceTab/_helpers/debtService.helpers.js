@@ -17,6 +17,24 @@ export const parseStoredDscr = (financial) => {
   return Number.isFinite(n) ? n : null;
 };
 
+const parseBalanceSheetNumber = (value) => {
+  if (value == null || value === '') return null;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
+};
+
+export const parseStoredCurrentRatio = (financial) => {
+  const stored = parseBalanceSheetNumber(financial?.currentRatio);
+  if (stored != null) return stored;
+  const tca = parseBalanceSheetNumber(financial?.totalCurrentAssets);
+  const tcl = parseBalanceSheetNumber(financial?.totalCurrentLiabilities);
+  if (tca == null || tcl == null || tcl <= 0) return null;
+  return parseFloat((tca / tcl).toFixed(4));
+};
+
+/** Shared footnote when covenant actuals use last yearend (not four-quarter TTM path). */
+export const COVENANT_YEAREND_PATH_FOOTNOTE = 'Based on last annual (yearend) financial — quarterly TTM path requires four consecutive quarters.';
+
 const sortFinancialsByAsOfDesc = (list) => [...list].sort(
   (a, b) => new Date(b.asOfDate) - new Date(a.asOfDate),
 );
@@ -92,7 +110,7 @@ export const hasFourConsecutiveQuartersWithEbitdaThroughLastYearend = (financial
  * Loan detail — covenant Actual DSCR: when four consecutive quarterly EBITDA periods exist
  * through yearend, use the loan-level metric; otherwise use stored DSCR from the last yearend filing.
  */
-export const resolveLoanDetailDebtServiceActual = (financialsList = [], loanLevelDebtService) => {
+export const resolveLoanDetailDebtServiceActual = (loanLevelDebtService, financialsList = []) => {
   if (hasFourConsecutiveQuartersWithEbitdaThroughLastYearend(financialsList)) {
     if (loanLevelDebtService == null || loanLevelDebtService === '') return null;
     const n = Number(loanLevelDebtService);
@@ -101,6 +119,21 @@ export const resolveLoanDetailDebtServiceActual = (financialsList = [], loanLeve
   const sorted = sortFinancialsByAsOfDesc(financialsList);
   const yearend = resolveLastYearendFinancial(sorted);
   return parseStoredDscr(yearend);
+};
+
+/**
+ * Loan detail — covenant Actual current ratio: same quarter gate as DSCR.
+ * With four consecutive quarterly EBITDA periods, use loan-level merge; otherwise last yearend.
+ */
+export const resolveLoanDetailCurrentRatioActual = (loanLevelCurrentRatio, financialsList = []) => {
+  if (hasFourConsecutiveQuartersWithEbitdaThroughLastYearend(financialsList)) {
+    if (loanLevelCurrentRatio == null || loanLevelCurrentRatio === '') return null;
+    const n = Number(loanLevelCurrentRatio);
+    return Number.isFinite(n) ? n : null;
+  }
+  const sorted = sortFinancialsByAsOfDesc(financialsList);
+  const yearend = resolveLastYearendFinancial(sorted);
+  return parseStoredCurrentRatio(yearend);
 };
 
 const tryYearendToQuarterlyDscrComparison = (currentFinancial, previousFinancial) => {
