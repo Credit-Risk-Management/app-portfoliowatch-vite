@@ -442,7 +442,10 @@ const computeDebtServiceRatio = (ebitda, totalMonthlyPayment, incomeStatementPac
 const inferQuarterlyIncomeForSubmit = (stagedByType) => {
   const quarterly = stagedByType?.incomeStatementQuarterly || [];
   if (quarterly.some((d) => d?.file || d?.isStored)) return true;
-  const ytd = stagedByType?.incomeStatementYtd || [];
+  const ytd = [
+    ...(stagedByType?.incomeStatementYtd || []),
+    ...(stagedByType?.incomeStatement || []),
+  ];
   if (ytd.some((d) => d?.file || d?.isStored)) return false;
   return Boolean($borrowerFinancialsForm.value.incomeStatementPackageQuarterly);
 };

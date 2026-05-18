@@ -25,7 +25,9 @@ import Loadable from '@src/components/global/Loadable';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import getResolvedIndustryTitle from '@src/utils/naicsTitles';
 import {
+  COVENANT_YEAREND_PATH_FOOTNOTE,
   hasFourConsecutiveQuartersWithEbitdaThroughLastYearend,
+  resolveLoanDetailCurrentRatioActual,
   resolveLoanDetailDebtServiceActual,
 } from '@src/components/views/BorrowerDetails/_components/TabContent/BorrowerDebtServiceTab/_helpers/debtService.helpers';
 import SubmitCollateralModal from './_components/SubmitCollateralModal';
@@ -232,13 +234,12 @@ const LoanDetail = () => {
     return labels;
   })();
   const borrowerFinancials = loanData?.borrower?.financials ?? [];
-  const hasFourQuarterEbitdaChain = hasFourConsecutiveQuartersWithEbitdaThroughLastYearend(
-    borrowerFinancials,
-  );
-  const covenantDebtServiceActual = resolveLoanDetailDebtServiceActual(
-    borrowerFinancials,
-    loanData?.debtService,
-  );
+  const hasFourQuarterEbitdaChain = loanData?.hasFourQuarterDscrChain
+    ?? hasFourConsecutiveQuartersWithEbitdaThroughLastYearend(borrowerFinancials);
+  const covenantDebtServiceActual = loanData?.covenantDebtServiceActual
+    ?? resolveLoanDetailDebtServiceActual(loanData?.debtService, borrowerFinancials);
+  const covenantCurrentRatioActual = loanData?.covenantCurrentRatioActual
+    ?? resolveLoanDetailCurrentRatioActual(loanData?.currentRatio, borrowerFinancials);
   const isDefaultWatchScore = normalizedWatchScore === 3
     && (borrowerFinancials.length === 0);
 
@@ -517,7 +518,7 @@ const LoanDetail = () => {
                   </div>
                   {!hasFourQuarterEbitdaChain && covenantDebtServiceActual != null && (
                     <div className="text-info-300 small mt-4">
-                      Based on last annual (yearend) financial — quarterly TTM path requires four consecutive quarters.
+                      {COVENANT_YEAREND_PATH_FOOTNOTE}
                     </div>
                   )}
                   {!hasFourQuarterEbitdaChain && covenantDebtServiceActual == null && (
@@ -536,15 +537,25 @@ const LoanDetail = () => {
                   <div className="text-info-100 fw-200 mt-16 mb-4">Current Ratio</div>
                   <div>
                     <span className="text-info-50 fw-500 me-8">Actual:</span>
-                    <span className={`fs-5 fw-bold text-${getCovenantStatus($loan.value?.loan?.currentRatio, $loan.value?.loan?.currentRatioCovenant).variant}`}>
-                      {formatRatio($loan.value?.loan?.currentRatio)}
+                    <span className={`fs-5 fw-bold text-${getCovenantStatus(covenantCurrentRatioActual, $loan.value?.loan?.currentRatioCovenant).variant}`}>
+                      {formatRatio(covenantCurrentRatioActual)}
                     </span>
-                    <div className="mb-8">
-                      <span className="text-info-50 fw-500 me-8">Covenant:</span>
-                      <span className="fs-5 fw-bold text-secondary-200">
-                        {formatRatio($loan.value?.loan?.currentRatioCovenant)}
-                      </span>
+                  </div>
+                  {!hasFourQuarterEbitdaChain && covenantCurrentRatioActual != null && (
+                    <div className="text-info-300 small mt-4">
+                      {COVENANT_YEAREND_PATH_FOOTNOTE}
                     </div>
+                  )}
+                  {!hasFourQuarterEbitdaChain && covenantCurrentRatioActual == null && (
+                    <div className="text-info-300 small mt-4">
+                      No current ratio on the last yearend financial; add annual filing or complete four consecutive quarters.
+                    </div>
+                  )}
+                  <div className="mb-8">
+                    <span className="text-info-50 fw-500 me-8">Covenant:</span>
+                    <span className="fs-5 fw-bold text-secondary-200">
+                      {formatRatio($loan.value?.loan?.currentRatioCovenant)}
+                    </span>
                   </div>
                 </Col>
                 <Col xs={12} md={6} className="mb-12 mb-md-0">
