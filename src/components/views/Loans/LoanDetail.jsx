@@ -243,8 +243,12 @@ const LoanDetail = () => {
   const isDefaultWatchScore = normalizedWatchScore === 3
     && (borrowerFinancials.length === 0);
 
+  const businessEbitdaForGlobalCashFlow = resolveLoanDetailBusinessEbitda(
+    loanData?.ebitda,
+    borrowerFinancials,
+  );
   const globalCashFlowMetrics = computeLoanGlobalCashFlowAnalysis({
-    borrowerEbitda: loanData?.ebitda,
+    borrowerEbitda: businessEbitdaForGlobalCashFlow,
     latestDebtScheduleRow: $loanDetailLatestDebtSchedule.value,
     loanGuarantors: $loanDetailGuarantors.value,
   });
@@ -541,16 +545,7 @@ const LoanDetail = () => {
                       {formatRatio(covenantCurrentRatioActual)}
                     </span>
                   </div>
-                  {!hasFourQuarterEbitdaChain && covenantCurrentRatioActual != null && (
-                    <div className="text-info-300 small mt-4">
-                      {COVENANT_YEAREND_PATH_FOOTNOTE}
-                    </div>
-                  )}
-                  {!hasFourQuarterEbitdaChain && covenantCurrentRatioActual == null && (
-                    <div className="text-info-300 small mt-4">
-                      No current ratio on the last yearend financial; add annual filing or complete four consecutive quarters.
-                    </div>
-                  )}
+
                   <div className="mb-8">
                     <span className="text-info-50 fw-500 me-8">Covenant:</span>
                     <span className="fs-5 fw-bold text-secondary-200">
