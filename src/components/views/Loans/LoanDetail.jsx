@@ -26,9 +26,8 @@ import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import getResolvedIndustryTitle from '@src/utils/naicsTitles';
 import {
   COVENANT_YEAREND_PATH_FOOTNOTE,
-  hasFourConsecutiveQuartersWithEbitdaThroughLastYearend,
+  hasFourConsecutiveQuartersWithEbitdaThroughLastYearend, resolveLoanDetailDebtServiceActual,
   resolveLoanDetailCurrentRatioActual,
-  resolveLoanDetailDebtServiceActual,
 } from '@src/components/views/BorrowerDetails/_components/TabContent/BorrowerDebtServiceTab/_helpers/debtService.helpers';
 import SubmitCollateralModal from './_components/SubmitCollateralModal';
 import { $loanCollateralView } from './_components/submitCollateralModal.signals';
@@ -239,7 +238,7 @@ const LoanDetail = () => {
   const covenantDebtServiceActual = loanData?.covenantDebtServiceActual
     ?? resolveLoanDetailDebtServiceActual(loanData?.debtService, borrowerFinancials);
   const covenantCurrentRatioActual = loanData?.covenantCurrentRatioActual
-    ?? resolveLoanDetailCurrentRatioActual(loanData?.currentRatio, borrowerFinancials);
+    ?? resolveLoanDetailCurrentRatioActual(borrowerFinancials);
   const isDefaultWatchScore = normalizedWatchScore === 3
     && (borrowerFinancials.length === 0);
 
@@ -541,16 +540,7 @@ const LoanDetail = () => {
                       {formatRatio(covenantCurrentRatioActual)}
                     </span>
                   </div>
-                  {!hasFourQuarterEbitdaChain && covenantCurrentRatioActual != null && (
-                    <div className="text-info-300 small mt-4">
-                      {COVENANT_YEAREND_PATH_FOOTNOTE}
-                    </div>
-                  )}
-                  {!hasFourQuarterEbitdaChain && covenantCurrentRatioActual == null && (
-                    <div className="text-info-300 small mt-4">
-                      No current ratio on the last yearend financial; add annual filing or complete four consecutive quarters.
-                    </div>
-                  )}
+
                   <div className="mb-8">
                     <span className="text-info-50 fw-500 me-8">Covenant:</span>
                     <span className="fs-5 fw-bold text-secondary-200">
