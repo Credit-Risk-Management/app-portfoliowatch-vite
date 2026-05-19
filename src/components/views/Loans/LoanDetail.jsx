@@ -27,8 +27,9 @@ import getResolvedIndustryTitle from '@src/utils/naicsTitles';
 import {
   COVENANT_YEAREND_PATH_FOOTNOTE,
   hasFourConsecutiveQuartersWithEbitdaThroughLastYearend,
-  resolveLoanDetailCurrentRatioActual,
+  resolveLoanDetailBusinessEbitda,
   resolveLoanDetailDebtServiceActual,
+  resolveLoanDetailCurrentRatioActual,
 } from '@src/components/views/BorrowerDetails/_components/TabContent/BorrowerDebtServiceTab/_helpers/debtService.helpers';
 import SubmitCollateralModal from './_components/SubmitCollateralModal';
 import { $loanCollateralView } from './_components/submitCollateralModal.signals';
@@ -239,7 +240,7 @@ const LoanDetail = () => {
   const covenantDebtServiceActual = loanData?.covenantDebtServiceActual
     ?? resolveLoanDetailDebtServiceActual(loanData?.debtService, borrowerFinancials);
   const covenantCurrentRatioActual = loanData?.covenantCurrentRatioActual
-    ?? resolveLoanDetailCurrentRatioActual(loanData?.currentRatio, borrowerFinancials);
+    ?? resolveLoanDetailCurrentRatioActual(borrowerFinancials);
   const isDefaultWatchScore = normalizedWatchScore === 3
     && (borrowerFinancials.length === 0);
 
