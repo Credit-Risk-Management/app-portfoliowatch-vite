@@ -129,6 +129,49 @@ export const resolveLoanDetailCurrentRatioActual = (financialsList = []) => {
   return parseStoredCurrentRatio(sorted[0]);
 };
 
+const sumQuarterlyEbitdaThroughLastYearend = (financialsList = []) => {
+  const sorted = sortFinancialsByAsOfDesc(financialsList);
+  const yearend = resolveLastYearendFinancial(sorted);
+  const yearendTime = yearend?.asOfDate ? new Date(yearend.asOfDate).getTime() : null;
+
+  const quarterlyWithEbitda = sorted.filter((f) => {
+    if (!f.incomeStatementPackageQuarterly || parseEbitda(f) == null) return false;
+    if (yearendTime == null) return true;
+    const asOfTime = new Date(f.asOfDate).getTime();
+    return !Number.isNaN(asOfTime) && asOfTime <= yearendTime;
+  });
+
+  if (!areConsecutiveQuarterChain(quarterlyWithEbitda, 4)) return null;
+  return sumEbitdaFromFinancials(quarterlyWithEbitda.slice(0, 4));
+};
+
+/**
+ * Business EBITDA for loan global cash flow — same path as covenant DSCR:
+ * four consecutive quarterly EBITDA through last yearend → TTM (loan-level or summed quarters);
+ * otherwise EBITDA from the last annual (yearend) filing.
+ */
+export const resolveLoanDetailBusinessEbitda = (loanLevelEbitda, financialsList = []) => {
+  if (hasFourConsecutiveQuartersWithEbitdaThroughLastYearend(financialsList)) {
+    if (loanLevelEbitda != null && loanLevelEbitda !== '') {
+      const n = Number(loanLevelEbitda);
+      if (Number.isFinite(n)) return n;
+    }
+    return sumQuarterlyEbitdaThroughLastYearend(financialsList);
+  }
+
+  if (!financialsList?.length) {
+    if (loanLevelEbitda != null && loanLevelEbitda !== '') {
+      const n = Number(loanLevelEbitda);
+      return Number.isFinite(n) ? n : null;
+    }
+    return null;
+  }
+
+  const sorted = sortFinancialsByAsOfDesc(financialsList);
+  const yearend = resolveLastYearendFinancial(sorted);
+  return parseEbitda(yearend);
+};
+
 const tryYearendToQuarterlyDscrComparison = (currentFinancial, previousFinancial) => {
   if (!currentFinancial?.incomeStatementPackageQuarterly) return null;
   if (!previousFinancial || previousFinancial.incomeStatementPackageQuarterly) return null;

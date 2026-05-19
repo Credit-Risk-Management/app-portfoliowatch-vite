@@ -26,7 +26,9 @@ import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import getResolvedIndustryTitle from '@src/utils/naicsTitles';
 import {
   COVENANT_YEAREND_PATH_FOOTNOTE,
-  hasFourConsecutiveQuartersWithEbitdaThroughLastYearend, resolveLoanDetailDebtServiceActual,
+  hasFourConsecutiveQuartersWithEbitdaThroughLastYearend,
+  resolveLoanDetailBusinessEbitda,
+  resolveLoanDetailDebtServiceActual,
   resolveLoanDetailCurrentRatioActual,
 } from '@src/components/views/BorrowerDetails/_components/TabContent/BorrowerDebtServiceTab/_helpers/debtService.helpers';
 import SubmitCollateralModal from './_components/SubmitCollateralModal';
@@ -242,8 +244,12 @@ const LoanDetail = () => {
   const isDefaultWatchScore = normalizedWatchScore === 3
     && (borrowerFinancials.length === 0);
 
+  const businessEbitdaForGlobalCashFlow = resolveLoanDetailBusinessEbitda(
+    loanData?.ebitda,
+    borrowerFinancials,
+  );
   const globalCashFlowMetrics = computeLoanGlobalCashFlowAnalysis({
-    borrowerEbitda: loanData?.ebitda,
+    borrowerEbitda: businessEbitdaForGlobalCashFlow,
     latestDebtScheduleRow: $loanDetailLatestDebtSchedule.value,
     loanGuarantors: $loanDetailGuarantors.value,
   });
