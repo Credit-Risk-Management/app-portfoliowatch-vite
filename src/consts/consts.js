@@ -54,11 +54,6 @@ export const $loan = Signal({
   isLoading: false,
 });
 
-export const $guarantor = Signal({
-  list: [],
-  isLoading: false,
-});
-
 export const $borrower = Signal({
   borrower: null,
   isLoading: false,
