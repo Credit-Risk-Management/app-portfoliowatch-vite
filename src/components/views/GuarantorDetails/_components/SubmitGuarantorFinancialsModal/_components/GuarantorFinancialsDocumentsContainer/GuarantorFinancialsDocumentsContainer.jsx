@@ -19,7 +19,7 @@ import FileUploader from '@src/components/global/FileUploader';
 import { $submitPFSModalDetails } from '../../_helpers/submitGuarantorFinancialsModal.const';
 import { $documentsContainerView } from './_helpers/guarantorFinancialsDocumentsContainer.consts';
 import * as events from './_helpers/guarantorFinancialsDocumentsContainer.events';
-import * as helpers from './_helpers/guarantorFinancialsDocumentsContainer.helpers';
+import * as helpers from '@src/utils/documents.utils';
 import * as resolvers from './_helpers/guarantorFinancialsDocumentsContainer.resolvers';
 
 // Configure PDF.js worker - using jsdelivr CDN which has proper CORS headers

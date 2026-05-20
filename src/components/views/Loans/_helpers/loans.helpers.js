@@ -5,30 +5,10 @@ import { $borrowers } from '@src/signals';
  */
 export const getClientById = (clientId) => ($borrowers.value?.list || []).find((client) => client.id === clientId) || null;
 
-/**
- * Formats a numeric ratio value to 2 decimal places
- */
-export const formatRatio = (value) => {
-  if (value === null || value === undefined) return '-';
-  return Number(value).toFixed(2);
-};
+export { formatRatio } from '@src/utils/formatRatio';
+export { formatDateNumeric as formatDate } from '@src/utils/formatDate';
 
-/**
- * Formats a date string to US locale format (MM/DD/YYYY)
- */
-export const formatDate = (dateString) => {
-  if (!dateString) return '-';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
-};
-
-/**
- * Returns relationship manager options for dropdown
- */
-export const getRelationshipManagerOptions = (managers) => managers.map((m) => ({
-  value: m.id,
-  label: m.name || m.relationshipManager?.name || 'Unknown',
-}));
+export { getRelationshipManagerOptions } from '@src/utils/relationshipManagers.utils';
 
 export const formatBorrowerPickerLine = (c) => {
   const name = (c.name || '').trim() || 'Unnamed borrower';

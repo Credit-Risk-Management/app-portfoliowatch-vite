@@ -4,9 +4,15 @@ import { useMemo } from 'react';
 import SignalTable from '@src/components/global/SignalTable';
 import ContextMenu from '@src/components/global/ContextMenu';
 import { faEye, faTrash } from '@fortawesome/free-solid-svg-icons';
-import { handleDownloadDocument } from '@src/components/views/Documents/_helpers/documents.events';
-import { $guarantorDocumentsView, $guarantorDocumentsDetails, $guarantorDocumentsFilter, TABLE_HEADERS, formatFileSize, formatUploadDate } from './_helpers/guarantorDocuments.consts';
+import {
+  formatFileSize,
+  formatUploadDate,
+  formatFinancialDocumentType,
+  handleDownloadDocument,
+  triggerBrowserFileDownload,
+} from '@src/utils/documents.utils';
 import { fetchGuarantorDocuments } from './_helpers/guarantorDocuments.resolvers';
+import { $guarantorDocumentsDetails, $guarantorDocumentsView, $guarantorDocumentsFilter, GUARANTOR_DOCUMENTS_TABLE_HEADERS } from './_helpers/guarantorDocuments.consts';
 import { handleDocumentRowClick } from './_helpers/guarantorDocuments.events';
 
 export function GuarantorDocuments() {
@@ -14,23 +20,11 @@ export function GuarantorDocuments() {
     await fetchGuarantorDocuments();
   }, []);
 
-  const formatDocumentType = (docType) => {
-    const labels = {
-      personalTaxReturn: 'Personal Tax Return',
-      personalFinancialStatement: 'Personal Financial Statement',
-      taxReturn: 'Tax Return',
-      balanceSheet: 'Balance Sheet',
-      incomeStatement: 'Income Statement',
-      debtServiceWorksheet: 'Debt Service Worksheet',
-    };
-    return labels[docType] ?? docType;
-  };
-
   const documentsTableRows = useMemo(
     () => $guarantorDocumentsDetails.value?.list?.map((doc) => ({
       ...doc,
       fileName: doc.fileName,
-      documentType: formatDocumentType(doc.documentType),
+      documentType: formatFinancialDocumentType(doc.documentType),
       uploadedAt: formatUploadDate(doc.uploadedAt),
       fileSize: formatFileSize(Number(doc.fileSize)),
       actions: (
@@ -42,13 +36,7 @@ export function GuarantorDocuments() {
           onItemClick={(item) => {
             if (item.action === 'download') {
               if (doc.storageUrl) {
-                const link = document.createElement('a');
-                link.href = doc.storageUrl;
-                link.download = doc.documentName || doc.fileName || 'document';
-                link.target = '_blank';
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
+                triggerBrowserFileDownload(doc.storageUrl, doc.documentName || doc.fileName || 'document');
               } else {
                 handleDownloadDocument(doc.id, doc.documentName);
               }
@@ -83,7 +71,7 @@ export function GuarantorDocuments() {
     <SignalTable
       $filter={$guarantorDocumentsFilter}
       $view={$guarantorDocumentsView}
-      headers={TABLE_HEADERS}
+      headers={GUARANTOR_DOCUMENTS_TABLE_HEADERS}
       rows={documentsTableRows}
       className="shadow"
       totalCount={$guarantorDocumentsDetails.value?.totalCount || 0}

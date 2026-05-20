@@ -22,4 +22,19 @@ export const formatDate = (dateString) => {
   });
 };
 
+/** US numeric date (MM/DD/YYYY) for tables and loan detail fields. */
+export const formatDateNumeric = (dateString) => {
+  if (!dateString) return '-';
+  const date = toLocalDate(dateString);
+  return date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
+};
+
+/** HTML date input value (YYYY-MM-DD). */
+export const formatDateForInput = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toISOString().slice(0, 10);
+};
+
 export default formatDate;

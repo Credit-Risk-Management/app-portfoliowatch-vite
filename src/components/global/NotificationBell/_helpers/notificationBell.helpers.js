@@ -1,32 +1,5 @@
-import moment from 'moment';
-
-/**
- * Get the link URL for a notification based on its resource type
- * @param {Object} notification - The notification object
- * @returns {string} The link URL
- */
-export const getNotificationLink = (notification) => {
-  if (notification.resourceType === 'LOAN' && notification.resourceId) {
-    return `/loans/${notification.resourceId}`;
-  }
-  if (notification.resourceType === 'BORROWER' && notification.resourceId) {
-    return `/borrowers/${notification.resourceId}?tab=financials`;
-  }
-  return '/notifications';
-};
-
-/**
- * Format a date string as relative time (e.g., "2 hours ago")
- * @param {string} dateString - The date string to format
- * @returns {string} The formatted relative time
- */
-export const formatTimeAgo = (dateString) => {
-  try {
-    return moment(dateString).fromNow();
-  } catch {
-    return 'recently';
-  }
-};
+export { formatTimeAgo } from '@src/utils/formatRelativeTime';
+export { getNotificationLink } from '@src/utils/notifications.utils';
 
 /**
  * Truncate a message to a maximum length

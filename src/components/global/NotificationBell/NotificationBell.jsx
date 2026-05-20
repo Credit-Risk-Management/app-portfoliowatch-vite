@@ -85,7 +85,7 @@ const NotificationBell = () => {
               <ListGroup.Item
                 key={notification.id}
                 as={Link}
-                to={helpers.getNotificationLink(notification)}
+                to={helpers.getNotificationLink(notification, '/notifications')}
                 onClick={() => events.handleNotificationClick(notification, setShow)}
                 className={`notification-item ${!notification.isRead ? 'unread' : ''}`}
                 action

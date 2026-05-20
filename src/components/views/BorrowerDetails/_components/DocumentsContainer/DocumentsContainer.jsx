@@ -29,7 +29,7 @@ import {
 } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
 import { $documentsContainerView } from './_helpers/documents.consts';
 import * as events from './_helpers/documents.events';
-import * as helpers from './_helpers/documents.helpers';
+import * as helpers from '@src/utils/documents.utils';
 import * as resolvers from './_helpers/documents.resolvers';
 
 // Configure PDF.js worker - using jsdelivr CDN which has proper CORS headers
