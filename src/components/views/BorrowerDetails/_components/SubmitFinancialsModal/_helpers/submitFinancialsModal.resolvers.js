@@ -5,6 +5,7 @@ import debtServiceHistoryApi from '@src/api/debtServiceHistory.api';
 import { successAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import { storage } from '@src/utils/firebase';
 import { profitMarginPercentFromNetIncome } from '@src/utils/sensibleExtractPrimitives';
+import { formatDateForInput } from '@src/utils/formatDate';
 import * as consts from './submitFinancialsModal.consts';
 
 const { MODAL_FINANCIAL_DOCUMENT_BUCKET_KEYS, INCOME_STATEMENT_MODAL_KEYS } = consts;
@@ -337,11 +338,6 @@ const flattenStoredDocumentIds = (documentsByType) => (
 export const handleOpenEditMode = async (financial) => {
   const { $modalState } = consts;
   const expectedFinancialId = financial.id;
-  const formatDateForInput = (dateString) => {
-    if (!dateString) return '';
-    return new Date(dateString).toISOString().split('T')[0];
-  };
-
   const documentsByType = await loadDocumentsFromBackend(financial.id);
   // User may have closed the modal or submitted while documents were loading; do not reopen.
   if ($borrowerFinancialsView.value.editingFinancialId !== expectedFinancialId) {

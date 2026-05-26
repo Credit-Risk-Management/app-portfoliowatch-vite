@@ -8,6 +8,7 @@ import { storage } from '@src/utils/firebase';
 import { fetchGuarantorDetail } from '@src/components/views/GuarantorDetails/_helpers/guarantorDetails.resolvers';
 import { parseSingleDocResponse, GUARANTOR_SENSIBLE_NORMALIZER_V1 } from '@src/utils/sensibleParseApi';
 import { normalizeRatioDecimalToPercent } from '@src/utils/ratioPercent';
+import { formatDateForInput } from '@src/utils/formatDate';
 import { computeDebtToIncomeRatio } from '../../../_utils/guarantorDebtToIncome';
 import { $submitPFSModalView, $submitPFSModalDetails } from './submitGuarantorFinancialsModal.const';
 
@@ -303,10 +304,6 @@ const loadGuarantorDocumentsFromBackend = async (guarantorFinancialId) => {
   };
 };
 
-const formatDateForInput = (dateString) => {
-  if (!dateString) return '';
-  return new Date(dateString).toISOString().split('T')[0];
-};
 const collectStoredIdsByType = (documentsByType) => ({
   personalFinancialStatement: (documentsByType.personalFinancialStatement || [])
     .filter((d) => d.isStored && d.id)

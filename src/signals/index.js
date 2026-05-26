@@ -4,7 +4,6 @@ export const $global = Signal({
   isLoading: true,
   isSignedIn: false,
 });
-export const $view = Signal({});
 export const $auth = Signal({
   user: null,
   token: null,
@@ -23,10 +22,7 @@ export const $organization = Signal({
   industry: null,
   createdAt: null,
 });
-export const $list = Signal({});
-export const $detail = Signal({});
 export const $form = Signal({});
-export const $filter = Signal({ page: 1 });
 export const $alert = Signal({});
 
 export const $borrowers = Signal({
@@ -147,45 +143,12 @@ export const $documents = Signal({
   totalCount: 0,
 });
 
-export const $documentsFilter = Signal({
-  page: 1,
-  sortKey: undefined,
-  sortDirection: undefined,
-  searchTerm: '',
-  documentType: '',
-});
-
 export const $documentsView = Signal({
   isTableLoading: false,
   selectedItems: [],
   showUploadModal: false,
   showDeleteModal: false,
   showPreviewModal: false,
-  tableHeaders: [],
-});
-
-export const $transactions = Signal({
-  list: [],
-  selectedTransaction: null,
-  isTableLoading: false,
-  totalCount: 0,
-});
-
-export const $transactionsFilter = Signal({
-  page: 1,
-  sortKey: undefined,
-  sortDirection: undefined,
-  searchTerm: '',
-  transactionType: '',
-  status: '',
-  startDate: '',
-  endDate: '',
-});
-
-export const $transactionsView = Signal({
-  isTableLoading: false,
-  selectedItems: [],
-  showDetailModal: false,
   tableHeaders: [],
 });
 
@@ -278,24 +241,6 @@ export const $contacts = Signal({
   selectedContact: null,
   isLoading: false,
   totalCount: 0,
-});
-
-export const $contactsView = Signal({
-  showAddModal: false,
-  showEditModal: false,
-  showDeleteModal: false,
-});
-
-export const $contactsForm = Signal({
-  id: '',
-  borrowerId: '',
-  firstName: '',
-  lastName: '',
-  email: '',
-  phone: '',
-  title: '',
-  isPrimary: false,
-  organizationId: '',
 });
 
 export const $borrowerFinancials = Signal({
@@ -402,11 +347,6 @@ export const $usersForm = Signal({
   message: '',
 });
 
-export const $profile = Signal({
-  isLoading: false,
-  isEditing: false,
-});
-
 export const $profileView = Signal({
   isEditing: false,
   isSaving: false,
@@ -414,11 +354,6 @@ export const $profileView = Signal({
 
 export const $profileForm = Signal({
   name: '',
-});
-
-export const $settings = Signal({
-  isLoading: false,
-  activeTab: 'organization',
 });
 
 export const $settingsView = Signal({
