@@ -57,51 +57,6 @@ export const formatFinancialDocumentType = (docType) => (
   FINANCIAL_DOCUMENT_TYPE_LABELS[docType] ?? docType
 );
 
-/** MIME → extension for financial uploads (public + lender submit). */
-const MIME_TO_UPLOAD_EXT = {
-  'application/pdf': '.pdf',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
-  'application/vnd.ms-excel': '.xls',
-  'text/csv': '.csv',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
-  'application/msword': '.doc',
-};
-
-const UPLOAD_EXT_PATTERN = /\.(pdf|xlsx?|csv|docx?)$/i;
-
-/**
- * Extension for a browser File — prefers the real file name, then MIME.
- * @param {File|null|undefined} file
- * @returns {string}
- */
-export const extensionFromUploadFile = (file) => {
-  if (!file) return '.pdf';
-  const name = file.name || '';
-  const nameExt = name.includes('.') ? name.slice(name.lastIndexOf('.')).toLowerCase() : '';
-  if (nameExt && UPLOAD_EXT_PATTERN.test(nameExt)) return nameExt;
-  const mimeExt = MIME_TO_UPLOAD_EXT[(file.type || '').split(';')[0].trim().toLowerCase()];
-  return mimeExt || '.pdf';
-};
-
-/**
- * Locked upload name: `{entitySlug}-{documentType}-{YYYY-MM-DD}{ext}` (ext from the File).
- * @param {{ entityName?: string, documentType: string, date?: string|Date, file: File }} params
- */
-export const buildStandardFinancialUploadFileName = ({
-  entityName,
-  documentType,
-  date,
-  file,
-}) => {
-  const safeName = (entityName || 'unknown')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
-  const dateStr = (date ? new Date(date) : new Date()).toISOString().slice(0, 10);
-  const ext = extensionFromUploadFile(file);
-  return `${safeName}-${documentType}-${dateStr}${ext}`;
-};
-
 export const isPdfFile = (doc) => {
   if (!doc) return false;
   const mimeType = doc.mimeType || '';
@@ -115,22 +70,12 @@ export const isPdfFile = (doc) => {
 
 export const isExcelFile = (doc) => {
   if (!doc) return false;
-  const mimeType = doc.mimeType || doc.file?.type || '';
-  const fileName = doc.fileName || doc.file?.name || '';
+  const mimeType = doc.mimeType || '';
+  const fileName = doc.fileName || '';
   return mimeType.includes('spreadsheet')
     || fileName.match(/\.(xlsx?|xls)$/i)
     || mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     || mimeType === 'application/vnd.ms-excel';
-};
-
-/** Office upload shown in lender/guarantor modals — no in-browser grid preview (server converts to PDF). */
-export const isOfficeUploadFile = (doc) => {
-  if (!doc || isPdfFile(doc)) return false;
-  const mimeType = doc.mimeType || doc.file?.type || '';
-  const fileName = doc.fileName || doc.file?.name || '';
-  if (isExcelFile(doc)) return true;
-  if (mimeType.includes('word') || fileName.match(/\.docx?$/i)) return true;
-  return mimeType === 'text/csv' || /\.csv$/i.test(fileName);
 };
 
 export const getFileIcon = (doc) => {
