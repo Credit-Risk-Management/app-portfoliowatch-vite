@@ -1,15 +1,16 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Alert, Button, Row, Col, Table } from 'react-bootstrap';
+import { Alert, Button, Row, Col } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faMagic, faTrash, faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { Document, Page, pdfjs } from 'react-pdf';
-import ExcelJS from 'exceljs';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 import UniversalModal from '@src/components/global/UniversalModal';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import FileUploader from '@src/components/global/FileUploader';
+import OfficeUploadPreview from '@src/components/global/OfficeUploadPreview/OfficeUploadPreview';
 import { normalizeCurrencyValue } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
+import { isPdfFile, isOfficeUploadFile, getFileIcon } from '@src/utils/documents.utils';
 import { $creditMemoView, $creditMemoForm, $creditMemoDocsUploader, $creditMemoModalState } from './addCreditMemoModal.signals';
 import {
   handleClose,
@@ -18,7 +19,6 @@ import {
   handleRemoveDocument,
   handleDownloadDocument,
 } from './addCreditMemoModal.handlers';
-import { isPdfFile, isExcelFile, getFileIcon } from '@src/utils/documents.utils';
 
 // Set up PDF.js worker - using jsdelivr CDN (cdnjs path structure doesn't support pdfjs-dist 5.x)
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -29,9 +29,6 @@ const AddCreditMemoModal = () => {
   const [pdfNumPages, setPdfNumPages] = useState(null);
   const [pdfPageNumber, setPdfPageNumber] = useState(1);
   const [pdfLoadError, setPdfLoadError] = useState(false);
-  const [excelData, setExcelData] = useState(null);
-  const [isLoadingExcel, setIsLoadingExcel] = useState(false);
-
   useEffect(() => {
     // Poll for signal updates and force re-render when refreshKey changes
     const interval = setInterval(() => {
@@ -64,78 +61,6 @@ const AddCreditMemoModal = () => {
     setPdfNumPages(null);
   }, [pdfUrl]);
 
-  // Parse Excel file and extract data
-  useEffect(() => {
-    const parseExcelFile = async () => {
-      if (!uploadedDocument || !isExcelFile(uploadedDocument)) {
-        setExcelData(null);
-        return;
-      }
-
-      setIsLoadingExcel(true);
-      try {
-        const workbook = new ExcelJS.Workbook();
-        let buffer;
-
-        if (uploadedDocument.file) {
-          // For newly uploaded files, use the File object
-          buffer = await uploadedDocument.file.arrayBuffer();
-        } else {
-          setExcelData(null);
-          setIsLoadingExcel(false);
-          return;
-        }
-
-        await workbook.xlsx.load(buffer);
-
-        // Get the first worksheet
-        const worksheet = workbook.worksheets[0];
-        if (!worksheet) {
-          setExcelData(null);
-          setIsLoadingExcel(false);
-          return;
-        }
-
-        // Convert worksheet to array of rows
-        const rows = [];
-        worksheet.eachRow((row) => {
-          const rowData = [];
-          row.eachCell({ includeEmpty: true }, (cell) => {
-            let { value } = cell;
-            // Handle different cell value types
-            if (value === null || value === undefined) {
-              value = '';
-            } else if (typeof value === 'object') {
-              // Handle formulas, rich text, etc.
-              if (value.text !== undefined) {
-                value = value.text;
-              } else if (value.result !== undefined) {
-                value = value.result;
-              } else {
-                value = String(value);
-              }
-            }
-            rowData.push(value);
-          });
-          rows.push(rowData);
-        });
-
-        setExcelData({
-          worksheetName: worksheet.name,
-          rows,
-          columnCount: worksheet.columnCount,
-        });
-      } catch (err) {
-        console.error('Error parsing Excel file:', err);
-        setExcelData(null);
-      } finally {
-        setIsLoadingExcel(false);
-      }
-    };
-
-    parseExcelFile();
-  }, [uploadedDocument, pdfUrl]);
-
   const renderDocumentPreview = () => {
     if (!pdfUrl) {
       return (
@@ -153,73 +78,14 @@ const AddCreditMemoModal = () => {
       );
     }
 
-    // Handle Excel files
-    if (isExcelFile(uploadedDocument)) {
-      if (isLoadingExcel) {
-        return (
-          <div className="d-flex justify-content-center align-items-center" style={{ height: '65vh' }}>
-            <div className="text-center">
-              <div className="spinner-border text-info-300 mb-3" role="status">
-                <span className="visually-hidden">Loading Excel...</span>
-              </div>
-              <p className="text-info-100">Parsing Excel file...</p>
-            </div>
-          </div>
-        );
-      }
-
-      if (excelData && excelData.rows.length > 0) {
-        return (
-          <div style={{ height: '65vh', overflow: 'auto', border: '1px solid #41696C', borderRadius: '8px' }}>
-            <div className="p-16 bg-info-700 border-bottom border-info-600">
-              <h6 className="text-info-50 mb-0">
-                {excelData.worksheetName} - {uploadedDocument?.fileName || 'Spreadsheet'}
-              </h6>
-            </div>
-            <Table striped bordered hover responsive className="primary-table mb-0" style={{ backgroundColor: 'transparent' }}>
-              <tbody>
-                {excelData.rows.map((row, rowIndex) => (
-                  <tr key={rowIndex}>
-                    {row.map((cell, cellIndex) => (
-                      <td
-                        key={cellIndex}
-                        className="text-info-50"
-                        style={{
-                          minWidth: '100px',
-                          whiteSpace: 'nowrap',
-                          padding: '8px',
-                        }}
-                      >
-                        {cell !== null && cell !== undefined ? String(cell) : ''}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          </div>
-        );
-      }
-
-      // Excel file but couldn't parse it
+    if (isOfficeUploadFile(uploadedDocument)) {
+      const iconClass = getFileIcon(uploadedDocument) === 'file-word' ? 'fa-file-word' : 'fa-file-excel';
       return (
-        <div className="text-center py-5 border border-info-600 rounded" style={{ height: '65vh' }}>
-          <div className="d-flex flex-column align-items-center justify-content-center h-100">
-            <div className="mb-3">
-              <i className="fas fa-file-excel fa-5x text-info-300" />
-            </div>
-            <h5 className="text-info-100 mb-2">{uploadedDocument?.fileName || 'Document'}</h5>
-            <p className="text-info-300 mb-3">
-              Unable to preview this Excel file. Please download to view.
-            </p>
-            <Button
-              variant="primary-100"
-              onClick={handleDownloadDocument}
-            >
-              Download File
-            </Button>
-          </div>
-        </div>
+        <OfficeUploadPreview
+          fileName={uploadedDocument?.fileName || uploadedDocument?.file?.name}
+          downloadUrl={pdfUrl}
+          iconClass={iconClass}
+        />
       );
     }
 

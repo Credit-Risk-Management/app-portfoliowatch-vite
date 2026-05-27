@@ -4,7 +4,6 @@ import {
   Col,
   Alert,
   Button,
-  Table,
 } from 'react-bootstrap';
 import { useRef, useEffect, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -22,6 +21,7 @@ import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import FileUploader from '@src/components/global/FileUploader';
+import OfficeUploadPreview from '@src/components/global/OfficeUploadPreview/OfficeUploadPreview';
 import { $borrowerFinancialsForm } from '@src/signals';
 import {
   normalizeCurrencyValueAllowNegative,
@@ -57,8 +57,6 @@ const DocumentsContainer = ({
   const hasMultipleDocs = currentDocs.length > 1;
   const isTaxReturnUploaded = (documentsByType.taxReturn || []).length > 0;
   const {
-    excelData,
-    isLoadingExcel,
     pdfNumPages,
     pdfPageNumber,
     pdfLoadError,
@@ -75,15 +73,6 @@ const DocumentsContainer = ({
     cMapPacked: true,
     standardFontDataUrl: `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/standard_fonts/`,
   }), []);
-
-  // Parse Excel file and extract data
-  useEffect(() => {
-    if (!currentDoc || !helpers.isExcelFile(currentDoc)) {
-      resolvers.parseExcelFile(null);
-      return;
-    }
-    resolvers.parseExcelFile(currentDoc);
-  }, [currentDoc, pdfUrl]);
 
   // Create blob URL for newly uploaded files (stored files use storageUrl directly)
   useEffect(() => {
@@ -373,73 +362,14 @@ const DocumentsContainer = ({
       );
     }
 
-    if (helpers.isExcelFile(currentDoc)) {
-      if (isLoadingExcel) {
-        return (
-          <div className="text-center py-5 border border-info-600 rounded" style={{ height: '65vh' }}>
-            <div className="d-flex flex-column align-items-center justify-content-center h-100">
-              <div className="spinner-border text-info-300 mb-3" role="status">
-                <span className="visually-hidden">Loading...</span>
-              </div>
-              <p className="text-info-300">Loading Excel file...</p>
-            </div>
-          </div>
-        );
-      }
-
-      if (excelData && excelData.rows.length > 0) {
-        return (
-          <div style={{ height: '65vh', overflow: 'auto', border: '1px solid #41696C', borderRadius: '8px' }}>
-            <div className="p-16 bg-info-700 border-bottom border-info-600">
-              <h6 className="text-info-50 mb-0">
-                {excelData.worksheetName} - {currentDoc?.fileName || 'Spreadsheet'}
-              </h6>
-            </div>
-            <Table striped bordered hover responsive className="mb-0" style={{ backgroundColor: 'transparent' }}>
-              <tbody>
-                {excelData.rows.map((row, rowIndex) => (
-                  <tr key={rowIndex}>
-                    {row.map((cell, cellIndex) => (
-                      <td
-                        key={cellIndex}
-                        className="text-info-50"
-                        style={{
-                          minWidth: '100px',
-                          whiteSpace: 'nowrap',
-                          padding: '8px',
-                        }}
-                      >
-                        {cell !== null && cell !== undefined ? String(cell) : ''}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </Table>
-          </div>
-        );
-      }
-
-      // Excel file but couldn't parse it
+    if (helpers.isOfficeUploadFile(currentDoc)) {
+      const iconClass = helpers.getFileIcon(currentDoc) === 'file-word' ? 'fa-file-word' : 'fa-file-excel';
       return (
-        <div className="text-center py-5 border border-info-600 rounded" style={{ height: '65vh' }}>
-          <div className="d-flex flex-column align-items-center justify-content-center h-100">
-            <div className="mb-3">
-              <i className={`fas fa-${helpers.getFileIcon(currentDoc)} fa-5x text-info-300`} />
-            </div>
-            <h5 className="text-info-100 mb-2">{currentDoc?.fileName || 'Document'}</h5>
-            <p className="text-info-300 mb-3">
-              Unable to preview this Excel file. Please download to view.
-            </p>
-            <a
-              href={pdfUrl}
-              download={currentDoc?.fileName}
-              className="btn btn-primary-100"
-            >
-              Download File
-            </a>
-          </div>
-        </div>
+        <OfficeUploadPreview
+          fileName={currentDoc?.fileName || currentDoc?.file?.name}
+          downloadUrl={pdfUrl || pdfBlobUrl}
+          iconClass={iconClass}
+        />
       );
     }
 
