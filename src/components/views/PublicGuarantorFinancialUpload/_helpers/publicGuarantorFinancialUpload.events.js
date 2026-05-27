@@ -5,6 +5,7 @@ import {
   notifyGuarantorExtractReadyViaToken,
 } from '@src/api/guarantorFinancialUploadLink.api';
 import { storage } from '@src/utils/firebase';
+import { buildStandardFinancialUploadFileName } from '@src/utils/documents.utils';
 import {
   $gPubPersonalTax,
   $gPubPfs,
@@ -23,15 +24,6 @@ const resetAllGuarantorUploaders = () => {
   $gPubPfs.update({ financialDocs: [] });
   $gPubBusinessTax.update({ financialDocs: [] });
   $gPubDebtSchedule.update({ financialDocs: [] });
-};
-
-const buildFileName = (guarantorName, documentType, date) => {
-  const safeName = (guarantorName || 'unknown')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
-  const dateStr = (date ? new Date(date) : new Date()).toISOString().slice(0, 10);
-  return `${safeName}-${documentType}-${dateStr}.pdf`;
 };
 
 export const clearGuarantorSectionFiles = (apiDocumentKey) => {
@@ -63,7 +55,12 @@ export const handleGuarantorFileUpload = async () => {
       const [file] = files;
       if (!file) return;
       filesToUpload.push({
-        fileName: buildFileName(guarantorName, apiDocumentKey, periodDate),
+        fileName: buildStandardFinancialUploadFileName({
+          entityName: guarantorName,
+          documentType: apiDocumentKey,
+          date: periodDate,
+          file,
+        }),
         fileSize: file.size,
         mimeType: file.type,
         contentType: file.type,
