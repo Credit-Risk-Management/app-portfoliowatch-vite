@@ -19,7 +19,6 @@ import {
   handleRemoveDocument,
   handleDownloadDocument,
 } from './addCreditMemoModal.handlers';
-import { isExcelFile } from '@src/utils/documents.utils';
 
 // Set up PDF.js worker - using jsdelivr CDN (cdnjs path structure doesn't support pdfjs-dist 5.x)
 pdfjs.GlobalWorkerOptions.workerSrc = `https://cdn.jsdelivr.net/npm/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
@@ -61,78 +60,6 @@ const AddCreditMemoModal = () => {
     setPdfPageNumber(1);
     setPdfNumPages(null);
   }, [pdfUrl]);
-
-  // Parse Excel file and extract data
-  useEffect(() => {
-    const parseExcelFile = async () => {
-      if (!uploadedDocument || !isExcelFile(uploadedDocument)) {
-        setExcelData(null);
-        return;
-      }
-
-      setIsLoadingExcel(true);
-      try {
-        const workbook = new ExcelJS.Workbook();
-        let buffer;
-
-        if (uploadedDocument.file) {
-          // For newly uploaded files, use the File object
-          buffer = await uploadedDocument.file.arrayBuffer();
-        } else {
-          setExcelData(null);
-          setIsLoadingExcel(false);
-          return;
-        }
-
-        await workbook.xlsx.load(buffer);
-
-        // Get the first worksheet
-        const worksheet = workbook.worksheets[0];
-        if (!worksheet) {
-          setExcelData(null);
-          setIsLoadingExcel(false);
-          return;
-        }
-
-        // Convert worksheet to array of rows
-        const rows = [];
-        worksheet.eachRow((row) => {
-          const rowData = [];
-          row.eachCell({ includeEmpty: true }, (cell) => {
-            let { value } = cell;
-            // Handle different cell value types
-            if (value === null || value === undefined) {
-              value = '';
-            } else if (typeof value === 'object') {
-              // Handle formulas, rich text, etc.
-              if (value.text !== undefined) {
-                value = value.text;
-              } else if (value.result !== undefined) {
-                value = value.result;
-              } else {
-                value = String(value);
-              }
-            }
-            rowData.push(value);
-          });
-          rows.push(rowData);
-        });
-
-        setExcelData({
-          worksheetName: worksheet.name,
-          rows,
-          columnCount: worksheet.columnCount,
-        });
-      } catch (err) {
-        console.error('Error parsing Excel file:', err);
-        setExcelData(null);
-      } finally {
-        setIsLoadingExcel(false);
-      }
-    };
-
-    parseExcelFile();
-  }, [uploadedDocument, pdfUrl]);
 
   const renderDocumentPreview = () => {
     if (!pdfUrl) {

@@ -115,12 +115,22 @@ export const isPdfFile = (doc) => {
 
 export const isExcelFile = (doc) => {
   if (!doc) return false;
-  const mimeType = doc.mimeType || '';
-  const fileName = doc.fileName || '';
+  const mimeType = doc.mimeType || doc.file?.type || '';
+  const fileName = doc.fileName || doc.file?.name || '';
   return mimeType.includes('spreadsheet')
     || fileName.match(/\.(xlsx?|xls)$/i)
     || mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     || mimeType === 'application/vnd.ms-excel';
+};
+
+/** Office upload shown in lender/guarantor modals — no in-browser grid preview (server converts to PDF). */
+export const isOfficeUploadFile = (doc) => {
+  if (!doc || isPdfFile(doc)) return false;
+  const mimeType = doc.mimeType || doc.file?.type || '';
+  const fileName = doc.fileName || doc.file?.name || '';
+  if (isExcelFile(doc)) return true;
+  if (mimeType.includes('word') || fileName.match(/\.docx?$/i)) return true;
+  return mimeType === 'text/csv' || /\.csv$/i.test(fileName);
 };
 
 export const getFileIcon = (doc) => {
