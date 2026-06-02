@@ -259,7 +259,7 @@ const PublicGuarantorFinancialUpload = () => {
                                 id={inputId}
                                 name="financialDocs"
                                 signal={uploaderSignal}
-                                acceptedTypes=".pdf"
+                                acceptedTypes=".pdf,.xlsx,.xls,.doc,.docx,.csv"
                               />
                             </div>
                             {hasPdf ? (

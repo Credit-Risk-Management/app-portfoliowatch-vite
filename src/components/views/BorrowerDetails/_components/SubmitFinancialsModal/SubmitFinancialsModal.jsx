@@ -14,7 +14,7 @@ import BorrowerTriggersTab from '@src/components/views/BorrowerDetails/_componen
 import BorrowerDebtServiceTab from '@src/components/views/BorrowerDetails/_components/TabContent/BorrowerDebtServiceTab';
 import WatchScoreResultsModal from '@src/components/views/Borrowers/_components/WatchScoreResultsModal';
 import DocumentsContainer from '@src/components/views/BorrowerDetails/_components/DocumentsContainer';
-import { hasAnyStagedDocument } from '@src/components/views/BorrowerDetails/_components/DocumentsContainer/_helpers/documents.helpers';
+import { hasAnyStagedDocument } from '@src/utils/documents.utils';
 import NewFinancialUploadTable from './_components/NewFinancialUploadTable';
 import * as events from './_helpers/submitFinancialsModal.events';
 import * as resolvers from './_helpers/submitFinancialsModal.resolvers';

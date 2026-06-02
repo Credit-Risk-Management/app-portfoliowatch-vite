@@ -1,11 +1,5 @@
-/**
- * Formats a date string to US locale format (MM/DD/YYYY)
- */
-export const formatDate = (dateString) => {
-  if (!dateString) return '-';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
-};
+export { formatDateNumeric as formatDate } from '@src/utils/formatDate';
+export { getManagerName, getManagerOptions } from '@src/utils/relationshipManagers.utils';
 
 /**
  * Formats a phone number
@@ -75,16 +69,6 @@ export const renderMarkdownLinks = (text) => {
   // Replace [text](url) with <a> tags
   return text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
 };
-
-export const getManagerName = (managerId, managers) => {
-  const manager = managers.find((m) => m.id === managerId);
-  return manager ? manager.name : '-';
-};
-
-export const getManagerOptions = (managers) => managers.map((m) => ({
-  value: m.id,
-  label: m.name,
-}));
 
 /** True when borrower has stored impact questionnaire workforce fields (internal or public submit). */
 export const hasImpactQuestionnaireWorkforceData = (borrower) => {

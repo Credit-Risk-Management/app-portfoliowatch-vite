@@ -9,6 +9,7 @@ import {
   notifyExtractReadyViaToken,
 } from '@src/api/borrowerFinancialUploadLink.api';
 import { storage } from '@src/utils/firebase';
+import { buildStandardFinancialUploadFileName } from '@src/utils/documents.utils';
 import {
   getRequiredPdfSectionsForLink,
   hasPdfStagedForSection,
@@ -30,19 +31,6 @@ import {
   SECTION_ID_TO_DOCUMENT_TYPE,
 } from './publicFinancialUpload.consts';
 import { $debtScheduleWorksheetWrapCellEdit } from '../_components/DebtScheduleWorksheetModal/_helpers/debtScheduleWorksheetModal.consts';
-
-/**
- * Build a locked, system-standard file name: `borrowerName-documentType-YYYY-MM-DD.pdf`
- * e.g. "acme-corp-balanceSheet-2026-04-08.pdf"
- */
-const buildFileName = (borrowerName, documentType, date) => {
-  const safeName = (borrowerName || 'unknown')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
-  const dateStr = (date ? new Date(date) : new Date()).toISOString().slice(0, 10);
-  return `${safeName}-${documentType}-${dateStr}.pdf`;
-};
 
 export const resetAllPublicFinancialUploaders = () => {
   $publicIncomeStatementUploader.update({ financialDocs: [] });
@@ -121,7 +109,12 @@ export const handleFileUpload = async () => {
       const [file] = files;
       if (!file) return;
       filesToUpload.push({
-        fileName: buildFileName(borrowerName, documentType, periodDate),
+        fileName: buildStandardFinancialUploadFileName({
+          entityName: borrowerName,
+          documentType,
+          date: periodDate,
+          file,
+        }),
         fileSize: file.size,
         mimeType: file.type,
         contentType: file.type,

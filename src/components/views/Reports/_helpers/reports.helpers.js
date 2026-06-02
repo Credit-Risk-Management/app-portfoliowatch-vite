@@ -1,20 +1,9 @@
 import { formatCurrency } from '@src/utils/formatCurrency';
+import { formatRatio } from '@src/utils/formatRatio';
+import { formatDateNumeric as formatDate } from '@src/utils/formatDate';
+import { getManagerName as getRelationshipManagerName } from '@src/utils/relationshipManagers.utils';
 
-export const getRelationshipManagerName = (managerId, managers) => {
-  const manager = managers.find((m) => m.id === managerId);
-  return manager ? manager.name : '-';
-};
-
-export const formatRatio = (value) => {
-  if (value === null || value === undefined) return '-';
-  return Number(value).toFixed(2);
-};
-
-export const formatDate = (dateString) => {
-  if (!dateString) return '-';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
-};
+export { formatRatio, formatDate, getRelationshipManagerName };
 
 export const applyFilters = (loans, filters) => {
   let filteredLoans = [...loans];

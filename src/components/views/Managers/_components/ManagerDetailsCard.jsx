@@ -3,12 +3,7 @@ import { Row, Col, Button, ListGroup, Badge } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import UniversalCard from '@src/components/global/UniversalCard';
 import { $managerDetail } from '@src/signals';
-
-const formatDate = (dateString) => {
-  if (!dateString) return '-';
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
-};
+import { formatDateNumeric } from '@src/utils/formatDate';
 
 const ManagerDetailsCard = () => {
   const navigate = useNavigate();
@@ -80,7 +75,7 @@ const ManagerDetailsCard = () => {
             </Row>
             <Row className="mb-0">
               <Col sm={4} className="text-info-100 fw-200">Member Since</Col>
-              <Col sm={8} className="text-info-50 lead fw-500">{formatDate(manager.createdAt || manager.created_at)}</Col>
+              <Col sm={8} className="text-info-50 lead fw-500">{formatDateNumeric(manager.createdAt || manager.created_at)}</Col>
             </Row>
           </div>
 
