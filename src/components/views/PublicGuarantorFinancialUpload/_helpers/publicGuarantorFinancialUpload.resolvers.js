@@ -18,6 +18,7 @@ export const fetchGuarantorUploadLinkData = async (token) => {
     $publicGuarantorUploadView.update({
       linkData: response?.data ?? null,
       token,
+      pfsWorksheetHydratedFromPrior: false,
     });
   } catch (err) {
     dangerAlert(err.message || 'Invalid or expired upload link');
