@@ -1,3 +1,6 @@
+/** Debounce search typing before list refetch (avoids overlapping API calls). */
+export const BORROWERS_SEARCH_DEBOUNCE_MS = 350;
+
 export const CLIENT_TYPE_OPTIONS = [
   { value: 'Business', label: 'Business' },
   { value: 'SBA CA', label: 'SBA CA' },

@@ -4,6 +4,9 @@ import { borrowersSearchGetAll } from '@src/api/borrowers.api';
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import { resolvePageLimit } from '@src/consts/consts';
 
+/** Ignore out-of-order list responses when filters change faster than the network. */
+let borrowersListFetchGeneration = 0;
+
 /** Reset list filters when opening Borrowers with a clean URL (avoids stale search/facets after nav or back). */
 export const resetBorrowersListFilters = () => {
   $borrowersFilter.reset();
@@ -65,6 +68,7 @@ const facetParamsFromBorrowersFilter = () => {
 };
 
 export const fetchAndSetBorrowerData = async (filters = {}) => {
+  const generation = ++borrowersListFetchGeneration;
   $borrowersView.update({ isTableLoading: true });
   try {
     const pageLimit = resolvePageLimit($borrowersFilter.value?.limit);
@@ -80,13 +84,21 @@ export const fetchAndSetBorrowerData = async (filters = {}) => {
       ...filters,
       ...paginationAndSortParams,
     });
+    if (generation !== borrowersListFetchGeneration) {
+      return;
+    }
     $borrowers.update({
       list: response.data || [],
       totalCount: response.count || 0,
     });
   } catch (error) {
+    if (generation !== borrowersListFetchGeneration) {
+      return;
+    }
     dangerAlert(error.message || 'Failed to fetch borrowers');
   } finally {
-    $borrowersView.update({ isTableLoading: false });
+    if (generation === borrowersListFetchGeneration) {
+      $borrowersView.update({ isTableLoading: false });
+    }
   }
 };

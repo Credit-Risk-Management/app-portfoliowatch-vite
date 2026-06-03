@@ -2,7 +2,16 @@ import { $borrowersView, $borrowersFilter, $borrowersForm } from '@src/signals';
 import borrowersApi from '@src/api/borrowers.api';
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import { resolvePageLimit } from '@src/consts/consts';
+import { borrowersFilterToUrlParams } from '@src/utils/tableFilterUrlParams';
 import * as resolvers from './borrowers.resolvers';
+
+/** Sync $borrowersFilter to the URL after signal-driven filter edits (search, selects). */
+export const syncBorrowersListUrl = (setSearchParams, patch = {}) => {
+  if (patch && Object.keys(patch).length > 0) {
+    $borrowersFilter.update(patch);
+  }
+  setSearchParams(borrowersFilterToUrlParams($borrowersFilter.value), { replace: true });
+};
 
 export const handleAddBorrower = async () => {
   try {

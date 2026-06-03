@@ -32,7 +32,8 @@ import { useRef } from 'react';
 import * as consts from './_helpers/borrowers.consts';
 import * as resolvers from './_helpers/borrowers.resolvers';
 import * as helpers from './_helpers/borrowers.helpers';
-import { handleBorrowerFilterChange } from './_helpers/borrowers.events';
+import { syncBorrowersListUrl } from './_helpers/borrowers.events';
+import { BORROWERS_SEARCH_DEBOUNCE_MS } from './_helpers/borrowers.consts';
 import EditBorrowerModal from './_components/EditBorrowerModal';
 import DeleteBorrowerModal from './_components/DeleteBorrowerModal';
 import AddBorrowerModal from './_components/AddBorrowerModal';
@@ -41,6 +42,7 @@ const Borrowers = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const isInitialMount = useRef(true);
+  const searchDebounceTimerRef = useRef(null);
 
   useEffectAsync(async () => {
     const q = searchParams.toString();
@@ -101,7 +103,6 @@ const Borrowers = () => {
 
     await resolvers.fetchAndSetBorrowerData(filters);
   }, [
-    $borrowersFilter.value.searchTerm,
     $borrowersFilter.value.borrowerType,
     $borrowersFilter.value.relationshipManager,
     $borrowersFilter.value.page,
@@ -111,6 +112,34 @@ const Borrowers = () => {
     $borrowersFilter.value.quarterlyPackageComplete,
     $borrowersFilter.value.impactQuestionnaireComplete,
   ]);
+
+  useEffectAsync(async () => {
+    if (isInitialMount.current) return;
+
+    if (searchDebounceTimerRef.current) {
+      clearTimeout(searchDebounceTimerRef.current);
+    }
+
+    await new Promise((resolve) => {
+      searchDebounceTimerRef.current = setTimeout(resolve, BORROWERS_SEARCH_DEBOUNCE_MS);
+    });
+
+    const borrowerTypeValue = Array.isArray($borrowersFilter.value.borrowerType)
+      ? $borrowersFilter.value.borrowerType.filter((type) => type !== '').join(',')
+      : $borrowersFilter.value.borrowerType;
+
+    const relationshipManagerValue = Array.isArray($borrowersFilter.value.relationshipManager)
+      ? $borrowersFilter.value.relationshipManager.filter((manager) => manager !== '').join(',')
+      : $borrowersFilter.value.relationshipManager;
+
+    await resolvers.fetchAndSetBorrowerData({
+      searchTerm: $borrowersFilter.value.searchTerm,
+      borrowerType: borrowerTypeValue,
+      relationshipManager: relationshipManagerValue,
+      page: $borrowersFilter.value.page,
+      limit: resolvePageLimit($borrowersFilter.value.limit),
+    });
+  }, [$borrowersFilter.value.searchTerm]);
 
   const rows = $borrowers.value.list.map((borrower) => ({
     ...borrower,
@@ -200,16 +229,8 @@ const Borrowers = () => {
           <Search
             placeholder="Search borrowers..."
             value={$borrowersFilter.value.searchTerm}
-            onChange={() => {
-              handleBorrowerFilterChange();
-              setSearchParams(borrowersFilterToUrlParams($borrowersFilter.value));
-              $borrowersFilter.update({ page: 1 });
-            }}
-            onClear={() => {
-              handleBorrowerFilterChange();
-              setSearchParams(borrowersFilterToUrlParams($borrowersFilter.value));
-              $borrowersFilter.update({ page: 1 });
-            }}
+            onChange={() => syncBorrowersListUrl(setSearchParams, { page: 1 })}
+            onClear={() => syncBorrowersListUrl(setSearchParams, { page: 1 })}
             signal={$borrowersFilter}
             name="searchTerm"
           />
@@ -218,10 +239,7 @@ const Borrowers = () => {
           <SelectInput
             options={[{ value: '', label: 'All Types' }, ...consts.CLIENT_TYPE_OPTIONS]}
             value={$borrowersFilter.value.borrowerType}
-            onChange={() => {
-              handleBorrowerFilterChange();
-              setSearchParams(borrowersFilterToUrlParams($borrowersFilter.value));
-            }}
+            onChange={() => syncBorrowersListUrl(setSearchParams, { page: 1 })}
             placeholder="Borrower Type"
             signal={$borrowersFilter}
             name="borrowerType"
@@ -232,10 +250,7 @@ const Borrowers = () => {
           <SelectInput
             options={[{ value: '', label: 'All Managers' }, ...relationshipManagerOptions]}
             value={$borrowersFilter.value.relationshipManager}
-            onChange={() => {
-              handleBorrowerFilterChange();
-              setSearchParams(borrowersFilterToUrlParams($borrowersFilter.value));
-            }}
+            onChange={() => syncBorrowersListUrl(setSearchParams, { page: 1 })}
             placeholder="Relationship Manager"
             signal={$borrowersFilter}
             name="relationshipManager"
@@ -246,11 +261,7 @@ const Borrowers = () => {
           <SelectInput
             options={[{ value: '', label: 'All (quarterly package)' }, ...consts.QUARTERLY_PACKAGE_FILTER_OPTIONS]}
             value={$borrowersFilter.value.quarterlyPackageComplete}
-            onChange={() => {
-              handleBorrowerFilterChange();
-              setSearchParams(borrowersFilterToUrlParams($borrowersFilter.value));
-              $borrowersFilter.update({ page: 1 });
-            }}
+            onChange={() => syncBorrowersListUrl(setSearchParams, { page: 1 })}
             placeholder="Quarterly (Q)"
             signal={$borrowersFilter}
             name="quarterlyPackageComplete"
@@ -262,11 +273,7 @@ const Borrowers = () => {
           <SelectInput
             options={[{ value: '', label: 'All (impact questionnaire)' }, ...consts.IMPACT_QUESTIONNAIRE_FILTER_OPTIONS]}
             value={$borrowersFilter.value.impactQuestionnaireComplete}
-            onChange={() => {
-              handleBorrowerFilterChange();
-              setSearchParams(borrowersFilterToUrlParams($borrowersFilter.value));
-              $borrowersFilter.update({ page: 1 });
-            }}
+            onChange={() => syncBorrowersListUrl(setSearchParams, { page: 1 })}
             placeholder="Impact (I-Q)"
             signal={$borrowersFilter}
             name="impactQuestionnaireComplete"
@@ -287,8 +294,7 @@ const Borrowers = () => {
             value={$borrowersFilter.value.limit}
             onChange={(selectedOption) => {
               const limit = resolvePageLimit(selectedOption?.value);
-              $borrowersFilter.update({ limit, page: 1 });
-              setSearchParams(borrowersFilterToUrlParams($borrowersFilter.value));
+              syncBorrowersListUrl(setSearchParams, { limit, page: 1 });
             }}
             placeholder="Limit"
             signal={$borrowersFilter}
