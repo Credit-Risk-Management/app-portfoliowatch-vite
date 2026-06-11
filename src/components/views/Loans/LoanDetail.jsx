@@ -254,8 +254,6 @@ const LoanDetail = () => {
     loanGuarantors: $loanDetailGuarantors.value,
   });
 
-
-
   return (
     <Loadable signal={$loan} template="fullscreen">
       <Container className="py-16 py-md-24">
