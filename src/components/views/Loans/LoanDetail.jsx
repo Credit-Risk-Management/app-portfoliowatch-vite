@@ -4,15 +4,15 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Container, Row, Col, Button, Collapse, Spinner, OverlayTrigger, Tooltip, Badge } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-    faArrowLeft,
-    faArrowRight,
-    faMagic,
-    faUser,
-    faLandmark,
-    faFileAlt,
-    faSync,
-    faFlag,
-    faExclamationTriangle,
+  faArrowLeft,
+  faArrowRight,
+  faMagic,
+  faUser,
+  faLandmark,
+  faFileAlt,
+  faSync,
+  faFlag,
+  faExclamationTriangle,
 } from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';
 import UniversalCard from '@src/components/global/UniversalCard';
@@ -25,11 +25,11 @@ import Loadable from '@src/components/global/Loadable';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import getResolvedIndustryTitle from '@src/utils/naicsTitles';
 import {
-    COVENANT_YEAREND_PATH_FOOTNOTE,
-    hasFourConsecutiveQuartersWithEbitdaThroughLastYearend,
-    resolveLoanDetailBusinessEbitda,
-    resolveLoanDetailDebtServiceActual,
-    resolveLoanDetailCurrentRatioActual,
+  COVENANT_YEAREND_PATH_FOOTNOTE,
+  hasFourConsecutiveQuartersWithEbitdaThroughLastYearend,
+  resolveLoanDetailBusinessEbitda,
+  resolveLoanDetailDebtServiceActual,
+  resolveLoanDetailCurrentRatioActual,
 } from '@src/components/views/BorrowerDetails/_components/TabContent/BorrowerDebtServiceTab/_helpers/debtService.helpers';
 import SubmitCollateralModal from './_components/SubmitCollateralModal';
 import { $loanCollateralView } from './_components/submitCollateralModal.signals';
@@ -38,27 +38,27 @@ import { handleOpenModal as handleOpenCreditMemoModal } from './_components/addC
 import LoanRadarChart from './_components/LoanRadarChart';
 import LoanComments from './_components/LoanComments';
 import {
-    formatDate,
-    formatInterestRatePercent,
-    formatPercent,
-    formatRatio,
-    getCovenantStatus,
-    getHealthScoreColor,
-    renderMarkdownLinks,
-    computeLoanGlobalCashFlowAnalysis,
+  formatDate,
+  formatInterestRatePercent,
+  formatPercent,
+  formatRatio,
+  getCovenantStatus,
+  getHealthScoreColor,
+  renderMarkdownLinks,
+  computeLoanGlobalCashFlowAnalysis,
 } from './_helpers/loans.helpers';
 import {
-    $loanDetailShowSecondaryContacts,
-    $loanDetailFinancials,
-    $loanDetailCollateral, $loanDetailCollateralAccordionExpanded,
-    $industryReportGenerating,
-    $loanDetailGuarantors,
-    $loanDetailView,
-    $loanDetailLatestDebtSchedule,
+  $loanDetailShowSecondaryContacts,
+  $loanDetailFinancials,
+  $loanDetailCollateral, $loanDetailCollateralAccordionExpanded,
+  $industryReportGenerating,
+  $loanDetailGuarantors,
+  $loanDetailView,
+  $loanDetailLatestDebtSchedule,
 } from './_helpers/loans.consts';
 import { fetchLoanDetail, resetLoanRouteState } from './_helpers/loans.resolvers';
 import {
-    handleGenerateIndustryReport,
+  handleGenerateIndustryReport,
 } from './_helpers/loans.events';
 
 const LoanDetail = () => {
@@ -250,12 +250,6 @@ const LoanDetail = () => {
   );
   const globalCashFlowMetrics = computeLoanGlobalCashFlowAnalysis({
     borrowerEbitda: businessEbitdaForGlobalCashFlow,
-    latestDebtScheduleRow: $loanDetailLatestDebtSchedule.value,
-    loanGuarantors: $loanDetailGuarantors.value,
-  });
-
-  const globalCashFlowMetrics = computeLoanGlobalCashFlowAnalysis({
-    borrowerEbitda: loanData?.ebitda,
     latestDebtScheduleRow: $loanDetailLatestDebtSchedule.value,
     loanGuarantors: $loanDetailGuarantors.value,
   });

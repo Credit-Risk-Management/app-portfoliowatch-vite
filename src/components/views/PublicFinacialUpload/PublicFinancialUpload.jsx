@@ -1,41 +1,41 @@
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import {
-    Container, Button, Alert, Card, Spinner,
+  Container, Button, Alert, Card, Spinner,
 } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-    faFileAlt,
-    faCheck,
-    faCheckCircle,
-    faExclamationTriangle,
+  faFileAlt,
+  faCheck,
+  faCheckCircle,
+  faExclamationTriangle,
 } from '@fortawesome/free-solid-svg-icons';
 import FileUploader from '@src/components/global/FileUploader';
 import ContentWrapper from '@src/components/global/ContentWrapper';
 import sabreFinanceWordmark from '@src/assets/sabre_finance.svg?url';
 import { formatDate } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
 import {
-    $debtScheduleWorksheetForm,
-    $publicFinancialUploadView,
-    DEFAULT_PUBLIC_ATTESTATION_TEXT,
+  $debtScheduleWorksheetForm,
+  $publicFinancialUploadView,
+  DEFAULT_PUBLIC_ATTESTATION_TEXT,
 } from './_helpers/publicFinancialUpload.consts';
 import AttestationModal from './_components/AttestationModal';
 import DebtScheduleWorksheetModal from './_components/DebtScheduleWorksheetModal';
 import PublicFinancialUploadImpactQuestionnaireModal from './_components/PublicFinancialUploadImpactQuestionnaireModal/PublicFinancialUploadImpactQuestionnaireModal';
 import {
-    getRequiredPdfSectionsForLink,
-    hasPdfStagedForSection,
-    getPublicUploaderSignalForSection,
-    isSectionReadyForSubmit,
+  getRequiredPdfSectionsForLink,
+  hasPdfStagedForSection,
+  getPublicUploaderSignalForSection,
+  isSectionReadyForSubmit,
 } from './_helpers/publicFinancialUpload.helpers';
 import { fetchUploadLinkData } from './_helpers/publicFinancialUpload.resolvers';
 import {
-    handleFileUpload,
-    clearError,
-    clearPublicFinancialSectionFiles, openAttestationModal,
-    closeAttestationModal,
-    openDebtScheduleWorksheetModal,
-    openImpactQuestionnaireFromPublicUpload,
+  handleFileUpload,
+  clearError,
+  clearPublicFinancialSectionFiles, openAttestationModal,
+  closeAttestationModal,
+  openDebtScheduleWorksheetModal,
+  openImpactQuestionnaireFromPublicUpload,
 } from './_helpers/publicFinancialUpload.events';
 
 const PublicFinancialUpload = () => {
