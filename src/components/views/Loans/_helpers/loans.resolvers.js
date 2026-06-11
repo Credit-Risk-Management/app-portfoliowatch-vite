@@ -1,9 +1,9 @@
 import { $borrowers, $loans, $loansFilter, $loansView, $relationshipManagers, $comments } from '@src/signals';
-import { $loan, $watchScoreBreakdown } from '@src/consts/consts';
+import { $loan, $watchScoreBreakdown, resolvePageLimit } from '@src/consts/consts';
 import borrowersApi, { borrowersSearchGetAll } from '@src/api/borrowers.api';
 import relationshipManagersApi from '@src/api/relationshipManagers.api';
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
-import loansApi from '@src/api/loans.api';
+import loansApi, { loansSearchGetAll } from '@src/api/loans.api';
 import commentsApi from '@src/api/comments.api';
 import documentsApi from '@src/api/documents.api';
 import loanCollateralValueApi from '@src/api/loanCollateralValue.api';
@@ -141,7 +141,16 @@ export const fetchAndSetLoans = async ({ isShowLoader = true }) => {
       $loansView.update({ isTableLoading: true });
     }
 
-    const { searchTerm, interestType, watchScore, relationshipManager, page, sortKey, sortDirection } = $loansFilter.value;
+    const {
+      searchTerm,
+      interestType,
+      watchScore,
+      relationshipManager,
+      page,
+      sortKey,
+      sortDirection,
+      limit,
+    } = $loansFilter.value;
 
     const filters = {
       searchTerm,
@@ -149,12 +158,12 @@ export const fetchAndSetLoans = async ({ isShowLoader = true }) => {
       watchScore,
       relationshipManager,
       page: page || 1,
-      limit: 10,
+      limit: resolvePageLimit(limit),
       sortKey,
       sortDirection,
     };
 
-    const response = await loansApi.getAll(filters);
+    const response = await loansSearchGetAll(filters);
 
     $loans.update({
       list: response?.data || [],

@@ -1,12 +1,14 @@
-import { $user } from '@src/signals';
+import { $user, $organization } from '@src/signals';
+import { sensibleConfigurationNameForSegment, organizationNameToSensibleSlug } from '@src/utils/organizationNameToSensibleSlug';
 import guarantorsApi from '@src/api/guarantors.api';
 import guarantorFinancialDocumentsApi from '@src/api/guarantorFinancialDocuments.api';
 import { dangerAlert, successAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import postToSensibleApi, { initiateUploadToSensibleApi } from '@src/api/sensible.api';
 import { storage } from '@src/utils/firebase';
 import { fetchGuarantorDetail } from '@src/components/views/GuarantorDetails/_helpers/guarantorDetails.resolvers';
-import { parseSingleDocResponse } from '@src/utils/sensibleParseApi';
+import { parseSingleDocResponse, GUARANTOR_SENSIBLE_NORMALIZER_V1 } from '@src/utils/sensibleParseApi';
 import { normalizeRatioDecimalToPercent } from '@src/utils/ratioPercent';
+import { formatDateForInput } from '@src/utils/formatDate';
 import { computeDebtToIncomeRatio } from '../../../_utils/guarantorDebtToIncome';
 import { $submitPFSModalView, $submitPFSModalDetails } from './submitGuarantorFinancialsModal.const';
 
@@ -94,10 +96,14 @@ export const handleFileUpload = async ($financialDocsUploader, $modalState, ocrA
     if (sensibleType && downloadURL) {
       $modalState.update({ isLoadingInputData: true });
       try {
+        const configurationName = sensibleConfigurationNameForSegment(
+          $organization.value?.name,
+          sensibleType,
+        );
         const sensibleBody = {
           url: downloadURL,
           documentType: sensibleType,
-          configurationName: sensibleType,
+          configurationName,
           environment: 'development',
           documentName: file.name,
         };
@@ -105,8 +111,17 @@ export const handleFileUpload = async ($financialDocsUploader, $modalState, ocrA
         const parsedDocument = sensibleResponse?.data?.parsed_document ?? sensibleResponse?.parsed_document ?? null;
 
         if (documentType === 'personalFinancialStatement' && parsedDocument) {
-          const pfsData = parseSingleDocResponse(parsedDocument, 'personalFinancialStatement');
-          if (pfsData) {
+          const orgName = $organization.value?.name;
+          const pfsData = parseSingleDocResponse(parsedDocument, 'personalFinancialStatement', {
+            normalizerVersion: GUARANTOR_SENSIBLE_NORMALIZER_V1,
+            ...(orgName != null && String(orgName).trim() !== ''
+              ? {
+                organizationName: String(orgName).trim(),
+                organizationSlug: organizationNameToSensibleSlug(orgName) || undefined,
+              }
+              : {}),
+          });
+          if (pfsData != null && typeof pfsData === 'object' && !Array.isArray(pfsData)) {
             $submitPFSModalDetails.update({
               asOfDate: pfsData.asOfDate,
               totalAssets: pfsData.totalAssets,
@@ -119,8 +134,10 @@ export const handleFileUpload = async ($financialDocsUploader, $modalState, ocrA
           }
         }
         if (documentType === 'personalTaxReturn' && parsedDocument) {
-          const extractedData = parseSingleDocResponse(parsedDocument, 'personalTaxReturn');
-          if (extractedData) {
+          const extractedData = parseSingleDocResponse(parsedDocument, 'personalTaxReturn', {
+            normalizerVersion: GUARANTOR_SENSIBLE_NORMALIZER_V1,
+          });
+          if (extractedData != null && typeof extractedData === 'object' && !Array.isArray(extractedData)) {
             $submitPFSModalDetails.update({
               asOfDate: extractedData.asOfDate,
               adjustedGrossIncome: extractedData.adjustedGrossIncome,
@@ -287,10 +304,6 @@ const loadGuarantorDocumentsFromBackend = async (guarantorFinancialId) => {
   };
 };
 
-const formatDateForInput = (dateString) => {
-  if (!dateString) return '';
-  return new Date(dateString).toISOString().split('T')[0];
-};
 const collectStoredIdsByType = (documentsByType) => ({
   personalFinancialStatement: (documentsByType.personalFinancialStatement || [])
     .filter((d) => d.isStored && d.id)

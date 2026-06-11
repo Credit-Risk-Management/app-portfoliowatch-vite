@@ -6,9 +6,7 @@ import ContextMenu from '@src/components/global/ContextMenu';
 import { $borrower } from '@src/consts/consts';
 import { $documents, $documentsView } from '@src/signals';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
-import { TABLE_HEADERS as DOCUMENTS_TABLE_HEADERS } from '@src/components/views/Documents/_helpers/documents.consts';
-import { formatFileSize, formatUploadDate, getLoanNumber } from '@src/components/views/Documents/_helpers/documents.helpers';
-import { handleDownloadDocument } from '@src/components/views/Documents/_helpers/documents.events';
+import { formatFileSize, formatUploadDate, getLoanNumber, DOCUMENTS_TABLE_HEADERS, handleDownloadDocument } from '@src/utils/documents.utils';
 import { $borrowerDocumentsFilter, $borrowerDocumentsView } from '@src/components/views/BorrowerDetails/_helpers/borrowerDetail.consts';
 import { fetchBorrowerDocuments } from '@src/components/views/BorrowerDetails/_helpers/borrowerDetail.resolvers';
 

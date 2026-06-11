@@ -1,39 +1,41 @@
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import {
-  Container, Button, Alert, Card, Spinner,
+    Container, Button, Alert, Card, Spinner,
 } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faFileAlt,
-  faCheck,
-  faCheckCircle,
-  faExclamationTriangle,
+    faFileAlt,
+    faCheck,
+    faCheckCircle,
+    faExclamationTriangle,
 } from '@fortawesome/free-solid-svg-icons';
 import FileUploader from '@src/components/global/FileUploader';
 import ContentWrapper from '@src/components/global/ContentWrapper';
 import sabreFinanceWordmark from '@src/assets/sabre_finance.svg?url';
 import { formatDate } from '@src/components/global/Inputs/UniversalInput/_helpers/universalinput.events';
 import {
-  $debtScheduleWorksheetForm,
-  $publicFinancialUploadView,
-  DEFAULT_PUBLIC_ATTESTATION_TEXT,
+    $debtScheduleWorksheetForm,
+    $publicFinancialUploadView,
+    DEFAULT_PUBLIC_ATTESTATION_TEXT,
 } from './_helpers/publicFinancialUpload.consts';
 import AttestationModal from './_components/AttestationModal';
 import DebtScheduleWorksheetModal from './_components/DebtScheduleWorksheetModal';
+import PublicFinancialUploadImpactQuestionnaireModal from './_components/PublicFinancialUploadImpactQuestionnaireModal/PublicFinancialUploadImpactQuestionnaireModal';
 import {
-  getRequiredPdfSectionsForLink,
-  hasPdfStagedForSection,
-  getPublicUploaderSignalForSection,
-  isSectionReadyForSubmit,
+    getRequiredPdfSectionsForLink,
+    hasPdfStagedForSection,
+    getPublicUploaderSignalForSection,
+    isSectionReadyForSubmit,
 } from './_helpers/publicFinancialUpload.helpers';
 import { fetchUploadLinkData } from './_helpers/publicFinancialUpload.resolvers';
 import {
-  handleFileUpload,
-  clearError,
-  clearPublicFinancialSectionFiles, openAttestationModal,
-  closeAttestationModal,
-  openDebtScheduleWorksheetModal,
+    handleFileUpload,
+    clearError,
+    clearPublicFinancialSectionFiles, openAttestationModal,
+    closeAttestationModal,
+    openDebtScheduleWorksheetModal,
+    openImpactQuestionnaireFromPublicUpload,
 } from './_helpers/publicFinancialUpload.events';
 
 const PublicFinancialUpload = () => {
@@ -207,16 +209,26 @@ const PublicFinancialUpload = () => {
                   </thead>
                   <tbody>
                     {requiredPdfSections.map(({ sectionId, title, inputId }, rowIndex) => {
+                      const isDebtSchedule = sectionId === 'debtScheduleWorksheet';
+                      const isImpactQuestionnaire = sectionId === 'impactQuestionnaire';
                       const uploaderSignal = getPublicUploaderSignalForSection(sectionId);
                       const rowReady = isSectionReadyForSubmit(sectionId, debtWorksheetForm);
-                      const hasPdf = sectionId === 'debtScheduleWorksheet'
+                      const hasPdf = isDebtSchedule || isImpactQuestionnaire
                         ? rowReady
                         : hasPdfStagedForSection(sectionId);
                       let firstFileName;
-                      if (sectionId === 'debtScheduleWorksheet') {
+                      if (isDebtSchedule) {
                         firstFileName = rowReady ? 'Worksheet complete (PDF generated on submit)' : '—';
+                      } else if (isImpactQuestionnaire) {
+                        firstFileName = rowReady ? 'Questionnaire complete' : '—';
                       } else {
                         firstFileName = (uploaderSignal.value.financialDocs || [])[0]?.name;
+                      }
+                      let notUploadedLabel = 'Not uploaded';
+                      if (isDebtSchedule) {
+                        notUploadedLabel = 'Worksheet not complete';
+                      } else if (isImpactQuestionnaire) {
+                        notUploadedLabel = 'Questionnaire not complete';
                       }
                       const isLast = rowIndex === requiredPdfSections.length - 1;
                       return (
@@ -233,11 +245,11 @@ const PublicFinancialUpload = () => {
                                 <span className="me-4">
                                   <FontAwesomeIcon icon={faCheck} size="sm" className="text-success-700" />
                                 </span>
-                                {sectionId === 'debtScheduleWorksheet' ? 'Complete' : 'Uploaded'}
+                                {isDebtSchedule || isImpactQuestionnaire ? 'Complete' : 'Uploaded'}
                               </span>
                             ) : (
                               <span className="text-grey-600 fw-normal">
-                                {sectionId === 'debtScheduleWorksheet' ? 'Worksheet not complete' : 'Not uploaded'}
+                                {notUploadedLabel}
                               </span>
                             )}
                           </td>
@@ -245,7 +257,7 @@ const PublicFinancialUpload = () => {
                             <div className="fw-semibold text-dark text-truncate">{hasPdf ? firstFileName : '—'}</div>
                           </td>
                           <td className="pe-16 py-8 text-end">
-                            {sectionId === 'debtScheduleWorksheet' && (
+                            {isDebtSchedule && (
                             <div className="text-dark d-flex justify-content-end">
                               <Button
                                 type="button"
@@ -258,14 +270,27 @@ const PublicFinancialUpload = () => {
                               </Button>
                             </div>
                             )}
-                            {sectionId !== 'debtScheduleWorksheet' && (
+                            {isImpactQuestionnaire && (
+                            <div className="text-dark d-flex justify-content-end">
+                              <Button
+                                type="button"
+                                variant="dark"
+                                size="sm"
+                                className="text-nowrap"
+                                onClick={() => openImpactQuestionnaireFromPublicUpload()}
+                              >
+                                Open questionnaire
+                              </Button>
+                            </div>
+                            )}
+                            {!isDebtSchedule && !isImpactQuestionnaire && (
                             <>
                               <div className="d-none">
                                 <FileUploader
                                   id={inputId}
                                   name="financialDocs"
                                   signal={uploaderSignal}
-                                  acceptedTypes=".pdf"
+                                  acceptedTypes=".pdf,.xlsx,.xls,.doc,.docx,.csv"
                                 />
                               </div>
                               {hasPdf ? (
@@ -322,6 +347,9 @@ const PublicFinancialUpload = () => {
         show={activeModalKey === 'debtSchedule'}
         isSubmitting={isSubmitting}
         worksheetSubmitting={debtScheduleWorksheetSubmitting}
+      />
+      <PublicFinancialUploadImpactQuestionnaireModal
+        show={activeModalKey === 'impactQuestionnaire'}
       />
     </ContentWrapper>
   );

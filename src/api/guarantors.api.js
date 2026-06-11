@@ -31,6 +31,8 @@ export const guarantorsApiBase = {
   // Update guarantor
   update: async (id, data) => apiClient.put(`/guarantors/${id}`, data),
 
+  delete: async (id) => apiClient.delete(`/guarantors/${id}`),
+
   // Link guarantor to loan (GuarantorToLoan)
   linkToLoan: async (guarantorId, loanId) => apiClient.post('/guarantor-to-loans', { guarantorId, loanId }),
 
@@ -55,6 +57,7 @@ export const guarantorsApi = wrapApiWithDebounce(guarantorsApiBase, {
   getByManager: 350,
   create: 0,
   update: 0,
+  delete: 0,
   linkToLoan: 0,
   unlinkFromLoan: 0,
   createFinancial: 300,

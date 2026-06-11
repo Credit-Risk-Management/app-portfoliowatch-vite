@@ -1,8 +1,4 @@
-export const getManagerName = (managerId, managers) => {
-  if (!managerId) return '-';
-  const manager = managers.find((m) => m.id === managerId);
-  return manager ? manager.name : '-';
-};
+export { getManagerName } from '@src/utils/relationshipManagers.utils';
 
 export const getDirectReports = (managerId, managers) => managers.filter((m) => m.managerId === managerId);
 

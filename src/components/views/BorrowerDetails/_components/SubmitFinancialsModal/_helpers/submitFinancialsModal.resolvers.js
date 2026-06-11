@@ -5,6 +5,7 @@ import debtServiceHistoryApi from '@src/api/debtServiceHistory.api';
 import { successAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import { storage } from '@src/utils/firebase';
 import { profitMarginPercentFromNetIncome } from '@src/utils/sensibleExtractPrimitives';
+import { formatDateForInput } from '@src/utils/formatDate';
 import * as consts from './submitFinancialsModal.consts';
 
 const { MODAL_FINANCIAL_DOCUMENT_BUCKET_KEYS, INCOME_STATEMENT_MODAL_KEYS } = consts;
@@ -337,11 +338,6 @@ const flattenStoredDocumentIds = (documentsByType) => (
 export const handleOpenEditMode = async (financial) => {
   const { $modalState } = consts;
   const expectedFinancialId = financial.id;
-  const formatDateForInput = (dateString) => {
-    if (!dateString) return '';
-    return new Date(dateString).toISOString().split('T')[0];
-  };
-
   const documentsByType = await loadDocumentsFromBackend(financial.id);
   // User may have closed the modal or submitted while documents were loading; do not reopen.
   if ($borrowerFinancialsView.value.editingFinancialId !== expectedFinancialId) {
@@ -383,6 +379,7 @@ export const handleOpenEditMode = async (financial) => {
     changeInAccountsPayable: financial.changeInAccountsPayable?.toString() || '',
     notes: financial.notes || '',
     documentIds: financial.documentIds || [],
+    incomeStatementPackageQuarterly: Boolean(financial.incomeStatementPackageQuarterly),
   });
 
   $borrowerFinancialsView.update({
@@ -428,12 +425,25 @@ const toDisplayPercentage = (value) => {
   return String(num);
 };
 
-const computeDebtServiceRatio = (ebitda, totalMonthlyPayment) => {
+const computeDebtServiceRatio = (ebitda, totalMonthlyPayment, incomeStatementPackageQuarterly = false) => {
   if (ebitda == null || totalMonthlyPayment == null) return null;
   if (totalMonthlyPayment <= 0) return null;
   const annualDebtService = totalMonthlyPayment * 12;
   if (annualDebtService <= 0) return null;
-  return roundTo4(ebitda / annualDebtService);
+  const ebitdaForRatio = incomeStatementPackageQuarterly ? ebitda * 4 : ebitda;
+  return roundTo4(ebitdaForRatio / annualDebtService);
+};
+
+/** True when staged or stored income docs imply a quarterly P&L package (aligns with API / WATCH). */
+const inferQuarterlyIncomeForSubmit = (stagedByType) => {
+  const quarterly = stagedByType?.incomeStatementQuarterly || [];
+  if (quarterly.some((d) => d?.file || d?.isStored)) return true;
+  const ytd = [
+    ...(stagedByType?.incomeStatementYtd || []),
+    ...(stagedByType?.incomeStatement || []),
+  ];
+  if (ytd.some((d) => d?.file || d?.isStored)) return false;
+  return Boolean($borrowerFinancialsForm.value.incomeStatementPackageQuarterly);
 };
 
 /** Total current assets / total current liabilities (matches WATCH Weighted Exposure). */
@@ -496,12 +506,19 @@ export const handleSubmit = async (onCloseCallback) => {
     const formCash = toNumberOrNull($borrowerFinancialsForm.value.cash);
     const formCashEq = toNumberOrNull($borrowerFinancialsForm.value.cashEquivalents);
 
+    const { documentsByType: stagedByType } = $modalState.value;
+
     let computedDebtServiceRatio = null;
     try {
       const debtServiceResponse = await debtServiceHistoryApi.getLatestByBorrowerId(borrowerId);
       const latestDebtService = debtServiceResponse?.data ?? null;
       const totalMonthlyPayment = toNumberOrNull(latestDebtService?.totalMonthlyPayment);
-      computedDebtServiceRatio = computeDebtServiceRatio(formEbitda, totalMonthlyPayment);
+      const quarterlyForDscr = inferQuarterlyIncomeForSubmit(stagedByType);
+      computedDebtServiceRatio = computeDebtServiceRatio(
+        formEbitda,
+        totalMonthlyPayment,
+        quarterlyForDscr,
+      );
     } catch (error) {
       computedDebtServiceRatio = null;
     }
@@ -514,7 +531,6 @@ export const handleSubmit = async (onCloseCallback) => {
       ? explicitProfitMargin
       : profitMarginPercentFromNetIncome(formNetIncome, formGrossRevenue);
 
-    const { documentsByType: stagedByType } = $modalState.value;
     const hasStagedNewUploads = stagedByType
       && Object.keys(stagedByType).some((k) => (stagedByType[k] || []).some((d) => d?.file && !d.isStored));
 

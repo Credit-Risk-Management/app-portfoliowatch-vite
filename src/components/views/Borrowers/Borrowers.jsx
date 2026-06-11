@@ -1,6 +1,13 @@
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Container, Row, Col } from 'react-bootstrap';
+import {
+  Container,
+  Row,
+  Col,
+  Badge,
+  OverlayTrigger,
+  Tooltip,
+} from 'react-bootstrap';
 import { faEdit, faEye, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';
 import SignalTable from '@src/components/global/SignalTable';
@@ -16,6 +23,11 @@ import {
 import SelectInput from '@src/components/global/Inputs/SelectInput';
 import { formatCurrency } from '@src/utils/formatCurrency';
 import { borrowersFilterToUrlParams } from '@src/utils/tableFilterUrlParams';
+import {
+  DEFAULT_PAGE_LIMIT,
+  PAGE_LIMIT_OPTIONS,
+  resolvePageLimit,
+} from '@src/consts/consts';
 import { useRef } from 'react';
 import * as consts from './_helpers/borrowers.consts';
 import * as resolvers from './_helpers/borrowers.resolvers';
@@ -43,13 +55,23 @@ const Borrowers = () => {
       const sortDirection = searchParams.get('sortDirection') || 'asc';
       const borrowerTypeParam = searchParams.get('borrowerType');
       const relationshipManagerParam = searchParams.get('relationshipManager');
+      const quarterlyPackageParam = searchParams.get('quarterlyPackageComplete') || '';
+      const impactQuestionnaireParam = searchParams.get('impactQuestionnaireComplete') || '';
+      const limitParam = searchParams.get('limit');
+      const parsedLimit = limitParam ? Number(limitParam) : DEFAULT_PAGE_LIMIT;
+      const limit = PAGE_LIMIT_OPTIONS.some((option) => option.value === parsedLimit)
+        ? parsedLimit
+        : DEFAULT_PAGE_LIMIT;
       $borrowersFilter.update({
         searchTerm,
         page: parsedPage,
+        limit,
         sortKey,
         sortDirection,
         borrowerType: borrowerTypeParam ? borrowerTypeParam.split(',').filter(Boolean) : [],
         relationshipManager: relationshipManagerParam ? relationshipManagerParam.split(',').filter(Boolean) : [],
+        quarterlyPackageComplete: ['true', 'false'].includes(quarterlyPackageParam) ? quarterlyPackageParam : '',
+        impactQuestionnaireComplete: ['true', 'false'].includes(impactQuestionnaireParam) ? impactQuestionnaireParam : '',
       });
     }
 
@@ -74,6 +96,7 @@ const Borrowers = () => {
       borrowerType: borrowerTypeValue,
       relationshipManager: relationshipManagerValue,
       page: $borrowersFilter.value.page,
+      limit: resolvePageLimit($borrowersFilter.value.limit),
     };
 
     await resolvers.fetchAndSetBorrowerData(filters);
@@ -82,12 +105,52 @@ const Borrowers = () => {
     $borrowersFilter.value.borrowerType,
     $borrowersFilter.value.relationshipManager,
     $borrowersFilter.value.page,
+    $borrowersFilter.value.limit,
     $borrowersFilter.value.sortKey,
     $borrowersFilter.value.sortDirection,
+    $borrowersFilter.value.quarterlyPackageComplete,
+    $borrowersFilter.value.impactQuestionnaireComplete,
   ]);
 
   const rows = $borrowers.value.list.map((borrower) => ({
     ...borrower,
+    name: () => (
+      <span className="d-inline-flex align-items-center flex-wrap">
+        <span className="text-break me-4">{borrower.name}</span>
+        <span className="d-inline-flex align-items-center flex-shrink-0 gap-2">
+          {borrower.quarterlyPackageComplete ? (
+            <OverlayTrigger
+              placement="top"
+              trigger={['hover', 'focus']}
+              overlay={(
+                <Tooltip id={`borrower-${borrower.id}-quarterly-badge`}>
+                  Quarterly financial package on file for the current reporting period.
+                </Tooltip>
+              )}
+            >
+              <Badge bg="success-600" pill className="me-4 text-dark">
+                Q1
+              </Badge>
+            </OverlayTrigger>
+          ) : null}
+          {borrower.impactQuestionnaireComplete ? (
+            <OverlayTrigger
+              placement="top"
+              trigger={['hover', 'focus']}
+              overlay={(
+                <Tooltip id={`borrower-${borrower.id}-impact-badge`}>
+                  Borrower impact questionnaire has been submitted.
+                </Tooltip>
+              )}
+            >
+              <Badge bg="info-600" pill className="text-dark">
+                I-Q
+              </Badge>
+            </OverlayTrigger>
+          ) : null}
+        </span>
+      </span>
+    ),
     borrowerType: borrower.borrowerType || '-',
     clientRiskRating: () => <StatusBadge status={borrower.clientRiskRating} type="risk" />,
     relationshipManager: borrower.relationshipManager?.name || '-',
@@ -132,8 +195,8 @@ const Borrowers = () => {
         onActionClick={() => $borrowersView.update({ showAddModal: true })}
       />
 
-      <Row className="mb-12 mb-md-16">
-        <Col xs={12} md={6} className="mb-12 mb-md-0">
+      <Row className="mb-12 mb-md-16 align-items-end">
+        <Col xs={12} md={4} className="mb-12 mb-md-0">
           <Search
             placeholder="Search borrowers..."
             value={$borrowersFilter.value.searchTerm}
@@ -151,7 +214,7 @@ const Borrowers = () => {
             name="searchTerm"
           />
         </Col>
-        <Col xs={12} md={3} className="mb-12 mb-md-0">
+        <Col xs={12} sm={6} md={2} className="mb-12 mb-md-0">
           <SelectInput
             options={[{ value: '', label: 'All Types' }, ...consts.CLIENT_TYPE_OPTIONS]}
             value={$borrowersFilter.value.borrowerType}
@@ -165,7 +228,7 @@ const Borrowers = () => {
             isMulti
           />
         </Col>
-        <Col xs={12} md={3} className="mb-12 mb-md-0">
+        <Col xs={12} sm={6} md={2} className="mb-12 mb-md-0">
           <SelectInput
             options={[{ value: '', label: 'All Managers' }, ...relationshipManagerOptions]}
             value={$borrowersFilter.value.relationshipManager}
@@ -179,13 +242,64 @@ const Borrowers = () => {
             isMulti
           />
         </Col>
+        <Col xs={12} sm={6} md={2} className="mb-12 mb-md-0">
+          <SelectInput
+            options={[{ value: '', label: 'All (quarterly package)' }, ...consts.QUARTERLY_PACKAGE_FILTER_OPTIONS]}
+            value={$borrowersFilter.value.quarterlyPackageComplete}
+            onChange={() => {
+              handleBorrowerFilterChange();
+              setSearchParams(borrowersFilterToUrlParams($borrowersFilter.value));
+              $borrowersFilter.update({ page: 1 });
+            }}
+            placeholder="Quarterly (Q)"
+            signal={$borrowersFilter}
+            name="quarterlyPackageComplete"
+            isMulti={false}
+            isSearchable={false}
+          />
+        </Col>
+        <Col xs={12} sm={6} md={2} className="mb-12 mb-md-0">
+          <SelectInput
+            options={[{ value: '', label: 'All (impact questionnaire)' }, ...consts.IMPACT_QUESTIONNAIRE_FILTER_OPTIONS]}
+            value={$borrowersFilter.value.impactQuestionnaireComplete}
+            onChange={() => {
+              handleBorrowerFilterChange();
+              setSearchParams(borrowersFilterToUrlParams($borrowersFilter.value));
+              $borrowersFilter.update({ page: 1 });
+            }}
+            placeholder="Impact (I-Q)"
+            signal={$borrowersFilter}
+            name="impactQuestionnaireComplete"
+            isMulti={false}
+            isSearchable={false}
+          />
+        </Col>
       </Row>
-
       <AddBorrowerModal />
       <EditBorrowerModal />
       <DeleteBorrowerModal />
 
-      <Row>
+      <Row className="mb-8 align-items-center justify-content-end">
+        <Col xs="auto" className="d-flex align-items-center gap-2">
+          <span className="text-info-100 text-nowrap small me-4">Rows per page</span>
+          <SelectInput
+            options={PAGE_LIMIT_OPTIONS}
+            value={$borrowersFilter.value.limit}
+            onChange={(selectedOption) => {
+              const limit = resolvePageLimit(selectedOption?.value);
+              $borrowersFilter.update({ limit, page: 1 });
+              setSearchParams(borrowersFilterToUrlParams($borrowersFilter.value));
+            }}
+            placeholder="Limit"
+            signal={$borrowersFilter}
+            name="limit"
+            isMulti={false}
+            isSearchable={false}
+            notClearable
+          />
+        </Col>
+      </Row>
+      <Row className="mb-8">
         <Col xs={12}>
           <div style={$borrowersView.value.showAllMode ? { maxHeight: '70vh', overflowY: 'auto' } : undefined}>
             <SignalTable
@@ -195,7 +309,8 @@ const Borrowers = () => {
               rows={rows}
               totalCount={$borrowers.value.totalCount}
               currentPage={$borrowersFilter.value.page}
-              itemsPerPageAmount={10}
+              currentPageItemsCount={$borrowers.value.list.length}
+              itemsPerPageAmount={resolvePageLimit($borrowersFilter.value.limit)}
               hasPagination={!$borrowersView.value.showAllMode}
               className="shadow"
               onRowClick={(borrower) => {

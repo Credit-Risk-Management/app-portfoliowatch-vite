@@ -4,15 +4,15 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Container, Row, Col, Button, Collapse, Spinner, OverlayTrigger, Tooltip, Badge } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faArrowLeft,
-  faArrowRight,
-  faMagic,
-  faUser,
-  faLandmark,
-  faFileAlt,
-  faSync,
-  faFlag,
-  faExclamationTriangle,
+    faArrowLeft,
+    faArrowRight,
+    faMagic,
+    faUser,
+    faLandmark,
+    faFileAlt,
+    faSync,
+    faFlag,
+    faExclamationTriangle,
 } from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';
 import UniversalCard from '@src/components/global/UniversalCard';
@@ -24,6 +24,13 @@ import { GuarantorNetWorthWithMemoFlag } from '@src/components/views/GuarantorDe
 import Loadable from '@src/components/global/Loadable';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import getResolvedIndustryTitle from '@src/utils/naicsTitles';
+import {
+    COVENANT_YEAREND_PATH_FOOTNOTE,
+    hasFourConsecutiveQuartersWithEbitdaThroughLastYearend,
+    resolveLoanDetailBusinessEbitda,
+    resolveLoanDetailDebtServiceActual,
+    resolveLoanDetailCurrentRatioActual,
+} from '@src/components/views/BorrowerDetails/_components/TabContent/BorrowerDebtServiceTab/_helpers/debtService.helpers';
 import SubmitCollateralModal from './_components/SubmitCollateralModal';
 import { $loanCollateralView } from './_components/submitCollateralModal.signals';
 import AddCreditMemoModal from './_components/AddCreditMemoModal';
@@ -31,27 +38,27 @@ import { handleOpenModal as handleOpenCreditMemoModal } from './_components/addC
 import LoanRadarChart from './_components/LoanRadarChart';
 import LoanComments from './_components/LoanComments';
 import {
-  formatDate,
-  formatInterestRatePercent,
-  formatPercent,
-  formatRatio,
-  getCovenantStatus,
-  getHealthScoreColor,
-  renderMarkdownLinks,
-  computeLoanGlobalCashFlowAnalysis,
+    formatDate,
+    formatInterestRatePercent,
+    formatPercent,
+    formatRatio,
+    getCovenantStatus,
+    getHealthScoreColor,
+    renderMarkdownLinks,
+    computeLoanGlobalCashFlowAnalysis,
 } from './_helpers/loans.helpers';
 import {
-  $loanDetailShowSecondaryContacts,
-  $loanDetailFinancials,
-  $loanDetailCollateral, $loanDetailCollateralAccordionExpanded,
-  $industryReportGenerating,
-  $loanDetailGuarantors,
-  $loanDetailView,
-  $loanDetailLatestDebtSchedule,
+    $loanDetailShowSecondaryContacts,
+    $loanDetailFinancials,
+    $loanDetailCollateral, $loanDetailCollateralAccordionExpanded,
+    $industryReportGenerating,
+    $loanDetailGuarantors,
+    $loanDetailView,
+    $loanDetailLatestDebtSchedule,
 } from './_helpers/loans.consts';
 import { fetchLoanDetail, resetLoanRouteState } from './_helpers/loans.resolvers';
 import {
-  handleGenerateIndustryReport,
+    handleGenerateIndustryReport,
 } from './_helpers/loans.events';
 
 const LoanDetail = () => {
@@ -227,8 +234,25 @@ const LoanDetail = () => {
     }
     return labels;
   })();
+  const borrowerFinancials = loanData?.borrower?.financials ?? [];
+  const hasFourQuarterEbitdaChain = loanData?.hasFourQuarterDscrChain
+    ?? hasFourConsecutiveQuartersWithEbitdaThroughLastYearend(borrowerFinancials);
+  const covenantDebtServiceActual = loanData?.covenantDebtServiceActual
+    ?? resolveLoanDetailDebtServiceActual(loanData?.debtService, borrowerFinancials);
+  const covenantCurrentRatioActual = loanData?.covenantCurrentRatioActual
+    ?? resolveLoanDetailCurrentRatioActual(borrowerFinancials);
   const isDefaultWatchScore = normalizedWatchScore === 3
-    && (loanData?.borrower?.financials?.length ?? 0) === 0;
+    && (borrowerFinancials.length === 0);
+
+  const businessEbitdaForGlobalCashFlow = resolveLoanDetailBusinessEbitda(
+    loanData?.ebitda,
+    borrowerFinancials,
+  );
+  const globalCashFlowMetrics = computeLoanGlobalCashFlowAnalysis({
+    borrowerEbitda: businessEbitdaForGlobalCashFlow,
+    latestDebtScheduleRow: $loanDetailLatestDebtSchedule.value,
+    loanGuarantors: $loanDetailGuarantors.value,
+  });
 
   const globalCashFlowMetrics = computeLoanGlobalCashFlowAnalysis({
     borrowerEbitda: loanData?.ebitda,
@@ -363,7 +387,7 @@ const LoanDetail = () => {
                 <div className="text-info-100 fw-200 mt-8">Last Submitted Financials</div>
                 <div className="text-info-50 lead fw-500">{formatDate($loan.value?.loan?.lastFinancialStatement)}</div>
                 <div className="text-info-100 fw-200 mt-8">Financial Submission Frequency</div>
-                <div className="text-info-50 lead fw-500">Monthly</div>
+                <div className="text-info-50 lead fw-500">Quarterly</div>
                 <div className="text-info-100 fw-200 mt-8">Next Financials Due</div>
                 <div className="text-info-50 lead fw-500">12/20/2025</div>
                 <div className="text-info-100 fw-200 mt-8">Interest Rate</div>
@@ -493,15 +517,64 @@ const LoanDetail = () => {
         </Row>
         <Row>
           <Col xs={12} md={12}>
-            <UniversalCard headerText="Guarantors" bodyContainer="container-fluid" className="mt-12 mt-md-16">
-              <Row className="mt-12 mb-12">
+            <UniversalCard headerText="Covenants" bodyContainer="container-fluid" className="mt-12 mt-md-16">
+              <Row>
+                <Col xs={12} md={6} className="mb-12 mb-md-0">
+                  <div className="text-info-100 fw-200 mt-16 mb-4">Debt Service Coverage</div>
+                  <div>
+                    <span className="text-info-50 fw-500 me-8">Actual:</span>
+                    <span className={`fs-5 fw-bold text-${getCovenantStatus(covenantDebtServiceActual, $loan.value?.loan?.debtServiceCovenant).variant}`}>
+                      {formatRatio(covenantDebtServiceActual)}
+                    </span>
+                  </div>
+                  {!hasFourQuarterEbitdaChain && covenantDebtServiceActual != null && (
+                    <div className="text-info-300 small mt-4">
+                      {COVENANT_YEAREND_PATH_FOOTNOTE}
+                    </div>
+                  )}
+                  {!hasFourQuarterEbitdaChain && covenantDebtServiceActual == null && (
+                    <div className="text-info-300 small mt-4">
+                      No stored DSCR on the last yearend financial; add annual filing or complete four consecutive quarters.
+                    </div>
+                  )}
+                  <div className="mb-8">
+                    <span className="text-info-50 fw-500 me-8">Covenant:</span>
+                    <span className="fs-5 fw-bold text-secondary-200">
+                      {formatRatio($loan.value?.loan?.debtServiceCovenant)}
+                    </span>
+                  </div>
+                </Col>
+                <Col xs={12} md={6} className="mb-12 mb-md-0">
+                  <div className="text-info-100 fw-200 mt-16 mb-4">Current Ratio</div>
+                  <div>
+                    <span className="text-info-50 fw-500 me-8">Actual:</span>
+                    <span className={`fs-5 fw-bold text-${getCovenantStatus(covenantCurrentRatioActual, $loan.value?.loan?.currentRatioCovenant).variant}`}>
+                      {formatRatio(covenantCurrentRatioActual)}
+                    </span>
+                  </div>
 
-                <SignalTable
-                  headers={guarantorsTableHeaders}
-                  rows={guarantorsTableRows}
-                  className="shadow"
-                  onRowClick={(guarantor) => navigate(`/guarantors/${guarantor.id}`)}
-                />
+                  <div className="mb-8">
+                    <span className="text-info-50 fw-500 me-8">Covenant:</span>
+                    <span className="fs-5 fw-bold text-secondary-200">
+                      {formatRatio($loan.value?.loan?.currentRatioCovenant)}
+                    </span>
+                  </div>
+                </Col>
+                <Col xs={12} md={6} className="mb-12 mb-md-0">
+                  <div className="text-info-100 fw-200 mt-16 mb-4">Liquidity Total</div>
+                  <div>
+                    <span className="text-info-50 fw-500 me-8">Actual:</span>
+                    <span className={`fs-5 fw-bold text-${getCovenantStatus($loan.value?.loan?.liquidity, $loan.value?.loan?.liquidityCovenant).variant}`}>
+                      {formatCurrency($loan.value?.loan?.liquidity)}
+                    </span>
+                  </div>
+                  <div className="mb-8">
+                    <span className="text-info-50 fw-500 me-8">Covenant:</span>
+                    <span className="fs-5 fw-bold text-secondary-200">
+                      {formatCurrency($loan.value?.loan?.liquidityCovenant)}
+                    </span>
+                  </div>
+                </Col>
               </Row>
             </UniversalCard>
             <UniversalCard
@@ -523,6 +596,12 @@ const LoanDetail = () => {
                   </div>
                 </Col>
                 <Col xs={12} md={6} lg={4}>
+                  <div className="text-info-100 fw-200 mb-4">Global Debt Service Coverage Ratio (DSCR)</div>
+                  <div className="text-info-50 fw-500 fs-5">
+                    {formatRatio(globalCashFlowMetrics.globalDebtServiceCoverageRatio)}
+                  </div>
+                </Col>
+                <Col xs={12} md={6} lg={4}>
                   <div className="text-info-100 fw-200 mb-4">Personal AGI</div>
                   <div className="text-info-50 fw-500 fs-5">
                     {formatCurrency(globalCashFlowMetrics.personalAgi)}
@@ -535,12 +614,6 @@ const LoanDetail = () => {
                   </div>
                 </Col>
                 <Col xs={12} md={6} lg={4}>
-                  <div className="text-info-100 fw-200 mb-4">Global Debt Service Coverage Ratio (DSCR)</div>
-                  <div className="text-info-50 fw-500 fs-5">
-                    {formatRatio(globalCashFlowMetrics.globalDebtServiceCoverageRatio)}
-                  </div>
-                </Col>
-                <Col xs={12} md={6} lg={4}>
                   <div className="text-info-100 fw-200 mb-4">Excess Cash Flow</div>
                   <div className="text-info-50 fw-500 fs-5">
                     {formatCurrency(globalCashFlowMetrics.excessCashFlow)}
@@ -548,54 +621,48 @@ const LoanDetail = () => {
                 </Col>
               </Row>
             </UniversalCard>
-            <UniversalCard headerText="Covenants" bodyContainer="container-fluid" className="mt-12 mt-md-16">
-              <Row>
-                <Col xs={12} md={6} className="mb-12 mb-md-0">
-                  <div className="text-info-100 fw-200 mt-16 mb-4">Debt Service Coverage</div>
-                  <div>
-                    <span className="text-info-50 fw-500 me-8">Actual:</span>
-                    <span className={`fs-5 fw-bold text-${getCovenantStatus($loan.value?.loan?.debtService, $loan.value?.loan?.debtServiceCovenant).variant}`}>
-                      {formatRatio($loan.value?.loan?.debtService)}
-                    </span>
-                  </div>
-                  <div className="mb-8">
-                    <span className="text-info-50 fw-500 me-8">Covenant:</span>
-                    <span className="fs-5 fw-bold text-secondary-200">
-                      {formatRatio($loan.value?.loan?.debtServiceCovenant)}
-                    </span>
-                  </div>
-                </Col>
-                <Col xs={12} md={6} className="mb-12 mb-md-0">
-                  <div className="text-info-100 fw-200 mt-16 mb-4">Current Ratio</div>
-                  <div>
-                    <span className="text-info-50 fw-500 me-8">Actual:</span>
-                    <span className={`fs-5 fw-bold text-${getCovenantStatus($loan.value?.loan?.currentRatio, $loan.value?.loan?.currentRatioCovenant).variant}`}>
-                      {formatRatio($loan.value?.loan?.currentRatio)}
-                    </span>
-                    <div className="mb-8">
-                      <span className="text-info-50 fw-500 me-8">Covenant:</span>
-                      <span className="fs-5 fw-bold text-secondary-200">
-                        {formatRatio($loan.value?.loan?.currentRatioCovenant)}
-                      </span>
-                    </div>
-                  </div>
-                </Col>
-                <Col xs={12} md={6} className="mb-12 mb-md-0">
-                  <div className="text-info-100 fw-200 mt-16 mb-4">Liquidity Total</div>
-                  <div>
-                    <span className="text-info-50 fw-500 me-8">Actual:</span>
-                    <span className={`fs-5 fw-bold text-${getCovenantStatus($loan.value?.loan?.liquidity, $loan.value?.loan?.liquidityCovenant).variant}`}>
-                      {formatCurrency($loan.value?.loan?.liquidity)}
-                    </span>
-                  </div>
-                  <div className="mb-8">
-                    <span className="text-info-50 fw-500 me-8">Covenant:</span>
-                    <span className="fs-5 fw-bold text-secondary-200">
-                      {formatCurrency($loan.value?.loan?.liquidityCovenant)}
-                    </span>
-                  </div>
-                </Col>
+            <UniversalCard headerText="Guarantors" bodyContainer="container-fluid" className="mt-12 mt-md-16">
+              <Row className="mt-12 mb-12">
+
+                <SignalTable
+                  headers={guarantorsTableHeaders}
+                  rows={guarantorsTableRows}
+                  className="shadow"
+                  onRowClick={(guarantor) => navigate(`/guarantors/${guarantor.id}`)}
+                />
               </Row>
+            </UniversalCard>
+            <UniversalCard headerText="Collateral Values" className="mt-12 mt-md-16">
+              {$loanDetailCollateral.value && $loanDetailCollateral.value.length > 0 ? (
+                <div className="mt-16">
+                  <SignalAccordion
+                    items={collateralAccordionItems}
+                    defaultExpandedId={collateralAccordionItems[0]?.id}
+                    $expandedId={$loanDetailCollateralAccordionExpanded}
+                    footer={{
+                      netValueLabel: 'Net Value',
+                      netValue: formatCurrency(footerNetValue),
+                      coverageLabel: 'Coverage Ratio',
+                      coverageValue: formatRatio(footerCoverage),
+                    }}
+                  />
+                  <div className="mt-16 pt-16 border-top d-flex justify-content-center">
+                    <Button
+                      variant="info"
+                      size="sm"
+                      disabled
+                      style={{ opacity: 0.7 }}
+                    >
+                      <FontAwesomeIcon icon={faSync} className="me-8" />
+                      Update Collateral (Coming soon...)
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-info-100 fw-200 fst-italic py-16">
+                  No collateral values submitted yet. Click the &quot;Submit Collateral Value&quot; button above to add collateral.
+                </div>
+              )}
             </UniversalCard>
             <UniversalCard headerText="Industry Analysis" className="mt-12 mt-md-16">
               <Row>
@@ -652,38 +719,6 @@ const LoanDetail = () => {
                   </div>
                 </Col>
               </Row>
-            </UniversalCard>
-            <UniversalCard headerText="Collateral Values" className="mt-12 mt-md-16">
-              {$loanDetailCollateral.value && $loanDetailCollateral.value.length > 0 ? (
-                <div className="mt-16">
-                  <SignalAccordion
-                    items={collateralAccordionItems}
-                    defaultExpandedId={collateralAccordionItems[0]?.id}
-                    $expandedId={$loanDetailCollateralAccordionExpanded}
-                    footer={{
-                      netValueLabel: 'Net Value',
-                      netValue: formatCurrency(footerNetValue),
-                      coverageLabel: 'Coverage Ratio',
-                      coverageValue: formatRatio(footerCoverage),
-                    }}
-                  />
-                  <div className="mt-16 pt-16 border-top d-flex justify-content-center">
-                    <Button
-                      variant="info"
-                      size="sm"
-                      disabled
-                      style={{ opacity: 0.7 }}
-                    >
-                      <FontAwesomeIcon icon={faSync} className="me-8" />
-                      Update Collateral (Coming soon...)
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-info-100 fw-200 fst-italic py-16">
-                  No collateral values submitted yet. Click the &quot;Submit Collateral Value&quot; button above to add collateral.
-                </div>
-              )}
             </UniversalCard>
             <UniversalCard headerText="Comments" className="mt-12 mt-md-16">
               <LoanComments loanId={loanId} />

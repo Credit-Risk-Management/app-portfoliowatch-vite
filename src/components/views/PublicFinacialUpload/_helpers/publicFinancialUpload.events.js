@@ -1,14 +1,21 @@
 import { dangerAlert, successAlert } from '@src/components/global/Alert/_helpers/alert.events';
+import { loadImpactQuestionnairePublic, submitImpactQuestionnairePublicForm } from '@src/components/views/PublicImpactQuestionnaire/_helpers/publicImpactQuestionnaire.resolvers';
+import {
+  $publicImpactQuestionnaireForm,
+  $publicImpactQuestionnaireView,
+} from '@src/components/views/PublicImpactQuestionnaire/_helpers/publicImpactQuestionnaire.consts';
 import {
   submitFinancialsViaToken,
   notifyExtractReadyViaToken,
 } from '@src/api/borrowerFinancialUploadLink.api';
 import { storage } from '@src/utils/firebase';
+import { buildStandardFinancialUploadFileName } from '@src/utils/documents.utils';
 import {
   getRequiredPdfSectionsForLink,
   hasPdfStagedForSection,
   mergePriorWorksheetRowsIntoForm,
   validateDebtScheduleWorksheetForPdf,
+  parseImpactQuestionnaireTokenFromUrl,
 } from './publicFinancialUpload.helpers';
 import {
   $publicFinancialForm,
@@ -24,19 +31,6 @@ import {
   SECTION_ID_TO_DOCUMENT_TYPE,
 } from './publicFinancialUpload.consts';
 import { $debtScheduleWorksheetWrapCellEdit } from '../_components/DebtScheduleWorksheetModal/_helpers/debtScheduleWorksheetModal.consts';
-
-/**
- * Build a locked, system-standard file name: `borrowerName-documentType-YYYY-MM-DD.pdf`
- * e.g. "acme-corp-balanceSheet-2026-04-08.pdf"
- */
-const buildFileName = (borrowerName, documentType, date) => {
-  const safeName = (borrowerName || 'unknown')
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
-  const dateStr = (date ? new Date(date) : new Date()).toISOString().slice(0, 10);
-  return `${safeName}-${documentType}-${dateStr}.pdf`;
-};
 
 export const resetAllPublicFinancialUploaders = () => {
   $publicIncomeStatementUploader.update({ financialDocs: [] });
@@ -82,7 +76,9 @@ export const handleFileUpload = async () => {
       ? { ...$debtScheduleWorksheetForm.value }
       : undefined;
 
-    const nonDebtRequired = requiredPdfSections.filter((s) => s.sectionId !== 'debtScheduleWorksheet');
+    const nonDebtRequired = requiredPdfSections.filter(
+      (s) => s.sectionId !== 'debtScheduleWorksheet' && s.sectionId !== 'impactQuestionnaire',
+    );
     const missingNonDebtUpload = nonDebtRequired.some((s) => !hasPdfStagedForSection(s.sectionId));
     if (missingNonDebtUpload) {
       $publicFinancialUploadView.update({
@@ -92,8 +88,18 @@ export const handleFileUpload = async () => {
       return;
     }
 
+    const needsImpactQuestionnaire = Boolean(linkData?.impactQuestionnaireUrl);
+    if (needsImpactQuestionnaire && !$publicFinancialUploadView.value.impactQuestionnairePublicComplete) {
+      $publicFinancialUploadView.update({
+        error: 'Complete the impact questionnaire before submitting.',
+        isSubmitting: false,
+      });
+      dangerAlert('Please complete the impact questionnaire before submitting.');
+      return;
+    }
+
     requiredPdfSections.forEach((section) => {
-      if (section.sectionId === 'debtScheduleWorksheet') {
+      if (section.sectionId === 'debtScheduleWorksheet' || section.sectionId === 'impactQuestionnaire') {
         return;
       }
       const uploader = UPLOADER_BY_SECTION[section.sectionId];
@@ -103,7 +109,12 @@ export const handleFileUpload = async () => {
       const [file] = files;
       if (!file) return;
       filesToUpload.push({
-        fileName: buildFileName(borrowerName, documentType, periodDate),
+        fileName: buildStandardFinancialUploadFileName({
+          entityName: borrowerName,
+          documentType,
+          date: periodDate,
+          file,
+        }),
         fileSize: file.size,
         mimeType: file.type,
         contentType: file.type,
@@ -264,4 +275,70 @@ export const patchDebtScheduleWorksheetForm = (patch) => {
 
 export const clearError = () => {
   $publicFinancialUploadView.update({ error: null });
+};
+
+/** Opens in-page questionnaire modal (same token as standalone `/impact-questionnaire/:token`). */
+export const openImpactQuestionnaireFromPublicUpload = async () => {
+  const url = $publicFinancialUploadView.value.linkData?.impactQuestionnaireUrl;
+  const token = parseImpactQuestionnaireTokenFromUrl(url);
+  if (!token) return;
+  $publicFinancialUploadView.update({
+    impactQuestionnaireToken: token,
+    activeModalKey: 'impactQuestionnaire',
+  });
+  await loadImpactQuestionnairePublic(token, { suppressDangerAlert: true });
+  if ($publicImpactQuestionnaireView.value.payload?.alreadySubmitted) {
+    $publicFinancialUploadView.update({ impactQuestionnairePublicComplete: true });
+  }
+};
+
+export const closeImpactQuestionnaireFromPublicUpload = () => {
+  const already = $publicImpactQuestionnaireView.value.payload?.alreadySubmitted === true;
+  $publicFinancialUploadView.update({
+    activeModalKey: null,
+    impactQuestionnaireToken: null,
+    ...(already ? { impactQuestionnairePublicComplete: true } : {}),
+  });
+  $publicImpactQuestionnaireForm.update({
+    currentEmployees: '',
+    averageMonthlyFte: '',
+    averageEmployeeWage: '',
+  });
+  $publicImpactQuestionnaireView.update({
+    isLoading: false,
+    error: null,
+    payload: null,
+    isSubmitting: false,
+    submitSuccess: false,
+  });
+};
+
+export const clearPublicImpactQuestionnaireModalError = () => {
+  $publicImpactQuestionnaireView.update({ error: null });
+};
+
+export const handleSubmitImpactQuestionnaireFromPublicUpload = async () => {
+  const { impactQuestionnaireToken: token } = $publicFinancialUploadView.value;
+  if (!token) return;
+  await submitImpactQuestionnairePublicForm(token, { suppressDangerAlert: true });
+  if ($publicImpactQuestionnaireView.value.submitSuccess) {
+    successAlert('Impact questionnaire saved.', 'toast');
+    $publicImpactQuestionnaireForm.update({
+      currentEmployees: '',
+      averageMonthlyFte: '',
+      averageEmployeeWage: '',
+    });
+    $publicImpactQuestionnaireView.update({
+      isLoading: false,
+      error: null,
+      payload: null,
+      isSubmitting: false,
+      submitSuccess: false,
+    });
+    $publicFinancialUploadView.update({
+      activeModalKey: null,
+      impactQuestionnaireToken: null,
+      impactQuestionnairePublicComplete: true,
+    });
+  }
 };

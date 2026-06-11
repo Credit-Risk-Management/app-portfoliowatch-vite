@@ -7,6 +7,7 @@ import {
   DEBT_SCHEDULE_XLSX_DATA_ROW_COUNT,
   DEBT_SCHEDULE_FORM_COLUMN_KEYS,
   debtScheduleFormField,
+  $publicFinancialUploadView,
 } from './publicFinancialUpload.consts';
 
 /**
@@ -28,7 +29,7 @@ export const getRequiredPdfSectionsForLink = (linkData) => {
       seen.add(sectionId);
       out.push(SECTION_DEF_BY_ID[sectionId]);
     });
-    if (out.length > 0) return out;
+    if (out.length > 0) return appendImpactQuestionnaireSectionIfNeeded(linkData, out);
   }
 
   const requested = linkData?.requiredPdfSections;
@@ -37,10 +38,46 @@ export const getRequiredPdfSectionsForLink = (linkData) => {
     : DEFAULT_SECTION_IDS;
 
   if (ids.length === 0) {
-    return DEFAULT_SECTION_IDS.map((id) => SECTION_DEF_BY_ID[id]);
+    return appendImpactQuestionnaireSectionIfNeeded(
+      linkData,
+      DEFAULT_SECTION_IDS.map((id) => SECTION_DEF_BY_ID[id]),
+    );
   }
 
-  return ids.map((id) => SECTION_DEF_BY_ID[id]).filter(Boolean);
+  return appendImpactQuestionnaireSectionIfNeeded(
+    linkData,
+    ids.map((id) => SECTION_DEF_BY_ID[id]).filter(Boolean),
+  );
+};
+
+/** Extract questionnaire token from full or relative `…/impact-questionnaire/:token` URL. */
+export const parseImpactQuestionnaireTokenFromUrl = (url) => {
+  if (!url || typeof url !== 'string') return null;
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+  try {
+    const base = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
+    const u = /^https?:\/\//i.test(trimmed)
+      ? new URL(trimmed)
+      : new URL(trimmed.startsWith('/') ? trimmed : `/${trimmed}`, base);
+    const m = u.pathname.match(/\/impact-questionnaire\/([^/]+)\/?$/);
+    return m ? decodeURIComponent(m[1]) : null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * When the financial upload link includes an impact questionnaire URL, that step is required
+ * on the same page (no API `requiredDocumentKeys` entry).
+ * @param {object|null|undefined} linkData
+ * @param {Array<{ sectionId: string }>} sections
+ */
+const appendImpactQuestionnaireSectionIfNeeded = (linkData, sections) => {
+  if (!linkData?.impactQuestionnaireUrl) return sections;
+  if (sections.some((s) => s.sectionId === 'impactQuestionnaire')) return sections;
+  const def = SECTION_DEF_BY_ID.impactQuestionnaire;
+  return def ? [...sections, def] : sections;
 };
 
 /** Section ids in display/extraction order for the current link. */
@@ -182,6 +219,9 @@ export const isDebtScheduleSectionReadyForSubmit = (debtWorksheetForm) => (
 export const isSectionReadyForSubmit = (sectionId, debtWorksheetForm) => {
   if (sectionId === 'debtScheduleWorksheet') {
     return isDebtScheduleSectionReadyForSubmit(debtWorksheetForm);
+  }
+  if (sectionId === 'impactQuestionnaire') {
+    return Boolean($publicFinancialUploadView.value.impactQuestionnairePublicComplete);
   }
   return hasPdfStagedForSection(sectionId);
 };

@@ -1,6 +1,7 @@
 import { ListGroup, Button, Row, Col } from 'react-bootstrap';
 import MentionText from '@src/components/global/MentionText';
-import moment from 'moment';
+import { formatDateNumeric } from '@src/utils/formatDate';
+import { formatTimeAgo } from '@src/utils/formatRelativeTime';
 import './CommentItem.scss';
 
 const CommentItem = ({
@@ -14,13 +15,9 @@ const CommentItem = ({
   dateFormat = 'date', // 'date' for MM/DD/YYYY or 'relative' for time ago
   clickable = false, // whether the item is clickable/hoverable
 }) => {
-  const formatDate = (dateString) => {
+  const displayDate = (dateString) => {
     if (!dateString) return '-';
-    if (dateFormat === 'relative') {
-      return moment(dateString).fromNow();
-    }
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' });
+    return dateFormat === 'relative' ? formatTimeAgo(dateString) : formatDateNumeric(dateString);
   };
 
   return (
@@ -37,7 +34,7 @@ const CommentItem = ({
             {showReadStatus && !isRead && (
               <div className="bg-primary-300 rounded-circle" style={{ width: '8px', height: '8px' }} />
             )}
-            <div className="text-info-100 fw-200">{formatDate(createdAt)}</div>
+            <div className="text-info-100 fw-200">{displayDate(createdAt)}</div>
             <div className="">
               {showReadStatus && !isRead && onMarkAsRead && (
                 <Button

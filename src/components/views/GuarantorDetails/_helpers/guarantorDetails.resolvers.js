@@ -1,5 +1,12 @@
 import guarantorsApi from '@src/api/guarantors.api';
-import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
+import { dangerAlert, successAlert } from '@src/components/global/Alert/_helpers/alert.events';
+import { fetchBorrowerDetail } from '@src/components/views/BorrowerDetails/_helpers/borrowerDetail.resolvers';
+import { navigateBackOrDefault } from './guarantorDetails.navigation';
+import {
+  $deleteGuarantorConfirmModal,
+  deleteGuarantorDetailNavigateRef,
+} from './deleteGuarantorConfirmModal.consts';
+import { closeDeleteGuarantorConfirmModal } from './deleteGuarantorConfirmModal.events';
 import { $guarantorDetailView, $guarantorDetailsData } from './guarantorDetails.consts';
 import {
   $submitPFSModalView,
@@ -58,8 +65,38 @@ export const fetchGuarantorDetail = async (guarantorId) => {
 };
 
 /**
- * Clears guarantor detail–scoped signals when leaving `/guarantors/:guarantorId` or switching guarantors.
+ * Runs after the user confirms delete in DeleteGuarantorConfirmModal.
  */
+export const executeDeleteGuarantorFromModal = async () => {
+  const modal = { ...$deleteGuarantorConfirmModal.value };
+  if (!modal.guarantorId) return;
+
+  const navigate = deleteGuarantorDetailNavigateRef.current;
+
+  try {
+    await guarantorsApi.delete(modal.guarantorId);
+    successAlert('Guarantor deleted successfully', 'toast');
+    deleteGuarantorDetailNavigateRef.current = null;
+    closeDeleteGuarantorConfirmModal();
+
+    if (modal.context === 'guarantorDetail') {
+      resetGuarantorRouteState();
+      if (modal.borrowerId && navigate) {
+        navigate(`/borrowers/${modal.borrowerId}`);
+      } else if (navigate) {
+        navigateBackOrDefault(navigate);
+      }
+    } else if (modal.context === 'borrowerTab' && modal.borrowerId) {
+      await fetchBorrowerDetail(modal.borrowerId);
+    }
+  } catch (err) {
+    const message = typeof err === 'string' ? err : (err?.error || err?.message || 'Unknown error');
+    dangerAlert(`Failed to delete guarantor: ${message}`);
+    throw err;
+  }
+};
+
+/** Clears guarantor detail–scoped signals when leaving `/guarantors/:guarantorId` or switching guarantors. */
 export const resetGuarantorRouteState = () => {
   $guarantorDetailView.reset();
   $guarantorDetailView.update({ isLoading: true });

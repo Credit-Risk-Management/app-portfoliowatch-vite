@@ -10,4 +10,5 @@ export const $debtServiceContainerView = Signal({
 export const $debtServiceContainerDetails = Signal({
   latestDebtService: null,
   latestFinancial: null,
+  financialsList: [],
 });

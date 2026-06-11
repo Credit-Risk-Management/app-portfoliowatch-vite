@@ -1,27 +1,7 @@
 import { Badge, ListGroup } from 'react-bootstrap';
 import { formatMoneyShorthand } from '@src/utils/currency';
+import { formatDashboardRelativeTime } from '@src/utils/formatRelativeTime';
 import { getWatchScoreColor } from '../_helpers/dashboard.consts';
-
-const formatDate = (dateString) => {
-  if (!dateString) return '';
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInMs = now.getTime() - date.getTime();
-  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-  const diffInDays = Math.floor(diffInHours / 24);
-
-  if (diffInHours < 24) {
-    if (diffInHours < 1) {
-      const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-      return diffInMinutes <= 1 ? 'Just now' : `${diffInMinutes}m ago`;
-    }
-    return `${diffInHours}h ago`;
-  }
-  if (diffInDays < 7) {
-    return `${diffInDays}d ago`;
-  }
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-};
 
 const RecentLoansList = ({ loans }) => {
   if (!loans || loans.length === 0) {
@@ -57,7 +37,7 @@ const RecentLoansList = ({ loans }) => {
                 <small className="fw-700" style={{ color: scoreColor }}>WATCH - {watchScore}</small>
               </div>
               <div className="text-white-50 mt-4" style={{ fontSize: '0.75rem' }}>
-                {formatDate(loan.updatedAt)}
+                {formatDashboardRelativeTime(loan.updatedAt)}
               </div>
             </div>
             <div>

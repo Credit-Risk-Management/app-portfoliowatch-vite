@@ -294,12 +294,9 @@ export const handleSubmit = async () => {
 
             // Step 2: Upload file directly to Firebase Storage using SDK (bypasses CORS!)
             const storageRef = storage.ref(storagePath);
-            const uploadTask = await storageRef.put(uploadedDocument.file, {
+            await storageRef.put(uploadedDocument.file, {
               contentType: uploadedDocument.mimeType,
             });
-
-            // Get the download URL
-            const downloadURL = await uploadTask.ref.getDownloadURL();
 
             // Step 3: Confirm upload with backend
             const confirmResponse = await documentsApi.confirmUpload(documentId, storagePath);

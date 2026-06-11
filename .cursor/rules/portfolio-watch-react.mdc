@@ -1,0 +1,69 @@
+---
+description: Portfolio Watch Vite — React, signals, _helpers, components, exports
+alwaysApply: true
+---
+
+# Portfolio Watch Vite — React & architecture
+
+**Stack:** Vite + React, Bootstrap + SCSS (see `bootstrap-scss.mdc` for styling rules), JavaScript.
+
+## SignalTable
+
+- Prefer importing and using `SignalTable` over custom tables.
+- Bind tables to signals for reactivity.
+- Avoid local component state when using `SignalTable`.
+
+## `_helpers` design pattern
+
+- Maintain signals in helpers instead of local React state; keep components declarative.
+- **Never** use `useState` — do not import or call it; store all component-visible state in signals (`_helpers/consts`) instead.
+- Avoid `useReducer` when a signal (or small set of signals) can model the same state.
+
+### `_helpers` folder layout
+
+- **consts:** signals + constants.
+- **events:** UI interactions (clicks, submits).
+- **resolvers:** all data fetching and updates to signals.
+- Store helpers in `/lib/_helpers/{componentName}/` or next to the component.
+- **Never** make API calls inside components; only resolver files may call API modules. Components call resolver functions only.
+
+### UI state vs form data
+
+- UI state (loading, validation, dirty flags) must not live inside form data signals.
+- Form data = only values sent to the backend.
+
+## UniversalInput
+
+- Always use `@components/global/Inputs/UniversalInput/UniversalInput.jsx` for form fields.
+- Do not use native `<input>`, `<textarea>`, or react-bootstrap inputs.
+
+## Logging
+
+- Remove `console.log` / `console.warn` / `console.error` before merging; use proper logging utilities.
+
+## Signals usage
+
+- Do not extract signal values into local variables unless needed.
+- Access signals inline, e.g. `$borrowers.value?.list || []`.
+
+## Component shape
+
+- Components should only contain imports, `useEffectAsync`, and JSX.
+- Handlers → `{component}.events.js`; utilities → `{component}.helpers.js`.
+
+## Component scaffolding
+
+Path: `/components/{ComponentName}/`
+
+- Main file: `{ComponentName}.tsx` (default export only for this file).
+- `_helpers/consts.ts`, `events.ts`, `resolvers.ts`, `helpers.ts` — named exports for helpers, events, consts, resolvers.
+
+## Naming
+
+- Components: PascalCase. Helpers: camelCase.
+
+## Avoid / prefer
+
+- **Never:** `useState` — not allowed anywhere; use signals in `_helpers/consts` (see `_helpers` design pattern above).
+- **Avoid:** `useReducer` when signals suffice; inline CSS (see `bootstrap-scss.mdc`).
+- **Prefer:** signals for state, `useEffectAsync` for async effects.

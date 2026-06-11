@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { $guarantorDetailsData } from '@src/components/views/GuarantorDetails/_helpers/guarantorDetails.consts';
 import { formatCurrency } from '@src/utils/formatCurrency';
-import { GuarantorNetWorthWithMemoFlag } from '../../_utils/GuarantorNetWorthWithMemoFlag';
 import SignalTable from '@src/components/global/SignalTable/SignalTable';
 import { Button } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -9,6 +8,7 @@ import { faChartLine, faCheck, faCopy, faTable } from '@fortawesome/free-solid-s
 import { formatDate } from '@src/utils/formatDate';
 import { formatRatioPercentForDisplay } from '@src/utils/ratioPercent';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
+import { GuarantorNetWorthWithMemoFlag } from '../../_utils/GuarantorNetWorthWithMemoFlag';
 import { $submitPFSModalView } from '../SubmitGuarantorFinancialsModal/_helpers/submitGuarantorFinancialsModal.const';
 import { $guarantorDetailView } from '../../_helpers/guarantorDetails.consts';
 import * as consts from './_helpers/guarantorFinancials.consts';

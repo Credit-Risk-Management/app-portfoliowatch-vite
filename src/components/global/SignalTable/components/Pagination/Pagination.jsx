@@ -75,8 +75,8 @@ const Pagination = ({
         </ListGroup>
       )}
 
-      {showPagination && currentPageItemsCount > 0 && (
-        <div className="ml-16 text-muted">
+      {totalItemsCount > 0 && currentPageItemsCount > 0 && (
+        <div className="ml-16 text-light">
           Showing {currentPageItemsCount} of {totalItemsCount} results
         </div>
       )}

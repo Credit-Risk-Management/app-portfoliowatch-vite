@@ -4,6 +4,8 @@ import { Signal } from '@fyclabs/tools-fyc-react/signals';
 export const $borrowerDetailView = Signal({
   showEditBorrowerModal: false,
   activeKey: 'details',
+  /** Bumped when guarantor delete confirm opens from the Guarantors tab (re-renders layout + modal). */
+  guarantorDeleteModalNonce: 0,
 });
 
 // Signals for borrower loans table
