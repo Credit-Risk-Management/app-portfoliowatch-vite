@@ -476,22 +476,6 @@ const computeRemovedStoredDocumentIds = (documentsByType, initialStoredDocumentI
   return removed;
 };
 
-/** Stored doc IDs removed from the modal since load (edit submit → API deletes after queue). */
-const computeRemovedStoredDocumentIds = (documentsByType, initialStoredDocumentIdsByType, editingId) => {
-  if (!editingId || !initialStoredDocumentIdsByType || !documentsByType) return [];
-  const removed = [];
-  Object.keys(initialStoredDocumentIdsByType).forEach((docType) => {
-    const docs = documentsByType[docType] || [];
-    const currentStoredIds = new Set(
-      docs.filter((d) => d.isStored && d.id).map((d) => d.id),
-    );
-    (initialStoredDocumentIdsByType[docType] || []).forEach((id) => {
-      if (!currentStoredIds.has(id)) removed.push(id);
-    });
-  });
-  return removed;
-};
-
 export const handleSubmit = async (onCloseCallback) => {
   const { $modalState } = consts;
   try {
@@ -546,17 +530,6 @@ export const handleSubmit = async (onCloseCallback) => {
     const resolvedProfitMargin = explicitProfitMargin != null
       ? explicitProfitMargin
       : profitMarginPercentFromNetIncome(formNetIncome, formGrossRevenue);
-
-    const hasStagedNewUploads = stagedByType
-      && Object.keys(stagedByType).some((k) => (stagedByType[k] || []).some((d) => d?.file && !d.isStored));
-
-    const fromModalIds = flattenStoredDocumentIds(stagedByType);
-    const fromFormIds = Array.isArray($borrowerFinancialsForm.value.documentIds)
-      ? $borrowerFinancialsForm.value.documentIds
-      : [];
-    const documentIds = fromModalIds.length > 0 ? fromModalIds : fromFormIds;
-
-    const { documentsByType: stagedByType } = $modalState.value;
     const hasStagedNewUploads = stagedByType
       && Object.keys(stagedByType).some((k) => (stagedByType[k] || []).some((d) => d?.file && !d.isStored));
 
