@@ -1,9 +1,13 @@
 import {
+  $pfsWorksheetSummariesFromSchedules,
   PFS_SCHEDULE_DEFINITIONS,
-  PFS_WORKSHEET_ROW_COUNT,
   pfsWorksheetField,
 } from './pfsWorksheetModal.consts';
-import { parsePfsNumeric } from './pfsWorksheetModal.helpers';
+import {
+  getPfsWorksheetMaxRowIndexInPayload,
+  parsePfsNumeric,
+  resolvePfsSummaryTotal,
+} from './pfsWorksheetModal.helpers';
 
 const ASSET_COLUMN_SPECS = [
   { scheduleId: 'A', columnKey: 'balance' },
@@ -13,7 +17,6 @@ const ASSET_COLUMN_SPECS = [
 ];
 
 const LIABILITY_BALANCE_SPECS = [
-  { scheduleId: 'D', columnKey: 'amountOwed' },
   { scheduleId: 'G', columnKey: 'currentBal' },
   { scheduleId: 'H', columnKey: 'currentBal' },
   { scheduleId: 'I', columnKey: 'currentBal' },
@@ -26,7 +29,8 @@ const parseMoney = (s) => {
 
 const sumScheduleColumn = (payload, scheduleId, columnKey) => {
   let sum = 0;
-  for (let r = 0; r < PFS_WORKSHEET_ROW_COUNT; r += 1) {
+  const maxIdx = getPfsWorksheetMaxRowIndexInPayload(payload, scheduleId);
+  for (let r = 0; r <= maxIdx; r += 1) {
     sum += parseMoney(payload[pfsWorksheetField(scheduleId, r, columnKey)]);
   }
   return sum;
@@ -34,7 +38,8 @@ const sumScheduleColumn = (payload, scheduleId, columnKey) => {
 
 const estimatedAnnualFromRateAndBalance = (payload, scheduleId) => {
   let sum = 0;
-  for (let r = 0; r < PFS_WORKSHEET_ROW_COUNT; r += 1) {
+  const maxIdx = getPfsWorksheetMaxRowIndexInPayload(payload, scheduleId);
+  for (let r = 0; r <= maxIdx; r += 1) {
     const bal = parseMoney(payload[pfsWorksheetField(scheduleId, r, 'currentBal')]);
     const rate = parseMoney(payload[pfsWorksheetField(scheduleId, r, 'rate')]);
     if (bal > 0 && rate > 0) {
@@ -45,8 +50,8 @@ const estimatedAnnualFromRateAndBalance = (payload, scheduleId) => {
 };
 
 export const formatPfsRollupMoney = (n) => {
-  if (!Number.isFinite(n) || n === 0) return '0';
-  return String(Math.round(n * 100) / 100);
+  if (!Number.isFinite(n)) return '0.00';
+  return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 };
 
 export const computePfsWorksheetRollup = (payload) => {
@@ -76,7 +81,8 @@ export const hasPfsScheduleNumericData = (payload) => {
     return true;
   }
   return PFS_SCHEDULE_DEFINITIONS.some((sch) => {
-    for (let r = 0; r < PFS_WORKSHEET_ROW_COUNT; r += 1) {
+    const maxIdx = getPfsWorksheetMaxRowIndexInPayload(payload, sch.id);
+    for (let r = 0; r <= maxIdx; r += 1) {
       const hasMoney = sch.columns.some((col) => {
         if (col.inputMode !== 'decimal') return false;
         return parseMoney(payload[pfsWorksheetField(sch.id, r, col.key)]) > 0;
@@ -92,11 +98,26 @@ export const applyPfsWorksheetRollup = (payload) => {
     return payload;
   }
   const rollup = computePfsWorksheetRollup(payload);
+  const useScheduleSummaries = $pfsWorksheetSummariesFromSchedules.value === true;
+
+  const totalAssets = useScheduleSummaries
+    ? rollup.totalAssets
+    : resolvePfsSummaryTotal(payload.summary_totalAssets, rollup.totalAssets);
+  const totalLiabilities = useScheduleSummaries
+    ? rollup.totalLiabilities
+    : resolvePfsSummaryTotal(payload.summary_totalLiabilities, rollup.totalLiabilities);
+  const netWorth = useScheduleSummaries
+    ? rollup.netWorth
+    : resolvePfsSummaryTotal(payload.summary_netWorth, totalAssets - totalLiabilities);
+  const annualPayments = useScheduleSummaries
+    ? rollup.annualPayments
+    : resolvePfsSummaryTotal(payload.summary_annualPayments, rollup.annualPayments);
+
   return {
     ...payload,
-    summary_totalAssets: formatPfsRollupMoney(rollup.totalAssets),
-    summary_totalLiabilities: formatPfsRollupMoney(rollup.totalLiabilities),
-    summary_netWorth: formatPfsRollupMoney(rollup.netWorth),
-    summary_annualPayments: formatPfsRollupMoney(rollup.annualPayments),
+    summary_totalAssets: formatPfsRollupMoney(totalAssets),
+    summary_totalLiabilities: formatPfsRollupMoney(totalLiabilities),
+    summary_netWorth: formatPfsRollupMoney(netWorth),
+    summary_annualPayments: formatPfsRollupMoney(annualPayments),
   };
 };

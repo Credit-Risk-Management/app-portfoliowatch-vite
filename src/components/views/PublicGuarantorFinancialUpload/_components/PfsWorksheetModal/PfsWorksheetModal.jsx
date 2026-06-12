@@ -3,14 +3,21 @@ import UniversalInput from '@src/components/global/Inputs/UniversalInput/Univers
 import { INPUT_LIGHT_STYLE } from '@src/components/views/PublicFinacialUpload/_components/DebtScheduleWorksheetModal/_helpers/debtScheduleWorksheetModal.consts';
 import {
   $pfsWorksheetForm,
+  $pfsWorksheetScheduleRowCounts,
   $pfsWorksheetStep,
   PFS_HEADER_FIELDS,
   PFS_SUMMARY_FIELDS,
+  PFS_WORKSHEET_MAX_ROW_COUNT,
   PFS_WORKSHEET_STEPS,
-  PFS_WORKSHEET_ROW_COUNT,
   pfsWorksheetField,
 } from './_helpers/pfsWorksheetModal.consts';
-import { schedulesForStep } from './_helpers/pfsWorksheetModal.helpers';
+import {
+  formatPfsWorksheetCurrencyDisplay,
+  formatPfsWorksheetCurrencyTyping,
+  getPfsScheduleDisplayRowCount,
+  pfsWorksheetColumnIsCurrency,
+  schedulesForStep,
+} from './_helpers/pfsWorksheetModal.helpers';
 import { hasPfsScheduleNumericData } from './_helpers/pfsWorksheetRollup.helpers';
 import { $publicGuarantorUploadView } from '../../_helpers/publicGuarantorFinancialUpload.consts';
 import * as events from './_helpers/pfsWorksheetModal.events';
@@ -20,53 +27,88 @@ const PfsWorksheetModal = ({ show, isSubmitting }) => {
   const step = $pfsWorksheetStep.value ?? 0;
   const stepMeta = PFS_WORKSHEET_STEPS[step];
   const { pfsWorksheetErrors: wsErrors } = $publicGuarantorUploadView.value;
+  const scheduleRowCounts = $pfsWorksheetScheduleRowCounts.value || {};
   const progress = ((step + 1) / PFS_WORKSHEET_STEPS.length) * 100;
 
-  const renderScheduleTable = (sch) => (
-    <div key={sch.id} className="mb-24">
-      <h6 className="text-dark fw-semibold fs-7 mb-8" style={{ letterSpacing: '0.04em' }}>
-        {sch.title}
-      </h6>
-      <div className="debt-schedule-worksheet-table-shell rounded-2 border overflow-hidden">
-        <div className="table-responsive debt-schedule-worksheet-table-responsive">
-          <table className="table text-dark debt-schedule-worksheet-table mb-0">
-            <thead>
-              <tr>
-                <th scope="col" className="small">#</th>
-                {sch.columns.map((col) => (
-                  <th key={col.key} scope="col">{col.label}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {Array.from({ length: PFS_WORKSHEET_ROW_COUNT }, (_, rowIdx) => (
-                <tr key={`${sch.id}-${rowIdx}`} className="debt-schedule-worksheet-row">
-                  <th scope="row" className="small text-grey-600 fw-normal">{rowIdx + 1}</th>
-                  {sch.columns.map((col) => {
-                    const name = pfsWorksheetField(sch.id, rowIdx, col.key);
-                    return (
-                      <td key={name}>
-                        <UniversalInput
-                          name={name}
-                          type="text"
-                          aria-label={`${sch.title} row ${rowIdx + 1} ${col.label}`}
-                          placeholder={col.label}
-                          signal={$pfsWorksheetForm}
-                          style={INPUT_LIGHT_STYLE}
-                          className="debt-schedule-worksheet-field rounded-2 border-0 shadow-none w-100"
-                          customOnChange={(e) => events.patchPfsWorksheetForm({ [name]: e.target.value })}
-                        />
-                      </td>
-                    );
-                  })}
+  const renderScheduleTable = (sch) => {
+    const rowCount = getPfsScheduleDisplayRowCount(sch.id, scheduleRowCounts);
+    const canAddRow = rowCount < PFS_WORKSHEET_MAX_ROW_COUNT;
+
+    return (
+      <div key={sch.id} className="mb-24">
+        <h6 className="text-dark fw-semibold fs-7 mb-8" style={{ letterSpacing: '0.04em' }}>
+          {sch.title}
+        </h6>
+        <div className="debt-schedule-worksheet-table-shell rounded-2 border overflow-hidden">
+          <div className="table-responsive debt-schedule-worksheet-table-responsive">
+            <table className="table text-dark debt-schedule-worksheet-table mb-0">
+              <thead>
+                <tr>
+                  <th scope="col" className="small">#</th>
+                  {sch.columns.map((col) => (
+                    <th key={col.key} scope="col">{col.label}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {Array.from({ length: rowCount }, (_, rowIdx) => (
+                  <tr key={`${sch.id}-${rowIdx}`} className="debt-schedule-worksheet-row">
+                    <th scope="row" className="small text-grey-600 fw-normal">{rowIdx + 1}</th>
+                    {sch.columns.map((col) => {
+                      const name = pfsWorksheetField(sch.id, rowIdx, col.key);
+                      const isCurrency = pfsWorksheetColumnIsCurrency(col);
+                      return (
+                        <td key={name} className={isCurrency ? 'text-end' : undefined}>
+                          <UniversalInput
+                            name={name}
+                            type="text"
+                            aria-label={`${sch.title} row ${rowIdx + 1} ${col.label}`}
+                            placeholder={col.label}
+                            signal={$pfsWorksheetForm}
+                            style={INPUT_LIGHT_STYLE}
+                            className={[
+                              'debt-schedule-worksheet-field rounded-2 border-0 shadow-none w-100',
+                              isCurrency ? 'text-end tabular-nums' : '',
+                            ].filter(Boolean).join(' ')}
+                            customOnChange={(e) => {
+                              const next = isCurrency
+                                ? formatPfsWorksheetCurrencyTyping(e.target.value)
+                                : e.target.value;
+                              events.patchPfsWorksheetForm({ [name]: next });
+                            }}
+                            onBlur={isCurrency ? () => {
+                              const raw = $pfsWorksheetForm.value?.[name] ?? '';
+                              const formatted = formatPfsWorksheetCurrencyDisplay(raw);
+                              if (formatted && formatted !== raw) {
+                                events.patchPfsWorksheetForm({ [name]: formatted });
+                              }
+                            } : undefined}
+                          />
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
+        {canAddRow ? (
+          <div className="mt-8">
+            <Button
+              variant="white"
+              size="sm"
+              className="text-dark rounded-2 border border-dark-200"
+              onClick={() => events.addPfsWorksheetRow(sch.id)}
+              disabled={isSubmitting}
+            >
+              Add row
+            </Button>
+          </div>
+        ) : null}
       </div>
-    </div>
-  );
+    );
+  };
 
   let body;
   if (stepMeta.id === 'about') {
@@ -120,7 +162,19 @@ const PfsWorksheetModal = ({ show, isSubmitting }) => {
                 signal={$pfsWorksheetForm}
                 style={INPUT_LIGHT_STYLE}
                 labelClassName="debt-schedule-field-label mb-6"
-                customOnChange={(e) => events.patchPfsWorksheetForm({ [key]: e.target.value })}
+                className="debt-schedule-worksheet-field rounded-2 border-0 shadow-none w-100 text-end tabular-nums"
+                customOnChange={(e) => {
+                  events.patchPfsWorksheetForm({
+                    [key]: formatPfsWorksheetCurrencyTyping(e.target.value),
+                  });
+                }}
+                onBlur={() => {
+                  const raw = $pfsWorksheetForm.value?.[key] ?? '';
+                  const formatted = formatPfsWorksheetCurrencyDisplay(raw);
+                  if (formatted && formatted !== raw) {
+                    events.patchPfsWorksheetForm({ [key]: formatted });
+                  }
+                }}
               />
             </Col>
           ))}

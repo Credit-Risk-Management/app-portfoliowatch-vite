@@ -12,7 +12,9 @@ export const PFS_TEMPLATE_XLSX_URL = (() => {
   return '/pfs-template.xlsx';
 })();
 
+/** Default rows shown per schedule (matches Template - PFS.xlsx). */
 export const PFS_WORKSHEET_ROW_COUNT = 4;
+export const PFS_WORKSHEET_MAX_ROW_COUNT = 20;
 
 export const PFS_HEADER_FIELDS = [
   { key: 'name', label: 'Name', placeholder: 'Full legal name', required: true },
@@ -112,6 +114,10 @@ export const PFS_SCHEDULE_DEFINITIONS = [
   },
 ];
 
+export const createDefaultPfsScheduleRowCounts = () => (
+  Object.fromEntries(PFS_SCHEDULE_DEFINITIONS.map((sch) => [sch.id, PFS_WORKSHEET_ROW_COUNT]))
+);
+
 export const PFS_WORKSHEET_STEPS = [
   { id: 'about', label: 'About you' },
   { id: 'assets', label: 'Assets' },
@@ -139,4 +145,7 @@ export const createDefaultPfsWorksheetForm = () => {
 };
 
 export const $pfsWorksheetForm = Signal(createDefaultPfsWorksheetForm());
+export const $pfsWorksheetScheduleRowCounts = Signal(createDefaultPfsScheduleRowCounts());
+/** When false, summary_* from PDF extraction wins over incomplete schedule rollups. */
+export const $pfsWorksheetSummariesFromSchedules = Signal(false);
 export const $pfsWorksheetStep = Signal(0);

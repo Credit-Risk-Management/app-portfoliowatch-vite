@@ -27,7 +27,6 @@ export const $publicGuarantorUploadView = Signal({
   priorDebtOpening: false,
   pfsWorksheetErrors: null,
   pfsWorksheetSubmitting: false,
-  pfsWorksheetHydratedFromPrior: false,
 });
 
 export const $gPubPersonalTax = Signal({ financialDocs: [] });
@@ -53,7 +52,7 @@ export const GUARANTOR_DOC_SECTION = {
   personalFinancialStatement: {
     sectionId: 'personalFinancialStatement',
     title: 'Personal financial statement (PFS)',
-    helperText: 'Please complete the PFS worksheet below and submit it to your lender.',
+    helperText: 'Complete the personal financial statement worksheet below.',
     inputId: 'public-guarantor-pfs',
   },
 

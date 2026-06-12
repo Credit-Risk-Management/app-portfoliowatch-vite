@@ -15,6 +15,7 @@ import {
   PFS_TEMPLATE_PDF_URL,
 } from './publicGuarantorFinancialUpload.consts';
 import { $pfsWorksheetForm } from '../_components/PfsWorksheetModal/_helpers/pfsWorksheetModal.consts';
+import { resetPfsWorksheetScheduleRowCounts, resetPfsWorksheetSummariesFromSchedules, hydratePfsWorksheetFromPriorLinkData } from '../_components/PfsWorksheetModal/_helpers/pfsWorksheetModal.events';
 import { validatePfsWorksheetForSubmit } from '../_components/PfsWorksheetModal/_helpers/pfsWorksheetModal.helpers';
 import { applyPfsWorksheetRollup } from '../_components/PfsWorksheetModal/_helpers/pfsWorksheetRollup.helpers';
 import {
@@ -135,6 +136,9 @@ export const handleGuarantorFileUpload = async () => {
     }
     resetAllGuarantorUploaders();
     $pfsWorksheetForm.reset();
+    resetPfsWorksheetScheduleRowCounts();
+    resetPfsWorksheetSummariesFromSchedules();
+    hydratePfsWorksheetFromPriorLinkData($publicGuarantorUploadView.value.linkData);
   } catch (error) {
     const message = error?.message || (typeof error === 'string' ? error : 'Request failed');
     dangerAlert(message);

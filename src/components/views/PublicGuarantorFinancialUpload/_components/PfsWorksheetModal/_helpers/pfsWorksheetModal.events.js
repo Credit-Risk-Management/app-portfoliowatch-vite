@@ -2,27 +2,76 @@ import { dangerAlert, successAlert } from '@src/components/global/Alert/_helpers
 import { $publicGuarantorUploadView } from '../../../_helpers/publicGuarantorFinancialUpload.consts';
 import {
   $pfsWorksheetForm,
+  $pfsWorksheetScheduleRowCounts,
+  $pfsWorksheetSummariesFromSchedules,
   $pfsWorksheetStep,
-  createDefaultPfsWorksheetForm,
+  createDefaultPfsScheduleRowCounts,
+  PFS_SCHEDULE_DEFINITIONS,
+  PFS_WORKSHEET_MAX_ROW_COUNT,
   PFS_WORKSHEET_STEPS,
+  pfsWorksheetField,
 } from './pfsWorksheetModal.consts';
-import { mergePriorPfsWorksheetIntoForm, validatePfsWorksheetForSubmit } from './pfsWorksheetModal.helpers';
+import {
+  getPfsScheduleDisplayRowCount,
+  inferPfsScheduleRowCountsFromForm,
+  mergePriorPfsWorksheetIntoForm,
+  validatePfsWorksheetForSubmit,
+} from './pfsWorksheetModal.helpers';
 import { applyPfsWorksheetRollup } from './pfsWorksheetRollup.helpers';
 
+export const resetPfsWorksheetScheduleRowCounts = () => {
+  $pfsWorksheetScheduleRowCounts.update(createDefaultPfsScheduleRowCounts());
+};
+
+export const resetPfsWorksheetSummariesFromSchedules = () => {
+  $pfsWorksheetSummariesFromSchedules.update(false);
+};
+
+export const syncPfsWorksheetScheduleRowCountsFromForm = (form) => {
+  $pfsWorksheetScheduleRowCounts.update(inferPfsScheduleRowCountsFromForm(form || {}));
+};
+
+export const hydratePfsWorksheetFromPriorLinkData = (linkData) => {
+  if (!linkData?.priorPfsWorksheet) return null;
+  const merged = applyPfsWorksheetRollup(
+    mergePriorPfsWorksheetIntoForm(
+      linkData.priorPfsWorksheet,
+      linkData,
+      $pfsWorksheetForm.value || {},
+    ),
+  );
+  $pfsWorksheetForm.update(merged);
+  syncPfsWorksheetScheduleRowCountsFromForm(merged);
+  resetPfsWorksheetSummariesFromSchedules();
+  return merged;
+};
+
+export const addPfsWorksheetRow = (scheduleId) => {
+  const rowCounts = { ...($pfsWorksheetScheduleRowCounts.value || {}) };
+  const current = getPfsScheduleDisplayRowCount(scheduleId, rowCounts);
+  if (current >= PFS_WORKSHEET_MAX_ROW_COUNT) return;
+
+  const sch = PFS_SCHEDULE_DEFINITIONS.find((s) => s.id === scheduleId);
+  if (!sch) return;
+
+  const newRowIdx = current;
+  const patch = {};
+  sch.columns.forEach((col) => {
+    patch[pfsWorksheetField(scheduleId, newRowIdx, col.key)] = '';
+  });
+
+  rowCounts[scheduleId] = current + 1;
+  $pfsWorksheetScheduleRowCounts.update(rowCounts);
+  patchPfsWorksheetForm(patch);
+};
+
 export const openPfsWorksheetModal = () => {
-  const { linkData, pfsWorksheetHydratedFromPrior } = $publicGuarantorUploadView.value;
-  if (linkData?.priorPfsWorksheet && !pfsWorksheetHydratedFromPrior) {
-    const merged = mergePriorPfsWorksheetIntoForm(linkData.priorPfsWorksheet, linkData);
-    $pfsWorksheetForm.update(merged);
-    $publicGuarantorUploadView.update({
-      activeModalKey: 'pfs',
-      pfsWorksheetErrors: null,
-      pfsWorksheetHydratedFromPrior: true,
-    });
-  } else if (!$pfsWorksheetForm.value?.name) {
-    $pfsWorksheetForm.update(
-      mergePriorPfsWorksheetIntoForm(createDefaultPfsWorksheetForm(), linkData),
-    );
+  const { linkData } = $publicGuarantorUploadView.value;
+  if (linkData?.priorPfsWorksheet) {
+    hydratePfsWorksheetFromPriorLinkData(linkData);
+  } else {
+    syncPfsWorksheetScheduleRowCountsFromForm($pfsWorksheetForm.value || {});
+    resetPfsWorksheetSummariesFromSchedules();
   }
   $pfsWorksheetStep.update(0);
   $publicGuarantorUploadView.update({ activeModalKey: 'pfs', pfsWorksheetErrors: null });
@@ -40,6 +89,9 @@ export const closePfsWorksheetModal = () => {
 export const patchPfsWorksheetForm = (patch) => {
   if ($publicGuarantorUploadView.value.pfsWorksheetErrors) {
     $publicGuarantorUploadView.update({ pfsWorksheetErrors: null });
+  }
+  if (Object.keys(patch).some((key) => /^sch[A-Z]_r\d+_/.test(key))) {
+    $pfsWorksheetSummariesFromSchedules.update(true);
   }
   const merged = {
     ...$pfsWorksheetForm.value,
