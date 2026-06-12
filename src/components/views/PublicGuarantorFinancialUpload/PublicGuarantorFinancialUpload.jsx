@@ -21,16 +21,19 @@ import {
 } from './_helpers/publicGuarantorFinancialUpload.consts';
 import {
   getRequiredPdfSectionsForGuarantorLink,
-  hasGuarantorPdfStagedForKey,
   getGuarantorUploaderForDocKey,
+  getRequirementPolicyLabel,
+  canSubmitGuarantorLink,
+  isGuarantorSectionReadyForSubmit,
 } from './_helpers/publicGuarantorFinancialUpload.helpers';
 import { fetchGuarantorUploadLinkData } from './_helpers/publicGuarantorFinancialUpload.resolvers';
+import PfsWorksheetModal from './_components/PfsWorksheetModal/PfsWorksheetModal';
+import { openPfsWorksheetModal } from './_components/PfsWorksheetModal/_helpers/pfsWorksheetModal.events';
 import {
   handleGuarantorFileUpload,
   clearGuarantorError,
-  clearGuarantorSectionFiles, handleOpenPfsTemplatePdf,
-  openGuarantorAttestationModal,
-  closeGuarantorAttestationModal,
+  clearGuarantorSectionFiles, openGuarantorAttestationModal,
+  closeGuarantorAttestationModal
 } from './_helpers/publicGuarantorFinancialUpload.events';
 
 const PublicGuarantorFinancialUpload = () => {
@@ -47,6 +50,7 @@ const PublicGuarantorFinancialUpload = () => {
     activeModalKey,
     error,
     success,
+    partialSuccess,
   } = $publicGuarantorUploadView.value;
 
   const attestationText = linkData?.attestationText || DEFAULT_GUARANTOR_PUBLIC_ATTESTATION_TEXT;
@@ -83,17 +87,16 @@ const PublicGuarantorFinancialUpload = () => {
     );
   }
 
-  if (linkData?.hasSubmitted) {
+  if (linkData?.packageComplete && !partialSuccess) {
     return (
       <ContentWrapper fluid className="min-vh-100 bg-white">
         <Container className="py-24">
           <Card className="bg-grey-50 border-grey">
             <Card.Body className="text-center py-32">
               <FontAwesomeIcon icon={faCheckCircle} className="text-dark-700 mb-16" size="3x" />
-              <h3 className="text-dark-900 mb-16">Submission already received</h3>
+              <h3 className="text-dark-900 mb-16">Package complete</h3>
               <p className="text-dark-800 mb-24">
-                This upload link has already been used. If you need to send updated files, contact your lender
-                for a new link.
+                All required documents for this period have been received. Thank you.
               </p>
             </Card.Body>
           </Card>
@@ -124,8 +127,7 @@ const PublicGuarantorFinancialUpload = () => {
   }
 
   const requiredPdfSections = getRequiredPdfSectionsForGuarantorLink(linkData);
-  const canSubmit = requiredPdfSections.length > 0
-    && requiredPdfSections.every((row) => hasGuarantorPdfStagedForKey(row.apiDocumentKey));
+  const canSubmit = canSubmitGuarantorLink(linkData, requiredPdfSections);
 
   return (
     <ContentWrapper
@@ -177,6 +179,11 @@ const PublicGuarantorFinancialUpload = () => {
             </div>
           </Card.Header>
           <Card.Body className="px-16 px-md-24 py-20 py-md-24">
+            {partialSuccess && (
+              <Alert variant="success" className="mb-24">
+                Part of your package was received. You can upload any remaining items below and submit again.
+              </Alert>
+            )}
             {error && (
               <Alert variant="danger" dismissible onClose={clearGuarantorError} className="mb-24">
                 {error}
@@ -204,12 +211,67 @@ const PublicGuarantorFinancialUpload = () => {
                   <tbody>
                     {requiredPdfSections.map(({
                       sectionId, title, inputId, apiDocumentKey, helperText,
+                      requirementStatus, requiredForSubmit,
                     }, rowIndex) => {
                       const uploaderSignal = getGuarantorUploaderForDocKey(apiDocumentKey);
-                      const hasPdf = hasGuarantorPdfStagedForKey(apiDocumentKey);
-                      const firstFileName = (uploaderSignal?.value?.financialDocs || [])[0]?.name;
-                      const isLast = rowIndex === requiredPdfSections.length - 1;
                       const isPfs = apiDocumentKey === 'personalFinancialStatement';
+                      const receivedOnLink = requirementStatus === 'COMPLETED';
+                      const rowReady = receivedOnLink || isGuarantorSectionReadyForSubmit(apiDocumentKey);
+                      const policyLabel = getRequirementPolicyLabel({
+                        requirementStatus,
+                        requiredForSubmit,
+                      });
+                      let firstFileName = (uploaderSignal?.value?.financialDocs || [])[0]?.name;
+                      if (isPfs) {
+                        firstFileName = rowReady
+                          ? 'Worksheet complete (official PDF generated on submit)'
+                          : '—';
+                      }
+                      const hasPdf = rowReady;
+                      let notUploadedLabel = 'Not uploaded';
+                      if (isPfs) {
+                        notUploadedLabel = 'Worksheet not complete';
+                      }
+                      const isLast = rowIndex === requiredPdfSections.length - 1;
+                      let statusLabel = 'Uploaded';
+                      if (receivedOnLink) {
+                        statusLabel = 'Received';
+                      } else if (isPfs) {
+                        statusLabel = 'Complete';
+                      }
+                      let actionContent;
+                      if (receivedOnLink) {
+                        actionContent = <span className="text-grey-600 small">—</span>;
+                      } else if (isPfs) {
+                        actionContent = (
+                          <Button
+                            type="button"
+                            variant="dark"
+                            size="sm"
+                            className="text-nowrap"
+                            onClick={() => openPfsWorksheetModal()}
+                          >
+                            Open worksheet
+                          </Button>
+                        );
+                      } else if (hasPdf) {
+                        actionContent = (
+                          <Button
+                            size="sm"
+                            variant="link"
+                            className="fw-bold text-dark p-0 text-decoration-none"
+                            onClick={() => clearGuarantorSectionFiles(apiDocumentKey)}
+                          >
+                            Remove
+                          </Button>
+                        );
+                      } else {
+                        actionContent = (
+                          <label htmlFor={inputId} className="fw-bold text-dark mb-0" style={{ cursor: 'pointer' }}>
+                            Upload
+                          </label>
+                        );
+                      }
                       return (
                         <tr
                           key={sectionId}
@@ -220,40 +282,26 @@ const PublicGuarantorFinancialUpload = () => {
                             {helperText && (
                               <div className="small text-grey-600 mt-4">{helperText}</div>
                             )}
-                            {isPfs && (
-                              <div className="mt-8 small text-dark">
-                                <div className="mb-4 fw-semibold text-grey-600">
-                                  Use your standard PFS format or our template as a starting point.
-                                </div>
-                                <Button
-                                  type="button"
-                                  variant="dark"
-                                  size="sm"
-                                  className="px-12"
-                                  onClick={() => handleOpenPfsTemplatePdf()}
-                                >
-                                  Open PFS template PDF
-                                </Button>
-                              </div>
-                            )}
 
                           </td>
                           <td className="px-16 py-8">
+                            <div className="small text-grey-600 mb-4">{policyLabel}</div>
                             {hasPdf ? (
                               <span className="d-inline-flex align-items-center fw-semibold text-success-700">
                                 <span className="me-4">
                                   <FontAwesomeIcon icon={faCheck} size="sm" className="text-success-700" />
                                 </span>
-                                Uploaded
+                                {statusLabel}
                               </span>
                             ) : (
-                              <span className="text-grey-600 fw-normal">Not uploaded</span>
+                              <span className="text-grey-600 fw-normal">{notUploadedLabel}</span>
                             )}
                           </td>
                           <td className="ps-16 py-8 text- text-truncate" style={{ maxWidth: 400 }}>
                             <div className="fw-semibold text-dark text-truncate">{hasPdf ? firstFileName : '—'}</div>
                           </td>
                           <td className="pe-16 py-8 text-end">
+                            {!isPfs && (
                             <div className="d-none">
                               <FileUploader
                                 id={inputId}
@@ -262,20 +310,8 @@ const PublicGuarantorFinancialUpload = () => {
                                 acceptedTypes=".pdf,.xlsx,.xls,.doc,.docx,.csv"
                               />
                             </div>
-                            {hasPdf ? (
-                              <Button
-                                size="sm"
-                                variant="link"
-                                className="fw-bold text-dark p-0 text-decoration-none"
-                                onClick={() => clearGuarantorSectionFiles(apiDocumentKey)}
-                              >
-                                Remove
-                              </Button>
-                            ) : (
-                              <label htmlFor={inputId} className="fw-bold text-dark mb-0" style={{ cursor: 'pointer' }}>
-                                Upload
-                              </label>
                             )}
+                            {actionContent}
                           </td>
                         </tr>
                       );
@@ -298,6 +334,11 @@ const PublicGuarantorFinancialUpload = () => {
           </Card.Body>
         </Card>
       </Container>
+
+      <PfsWorksheetModal
+        show={activeModalKey === 'pfs'}
+        isSubmitting={isSubmitting}
+      />
 
       <AttestationModal
         show={activeModalKey === 'attestation'}

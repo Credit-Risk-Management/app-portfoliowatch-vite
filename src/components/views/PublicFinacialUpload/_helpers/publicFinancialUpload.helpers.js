@@ -11,14 +11,52 @@ import {
 } from './publicFinancialUpload.consts';
 
 /**
+ * Types that must be present on this submit.
+ * @param {object|null|undefined} linkData
+ * @returns {string[]}
+ */
+export const getBlockingDocumentKeysForLink = (linkData) => {
+  const fromApi = linkData?.requiredForSubmitDocumentKeys;
+  if (Array.isArray(fromApi)) return fromApi;
+  const reqs = linkData?.documentRequirements;
+  if (Array.isArray(reqs)) {
+    return reqs
+      .filter((r) => r?.requiredForSubmit && r?.status === 'PENDING')
+      .map((r) => r.type);
+  }
+  return Array.isArray(linkData?.requiredDocumentKeys) ? linkData.requiredDocumentKeys : [];
+};
+
+/**
  * Resolve which PDF rows to show for this upload link.
- * Prefers `linkData.requiredDocumentKeys` (API). Falls back to `linkData.requiredPdfSections`, then balance sheet + YTD income.
+ * Prefers `linkData.documentRequirements`, then `requiredDocumentKeys`. Falls back to legacy fields.
  *
  * @param {object|null|undefined} linkData
  * @param {string[]} [linkData.requiredDocumentKeys]
  * @param {string[]} [linkData.requiredPdfSections]
  */
 export const getRequiredPdfSectionsForLink = (linkData) => {
+  const reqs = linkData?.documentRequirements;
+  if (Array.isArray(reqs) && reqs.length > 0) {
+    const seen = new Set();
+    const out = [];
+    reqs.forEach((r) => {
+      if (!r?.visible || r?.status === 'WAIVED') return;
+      const sectionId = API_KEY_TO_SECTION_ID[r.type];
+      if (!sectionId || !KNOWN_SECTION_IDS.has(sectionId) || seen.has(sectionId)) return;
+      seen.add(sectionId);
+      const def = SECTION_DEF_BY_ID[sectionId];
+      if (!def) return;
+      out.push({
+        ...def,
+        apiDocumentKey: r.type,
+        requiredForSubmit: Boolean(r.requiredForSubmit && r.status === 'PENDING'),
+        requirementStatus: r.status,
+      });
+    });
+    if (out.length > 0) return appendImpactQuestionnaireSectionIfNeeded(linkData, out);
+  }
+
   const fromApi = linkData?.requiredDocumentKeys;
   if (Array.isArray(fromApi) && fromApi.length > 0) {
     const seen = new Set();
@@ -84,6 +122,38 @@ const appendImpactQuestionnaireSectionIfNeeded = (linkData, sections) => {
 export const getRequiredSectionIdsForLink = (linkData) => (
   getRequiredPdfSectionsForLink(linkData).map((d) => d.sectionId)
 );
+
+export const getRequirementPolicyLabel = (section) => {
+  if (section?.requirementStatus === 'COMPLETED') return 'Received';
+  if (section?.requirementStatus === 'WAIVED') return 'Not required';
+  if (section?.requirementStatus === 'EXTENDED') return 'Extended';
+  if (section?.requiredForSubmit) return 'Required to submit';
+  return 'Requested when available';
+};
+
+/**
+ * @param {object} linkData
+ * @param {Array<{ sectionId: string, apiDocumentKey?: string }>} requiredPdfSections
+ * @param {Record<string, string>} debtWorksheetForm
+ */
+export const canSubmitBorrowerLink = (linkData, requiredPdfSections, debtWorksheetForm) => {
+  const blockingKeys = getBlockingDocumentKeysForLink(linkData);
+  const blockingOk = blockingKeys.length === 0
+    || blockingKeys.every((key) => {
+      if (key === 'debtScheduleWorksheet') {
+        return validateDebtScheduleWorksheetForPdf(debtWorksheetForm || {}).valid;
+      }
+      const section = requiredPdfSections.find(
+        (s) => (s.apiDocumentKey ?? s.sectionId) === key || s.sectionId === key,
+      );
+      if (!section) return true;
+      return isSectionReadyForSubmit(section.sectionId, debtWorksheetForm);
+    });
+  const hasAnyStaged = requiredPdfSections.some((s) => (
+    isSectionReadyForSubmit(s.sectionId, debtWorksheetForm)
+  ));
+  return blockingOk && hasAnyStaged;
+};
 
 export const hasPdfStagedForSection = (sectionId) => {
   const uploader = UPLOADER_BY_SECTION[sectionId];
