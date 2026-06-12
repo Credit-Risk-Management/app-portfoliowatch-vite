@@ -2,7 +2,7 @@
  * @param {Object} notification
  * @param {string} [fallback='#'] Route when resource type is unknown
  */
-export default function getNotificationLink(notification, fallback = '#') {
+export function getNotificationLink(notification, fallback = '#') {
   if (notification.resourceType === 'LOAN' && notification.resourceId) {
     return `/loans/${notification.resourceId}`;
   }
@@ -11,3 +11,5 @@ export default function getNotificationLink(notification, fallback = '#') {
   }
   return fallback;
 }
+
+export default getNotificationLink;
