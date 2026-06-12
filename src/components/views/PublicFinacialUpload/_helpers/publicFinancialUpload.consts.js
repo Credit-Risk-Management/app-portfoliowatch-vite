@@ -94,6 +94,7 @@ export const $publicFinancialUploadView = Signal({
   impactQuestionnaireToken: null,
   error: null,
   success: false,
+  partialSuccess: false,
   /** True after successful public impact questionnaire submit (or link already submitted). */
   impactQuestionnairePublicComplete: false,
   priorDebtOpening: false,

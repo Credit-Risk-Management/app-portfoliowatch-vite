@@ -11,6 +11,7 @@ import {
 import { storage } from '@src/utils/firebase';
 import { buildStandardFinancialUploadFileName } from '@src/utils/documents.utils';
 import {
+  getBlockingDocumentKeysForLink,
   getRequiredPdfSectionsForLink,
   hasPdfStagedForSection,
   mergePriorWorksheetRowsIntoForm,
@@ -30,6 +31,7 @@ import {
   UPLOADER_BY_SECTION,
   SECTION_ID_TO_DOCUMENT_TYPE,
 } from './publicFinancialUpload.consts';
+import { fetchUploadLinkData } from './publicFinancialUpload.resolvers';
 import { $debtScheduleWorksheetWrapCellEdit } from '../_components/DebtScheduleWorksheetModal/_helpers/debtScheduleWorksheetModal.consts';
 
 export const resetAllPublicFinancialUploaders = () => {
@@ -76,13 +78,24 @@ export const handleFileUpload = async () => {
       ? { ...$debtScheduleWorksheetForm.value }
       : undefined;
 
-    const nonDebtRequired = requiredPdfSections.filter(
-      (s) => s.sectionId !== 'debtScheduleWorksheet' && s.sectionId !== 'impactQuestionnaire',
-    );
-    const missingNonDebtUpload = nonDebtRequired.some((s) => !hasPdfStagedForSection(s.sectionId));
-    if (missingNonDebtUpload) {
+    const blockingKeys = new Set(getBlockingDocumentKeysForLink(linkData));
+    const blockingSections = requiredPdfSections.filter((s) => {
+      if (s.sectionId === 'impactQuestionnaire') return false;
+      const docType = SECTION_ID_TO_DOCUMENT_TYPE[s.sectionId] ?? s.sectionId;
+      if (s.sectionId === 'debtScheduleWorksheet') {
+        return blockingKeys.has('debtScheduleWorksheet');
+      }
+      return blockingKeys.has(docType) || blockingKeys.has(s.sectionId);
+    });
+    const missingBlockingUpload = blockingSections.some((s) => {
+      if (s.sectionId === 'debtScheduleWorksheet') {
+        return !validateDebtScheduleWorksheetForPdf($debtScheduleWorksheetForm.value || {}).valid;
+      }
+      return !hasPdfStagedForSection(s.sectionId);
+    });
+    if (missingBlockingUpload) {
       $publicFinancialUploadView.update({
-        error: 'Please upload all required PDFs before submitting.',
+        error: 'Please complete all required items before submitting.',
         isSubmitting: false,
       });
       return;
@@ -163,7 +176,17 @@ export const handleFileUpload = async () => {
       await notifyExtractReadyViaToken(token, extractTaskId);
     }
 
-    $publicFinancialUploadView.update({ success: true });
+    await fetchUploadLinkData(token);
+    const packageComplete = $publicFinancialUploadView.value.linkData?.packageComplete;
+    if (packageComplete) {
+      $publicFinancialUploadView.update({ success: true, partialSuccess: false });
+    } else {
+      $publicFinancialUploadView.update({ partialSuccess: true, success: false });
+      successAlert(
+        'Documents received. You can return to this link later to upload any remaining items.',
+        'toast',
+      );
+    }
     $publicFinancialForm.reset();
     $debtScheduleWorksheetForm.reset();
     resetAllPublicFinancialUploaders();
