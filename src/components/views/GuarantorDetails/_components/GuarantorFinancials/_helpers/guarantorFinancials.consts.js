@@ -1,5 +1,8 @@
 import { Signal } from '@fyclabs/tools-fyc-react/signals';
 
+/** True when permanent upload link was just copied */
+export const $copiedLink = Signal(false);
+
 /** True when "Annual" one-off copy was just used */
 export const $copiedAnnualLink = Signal(false);
 

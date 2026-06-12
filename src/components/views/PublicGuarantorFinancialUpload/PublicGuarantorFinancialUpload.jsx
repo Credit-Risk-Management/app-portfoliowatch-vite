@@ -33,7 +33,7 @@ import {
   handleGuarantorFileUpload,
   clearGuarantorError,
   clearGuarantorSectionFiles, openGuarantorAttestationModal,
-  closeGuarantorAttestationModal
+  closeGuarantorAttestationModal,
 } from './_helpers/publicGuarantorFinancialUpload.events';
 
 const PublicGuarantorFinancialUpload = () => {
