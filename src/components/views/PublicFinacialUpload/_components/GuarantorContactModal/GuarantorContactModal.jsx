@@ -38,7 +38,7 @@ const GuarantorContactModal = ({ show, isSubmitting }) => {
           Contact details
         </div>
         <p className="text-dark mb-16 lh-base">
-          We need an email for each guarantor so we can send annual guarantor document requests.
+          We need contact details for each guarantor so we can send annual guarantor document requests.
           This must be completed before you can submit financials.
         </p>
 
@@ -59,7 +59,7 @@ const GuarantorContactModal = ({ show, isSubmitting }) => {
                 </div>
               )}
               <Row className="g-4 mb-8">
-                <Col xs={12} md={4}>
+                <Col xs={12} md={6}>
                   <UniversalInput
                     label="First name"
                     labelClassName="debt-schedule-field-label mb-6"
@@ -74,7 +74,7 @@ const GuarantorContactModal = ({ show, isSubmitting }) => {
                     isInvalid={Boolean(rowErrors.firstName)}
                   />
                 </Col>
-                <Col xs={12} md={4}>
+                <Col xs={12} md={6}>
                   <UniversalInput
                     label="Last name"
                     labelClassName="debt-schedule-field-label mb-6"
@@ -89,7 +89,7 @@ const GuarantorContactModal = ({ show, isSubmitting }) => {
                     isInvalid={Boolean(rowErrors.lastName)}
                   />
                 </Col>
-                <Col xs={12} md={4}>
+                <Col xs={12} md={6}>
                   <UniversalInput
                     label="Email"
                     labelClassName="debt-schedule-field-label mb-6"
@@ -102,6 +102,21 @@ const GuarantorContactModal = ({ show, isSubmitting }) => {
                     required
                     disabled={isSubmitting}
                     isInvalid={Boolean(rowErrors.email)}
+                  />
+                </Col>
+                <Col xs={12} md={6}>
+                  <UniversalInput
+                    label="Phone"
+                    labelClassName="debt-schedule-field-label mb-6"
+                    type="phone"
+                    name="phone"
+                    placeholder="(555) 555-0100"
+                    style={INPUT_LIGHT_STYLE}
+                    signal={signal}
+                    value={signal.value.phone}
+                    required
+                    disabled={isSubmitting}
+                    isInvalid={Boolean(rowErrors.phone)}
                   />
                 </Col>
               </Row>

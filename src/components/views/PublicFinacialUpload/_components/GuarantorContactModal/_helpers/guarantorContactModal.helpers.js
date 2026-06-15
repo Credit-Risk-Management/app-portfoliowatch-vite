@@ -26,13 +26,13 @@ export const hydrateGuarantorContactForms = (guarantorsNeedingContact) => {
     const signal = getGuarantorContactSignal(id);
     if (!signal) return;
     const { firstName, lastName } = splitGuarantorName(name);
-    signal.update({ firstName, lastName, email: '' });
+    signal.update({ firstName, lastName, email: '', phone: '' });
   });
 };
 
 /**
  * @param {Array<{ id: string, name: string }>|undefined|null} guarantorsNeedingContact
- * @returns {{ valid: boolean, errors: Record<string, { firstName?: string, lastName?: string, email?: string }> }}
+ * @returns {{ valid: boolean, errors: Record<string, { firstName?: string, lastName?: string, email?: string, phone?: string }> }}
  */
 export const validateGuarantorContactForms = (guarantorsNeedingContact) => {
   const list = Array.isArray(guarantorsNeedingContact) ? guarantorsNeedingContact : [];
@@ -55,6 +55,11 @@ export const validateGuarantorContactForms = (guarantorsNeedingContact) => {
       rowErrors.email = 'A valid email address is required.';
       valid = false;
     }
+    const phone = String(form.phone ?? '').trim();
+    if (!phone || phone.length !== 14) {
+      rowErrors.phone = 'A valid phone number is required.';
+      valid = false;
+    }
     if (Object.keys(rowErrors).length > 0) {
       errors[id] = { ...rowErrors, guarantorName: name };
     }
@@ -65,7 +70,7 @@ export const validateGuarantorContactForms = (guarantorsNeedingContact) => {
 
 /**
  * @param {Array<{ id: string, name: string }>|undefined|null} guarantorsNeedingContact
- * @returns {Array<{ guarantorId: string, firstName: string, lastName: string, email: string }>}
+ * @returns {Array<{ guarantorId: string, firstName: string, lastName: string, email: string, phone: string }>}
  */
 export const buildGuarantorContactsPayload = (guarantorsNeedingContact) => {
   const list = Array.isArray(guarantorsNeedingContact) ? guarantorsNeedingContact : [];
@@ -76,6 +81,7 @@ export const buildGuarantorContactsPayload = (guarantorsNeedingContact) => {
       firstName: String(form.firstName ?? '').trim(),
       lastName: String(form.lastName ?? '').trim(),
       email: String(form.email ?? '').trim(),
+      phone: String(form.phone ?? '').trim(),
     };
   });
 };

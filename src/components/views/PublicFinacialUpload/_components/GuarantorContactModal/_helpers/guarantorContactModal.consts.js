@@ -10,6 +10,7 @@ export const getGuarantorContactSignal = (guarantorId) => {
       firstName: '',
       lastName: '',
       email: '',
+      phone: '',
     });
   }
   return contactSignalsByGuarantorId[guarantorId];
@@ -21,6 +22,7 @@ export const resetGuarantorContactSignals = () => {
       firstName: '',
       lastName: '',
       email: '',
+      phone: '',
     });
   });
 };
