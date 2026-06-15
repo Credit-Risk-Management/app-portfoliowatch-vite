@@ -27,6 +27,7 @@ import {
   $publicCashFlowUploader,
   $publicOtherFinancialsUploader,
   $publicDebtScheduleUploader,
+  $publicBusinessTaxReturnExtensionUploader,
   $publicFinancialUploadView,
   UPLOADER_BY_SECTION,
   SECTION_ID_TO_DOCUMENT_TYPE,
@@ -48,6 +49,7 @@ export const resetAllPublicFinancialUploaders = () => {
   $publicCashFlowUploader.update({ financialDocs: [] });
   $publicOtherFinancialsUploader.update({ financialDocs: [] });
   $publicDebtScheduleUploader.update({ financialDocs: [] });
+  $publicBusinessTaxReturnExtensionUploader.update({ financialDocs: [] });
 };
 
 /** Clear staged files for one public-upload section (show dropzone again). */
@@ -98,6 +100,20 @@ export const handleFileUpload = async () => {
     const missingBlockingUpload = blockingSections.some((s) => {
       if (s.sectionId === 'debtScheduleWorksheet') {
         return !validateDebtScheduleWorksheetForPdf($debtScheduleWorksheetForm.value || {}).valid;
+      }
+      if (
+        s.sectionId === 'businessTaxReturn'
+        && hasPdfStagedForSection('businessTaxReturnExtension')
+        && !hasPdfStagedForSection('businessTaxReturn')
+      ) {
+        const taxReq = linkData?.documentRequirements?.find((r) => r.type === 'businessTaxReturn');
+        if (taxReq?.status === 'PENDING') return false;
+      }
+      if (
+        s.sectionId === 'businessTaxReturn'
+        && s.requirementStatus === 'EXTENDED'
+      ) {
+        return false;
       }
       return !hasPdfStagedForSection(s.sectionId);
     });

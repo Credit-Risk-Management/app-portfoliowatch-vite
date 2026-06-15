@@ -11,6 +11,43 @@ import {
 } from './publicFinancialUpload.consts';
 
 /**
+ * Sept 15 of the calendar year after the FY period end (UTC), matching API extension deadline.
+ * @param {string|Date|null|undefined} reportingPeriodEndDate
+ * @returns {Date|null}
+ */
+export const resolveBusinessTaxReturnExtensionDeadline = (reportingPeriodEndDate) => {
+  if (!reportingPeriodEndDate) return null;
+  const d = new Date(reportingPeriodEndDate);
+  if (Number.isNaN(d.getTime())) return null;
+  const filingYear = d.getUTCFullYear() + 1;
+  return new Date(Date.UTC(filingYear, 8, 15));
+};
+
+/**
+ * True when an EXTENDED business tax return no longer satisfies submit (after Sept 15).
+ * @param {string|Date|null|undefined} reportingPeriodEndDate
+ * @param {Date} [referenceDate]
+ */
+export const isPastBusinessTaxReturnExtensionDeadline = (
+  reportingPeriodEndDate,
+  referenceDate = new Date(),
+) => {
+  const deadline = resolveBusinessTaxReturnExtensionDeadline(reportingPeriodEndDate);
+  if (!deadline) return false;
+  const ref = new Date(Date.UTC(
+    referenceDate.getUTCFullYear(),
+    referenceDate.getUTCMonth(),
+    referenceDate.getUTCDate(),
+  ));
+  const end = new Date(Date.UTC(
+    deadline.getUTCFullYear(),
+    deadline.getUTCMonth(),
+    deadline.getUTCDate(),
+  ));
+  return ref.getTime() > end.getTime();
+};
+
+/**
  * Types that must be present on this submit.
  * @param {object|null|undefined} linkData
  * @returns {string[]}
@@ -21,7 +58,18 @@ export const getBlockingDocumentKeysForLink = (linkData) => {
   const reqs = linkData?.documentRequirements;
   if (Array.isArray(reqs)) {
     return reqs
-      .filter((r) => r?.requiredForSubmit && r?.status === 'PENDING')
+      .filter((r) => {
+        if (!r?.requiredForSubmit) return false;
+        if (r.status === 'PENDING') return true;
+        if (
+          r.type === 'businessTaxReturn'
+          && r.status === 'EXTENDED'
+          && isPastBusinessTaxReturnExtensionDeadline(linkData?.reportingPeriodEndDate)
+        ) {
+          return true;
+        }
+        return false;
+      })
       .map((r) => r.type);
   }
   return Array.isArray(linkData?.requiredDocumentKeys) ? linkData.requiredDocumentKeys : [];
@@ -157,8 +205,17 @@ export const getRequirementPolicyLabel = (section) => {
  */
 export const canSubmitBorrowerLink = (linkData, requiredPdfSections, debtWorksheetForm) => {
   const blockingKeys = getBlockingDocumentKeysForLink(linkData);
+  const extensionStaged = hasPdfStagedForSection('businessTaxReturnExtension');
   const blockingOk = blockingKeys.length === 0
     || blockingKeys.every((key) => {
+      if (
+        key === 'businessTaxReturn'
+        && extensionStaged
+        && !hasPdfStagedForSection('businessTaxReturn')
+      ) {
+        const taxReq = linkData?.documentRequirements?.find((r) => r.type === 'businessTaxReturn');
+        if (taxReq?.status === 'PENDING') return true;
+      }
       if (key === 'debtScheduleWorksheet') {
         return validateDebtScheduleWorksheetForPdf(debtWorksheetForm || {}).valid;
       }
@@ -166,6 +223,13 @@ export const canSubmitBorrowerLink = (linkData, requiredPdfSections, debtWorkshe
         (s) => (s.apiDocumentKey ?? s.sectionId) === key || s.sectionId === key,
       );
       if (!section) return true;
+      if (
+        section.sectionId === 'businessTaxReturn'
+        && section.requirementStatus === 'EXTENDED'
+        && !isPastBusinessTaxReturnExtensionDeadline(linkData?.reportingPeriodEndDate)
+      ) {
+        return true;
+      }
       return isSectionReadyForSubmit(section.sectionId, debtWorksheetForm);
     });
   const hasAnyStaged = requiredPdfSections.some((s) => (

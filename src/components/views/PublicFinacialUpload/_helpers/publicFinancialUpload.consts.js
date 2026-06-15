@@ -43,6 +43,8 @@ export const $publicIncomeStatementUploader = Signal({ financialDocs: [] });
 export const $publicBalanceSheetUploader = Signal({ financialDocs: [] });
 export const $publicCashFlowUploader = Signal({ financialDocs: [] });
 export const $publicOtherFinancialsUploader = Signal({ financialDocs: [] });
+/** Filed business tax extension form (Form 7004). */
+export const $publicBusinessTaxReturnExtensionUploader = Signal({ financialDocs: [] });
 /** Quarterly P&L slot (API key `incomeStatementQuarterly`); reuses cash-flow uploader signal. */
 export const $publicDebtScheduleUploader = Signal({ financialDocs: [] });
 
@@ -117,6 +119,7 @@ export const UPLOADER_BY_SECTION = {
   balanceSheet: $publicBalanceSheetUploader,
   incomeStatementQuarterly: $publicCashFlowUploader,
   businessTaxReturn: $publicOtherFinancialsUploader,
+  businessTaxReturnExtension: $publicBusinessTaxReturnExtensionUploader,
   debtScheduleWorksheet: $publicDebtScheduleUploader,
   cashFlow: $publicCashFlowUploader,
   otherFinancials: $publicOtherFinancialsUploader,
@@ -152,6 +155,14 @@ export const SECTION_DEF_BY_ID = {
     inputId: 'public-financial-tax-return',
     replaceButtonVariant: 'outline-secondary',
   },
+  businessTaxReturnExtension: {
+    sectionId: 'businessTaxReturnExtension',
+    title: 'Business tax return extension (Form 7004)',
+    helperText:
+      'If you filed for an extension, upload your completed Form 7004 here. You can return later to upload the full tax return.',
+    inputId: 'public-financial-tax-return-extension',
+    replaceButtonVariant: 'outline-secondary',
+  },
   debtScheduleWorksheet: {
     sectionId: 'debtScheduleWorksheet',
     title: 'Debt schedule',
@@ -184,6 +195,7 @@ export const API_KEY_TO_SECTION_ID = {
   balanceSheet: 'balanceSheet',
   incomeStatementQuarterly: 'incomeStatementQuarterly',
   businessTaxReturn: 'businessTaxReturn',
+  businessTaxReturnExtension: 'businessTaxReturnExtension',
   debtScheduleWorksheet: 'debtScheduleWorksheet',
 };
 
@@ -193,6 +205,7 @@ export const SECTION_ID_TO_DOCUMENT_TYPE = {
   balanceSheet: 'balanceSheet',
   incomeStatementQuarterly: 'incomeStatementQuarterly',
   businessTaxReturn: 'businessTaxReturn',
+  businessTaxReturnExtension: 'businessTaxReturnExtension',
   debtScheduleWorksheet: 'debtScheduleWorksheet',
   cashFlow: 'cashFlow',
   otherFinancials: 'otherFinancials',

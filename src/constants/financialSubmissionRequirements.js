@@ -7,6 +7,7 @@ export const REQUIRED_DOCUMENT_KEYS = {
   INCOME_STATEMENT_YTD: 'incomeStatementYtd',
   INCOME_STATEMENT_QUARTERLY: 'incomeStatementQuarterly',
   BUSINESS_TAX_RETURN: 'businessTaxReturn',
+  BUSINESS_TAX_RETURN_EXTENSION: 'businessTaxReturnExtension',
   DEBT_SCHEDULE: 'debtScheduleWorksheet',
 };
 

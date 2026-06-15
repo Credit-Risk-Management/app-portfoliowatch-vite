@@ -35,6 +35,7 @@ export const FINANCIAL_DOC_TYPES = [
   { value: 'debtScheduleWorksheet', label: 'Debt Schedule' },
   { value: 'taxReturn', label: 'Tax Return' },
   { value: 'businessTaxReturn', label: 'Tax Return' },
+  { value: 'businessTaxReturnExtension', label: 'Business Tax Return Extension (Form 7004)' },
   { value: 'tax_return', label: 'Tax Return' },
 ];
 

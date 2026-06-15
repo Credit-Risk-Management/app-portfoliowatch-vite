@@ -222,6 +222,7 @@ const PublicFinancialUpload = () => {
                       const isDebtSchedule = sectionId === 'debtScheduleWorksheet';
                       const isImpactQuestionnaire = sectionId === 'impactQuestionnaire';
                       const isGuarantorContact = sectionId === 'guarantorContact';
+                      const isTaxReturnExtension = sectionId === 'businessTaxReturnExtension';
                       const uploaderSignal = getPublicUploaderSignalForSection(sectionId);
                       const receivedOnLink = requirementStatus === 'COMPLETED';
                       const rowReady = receivedOnLink
@@ -250,6 +251,14 @@ const PublicFinancialUpload = () => {
                         notUploadedLabel = 'Questionnaire not complete';
                       } else if (isGuarantorContact) {
                         notUploadedLabel = 'Contact not complete';
+                      } else if (sectionId === 'businessTaxReturn' && requirementStatus === 'EXTENDED') {
+                        notUploadedLabel = 'On extension — return due later';
+                      }
+                      let uploadedStatusLabel = 'Uploaded';
+                      if (receivedOnLink) {
+                        uploadedStatusLabel = isTaxReturnExtension ? 'Extension filed' : 'Received';
+                      } else if (isDebtSchedule || isImpactQuestionnaire || isGuarantorContact) {
+                        uploadedStatusLabel = 'Complete';
                       }
                       const isLast = rowIndex === requiredPdfSections.length - 1;
                       return (
@@ -267,9 +276,7 @@ const PublicFinancialUpload = () => {
                                 <span className="me-4">
                                   <FontAwesomeIcon icon={faCheck} size="sm" className="text-success-700" />
                                 </span>
-                                {receivedOnLink
-                                  ? 'Received'
-                              : (isDebtSchedule || isImpactQuestionnaire || isGuarantorContact ? 'Complete' : 'Uploaded')}
+                                {uploadedStatusLabel}
                               </span>
                             ) : (
                               <span className="text-grey-600 fw-normal">

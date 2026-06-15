@@ -15,6 +15,7 @@ import borrowerFinancialDocumentsApi from '@src/api/borrowerFinancialDocuments.a
 import relationshipManagersApi from '@src/api/relationshipManagers.api';
 import loansApi from '@src/api/loans.api';
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
+import { formatFinancialDocumentType } from '@src/utils/documents.utils';
 import {
   $borrowerDetailView,
   $borrowerDocumentsView,
@@ -127,15 +128,19 @@ export const fetchBorrowerDocuments = async (borrowerId) => {
           if (response?.success && Array.isArray(response.data)) {
             return response.data.map((doc) => ({
               ...doc,
-              documentName: doc.fileName, // Borrower financial docs use fileName
-              loanId: null, // These aren't linked to loans
-              source: 'borrowerFinancial', // Mark as borrower financial document
+              documentName: doc.documentType
+                ? `${formatFinancialDocumentType(doc.documentType)} — ${doc.fileName}`
+                : doc.fileName,
+              loanId: null,
+              source: 'borrowerFinancial',
             }));
           }
           if (Array.isArray(response)) {
             return response.map((doc) => ({
               ...doc,
-              documentName: doc.fileName,
+              documentName: doc.documentType
+                ? `${formatFinancialDocumentType(doc.documentType)} — ${doc.fileName}`
+                : doc.fileName,
               loanId: null,
               source: 'borrowerFinancial',
             }));

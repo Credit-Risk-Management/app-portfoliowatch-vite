@@ -21,6 +21,8 @@ export const FINANCIAL_DOCUMENT_TYPE_LABELS = {
   personalTaxReturn: 'Personal Tax Return',
   personalFinancialStatement: 'Personal Financial Statement',
   taxReturn: 'Tax Return',
+  businessTaxReturn: 'Business Tax Return',
+  businessTaxReturnExtension: 'Business Tax Return Extension (Form 7004)',
   balanceSheet: 'Balance Sheet',
   incomeStatement: 'Income Statement',
   debtServiceWorksheet: 'Debt Service Worksheet',
