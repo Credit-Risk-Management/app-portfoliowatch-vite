@@ -21,6 +21,7 @@ import {
 } from './_helpers/publicFinancialUpload.consts';
 import AttestationModal from './_components/AttestationModal';
 import DebtScheduleWorksheetModal from './_components/DebtScheduleWorksheetModal';
+import GuarantorContactModal from './_components/GuarantorContactModal/GuarantorContactModal';
 import PublicFinancialUploadImpactQuestionnaireModal from './_components/PublicFinancialUploadImpactQuestionnaireModal/PublicFinancialUploadImpactQuestionnaireModal';
 import {
   getRequiredPdfSectionsForLink,
@@ -38,6 +39,7 @@ import {
   closeAttestationModal,
   openDebtScheduleWorksheetModal,
   openImpactQuestionnaireFromPublicUpload,
+  openGuarantorContactModal,
 } from './_helpers/publicFinancialUpload.events';
 
 const PublicFinancialUpload = () => {
@@ -219,6 +221,7 @@ const PublicFinancialUpload = () => {
                     }, rowIndex) => {
                       const isDebtSchedule = sectionId === 'debtScheduleWorksheet';
                       const isImpactQuestionnaire = sectionId === 'impactQuestionnaire';
+                      const isGuarantorContact = sectionId === 'guarantorContact';
                       const uploaderSignal = getPublicUploaderSignalForSection(sectionId);
                       const receivedOnLink = requirementStatus === 'COMPLETED';
                       const rowReady = receivedOnLink
@@ -227,7 +230,7 @@ const PublicFinancialUpload = () => {
                         requirementStatus,
                         requiredForSubmit,
                       });
-                      const hasPdf = isDebtSchedule || isImpactQuestionnaire
+                      const hasPdf = isDebtSchedule || isImpactQuestionnaire || isGuarantorContact
                         ? rowReady
                         : hasPdfStagedForSection(sectionId);
                       let firstFileName;
@@ -235,6 +238,8 @@ const PublicFinancialUpload = () => {
                         firstFileName = rowReady ? 'Worksheet complete (PDF generated on submit)' : '—';
                       } else if (isImpactQuestionnaire) {
                         firstFileName = rowReady ? 'Questionnaire complete' : '—';
+                      } else if (isGuarantorContact) {
+                        firstFileName = rowReady ? 'Contact details entered' : '—';
                       } else {
                         firstFileName = (uploaderSignal.value.financialDocs || [])[0]?.name;
                       }
@@ -243,6 +248,8 @@ const PublicFinancialUpload = () => {
                         notUploadedLabel = 'Worksheet not complete';
                       } else if (isImpactQuestionnaire) {
                         notUploadedLabel = 'Questionnaire not complete';
+                      } else if (isGuarantorContact) {
+                        notUploadedLabel = 'Contact not complete';
                       }
                       const isLast = rowIndex === requiredPdfSections.length - 1;
                       return (
@@ -262,7 +269,7 @@ const PublicFinancialUpload = () => {
                                 </span>
                                 {receivedOnLink
                                   ? 'Received'
-                              : (isDebtSchedule || isImpactQuestionnaire ? 'Complete' : 'Uploaded')}
+                              : (isDebtSchedule || isImpactQuestionnaire || isGuarantorContact ? 'Complete' : 'Uploaded')}
                               </span>
                             ) : (
                               <span className="text-grey-600 fw-normal">
@@ -300,7 +307,20 @@ const PublicFinancialUpload = () => {
                               </Button>
                             </div>
                             )}
-                            {!isDebtSchedule && !isImpactQuestionnaire && (
+                            {isGuarantorContact && (
+                            <div className="text-dark d-flex justify-content-end">
+                              <Button
+                                type="button"
+                                variant="dark"
+                                size="sm"
+                                className="text-nowrap"
+                                onClick={() => openGuarantorContactModal()}
+                              >
+                                Open
+                              </Button>
+                            </div>
+                            )}
+                            {!isDebtSchedule && !isImpactQuestionnaire && !isGuarantorContact && (
                             <>
                               <div className="d-none">
                                 <FileUploader
@@ -367,6 +387,10 @@ const PublicFinancialUpload = () => {
       />
       <PublicFinancialUploadImpactQuestionnaireModal
         show={activeModalKey === 'impactQuestionnaire'}
+      />
+      <GuarantorContactModal
+        show={activeModalKey === 'guarantorContact'}
+        isSubmitting={isSubmitting}
       />
     </ContentWrapper>
   );

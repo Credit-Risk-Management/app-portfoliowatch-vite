@@ -105,6 +105,20 @@ export const parseImpactQuestionnaireTokenFromUrl = (url) => {
   }
 };
 
+const appendGuarantorContactSectionIfNeeded = (linkData, sections) => {
+  const needing = linkData?.guarantorsNeedingContact;
+  if (!Array.isArray(needing) || needing.length === 0) return sections;
+  if (sections.some((s) => s.sectionId === 'guarantorContact')) return sections;
+  const def = SECTION_DEF_BY_ID.guarantorContact;
+  return def
+    ? [...sections, {
+      ...def,
+      requiredForSubmit: true,
+      requirementStatus: 'PENDING',
+    }]
+    : sections;
+};
+
 /**
  * When the financial upload link includes an impact questionnaire URL, that step is required
  * on the same page (no API `requiredDocumentKeys` entry).
@@ -112,10 +126,15 @@ export const parseImpactQuestionnaireTokenFromUrl = (url) => {
  * @param {Array<{ sectionId: string }>} sections
  */
 const appendImpactQuestionnaireSectionIfNeeded = (linkData, sections) => {
-  if (!linkData?.impactQuestionnaireUrl) return sections;
-  if (sections.some((s) => s.sectionId === 'impactQuestionnaire')) return sections;
+  if (!linkData?.impactQuestionnaireUrl) {
+    return appendGuarantorContactSectionIfNeeded(linkData, sections);
+  }
+  if (sections.some((s) => s.sectionId === 'impactQuestionnaire')) {
+    return appendGuarantorContactSectionIfNeeded(linkData, sections);
+  }
   const def = SECTION_DEF_BY_ID.impactQuestionnaire;
-  return def ? [...sections, def] : sections;
+  const withQuestionnaire = def ? [...sections, def] : sections;
+  return appendGuarantorContactSectionIfNeeded(linkData, withQuestionnaire);
 };
 
 /** Section ids in display/extraction order for the current link. */
@@ -152,7 +171,10 @@ export const canSubmitBorrowerLink = (linkData, requiredPdfSections, debtWorkshe
   const hasAnyStaged = requiredPdfSections.some((s) => (
     isSectionReadyForSubmit(s.sectionId, debtWorksheetForm)
   ));
-  return blockingOk && hasAnyStaged;
+  const guarantorContactOk = !Array.isArray(linkData?.guarantorsNeedingContact)
+    || linkData.guarantorsNeedingContact.length === 0
+    || Boolean($publicFinancialUploadView.value.guarantorContactComplete);
+  return blockingOk && hasAnyStaged && guarantorContactOk;
 };
 
 export const hasPdfStagedForSection = (sectionId) => {
@@ -292,6 +314,9 @@ export const isSectionReadyForSubmit = (sectionId, debtWorksheetForm) => {
   }
   if (sectionId === 'impactQuestionnaire') {
     return Boolean($publicFinancialUploadView.value.impactQuestionnairePublicComplete);
+  }
+  if (sectionId === 'guarantorContact') {
+    return Boolean($publicFinancialUploadView.value.guarantorContactComplete);
   }
   return hasPdfStagedForSection(sectionId);
 };

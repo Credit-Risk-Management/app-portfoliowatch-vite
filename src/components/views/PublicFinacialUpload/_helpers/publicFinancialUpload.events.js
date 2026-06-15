@@ -33,6 +33,14 @@ import {
 } from './publicFinancialUpload.consts';
 import { fetchUploadLinkData } from './publicFinancialUpload.resolvers';
 import { $debtScheduleWorksheetWrapCellEdit } from '../_components/DebtScheduleWorksheetModal/_helpers/debtScheduleWorksheetModal.consts';
+import {
+  buildGuarantorContactsPayload,
+  validateGuarantorContactForms,
+} from '../_components/GuarantorContactModal/_helpers/guarantorContactModal.helpers';
+import { resetGuarantorContactSignals } from '../_components/GuarantorContactModal/_helpers/guarantorContactModal.consts';
+import { openGuarantorContactModal } from '../_components/GuarantorContactModal/_helpers/guarantorContactModal.events';
+
+export { openGuarantorContactModal };
 
 export const resetAllPublicFinancialUploaders = () => {
   $publicIncomeStatementUploader.update({ financialDocs: [] });
@@ -80,7 +88,7 @@ export const handleFileUpload = async () => {
 
     const blockingKeys = new Set(getBlockingDocumentKeysForLink(linkData));
     const blockingSections = requiredPdfSections.filter((s) => {
-      if (s.sectionId === 'impactQuestionnaire') return false;
+      if (s.sectionId === 'impactQuestionnaire' || s.sectionId === 'guarantorContact') return false;
       const docType = SECTION_ID_TO_DOCUMENT_TYPE[s.sectionId] ?? s.sectionId;
       if (s.sectionId === 'debtScheduleWorksheet') {
         return blockingKeys.has('debtScheduleWorksheet');
@@ -111,8 +119,25 @@ export const handleFileUpload = async () => {
       return;
     }
 
+    const guarantorsNeedingContact = linkData?.guarantorsNeedingContact ?? [];
+    if (guarantorsNeedingContact.length > 0) {
+      const contactValidation = validateGuarantorContactForms(guarantorsNeedingContact);
+      if (!contactValidation.valid || !$publicFinancialUploadView.value.guarantorContactComplete) {
+        $publicFinancialUploadView.update({
+          error: 'Complete guarantor contact information before submitting.',
+          isSubmitting: false,
+        });
+        dangerAlert('Please complete guarantor contact information before submitting.');
+        return;
+      }
+    }
+
     requiredPdfSections.forEach((section) => {
-      if (section.sectionId === 'debtScheduleWorksheet' || section.sectionId === 'impactQuestionnaire') {
+      if (
+        section.sectionId === 'debtScheduleWorksheet'
+        || section.sectionId === 'impactQuestionnaire'
+        || section.sectionId === 'guarantorContact'
+      ) {
         return;
       }
       const uploader = UPLOADER_BY_SECTION[section.sectionId];
@@ -157,9 +182,14 @@ export const handleFileUpload = async () => {
       return;
     }
 
+    const guarantorContacts = guarantorsNeedingContact.length > 0
+      ? buildGuarantorContactsPayload(guarantorsNeedingContact)
+      : undefined;
+
     const submitResponse = await submitFinancialsViaToken(token, {
       filesToUpload,
       ...(debtScheduleWorksheet ? { debtScheduleWorksheet } : {}),
+      ...(guarantorContacts ? { guarantorContacts } : {}),
     });
     const uploads = submitResponse?.data?.uploads ?? [];
     const extractTaskId = submitResponse?.data?.extractTask?.id;
@@ -190,6 +220,7 @@ export const handleFileUpload = async () => {
     $publicFinancialForm.reset();
     $debtScheduleWorksheetForm.reset();
     resetAllPublicFinancialUploaders();
+    resetGuarantorContactSignals();
   } catch (error) {
     const message = error?.message || (typeof error === 'string' ? error : 'Request failed');
     dangerAlert(message);

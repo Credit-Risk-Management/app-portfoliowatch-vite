@@ -102,11 +102,14 @@ export const $publicFinancialUploadView = Signal({
   debtScheduleWorksheetErrors: null,
   /** True while building the worksheet PDF for upload. */
   debtScheduleWorksheetSubmitting: false,
-  /**
-   * After one merge from `linkData.priorDebtScheduleWorksheet`, further opens keep the in-memory
+  /** After one merge from `linkData.priorDebtScheduleWorksheet`, further opens keep the in-memory
    * worksheet so the user can edit after save without being reset to the prior snapshot.
    */
   debtScheduleWorksheetHydratedFromPrior: false,
+  /** True after guarantor contact modal Save when all required guarantors have valid contact info. */
+  guarantorContactComplete: false,
+  /** Validation errors from guarantor contact modal Save attempt. */
+  guarantorContactErrors: null,
 });
 
 export const UPLOADER_BY_SECTION = {
@@ -163,6 +166,14 @@ export const SECTION_DEF_BY_ID = {
     helperText:
       'Open the questionnaire and answer all fields. Your lender requires this for portfolio reporting before you can submit your financials.',
     inputId: 'public-financial-impact-questionnaire',
+    replaceButtonVariant: 'outline-secondary',
+  },
+  guarantorContact: {
+    sectionId: 'guarantorContact',
+    title: 'Guarantor contact information',
+    helperText:
+      'We need an email for each guarantor so we can send annual guarantor document requests.',
+    inputId: 'public-financial-guarantor-contact',
     replaceButtonVariant: 'outline-secondary',
   },
 };
