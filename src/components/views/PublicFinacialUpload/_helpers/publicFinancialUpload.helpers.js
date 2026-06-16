@@ -195,7 +195,7 @@ export const getRequirementPolicyLabel = (section) => {
   if (section?.requirementStatus === 'WAIVED') return 'Not required';
   if (section?.requirementStatus === 'EXTENDED') return 'Extended';
   if (section?.requiredForSubmit) return 'Required to submit';
-  return 'Requested when available';
+  return 'Requested if available';
 };
 
 /**
