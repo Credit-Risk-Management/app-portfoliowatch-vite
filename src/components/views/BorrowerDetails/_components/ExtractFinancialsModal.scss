@@ -1,0 +1,48 @@
+@import '@src/scss/_vars.scss';
+
+.extract-financials-modal {
+  &__doc-list.list-group {
+    border-color: $info-800 !important;
+  }
+
+  &__doc-row.list-group-item {
+    background-color: $info-900;
+    border-color: $info-800;
+    color: $info-100;
+    cursor: pointer;
+
+    &:hover,
+    &:focus {
+      background-color: $info-800;
+      color: $info-100;
+    }
+  }
+
+  &__doc-row--disabled.list-group-item {
+    cursor: default;
+    opacity: 0.65;
+
+    &:hover,
+    &:focus {
+      background-color: $info-900;
+    }
+  }
+
+  &__doc-check.form-check {
+    margin-bottom: 0;
+    pointer-events: none;
+
+    .form-check-label {
+      color: $info-100;
+      cursor: pointer;
+    }
+  }
+
+  &__doc-type {
+    color: $info-100;
+  }
+
+  &__doc-name {
+    color: $info-200;
+  }
+}

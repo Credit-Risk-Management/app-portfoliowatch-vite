@@ -34,6 +34,10 @@ const borrowerFinancialsApiBase = {
 
   // Delete financial record
   delete: async (id) => apiClient.delete(`/borrower-financials/${id}`),
+
+  rerunExtract: async (id, data = {}) => apiClient.post(`/borrower-financials/${id}/rerun-extract`, data),
+
+  rerunCalculations: async (id) => apiClient.post(`/borrower-financials/${id}/rerun-calculations`),
 };
 
 // Wrap with debouncing - only debounce read operations that might be called repeatedly
