@@ -22,7 +22,11 @@ export const $publicGuarantorUploadView = Signal({
   activeModalKey: null,
   error: null,
   success: false,
+  /** True after a submit when more optional/request docs may still be uploaded. */
+  partialSuccess: false,
   priorDebtOpening: false,
+  pfsWorksheetErrors: null,
+  pfsWorksheetSubmitting: false,
 });
 
 export const $gPubPersonalTax = Signal({ financialDocs: [] });
@@ -48,7 +52,7 @@ export const GUARANTOR_DOC_SECTION = {
   personalFinancialStatement: {
     sectionId: 'personalFinancialStatement',
     title: 'Personal financial statement (PFS)',
-    helperText: 'Upload your completed PFS as a PDF.',
+    helperText: 'Complete the personal financial statement worksheet below.',
     inputId: 'public-guarantor-pfs',
   },
 

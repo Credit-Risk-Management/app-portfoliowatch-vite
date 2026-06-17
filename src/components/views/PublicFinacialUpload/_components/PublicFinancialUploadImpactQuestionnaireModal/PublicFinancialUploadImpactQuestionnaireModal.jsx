@@ -102,7 +102,7 @@ const PublicFinancialUploadImpactQuestionnaireModal = ({ show }) => {
                     <UniversalInput
                       label="Average employee wage – per hour"
                       labelClassName="debt-schedule-field-label mb-6"
-                      type="currency"
+                      type="currencyCents"
                       name="averageEmployeeWage"
                       placeholder="e.g. 18.00"
                       style={INPUT_LIGHT_STYLE}

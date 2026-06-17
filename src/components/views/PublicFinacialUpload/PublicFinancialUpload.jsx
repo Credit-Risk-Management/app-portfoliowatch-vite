@@ -21,12 +21,15 @@ import {
 } from './_helpers/publicFinancialUpload.consts';
 import AttestationModal from './_components/AttestationModal';
 import DebtScheduleWorksheetModal from './_components/DebtScheduleWorksheetModal';
+import GuarantorContactModal from './_components/GuarantorContactModal/GuarantorContactModal';
 import PublicFinancialUploadImpactQuestionnaireModal from './_components/PublicFinancialUploadImpactQuestionnaireModal/PublicFinancialUploadImpactQuestionnaireModal';
 import {
   getRequiredPdfSectionsForLink,
   hasPdfStagedForSection,
   getPublicUploaderSignalForSection,
   isSectionReadyForSubmit,
+  getRequirementPolicyLabel,
+  canSubmitBorrowerLink,
 } from './_helpers/publicFinancialUpload.helpers';
 import { fetchUploadLinkData } from './_helpers/publicFinancialUpload.resolvers';
 import {
@@ -36,6 +39,7 @@ import {
   closeAttestationModal,
   openDebtScheduleWorksheetModal,
   openImpactQuestionnaireFromPublicUpload,
+  openGuarantorContactModal,
 } from './_helpers/publicFinancialUpload.events';
 
 const PublicFinancialUpload = () => {
@@ -53,13 +57,13 @@ const PublicFinancialUpload = () => {
     activeModalKey,
     error,
     success,
+    partialSuccess,
     debtScheduleWorksheetSubmitting,
   } = $publicFinancialUploadView.value;
   const attestationText = linkData?.attestationText || DEFAULT_PUBLIC_ATTESTATION_TEXT;
   const requiredPdfSections = getRequiredPdfSectionsForLink(linkData);
   const debtWorksheetForm = $debtScheduleWorksheetForm.value;
-  const canRunExtraction = requiredPdfSections.length > 0
-    && requiredPdfSections.every(({ sectionId }) => isSectionReadyForSubmit(sectionId, debtWorksheetForm));
+  const canRunExtraction = canSubmitBorrowerLink(linkData, requiredPdfSections, debtWorksheetForm);
 
   if (isLoading) {
     return (
@@ -93,17 +97,16 @@ const PublicFinancialUpload = () => {
     );
   }
 
-  if (linkData?.hasSubmitted) {
+  if (linkData?.packageComplete && !partialSuccess) {
     return (
       <ContentWrapper fluid className="min-vh-100 bg-white">
         <Container className="py-24">
           <Card className="bg-grey-50 border-grey">
             <Card.Body className="text-center py-32">
               <FontAwesomeIcon icon={faCheckCircle} className="text-dark-700 mb-16" size="3x" />
-              <h3 className="text-dark-900 mb-16">Submission already received</h3>
+              <h3 className="text-dark-900 mb-16">Package complete</h3>
               <p className="text-dark-800 mb-24">
-                This upload link has already been used to submit financial documents. If you need to send
-                updated files, contact your lender for a new link.
+                All required documents for this period have been received. Thank you.
               </p>
             </Card.Body>
           </Card>
@@ -183,6 +186,11 @@ const PublicFinancialUpload = () => {
             </div>
           </Card.Header>
           <Card.Body className="px-16 px-md-24 py-20 py-md-24">
+            {partialSuccess && (
+              <Alert variant="success" className="mb-24">
+                Part of your package was received. Upload any remaining items below and submit again.
+              </Alert>
+            )}
             {error && (
               <Alert variant="danger" dismissible onClose={clearError} className="mb-24">
                 {error}
@@ -208,12 +216,22 @@ const PublicFinancialUpload = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {requiredPdfSections.map(({ sectionId, title, inputId }, rowIndex) => {
+                    {requiredPdfSections.map(({
+                      sectionId, title, inputId, requirementStatus, requiredForSubmit,
+                    }, rowIndex) => {
                       const isDebtSchedule = sectionId === 'debtScheduleWorksheet';
                       const isImpactQuestionnaire = sectionId === 'impactQuestionnaire';
+                      const isGuarantorContact = sectionId === 'guarantorContact';
+                      const isTaxReturnExtension = sectionId === 'businessTaxReturnExtension';
                       const uploaderSignal = getPublicUploaderSignalForSection(sectionId);
-                      const rowReady = isSectionReadyForSubmit(sectionId, debtWorksheetForm);
-                      const hasPdf = isDebtSchedule || isImpactQuestionnaire
+                      const receivedOnLink = requirementStatus === 'COMPLETED';
+                      const rowReady = receivedOnLink
+                        || isSectionReadyForSubmit(sectionId, debtWorksheetForm);
+                      const policyLabel = getRequirementPolicyLabel({
+                        requirementStatus,
+                        requiredForSubmit,
+                      });
+                      const hasPdf = isDebtSchedule || isImpactQuestionnaire || isGuarantorContact
                         ? rowReady
                         : hasPdfStagedForSection(sectionId);
                       let firstFileName;
@@ -221,6 +239,8 @@ const PublicFinancialUpload = () => {
                         firstFileName = rowReady ? 'Worksheet complete (PDF generated on submit)' : '—';
                       } else if (isImpactQuestionnaire) {
                         firstFileName = rowReady ? 'Questionnaire complete' : '—';
+                      } else if (isGuarantorContact) {
+                        firstFileName = rowReady ? 'Contact details entered' : '—';
                       } else {
                         firstFileName = (uploaderSignal.value.financialDocs || [])[0]?.name;
                       }
@@ -229,6 +249,16 @@ const PublicFinancialUpload = () => {
                         notUploadedLabel = 'Worksheet not complete';
                       } else if (isImpactQuestionnaire) {
                         notUploadedLabel = 'Questionnaire not complete';
+                      } else if (isGuarantorContact) {
+                        notUploadedLabel = 'Contact not complete';
+                      } else if (sectionId === 'businessTaxReturn' && requirementStatus === 'EXTENDED') {
+                        notUploadedLabel = 'On extension — return due later';
+                      }
+                      let uploadedStatusLabel = 'Uploaded';
+                      if (receivedOnLink) {
+                        uploadedStatusLabel = isTaxReturnExtension ? 'Extension filed' : 'Received';
+                      } else if (isDebtSchedule || isImpactQuestionnaire || isGuarantorContact) {
+                        uploadedStatusLabel = 'Complete';
                       }
                       const isLast = rowIndex === requiredPdfSections.length - 1;
                       return (
@@ -240,12 +270,13 @@ const PublicFinancialUpload = () => {
                             <div className="fw-semibold text-dark">{title}</div>
                           </td>
                           <td className="px-16 py-8">
+                            <div className="small text-grey-600 mb-4">{policyLabel}</div>
                             {hasPdf ? (
                               <span className="d-inline-flex align-items-center fw-semibold text-success-700">
                                 <span className="me-4">
                                   <FontAwesomeIcon icon={faCheck} size="sm" className="text-success-700" />
                                 </span>
-                                {isDebtSchedule || isImpactQuestionnaire ? 'Complete' : 'Uploaded'}
+                                {uploadedStatusLabel}
                               </span>
                             ) : (
                               <span className="text-grey-600 fw-normal">
@@ -283,7 +314,20 @@ const PublicFinancialUpload = () => {
                               </Button>
                             </div>
                             )}
-                            {!isDebtSchedule && !isImpactQuestionnaire && (
+                            {isGuarantorContact && (
+                            <div className="text-dark d-flex justify-content-end">
+                              <Button
+                                type="button"
+                                variant="dark"
+                                size="sm"
+                                className="text-nowrap"
+                                onClick={() => openGuarantorContactModal()}
+                              >
+                                Open
+                              </Button>
+                            </div>
+                            )}
+                            {!isDebtSchedule && !isImpactQuestionnaire && !isGuarantorContact && (
                             <>
                               <div className="d-none">
                                 <FileUploader
@@ -350,6 +394,10 @@ const PublicFinancialUpload = () => {
       />
       <PublicFinancialUploadImpactQuestionnaireModal
         show={activeModalKey === 'impactQuestionnaire'}
+      />
+      <GuarantorContactModal
+        show={activeModalKey === 'guarantorContact'}
+        isSubmitting={isSubmitting}
       />
     </ContentWrapper>
   );

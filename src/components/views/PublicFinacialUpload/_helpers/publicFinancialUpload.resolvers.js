@@ -5,6 +5,8 @@ import {
   $publicFinancialUploadView,
 } from './publicFinancialUpload.consts';
 import { parseImpactQuestionnaireTokenFromUrl } from './publicFinancialUpload.helpers';
+import { hydrateGuarantorContactForms } from '../_components/GuarantorContactModal/_helpers/guarantorContactModal.helpers';
+import { clearGuarantorContactSignalCache } from '../_components/GuarantorContactModal/_helpers/guarantorContactModal.consts';
 
 /**
  * Fetch upload link data by token
@@ -34,7 +36,12 @@ export const fetchUploadLinkData = async (token) => {
       debtScheduleWorksheetHydratedFromPrior: false,
       impactQuestionnaireToken: null,
       impactQuestionnairePublicComplete: false,
+      guarantorContactComplete: false,
+      guarantorContactErrors: null,
     });
+
+    clearGuarantorContactSignalCache();
+    hydrateGuarantorContactForms(linkPayload?.guarantorsNeedingContact);
 
     const iqToken = parseImpactQuestionnaireTokenFromUrl(linkPayload?.impactQuestionnaireUrl);
     if (iqToken) {

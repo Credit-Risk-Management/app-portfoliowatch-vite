@@ -530,7 +530,6 @@ export const handleSubmit = async (onCloseCallback) => {
     const resolvedProfitMargin = explicitProfitMargin != null
       ? explicitProfitMargin
       : profitMarginPercentFromNetIncome(formNetIncome, formGrossRevenue);
-
     const hasStagedNewUploads = stagedByType
       && Object.keys(stagedByType).some((k) => (stagedByType[k] || []).some((d) => d?.file && !d.isStored));
 

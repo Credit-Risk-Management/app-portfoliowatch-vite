@@ -11,14 +11,100 @@ import {
 } from './publicFinancialUpload.consts';
 
 /**
+ * Sept 15 of the calendar year after the FY period end (UTC), matching API extension deadline.
+ * @param {string|Date|null|undefined} reportingPeriodEndDate
+ * @returns {Date|null}
+ */
+export const resolveBusinessTaxReturnExtensionDeadline = (reportingPeriodEndDate) => {
+  if (!reportingPeriodEndDate) return null;
+  const d = new Date(reportingPeriodEndDate);
+  if (Number.isNaN(d.getTime())) return null;
+  const filingYear = d.getUTCFullYear() + 1;
+  return new Date(Date.UTC(filingYear, 8, 15));
+};
+
+/**
+ * True when an EXTENDED business tax return no longer satisfies submit (after Sept 15).
+ * @param {string|Date|null|undefined} reportingPeriodEndDate
+ * @param {Date} [referenceDate]
+ */
+export const isPastBusinessTaxReturnExtensionDeadline = (
+  reportingPeriodEndDate,
+  referenceDate = new Date(),
+) => {
+  const deadline = resolveBusinessTaxReturnExtensionDeadline(reportingPeriodEndDate);
+  if (!deadline) return false;
+  const ref = new Date(Date.UTC(
+    referenceDate.getUTCFullYear(),
+    referenceDate.getUTCMonth(),
+    referenceDate.getUTCDate(),
+  ));
+  const end = new Date(Date.UTC(
+    deadline.getUTCFullYear(),
+    deadline.getUTCMonth(),
+    deadline.getUTCDate(),
+  ));
+  return ref.getTime() > end.getTime();
+};
+
+/**
+ * Types that must be present on this submit.
+ * @param {object|null|undefined} linkData
+ * @returns {string[]}
+ */
+export const getBlockingDocumentKeysForLink = (linkData) => {
+  const fromApi = linkData?.requiredForSubmitDocumentKeys;
+  if (Array.isArray(fromApi)) return fromApi;
+  const reqs = linkData?.documentRequirements;
+  if (Array.isArray(reqs)) {
+    return reqs
+      .filter((r) => {
+        if (!r?.requiredForSubmit) return false;
+        if (r.status === 'PENDING') return true;
+        if (
+          r.type === 'businessTaxReturn'
+          && r.status === 'EXTENDED'
+          && isPastBusinessTaxReturnExtensionDeadline(linkData?.reportingPeriodEndDate)
+        ) {
+          return true;
+        }
+        return false;
+      })
+      .map((r) => r.type);
+  }
+  return Array.isArray(linkData?.requiredDocumentKeys) ? linkData.requiredDocumentKeys : [];
+};
+
+/**
  * Resolve which PDF rows to show for this upload link.
- * Prefers `linkData.requiredDocumentKeys` (API). Falls back to `linkData.requiredPdfSections`, then balance sheet + YTD income.
+ * Prefers `linkData.documentRequirements`, then `requiredDocumentKeys`. Falls back to legacy fields.
  *
  * @param {object|null|undefined} linkData
  * @param {string[]} [linkData.requiredDocumentKeys]
  * @param {string[]} [linkData.requiredPdfSections]
  */
 export const getRequiredPdfSectionsForLink = (linkData) => {
+  const reqs = linkData?.documentRequirements;
+  if (Array.isArray(reqs) && reqs.length > 0) {
+    const seen = new Set();
+    const out = [];
+    reqs.forEach((r) => {
+      if (!r?.visible || r?.status === 'WAIVED') return;
+      const sectionId = API_KEY_TO_SECTION_ID[r.type];
+      if (!sectionId || !KNOWN_SECTION_IDS.has(sectionId) || seen.has(sectionId)) return;
+      seen.add(sectionId);
+      const def = SECTION_DEF_BY_ID[sectionId];
+      if (!def) return;
+      out.push({
+        ...def,
+        apiDocumentKey: r.type,
+        requiredForSubmit: Boolean(r.requiredForSubmit && r.status === 'PENDING'),
+        requirementStatus: r.status,
+      });
+    });
+    if (out.length > 0) return appendImpactQuestionnaireSectionIfNeeded(linkData, out);
+  }
+
   const fromApi = linkData?.requiredDocumentKeys;
   if (Array.isArray(fromApi) && fromApi.length > 0) {
     const seen = new Set();
@@ -67,6 +153,20 @@ export const parseImpactQuestionnaireTokenFromUrl = (url) => {
   }
 };
 
+const appendGuarantorContactSectionIfNeeded = (linkData, sections) => {
+  const needing = linkData?.guarantorsNeedingContact;
+  if (!Array.isArray(needing) || needing.length === 0) return sections;
+  if (sections.some((s) => s.sectionId === 'guarantorContact')) return sections;
+  const def = SECTION_DEF_BY_ID.guarantorContact;
+  return def
+    ? [...sections, {
+      ...def,
+      requiredForSubmit: true,
+      requirementStatus: 'PENDING',
+    }]
+    : sections;
+};
+
 /**
  * When the financial upload link includes an impact questionnaire URL, that step is required
  * on the same page (no API `requiredDocumentKeys` entry).
@@ -74,16 +174,72 @@ export const parseImpactQuestionnaireTokenFromUrl = (url) => {
  * @param {Array<{ sectionId: string }>} sections
  */
 const appendImpactQuestionnaireSectionIfNeeded = (linkData, sections) => {
-  if (!linkData?.impactQuestionnaireUrl) return sections;
-  if (sections.some((s) => s.sectionId === 'impactQuestionnaire')) return sections;
+  if (!linkData?.impactQuestionnaireUrl) {
+    return appendGuarantorContactSectionIfNeeded(linkData, sections);
+  }
+  if (sections.some((s) => s.sectionId === 'impactQuestionnaire')) {
+    return appendGuarantorContactSectionIfNeeded(linkData, sections);
+  }
   const def = SECTION_DEF_BY_ID.impactQuestionnaire;
-  return def ? [...sections, def] : sections;
+  const withQuestionnaire = def ? [...sections, def] : sections;
+  return appendGuarantorContactSectionIfNeeded(linkData, withQuestionnaire);
 };
 
 /** Section ids in display/extraction order for the current link. */
 export const getRequiredSectionIdsForLink = (linkData) => (
   getRequiredPdfSectionsForLink(linkData).map((d) => d.sectionId)
 );
+
+export const getRequirementPolicyLabel = (section) => {
+  if (section?.requirementStatus === 'COMPLETED') return 'Received';
+  if (section?.requirementStatus === 'WAIVED') return 'Not required';
+  if (section?.requirementStatus === 'EXTENDED') return 'Extended';
+  if (section?.requiredForSubmit) return 'Required to submit';
+  return 'Requested if available';
+};
+
+/**
+ * @param {object} linkData
+ * @param {Array<{ sectionId: string, apiDocumentKey?: string }>} requiredPdfSections
+ * @param {Record<string, string>} debtWorksheetForm
+ */
+export const canSubmitBorrowerLink = (linkData, requiredPdfSections, debtWorksheetForm) => {
+  const blockingKeys = getBlockingDocumentKeysForLink(linkData);
+  const extensionStaged = hasPdfStagedForSection('businessTaxReturnExtension');
+  const blockingOk = blockingKeys.length === 0
+    || blockingKeys.every((key) => {
+      if (
+        key === 'businessTaxReturn'
+        && extensionStaged
+        && !hasPdfStagedForSection('businessTaxReturn')
+      ) {
+        const taxReq = linkData?.documentRequirements?.find((r) => r.type === 'businessTaxReturn');
+        if (taxReq?.status === 'PENDING') return true;
+      }
+      if (key === 'debtScheduleWorksheet') {
+        return validateDebtScheduleWorksheetForPdf(debtWorksheetForm || {}).valid;
+      }
+      const section = requiredPdfSections.find(
+        (s) => (s.apiDocumentKey ?? s.sectionId) === key || s.sectionId === key,
+      );
+      if (!section) return true;
+      if (
+        section.sectionId === 'businessTaxReturn'
+        && section.requirementStatus === 'EXTENDED'
+        && !isPastBusinessTaxReturnExtensionDeadline(linkData?.reportingPeriodEndDate)
+      ) {
+        return true;
+      }
+      return isSectionReadyForSubmit(section.sectionId, debtWorksheetForm);
+    });
+  const hasAnyStaged = requiredPdfSections.some((s) => (
+    isSectionReadyForSubmit(s.sectionId, debtWorksheetForm)
+  ));
+  const guarantorContactOk = !Array.isArray(linkData?.guarantorsNeedingContact)
+    || linkData.guarantorsNeedingContact.length === 0
+    || Boolean($publicFinancialUploadView.value.guarantorContactComplete);
+  return blockingOk && hasAnyStaged && guarantorContactOk;
+};
 
 export const hasPdfStagedForSection = (sectionId) => {
   const uploader = UPLOADER_BY_SECTION[sectionId];
@@ -222,6 +378,9 @@ export const isSectionReadyForSubmit = (sectionId, debtWorksheetForm) => {
   }
   if (sectionId === 'impactQuestionnaire') {
     return Boolean($publicFinancialUploadView.value.impactQuestionnairePublicComplete);
+  }
+  if (sectionId === 'guarantorContact') {
+    return Boolean($publicFinancialUploadView.value.guarantorContactComplete);
   }
   return hasPdfStagedForSection(sectionId);
 };

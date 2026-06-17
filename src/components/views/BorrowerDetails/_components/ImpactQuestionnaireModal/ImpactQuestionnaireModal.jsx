@@ -53,7 +53,7 @@ const ImpactQuestionnaireModal = () => {
           <UniversalInput
             label="Average employee wage – per hour"
             labelClassName="text-info-100"
-            type="currency"
+            type="currencyCents"
             name="averageEmployeeWage"
             placeholder="e.g. 18.00"
             value={$impactQuestionnaireForm.value.averageEmployeeWage}

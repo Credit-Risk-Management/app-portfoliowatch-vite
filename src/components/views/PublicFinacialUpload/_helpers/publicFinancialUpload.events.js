@@ -11,6 +11,7 @@ import {
 import { storage } from '@src/utils/firebase';
 import { buildStandardFinancialUploadFileName } from '@src/utils/documents.utils';
 import {
+  getBlockingDocumentKeysForLink,
   getRequiredPdfSectionsForLink,
   hasPdfStagedForSection,
   mergePriorWorksheetRowsIntoForm,
@@ -26,11 +27,21 @@ import {
   $publicCashFlowUploader,
   $publicOtherFinancialsUploader,
   $publicDebtScheduleUploader,
+  $publicBusinessTaxReturnExtensionUploader,
   $publicFinancialUploadView,
   UPLOADER_BY_SECTION,
   SECTION_ID_TO_DOCUMENT_TYPE,
 } from './publicFinancialUpload.consts';
+import { fetchUploadLinkData } from './publicFinancialUpload.resolvers';
 import { $debtScheduleWorksheetWrapCellEdit } from '../_components/DebtScheduleWorksheetModal/_helpers/debtScheduleWorksheetModal.consts';
+import {
+  buildGuarantorContactsPayload,
+  validateGuarantorContactForms,
+} from '../_components/GuarantorContactModal/_helpers/guarantorContactModal.helpers';
+import { resetGuarantorContactSignals } from '../_components/GuarantorContactModal/_helpers/guarantorContactModal.consts';
+import { openGuarantorContactModal } from '../_components/GuarantorContactModal/_helpers/guarantorContactModal.events';
+
+export { openGuarantorContactModal };
 
 export const resetAllPublicFinancialUploaders = () => {
   $publicIncomeStatementUploader.update({ financialDocs: [] });
@@ -38,6 +49,7 @@ export const resetAllPublicFinancialUploaders = () => {
   $publicCashFlowUploader.update({ financialDocs: [] });
   $publicOtherFinancialsUploader.update({ financialDocs: [] });
   $publicDebtScheduleUploader.update({ financialDocs: [] });
+  $publicBusinessTaxReturnExtensionUploader.update({ financialDocs: [] });
 };
 
 /** Clear staged files for one public-upload section (show dropzone again). */
@@ -76,13 +88,38 @@ export const handleFileUpload = async () => {
       ? { ...$debtScheduleWorksheetForm.value }
       : undefined;
 
-    const nonDebtRequired = requiredPdfSections.filter(
-      (s) => s.sectionId !== 'debtScheduleWorksheet' && s.sectionId !== 'impactQuestionnaire',
-    );
-    const missingNonDebtUpload = nonDebtRequired.some((s) => !hasPdfStagedForSection(s.sectionId));
-    if (missingNonDebtUpload) {
+    const blockingKeys = new Set(getBlockingDocumentKeysForLink(linkData));
+    const blockingSections = requiredPdfSections.filter((s) => {
+      if (s.sectionId === 'impactQuestionnaire' || s.sectionId === 'guarantorContact') return false;
+      const docType = SECTION_ID_TO_DOCUMENT_TYPE[s.sectionId] ?? s.sectionId;
+      if (s.sectionId === 'debtScheduleWorksheet') {
+        return blockingKeys.has('debtScheduleWorksheet');
+      }
+      return blockingKeys.has(docType) || blockingKeys.has(s.sectionId);
+    });
+    const missingBlockingUpload = blockingSections.some((s) => {
+      if (s.sectionId === 'debtScheduleWorksheet') {
+        return !validateDebtScheduleWorksheetForPdf($debtScheduleWorksheetForm.value || {}).valid;
+      }
+      if (
+        s.sectionId === 'businessTaxReturn'
+        && hasPdfStagedForSection('businessTaxReturnExtension')
+        && !hasPdfStagedForSection('businessTaxReturn')
+      ) {
+        const taxReq = linkData?.documentRequirements?.find((r) => r.type === 'businessTaxReturn');
+        if (taxReq?.status === 'PENDING') return false;
+      }
+      if (
+        s.sectionId === 'businessTaxReturn'
+        && s.requirementStatus === 'EXTENDED'
+      ) {
+        return false;
+      }
+      return !hasPdfStagedForSection(s.sectionId);
+    });
+    if (missingBlockingUpload) {
       $publicFinancialUploadView.update({
-        error: 'Please upload all required PDFs before submitting.',
+        error: 'Please complete all required items before submitting.',
         isSubmitting: false,
       });
       return;
@@ -98,8 +135,25 @@ export const handleFileUpload = async () => {
       return;
     }
 
+    const guarantorsNeedingContact = linkData?.guarantorsNeedingContact ?? [];
+    if (guarantorsNeedingContact.length > 0) {
+      const contactValidation = validateGuarantorContactForms(guarantorsNeedingContact);
+      if (!contactValidation.valid || !$publicFinancialUploadView.value.guarantorContactComplete) {
+        $publicFinancialUploadView.update({
+          error: 'Complete guarantor contact information before submitting.',
+          isSubmitting: false,
+        });
+        dangerAlert('Please complete guarantor contact information before submitting.');
+        return;
+      }
+    }
+
     requiredPdfSections.forEach((section) => {
-      if (section.sectionId === 'debtScheduleWorksheet' || section.sectionId === 'impactQuestionnaire') {
+      if (
+        section.sectionId === 'debtScheduleWorksheet'
+        || section.sectionId === 'impactQuestionnaire'
+        || section.sectionId === 'guarantorContact'
+      ) {
         return;
       }
       const uploader = UPLOADER_BY_SECTION[section.sectionId];
@@ -144,9 +198,14 @@ export const handleFileUpload = async () => {
       return;
     }
 
+    const guarantorContacts = guarantorsNeedingContact.length > 0
+      ? buildGuarantorContactsPayload(guarantorsNeedingContact)
+      : undefined;
+
     const submitResponse = await submitFinancialsViaToken(token, {
       filesToUpload,
       ...(debtScheduleWorksheet ? { debtScheduleWorksheet } : {}),
+      ...(guarantorContacts ? { guarantorContacts } : {}),
     });
     const uploads = submitResponse?.data?.uploads ?? [];
     const extractTaskId = submitResponse?.data?.extractTask?.id;
@@ -163,10 +222,21 @@ export const handleFileUpload = async () => {
       await notifyExtractReadyViaToken(token, extractTaskId);
     }
 
-    $publicFinancialUploadView.update({ success: true });
+    await fetchUploadLinkData(token);
+    const packageComplete = $publicFinancialUploadView.value.linkData?.packageComplete;
+    if (packageComplete) {
+      $publicFinancialUploadView.update({ success: true, partialSuccess: false });
+    } else {
+      $publicFinancialUploadView.update({ partialSuccess: true, success: false });
+      successAlert(
+        'Documents received. You can return to this link later to upload any remaining items.',
+        'toast',
+      );
+    }
     $publicFinancialForm.reset();
     $debtScheduleWorksheetForm.reset();
     resetAllPublicFinancialUploaders();
+    resetGuarantorContactSignals();
   } catch (error) {
     const message = error?.message || (typeof error === 'string' ? error : 'Request failed');
     dangerAlert(message);

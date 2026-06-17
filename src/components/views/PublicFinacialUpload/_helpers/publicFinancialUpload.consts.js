@@ -43,6 +43,8 @@ export const $publicIncomeStatementUploader = Signal({ financialDocs: [] });
 export const $publicBalanceSheetUploader = Signal({ financialDocs: [] });
 export const $publicCashFlowUploader = Signal({ financialDocs: [] });
 export const $publicOtherFinancialsUploader = Signal({ financialDocs: [] });
+/** Filed business tax extension form (Form 7004). */
+export const $publicBusinessTaxReturnExtensionUploader = Signal({ financialDocs: [] });
 /** Quarterly P&L slot (API key `incomeStatementQuarterly`); reuses cash-flow uploader signal. */
 export const $publicDebtScheduleUploader = Signal({ financialDocs: [] });
 
@@ -94,6 +96,7 @@ export const $publicFinancialUploadView = Signal({
   impactQuestionnaireToken: null,
   error: null,
   success: false,
+  partialSuccess: false,
   /** True after successful public impact questionnaire submit (or link already submitted). */
   impactQuestionnairePublicComplete: false,
   priorDebtOpening: false,
@@ -101,11 +104,14 @@ export const $publicFinancialUploadView = Signal({
   debtScheduleWorksheetErrors: null,
   /** True while building the worksheet PDF for upload. */
   debtScheduleWorksheetSubmitting: false,
-  /**
-   * After one merge from `linkData.priorDebtScheduleWorksheet`, further opens keep the in-memory
+  /** After one merge from `linkData.priorDebtScheduleWorksheet`, further opens keep the in-memory
    * worksheet so the user can edit after save without being reset to the prior snapshot.
    */
   debtScheduleWorksheetHydratedFromPrior: false,
+  /** True after guarantor contact modal Save when all required guarantors have valid contact info. */
+  guarantorContactComplete: false,
+  /** Validation errors from guarantor contact modal Save attempt. */
+  guarantorContactErrors: null,
 });
 
 export const UPLOADER_BY_SECTION = {
@@ -113,6 +119,7 @@ export const UPLOADER_BY_SECTION = {
   balanceSheet: $publicBalanceSheetUploader,
   incomeStatementQuarterly: $publicCashFlowUploader,
   businessTaxReturn: $publicOtherFinancialsUploader,
+  businessTaxReturnExtension: $publicBusinessTaxReturnExtensionUploader,
   debtScheduleWorksheet: $publicDebtScheduleUploader,
   cashFlow: $publicCashFlowUploader,
   otherFinancials: $publicOtherFinancialsUploader,
@@ -148,6 +155,14 @@ export const SECTION_DEF_BY_ID = {
     inputId: 'public-financial-tax-return',
     replaceButtonVariant: 'outline-secondary',
   },
+  businessTaxReturnExtension: {
+    sectionId: 'businessTaxReturnExtension',
+    title: 'Business tax return extension (Form 7004)',
+    helperText:
+      'If you filed for an extension, upload your completed Form 7004 here. You can return later to upload the full tax return.',
+    inputId: 'public-financial-tax-return-extension',
+    replaceButtonVariant: 'outline-secondary',
+  },
   debtScheduleWorksheet: {
     sectionId: 'debtScheduleWorksheet',
     title: 'Debt schedule',
@@ -164,6 +179,14 @@ export const SECTION_DEF_BY_ID = {
     inputId: 'public-financial-impact-questionnaire',
     replaceButtonVariant: 'outline-secondary',
   },
+  guarantorContact: {
+    sectionId: 'guarantorContact',
+    title: 'Guarantor contact information',
+    helperText:
+      'We need an email for each guarantor so we can send annual guarantor document requests.',
+    inputId: 'public-financial-guarantor-contact',
+    replaceButtonVariant: 'outline-secondary',
+  },
 };
 
 /** Maps API `requiredDocumentKeys` entries (from Express) to internal section ids. */
@@ -172,6 +195,7 @@ export const API_KEY_TO_SECTION_ID = {
   balanceSheet: 'balanceSheet',
   incomeStatementQuarterly: 'incomeStatementQuarterly',
   businessTaxReturn: 'businessTaxReturn',
+  businessTaxReturnExtension: 'businessTaxReturnExtension',
   debtScheduleWorksheet: 'debtScheduleWorksheet',
 };
 
@@ -181,6 +205,7 @@ export const SECTION_ID_TO_DOCUMENT_TYPE = {
   balanceSheet: 'balanceSheet',
   incomeStatementQuarterly: 'incomeStatementQuarterly',
   businessTaxReturn: 'businessTaxReturn',
+  businessTaxReturnExtension: 'businessTaxReturnExtension',
   debtScheduleWorksheet: 'debtScheduleWorksheet',
   cashFlow: 'cashFlow',
   otherFinancials: 'otherFinancials',

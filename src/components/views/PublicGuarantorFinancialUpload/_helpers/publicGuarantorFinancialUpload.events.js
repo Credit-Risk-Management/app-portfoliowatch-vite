@@ -1,4 +1,4 @@
-import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
+import { dangerAlert, successAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import {
   submitGuarantorFinancialsViaToken,
   getGuarantorPublicPriorDebtScheduleDownload,
@@ -14,10 +14,17 @@ import {
   $publicGuarantorUploadView,
   PFS_TEMPLATE_PDF_URL,
 } from './publicGuarantorFinancialUpload.consts';
+import { $pfsWorksheetForm } from '../_components/PfsWorksheetModal/_helpers/pfsWorksheetModal.consts';
+import { resetPfsWorksheetScheduleRowCounts, resetPfsWorksheetSummariesFromSchedules, hydratePfsWorksheetFromPriorLinkData } from '../_components/PfsWorksheetModal/_helpers/pfsWorksheetModal.events';
+import { validatePfsWorksheetForSubmit } from '../_components/PfsWorksheetModal/_helpers/pfsWorksheetModal.helpers';
+import { applyPfsWorksheetRollup } from '../_components/PfsWorksheetModal/_helpers/pfsWorksheetRollup.helpers';
 import {
+  getBlockingDocumentKeysForGuarantorLink,
   getRequiredPdfSectionsForGuarantorLink,
   getGuarantorUploaderForDocKey,
+  isGuarantorSectionReadyForSubmit,
 } from './publicGuarantorFinancialUpload.helpers';
+import { fetchGuarantorUploadLinkData } from './publicGuarantorFinancialUpload.resolvers';
 
 const resetAllGuarantorUploaders = () => {
   $gPubPersonalTax.update({ financialDocs: [] });
@@ -46,9 +53,18 @@ export const handleGuarantorFileUpload = async () => {
     const guarantorName = linkData?.guarantor?.name;
     const periodDate = linkData?.reportingPeriodEndDate;
     const requiredPdfSections = getRequiredPdfSectionsForGuarantorLink(linkData);
+    const blockingKeys = new Set(getBlockingDocumentKeysForGuarantorLink(linkData));
     const filesToUpload = [];
     const fileBlobs = [];
+    const rolledPfsForm = applyPfsWorksheetRollup($pfsWorksheetForm.value || {});
+    const pfsWorksheet = validatePfsWorksheetForSubmit(rolledPfsForm).valid
+      ? { ...rolledPfsForm }
+      : undefined;
+
     requiredPdfSections.forEach(({ apiDocumentKey }) => {
+      if (apiDocumentKey === 'personalFinancialStatement' && pfsWorksheet) {
+        return;
+      }
       const uploader = getGuarantorUploaderForDocKey(apiDocumentKey);
       if (!uploader) return;
       const files = uploader.value?.financialDocs ?? [];
@@ -69,15 +85,29 @@ export const handleGuarantorFileUpload = async () => {
       fileBlobs.push(file);
     });
 
-    if (filesToUpload.length === 0) {
+    const missingBlocking = [...blockingKeys].filter(
+      (key) => !isGuarantorSectionReadyForSubmit(key),
+    );
+    if (missingBlocking.length > 0) {
       $publicGuarantorUploadView.update({
-        error: 'Please upload the required PDFs before submitting.',
+        error: 'Please upload all required PDFs before submitting.',
         isSubmitting: false,
       });
       return;
     }
 
-    const submitResponse = await submitGuarantorFinancialsViaToken(token, { filesToUpload });
+    if (filesToUpload.length === 0 && !pfsWorksheet) {
+      $publicGuarantorUploadView.update({
+        error: 'Please upload at least one document or complete the PFS worksheet before submitting.',
+        isSubmitting: false,
+      });
+      return;
+    }
+
+    const submitResponse = await submitGuarantorFinancialsViaToken(token, {
+      filesToUpload,
+      ...(pfsWorksheet ? { pfsWorksheet } : {}),
+    });
     const uploads = submitResponse?.data?.uploads ?? [];
     const extractTaskId = submitResponse?.data?.extractTask?.id;
 
@@ -93,8 +123,22 @@ export const handleGuarantorFileUpload = async () => {
       await notifyGuarantorExtractReadyViaToken(token, extractTaskId);
     }
 
-    $publicGuarantorUploadView.update({ success: true });
+    await fetchGuarantorUploadLinkData(token);
+    const packageComplete = $publicGuarantorUploadView.value.linkData?.packageComplete;
+    if (packageComplete) {
+      $publicGuarantorUploadView.update({ success: true, partialSuccess: false });
+    } else {
+      $publicGuarantorUploadView.update({ partialSuccess: true, success: false });
+      successAlert(
+        'Documents received. You can return to this link later to upload any remaining items.',
+        'toast',
+      );
+    }
     resetAllGuarantorUploaders();
+    $pfsWorksheetForm.reset();
+    resetPfsWorksheetScheduleRowCounts();
+    resetPfsWorksheetSummariesFromSchedules();
+    hydratePfsWorksheetFromPriorLinkData($publicGuarantorUploadView.value.linkData);
   } catch (error) {
     const message = error?.message || (typeof error === 'string' ? error : 'Request failed');
     dangerAlert(message);
