@@ -64,6 +64,7 @@ const facetParamsFromBorrowersFilter = () => {
     relationshipManager,
     quarterlyPackageComplete: bf?.quarterlyPackageComplete,
     impactQuestionnaireComplete: bf?.impactQuestionnaireComplete,
+    taxReturn2025Complete: bf?.taxReturn2025Complete,
   };
 };
 

@@ -8,16 +8,38 @@ export const CLIENT_TYPE_OPTIONS = [
   { value: 'CRE', label: 'CRE' },
 ];
 
-/** Borrowers list: quarterly package badge filter (matches API `quarterlyPackageComplete`). */
-export const QUARTERLY_PACKAGE_FILTER_OPTIONS = [
-  { value: 'true', label: 'On file (current period)' },
-  { value: 'false', label: 'Not on file' },
-];
-
-/** Borrowers list: impact questionnaire badge filter (matches API `impactQuestionnaireComplete`). */
-export const IMPACT_QUESTIONNAIRE_FILTER_OPTIONS = [
-  { value: 'true', label: 'Submitted' },
-  { value: 'false', label: 'Not submitted' },
+/**
+ * Borrowers list compliance checklist (maps to API boolean query params).
+ * One active option per group; multiple groups combine with OR.
+ */
+export const COMPLIANCE_FILTER_GROUPS = [
+  {
+    key: 'quarterlyPackageComplete',
+    label: 'Quarterly (Q)',
+    shortLabel: 'Quarterly',
+    options: [
+      { value: 'true', label: 'On file' },
+      { value: 'false', label: 'Not on file' },
+    ],
+  },
+  {
+    key: 'impactQuestionnaireComplete',
+    label: 'Impact questionnaire (I-Q)',
+    shortLabel: 'Impact',
+    options: [
+      { value: 'true', label: 'Submitted' },
+      { value: 'false', label: 'Not submitted' },
+    ],
+  },
+  {
+    key: 'taxReturn2025Complete',
+    label: '2025 tax return',
+    shortLabel: '2025 tax return',
+    options: [
+      { value: 'true', label: 'On file' },
+      { value: 'false', label: 'Not on file' },
+    ],
+  },
 ];
 
 export const INDUSTRY_TYPE_OPTIONS = [

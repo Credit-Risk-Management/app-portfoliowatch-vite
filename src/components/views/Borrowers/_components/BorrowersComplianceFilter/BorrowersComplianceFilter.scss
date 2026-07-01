@@ -1,0 +1,124 @@
+@import '@src/scss/_vars.scss';
+
+// Match react-select control inside SelectInput (`bg-info-800 rounded-pill`).
+.borrowers-compliance-filter {
+  .dropdown-toggle.borrowers-compliance-filter__toggle {
+    width: 100%;
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: map-get($spacers, 4);
+    padding: 0 map-get($spacers, 4) 0 0;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    text-decoration: none !important;
+
+    &::after {
+      display: none;
+    }
+
+    &:hover,
+    &:focus,
+    &:active,
+    &.show {
+      background: transparent !important;
+      box-shadow: none !important;
+    }
+  }
+
+  &__label {
+    margin-left: map-get($spacers, 8);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    text-align: left;
+    line-height: 1.2;
+
+    &--placeholder {
+      color: $info-600;
+    }
+
+    &--value {
+      color: $info-100;
+    }
+  }
+
+  &__indicator {
+    color: $info-100;
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    line-height: 1;
+  }
+
+  &__menu.dropdown-menu {
+    background-color: $info-900;
+    border: none;
+    border-radius: $card-border-radius;
+    width: 100%;
+    min-width: 100%;
+    margin-top: map-get($spacers, 4);
+    padding: map-get($spacers, 4);
+  }
+
+  &__group {
+    &:not(:last-child) {
+      margin-bottom: map-get($spacers, 4);
+      padding-bottom: map-get($spacers, 4);
+      border-bottom: 1px solid $info-800;
+    }
+  }
+
+  &__group-label {
+    color: $info-600;
+    font-size: $small-font-size;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    margin-bottom: map-get($spacers, 4);
+  }
+
+  &__options {
+    display: flex;
+    flex-direction: column;
+    gap: map-get($spacers, 4);
+  }
+
+  &__option.form-check {
+    margin-bottom: 0;
+    min-height: auto;
+    padding-left: map-get($spacers, 12);
+    font-size: $body-font-size;
+    line-height: 1.25;
+    color: $info-100;
+
+    .form-check-label {
+      color: $info-100;
+      cursor: pointer;
+    }
+
+    .form-check-input {
+      margin-top: 0.125rem;
+    }
+  }
+
+  &__clear-wrap {
+    margin-top: map-get($spacers, 4);
+    padding-top: map-get($spacers, 4);
+    border-top: 1px solid $info-800;
+  }
+
+  &__clear {
+    padding: 0;
+    font-size: $small-font-size;
+    line-height: 1.25;
+    color: $info-600;
+    text-decoration: none;
+
+    &:hover,
+    &:focus {
+      color: $info-100;
+    }
+  }
+}

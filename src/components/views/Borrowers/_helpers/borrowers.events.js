@@ -5,6 +5,22 @@ import { resolvePageLimit } from '@src/consts/consts';
 import { borrowersFilterToUrlParams } from '@src/utils/tableFilterUrlParams';
 import * as resolvers from './borrowers.resolvers';
 
+/** Toggle one compliance checklist row (mutually exclusive within each group). */
+export const toggleBorrowersComplianceFilter = (setSearchParams, filterKey, value) => {
+  const current = $borrowersFilter.value?.[filterKey];
+  const nextValue = current === value ? '' : value;
+  syncBorrowersListUrl(setSearchParams, { [filterKey]: nextValue, page: 1 });
+};
+
+export const clearBorrowersComplianceFilters = (setSearchParams) => {
+  syncBorrowersListUrl(setSearchParams, {
+    quarterlyPackageComplete: '',
+    impactQuestionnaireComplete: '',
+    taxReturn2025Complete: '',
+    page: 1,
+  });
+};
+
 /** Sync $borrowersFilter to the URL after signal-driven filter edits (search, selects). */
 export const syncBorrowersListUrl = (setSearchParams, patch = {}) => {
   if (patch && Object.keys(patch).length > 0) {
@@ -89,6 +105,7 @@ export const handleBorrowerFilterChange = async () => {
       relationshipManager: relationshipManagerValue,
       quarterlyPackageComplete: $borrowersFilter.value.quarterlyPackageComplete,
       impactQuestionnaireComplete: $borrowersFilter.value.impactQuestionnaireComplete,
+      taxReturn2025Complete: $borrowersFilter.value.taxReturn2025Complete,
       limit: resolvePageLimit($borrowersFilter.value.limit),
     };
 

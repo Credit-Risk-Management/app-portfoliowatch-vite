@@ -37,6 +37,7 @@ import { BORROWERS_SEARCH_DEBOUNCE_MS } from './_helpers/borrowers.consts';
 import EditBorrowerModal from './_components/EditBorrowerModal';
 import DeleteBorrowerModal from './_components/DeleteBorrowerModal';
 import AddBorrowerModal from './_components/AddBorrowerModal';
+import BorrowersComplianceFilter from './_components/BorrowersComplianceFilter/BorrowersComplianceFilter';
 
 const Borrowers = () => {
   const navigate = useNavigate();
@@ -59,6 +60,7 @@ const Borrowers = () => {
       const relationshipManagerParam = searchParams.get('relationshipManager');
       const quarterlyPackageParam = searchParams.get('quarterlyPackageComplete') || '';
       const impactQuestionnaireParam = searchParams.get('impactQuestionnaireComplete') || '';
+      const taxReturn2025Param = searchParams.get('taxReturn2025Complete') || '';
       const limitParam = searchParams.get('limit');
       const parsedLimit = limitParam ? Number(limitParam) : DEFAULT_PAGE_LIMIT;
       const limit = PAGE_LIMIT_OPTIONS.some((option) => option.value === parsedLimit)
@@ -74,6 +76,7 @@ const Borrowers = () => {
         relationshipManager: relationshipManagerParam ? relationshipManagerParam.split(',').filter(Boolean) : [],
         quarterlyPackageComplete: ['true', 'false'].includes(quarterlyPackageParam) ? quarterlyPackageParam : '',
         impactQuestionnaireComplete: ['true', 'false'].includes(impactQuestionnaireParam) ? impactQuestionnaireParam : '',
+        taxReturn2025Complete: ['true', 'false'].includes(taxReturn2025Param) ? taxReturn2025Param : '',
       });
     }
 
@@ -111,6 +114,7 @@ const Borrowers = () => {
     $borrowersFilter.value.sortDirection,
     $borrowersFilter.value.quarterlyPackageComplete,
     $borrowersFilter.value.impactQuestionnaireComplete,
+    $borrowersFilter.value.taxReturn2025Complete,
   ]);
 
   useEffectAsync(async () => {
@@ -144,9 +148,9 @@ const Borrowers = () => {
   const rows = $borrowers.value.list.map((borrower) => ({
     ...borrower,
     name: () => (
-      <span className="d-inline-flex align-items-center flex-wrap">
-        <span className="text-break me-4">{borrower.name}</span>
-        <span className="d-inline-flex align-items-center flex-shrink-0 gap-2">
+      <span className="d-flex align-items-center flex-wrap py-4">
+        <span className="text-break me-8">{borrower.name}</span>
+        <span className="d-inline-flex align-items-center flex-wrap gap-4">
           {borrower.quarterlyPackageComplete ? (
             <OverlayTrigger
               placement="top"
@@ -157,7 +161,7 @@ const Borrowers = () => {
                 </Tooltip>
               )}
             >
-              <Badge bg="success-600" pill className="me-4 text-dark">
+              <Badge bg="success-600" pill className="text-dark">
                 Q1
               </Badge>
             </OverlayTrigger>
@@ -174,6 +178,21 @@ const Borrowers = () => {
             >
               <Badge bg="info-600" pill className="text-dark">
                 I-Q
+              </Badge>
+            </OverlayTrigger>
+          ) : null}
+          {borrower.taxReturn2025Complete ? (
+            <OverlayTrigger
+              placement="top"
+              trigger={['hover', 'focus']}
+              overlay={(
+                <Tooltip id={`borrower-${borrower.id}-tax-return-2025-badge`}>
+                  FY 2025 business tax return is on file.
+                </Tooltip>
+              )}
+            >
+              <Badge bg="warning-600" pill className="text-dark">
+                2025 TR
               </Badge>
             </OverlayTrigger>
           ) : null}
@@ -225,7 +244,7 @@ const Borrowers = () => {
       />
 
       <Row className="mb-12 mb-md-16 align-items-end">
-        <Col xs={12} md={4} className="mb-12 mb-md-0">
+        <Col xs={12} lg={4} className="mb-12 mb-lg-0">
           <Search
             placeholder="Search borrowers..."
             value={$borrowersFilter.value.searchTerm}
@@ -235,7 +254,7 @@ const Borrowers = () => {
             name="searchTerm"
           />
         </Col>
-        <Col xs={12} sm={6} md={2} className="mb-12 mb-md-0">
+        <Col xs={12} sm={6} lg={3} className="mb-12 mb-lg-0">
           <SelectInput
             options={[{ value: '', label: 'All Types' }, ...consts.CLIENT_TYPE_OPTIONS]}
             value={$borrowersFilter.value.borrowerType}
@@ -246,7 +265,7 @@ const Borrowers = () => {
             isMulti
           />
         </Col>
-        <Col xs={12} sm={6} md={2} className="mb-12 mb-md-0">
+        <Col xs={12} sm={6} lg={3} className="mb-12 mb-lg-0">
           <SelectInput
             options={[{ value: '', label: 'All Managers' }, ...relationshipManagerOptions]}
             value={$borrowersFilter.value.relationshipManager}
@@ -257,29 +276,8 @@ const Borrowers = () => {
             isMulti
           />
         </Col>
-        <Col xs={12} sm={6} md={2} className="mb-12 mb-md-0">
-          <SelectInput
-            options={[{ value: '', label: 'All (quarterly package)' }, ...consts.QUARTERLY_PACKAGE_FILTER_OPTIONS]}
-            value={$borrowersFilter.value.quarterlyPackageComplete}
-            onChange={() => syncBorrowersListUrl(setSearchParams, { page: 1 })}
-            placeholder="Quarterly (Q)"
-            signal={$borrowersFilter}
-            name="quarterlyPackageComplete"
-            isMulti={false}
-            isSearchable={false}
-          />
-        </Col>
-        <Col xs={12} sm={6} md={2} className="mb-12 mb-md-0">
-          <SelectInput
-            options={[{ value: '', label: 'All (impact questionnaire)' }, ...consts.IMPACT_QUESTIONNAIRE_FILTER_OPTIONS]}
-            value={$borrowersFilter.value.impactQuestionnaireComplete}
-            onChange={() => syncBorrowersListUrl(setSearchParams, { page: 1 })}
-            placeholder="Impact (I-Q)"
-            signal={$borrowersFilter}
-            name="impactQuestionnaireComplete"
-            isMulti={false}
-            isSearchable={false}
-          />
+        <Col xs={12} lg={2}>
+          <BorrowersComplianceFilter setSearchParams={setSearchParams} />
         </Col>
       </Row>
       <AddBorrowerModal />

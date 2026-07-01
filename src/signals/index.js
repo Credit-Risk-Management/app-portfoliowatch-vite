@@ -44,6 +44,8 @@ export const $borrowersFilter = Signal({
   quarterlyPackageComplete: '',
   /** '' | 'true' | 'false' — any submitted impact questionnaire link */
   impactQuestionnaireComplete: '',
+  /** '' | 'true' | 'false' — FY 2025 business tax return on file (as-of 12/31/2025) */
+  taxReturn2025Complete: '',
 });
 
 export const $borrowersView = Signal({
