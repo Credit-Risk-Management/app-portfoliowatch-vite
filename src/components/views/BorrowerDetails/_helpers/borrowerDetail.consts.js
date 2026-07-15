@@ -1,4 +1,5 @@
 import { Signal } from '@fyclabs/tools-fyc-react/signals';
+import { DEFAULT_PAGE_LIMIT } from '@src/consts/consts';
 
 // Signals for borrower detail component state
 export const $borrowerDetailView = Signal({
@@ -33,6 +34,7 @@ export const $borrowerFinancialsTableView = Signal({
 // Signals for borrower documents table
 export const $borrowerDocumentsFilter = Signal({
   page: 1,
+  limit: DEFAULT_PAGE_LIMIT,
   sortKey: undefined,
   sortDirection: undefined,
 });
