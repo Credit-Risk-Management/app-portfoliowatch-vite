@@ -103,6 +103,17 @@ export const submitFinancialsViaToken = async (token, financialData = undefined)
 };
 
 /**
+ * After PUTing files to signed URLs, confirm uploads with the API (public token).
+ */
+export const confirmUploadsViaToken = async (token, uploads) => {
+  const response = await publicClient.post(
+    `/borrower-financial-upload-links/public/${encodeURIComponent(token)}/confirm-uploads`,
+    { uploads },
+  );
+  return response;
+};
+
+/**
  * After uploading PDFs to Storage, tell the API to run EXTRACT_FINANCIALS (public token).
  */
 export const notifyExtractReadyViaToken = async (token, taskId) => {
