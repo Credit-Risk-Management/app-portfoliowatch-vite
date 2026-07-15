@@ -9,7 +9,8 @@ import publicClient from './publicClient';
  * @param {'QUARTERLY'|'ANNUAL'|'CUSTOM'} [options.submissionCadence]
  * @param {string} [options.reportingPeriodEndDate] ISO date YYYY-MM-DD (as-of / period end)
  * @param {number} [options.fiscalYearEndMonth] 1–12; omit for calendar year
- * @param {string[]} [options.requiredDocumentKeys] e.g. balanceSheet, incomeStatementYtd, …
+ * @param {string[]|object[]} [options.requiredDocumentKeys] legacy keys or structured requirement rows
+ *   (`type`, `status`, `requiredForSubmit`, `visible`, `remind`)
  * @param {string} [options.periodLabel] display label (e.g. "Q1 2026")
  * @param {string} [options.lenderInstructions] optional notes on public page
  * @param {string|null} [options.priorDebtServiceHistoryId] optional prior debt service history id (worksheet prefill)

@@ -3,8 +3,8 @@ import { successAlert, dangerAlert } from '@src/components/global/Alert/_helpers
 import borrowersApi from '@src/api/borrowers.api';
 import { createUploadLink } from '@src/api/borrowerFinancialUploadLink.api';
 import {
-  Q1_TEST_UPLOAD_LINK_OPTIONS,
-  ANNUAL_TEST_UPLOAD_LINK_OPTIONS,
+  buildQuarterlyTestUploadLinkOptions,
+  buildAnnualBorrowerTestUploadLinkOptions,
 } from '@src/constants/financialSubmissionRequirements';
 import * as consts from './borrowerFinancialsTab.consts';
 import { getUploadLinkUrl, getUploadedFinancialDocumentIds } from './borrowerFinancialsTab.helpers';
@@ -213,7 +213,7 @@ const copyToClipboard = async (url, linkKind = 'quarterly') => {
 export const handleCreateQ1TestUploadLink = async (borrowerId) => {
   if (!borrowerId) return;
   try {
-    const response = await createUploadLink(borrowerId, Q1_TEST_UPLOAD_LINK_OPTIONS);
+    const response = await createUploadLink(borrowerId, buildQuarterlyTestUploadLinkOptions());
     const data = response?.data ?? response;
     const url = data?.uploadLinkUrl ?? data?.upload_link_url;
     if (response?.status === 'success' && url) {
@@ -232,7 +232,7 @@ export const handleCreateQ1TestUploadLink = async (borrowerId) => {
 export const handleCreateAnnualTestUploadLink = async (borrowerId) => {
   if (!borrowerId) return;
   try {
-    const response = await createUploadLink(borrowerId, ANNUAL_TEST_UPLOAD_LINK_OPTIONS);
+    const response = await createUploadLink(borrowerId, buildAnnualBorrowerTestUploadLinkOptions());
     const data = response?.data ?? response;
     const url = data?.uploadLinkUrl ?? data?.upload_link_url;
     if (response?.status === 'success' && url) {
