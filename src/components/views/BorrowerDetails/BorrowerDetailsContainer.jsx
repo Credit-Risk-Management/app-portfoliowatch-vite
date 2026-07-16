@@ -13,6 +13,9 @@ import SubmitFinancialsModal from '@src/components/views/BorrowerDetails/_compon
 import ImpactQuestionnaireModal from '@src/components/views/BorrowerDetails/_components/ImpactQuestionnaireModal/ImpactQuestionnaireModal';
 import DeleteBorrowerDocumentModal from '@src/components/views/Borrowers/_components/DeleteBorrowerDocumentModal';
 import DeleteBorrowerFinancialModal from '@src/components/views/BorrowerDetails/_components/DeleteBorrowerFinancialModal';
+import ExtractFinancialsModal from '@src/components/views/BorrowerDetails/_components/ExtractFinancialsModal';
+import RerunCalculationsModal from '@src/components/views/BorrowerDetails/_components/RerunCalculationsModal';
+import NoPriorExtractionModal from '@src/components/views/BorrowerDetails/_components/NoPriorExtractionModal';
 import UniversalCard from '@src/components/global/UniversalCard';
 import DeleteGuarantorConfirmModal from '@src/components/views/GuarantorDetails/_components/DeleteGuarantorConfirmModal';
 import { $borrowerDetailView } from './_helpers/borrowerDetail.consts';
@@ -166,6 +169,9 @@ export function BorrowerDetailsContainer() {
         <SubmitFinancialsModal />
         <ImpactQuestionnaireModal />
         <DeleteBorrowerFinancialModal />
+        <ExtractFinancialsModal />
+        <RerunCalculationsModal />
+        <NoPriorExtractionModal />
 
         {/* Edit Borrower Modal */}
         <EditBorrowerDetailModal />

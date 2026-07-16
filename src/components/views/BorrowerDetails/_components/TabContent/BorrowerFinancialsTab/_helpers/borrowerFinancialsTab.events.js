@@ -3,11 +3,11 @@ import { successAlert, dangerAlert } from '@src/components/global/Alert/_helpers
 import borrowersApi from '@src/api/borrowers.api';
 import { createUploadLink } from '@src/api/borrowerFinancialUploadLink.api';
 import {
-  Q1_TEST_UPLOAD_LINK_OPTIONS,
-  ANNUAL_TEST_UPLOAD_LINK_OPTIONS,
+  buildQuarterlyTestUploadLinkOptions,
+  buildAnnualBorrowerTestUploadLinkOptions,
 } from '@src/constants/financialSubmissionRequirements';
 import * as consts from './borrowerFinancialsTab.consts';
-import { getUploadLinkUrl } from './borrowerFinancialsTab.helpers';
+import { getUploadLinkUrl, getUploadedFinancialDocumentIds } from './borrowerFinancialsTab.helpers';
 import * as resolvers from './borrowerFinancialsTab.resolvers';
 
 const COPIED_RESET_MS = 2000;
@@ -44,6 +44,110 @@ export const closeDeleteFinancialModal = () => {
     pendingDeleteFinancial: null,
     isDeletingBorrowerFinancial: false,
   });
+};
+
+export const openExtractFinancialsModal = (financial) => {
+  consts.$extractSelectedDocumentIds.update(getUploadedFinancialDocumentIds(financial));
+  $borrowerFinancialsView.update({
+    activeModalKey: 'extractFinancials',
+    pendingExtractFinancial: financial,
+  });
+};
+
+export const closeExtractFinancialsModal = () => {
+  if (consts.$financialRowActionInProgress.value.action === 'extract') return;
+  consts.$extractSelectedDocumentIds.update([]);
+  $borrowerFinancialsView.update({
+    activeModalKey: null,
+    pendingExtractFinancial: null,
+  });
+};
+
+export const toggleExtractDocumentSelection = (documentId) => {
+  if (!documentId) return;
+  const selected = consts.$extractSelectedDocumentIds.value || [];
+  if (selected.includes(documentId)) {
+    consts.$extractSelectedDocumentIds.update(selected.filter((id) => id !== documentId));
+    return;
+  }
+  consts.$extractSelectedDocumentIds.update([...selected, documentId]);
+};
+
+export const openNoPriorExtractionModal = (financial) => {
+  $borrowerFinancialsView.update({
+    activeModalKey: 'noPriorExtraction',
+    pendingRerunFinancial: financial,
+  });
+};
+
+export const closeNoPriorExtractionModal = () => {
+  $borrowerFinancialsView.update({
+    activeModalKey: null,
+    pendingRerunFinancial: null,
+  });
+};
+
+export const openRerunCalculationsModal = (financial) => {
+  $borrowerFinancialsView.update({
+    activeModalKey: 'rerunCalculations',
+    pendingRerunCalculationsFinancial: financial,
+  });
+};
+
+export const closeRerunCalculationsModal = () => {
+  $borrowerFinancialsView.update({
+    activeModalKey: null,
+    pendingRerunCalculationsFinancial: null,
+  });
+};
+
+export const confirmRerunCalculations = async () => {
+  const pending = $borrowerFinancialsView.value.pendingRerunCalculationsFinancial;
+  if (!pending?.id) return;
+  await resolvers.rerunFinancialCalculations(pending.id);
+};
+
+export const handleExtractClick = (financial) => {
+  openExtractFinancialsModal(financial);
+};
+
+export const handleRerunCalculationsClick = (financial) => {
+  if (financial?.canRerunCalculations) {
+    openRerunCalculationsModal(financial);
+    return;
+  }
+  openNoPriorExtractionModal(financial);
+};
+
+export const confirmRunExtractionFromModal = (financial) => {
+  closeNoPriorExtractionModal();
+  openExtractFinancialsModal(financial);
+};
+
+export const confirmExtractFinancials = async (borrowerId) => {
+  const pending = $borrowerFinancialsView.value.pendingExtractFinancial;
+  const documentIds = consts.$extractSelectedDocumentIds.value || [];
+  if (!borrowerId || !pending?.id) return;
+  if (!documentIds.length) {
+    dangerAlert('Select at least one document to extract.');
+    return;
+  }
+  await resolvers.rerunFinancialExtract(pending.id, documentIds);
+};
+
+export const handleFinancialRowAction = async (financial, action) => {
+  if (!financial) return;
+  if (action === 'extract') {
+    handleExtractClick(financial);
+    return;
+  }
+  if (action === 'rerunCalculations') {
+    handleRerunCalculationsClick(financial);
+    return;
+  }
+  if (action === 'delete') {
+    openDeleteFinancialModal(financial);
+  }
 };
 
 export const handleCopyPermanentLink = async (isAnnualLink = false) => {
@@ -109,7 +213,7 @@ const copyToClipboard = async (url, linkKind = 'quarterly') => {
 export const handleCreateQ1TestUploadLink = async (borrowerId) => {
   if (!borrowerId) return;
   try {
-    const response = await createUploadLink(borrowerId, Q1_TEST_UPLOAD_LINK_OPTIONS);
+    const response = await createUploadLink(borrowerId, buildQuarterlyTestUploadLinkOptions());
     const data = response?.data ?? response;
     const url = data?.uploadLinkUrl ?? data?.upload_link_url;
     if (response?.status === 'success' && url) {
@@ -128,7 +232,7 @@ export const handleCreateQ1TestUploadLink = async (borrowerId) => {
 export const handleCreateAnnualTestUploadLink = async (borrowerId) => {
   if (!borrowerId) return;
   try {
-    const response = await createUploadLink(borrowerId, ANNUAL_TEST_UPLOAD_LINK_OPTIONS);
+    const response = await createUploadLink(borrowerId, buildAnnualBorrowerTestUploadLinkOptions());
     const data = response?.data ?? response;
     const url = data?.uploadLinkUrl ?? data?.upload_link_url;
     if (response?.status === 'success' && url) {

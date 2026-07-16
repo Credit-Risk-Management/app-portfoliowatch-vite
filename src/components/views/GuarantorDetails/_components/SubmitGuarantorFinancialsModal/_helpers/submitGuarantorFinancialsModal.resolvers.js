@@ -3,7 +3,7 @@ import { sensibleConfigurationNameForSegment, organizationNameToSensibleSlug } f
 import guarantorsApi from '@src/api/guarantors.api';
 import guarantorFinancialDocumentsApi from '@src/api/guarantorFinancialDocuments.api';
 import { dangerAlert, successAlert } from '@src/components/global/Alert/_helpers/alert.events';
-import postToSensibleApi, { initiateUploadToSensibleApi } from '@src/api/sensible.api';
+import postToSensibleApi, { initiateUploadToSensibleApi, getSensibleEnvironment } from '@src/api/sensible.api';
 import { storage } from '@src/utils/firebase';
 import { fetchGuarantorDetail } from '@src/components/views/GuarantorDetails/_helpers/guarantorDetails.resolvers';
 import { parseSingleDocResponse, GUARANTOR_SENSIBLE_NORMALIZER_V1 } from '@src/utils/sensibleParseApi';
@@ -104,7 +104,7 @@ export const handleFileUpload = async ($financialDocsUploader, $modalState, ocrA
           url: downloadURL,
           documentType: sensibleType,
           configurationName,
-          environment: 'development',
+          environment: getSensibleEnvironment(),
           documentName: file.name,
         };
         const sensibleResponse = await postToSensibleApi(sensibleBody);

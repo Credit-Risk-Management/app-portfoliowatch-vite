@@ -17,3 +17,9 @@ export const $isCreatingQ1TestLink = Signal(false);
 
 /** Permanent upload link: { token: string | null } */
 export const $permanentUploadLink = Signal({ token: null });
+
+/** Tracks in-flight row actions: { financialId: string | null, action: string | null } */
+export const $financialRowActionInProgress = Signal({ financialId: null, action: null });
+
+/** Document ids selected in the Run extraction modal */
+export const $extractSelectedDocumentIds = Signal([]);

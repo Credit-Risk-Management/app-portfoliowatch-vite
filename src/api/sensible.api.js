@@ -1,6 +1,13 @@
 import apiClient from './client';
 
 /**
+ * Sensible extract environment — mirrors backend getSensibleEnvironment().
+ */
+export function getSensibleEnvironment() {
+  return import.meta.env.PROD ? 'production' : 'development';
+}
+
+/**
  * POST to Sensible API to get financial data
  */
 export default async function postToSensibleApi(data) {

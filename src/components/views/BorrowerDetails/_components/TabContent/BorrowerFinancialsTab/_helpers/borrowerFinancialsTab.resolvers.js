@@ -4,7 +4,7 @@ import { $borrowerFinancials, $borrowerFinancialsView } from '@src/signals';
 import { getPermanentUploadLink } from '@src/api/borrowerFinancialUploadLink.api';
 import borrowerFinancialsApi from '@src/api/borrowerFinancials.api';
 import { auth } from '@src/utils/firebase';
-import { successAlert, dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
+import { successAlert, dangerAlert, infoAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import { $borrowerFinancialsFilter, $borrowerFinancialsTableView } from '@src/components/views/BorrowerDetails/_helpers/borrowerDetail.consts';
 import { fetchBorrowerDocuments } from '@src/components/views/BorrowerDetails/_helpers/borrowerDetail.resolvers';
 import * as consts from './borrowerFinancialsTab.consts';
@@ -86,6 +86,51 @@ export const fetchPermanentUploadLink = async (borrowerId) => {
     consts.$permanentUploadLink.update({ token: token ?? null });
   } catch (error) {
     consts.$permanentUploadLink.update({ token: null });
+  }
+};
+
+export const rerunFinancialExtract = async (financialId, documentIds) => {
+  if (!financialId) return;
+  if (!documentIds?.length) {
+    dangerAlert('Select at least one document to extract.');
+    return;
+  }
+  consts.$financialRowActionInProgress.update({ financialId, action: 'extract' });
+  try {
+    const response = await borrowerFinancialsApi.rerunExtract(financialId, { documentIds });
+    const message = response?.message || 'Extraction queued successfully.';
+    successAlert(message);
+    consts.$extractSelectedDocumentIds.update([]);
+    $borrowerFinancialsView.update({
+      activeModalKey: null,
+      pendingExtractFinancial: null,
+      pendingRerunFinancial: null,
+    });
+    await fetchFinancialHistory();
+  } catch (error) {
+    dangerAlert(error?.message || 'Failed to queue extraction.');
+  } finally {
+    consts.$financialRowActionInProgress.update({ financialId: null, action: null });
+  }
+};
+
+export const rerunFinancialCalculations = async (financialId) => {
+  if (!financialId) return;
+  consts.$financialRowActionInProgress.update({ financialId, action: 'rerunCalculations' });
+  infoAlert('Rerunning financial calculations...');
+  try {
+    const response = await borrowerFinancialsApi.rerunCalculations(financialId);
+    const message = response?.message || 'Financial calculations updated successfully.';
+    $borrowerFinancialsView.update({
+      activeModalKey: null,
+      pendingRerunCalculationsFinancial: null,
+    });
+    successAlert(message);
+    await fetchFinancialHistory();
+  } catch (error) {
+    dangerAlert(error?.message || 'Failed to rerun calculations.');
+  } finally {
+    consts.$financialRowActionInProgress.update({ financialId: null, action: null });
   }
 };
 

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Button } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChartLine, faCheck, faCopy, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faChartLine, faCheck, faCopy, faTrash, faRotateRight, faCalculator } from '@fortawesome/free-solid-svg-icons';
 import SignalTable from '@src/components/global/SignalTable';
 import ContextMenu from '@src/components/global/ContextMenu';
 import { $borrower } from '@src/consts/consts';
@@ -50,11 +50,13 @@ export function BorrowerFinancialsTab() {
       submittedBy: financial.submittedBy ?? '-',
       actions: (
         <ContextMenu
-          items={[{ label: 'Delete', icon: faTrash, action: 'delete' }]}
+          items={[
+            { label: 'Extract', icon: faRotateRight, action: 'extract' },
+            { label: 'Rerun calculations', icon: faCalculator, action: 'rerunCalculations' },
+            { label: 'Delete', icon: faTrash, action: 'delete' },
+          ]}
           onItemClick={(item) => {
-            if (item.action === 'delete') {
-              events.openDeleteFinancialModal(financial);
-            }
+            events.handleFinancialRowAction(financial, item.action);
           }}
         />
       ),

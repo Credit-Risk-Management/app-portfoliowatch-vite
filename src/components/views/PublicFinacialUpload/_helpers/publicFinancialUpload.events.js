@@ -7,8 +7,9 @@ import {
 import {
   submitFinancialsViaToken,
   notifyExtractReadyViaToken,
+  confirmUploadsViaToken,
 } from '@src/api/borrowerFinancialUploadLink.api';
-import { storage } from '@src/utils/firebase';
+import { uploadToFirebase } from '@src/components/views/Loans/_helpers/loans.upload';
 import { buildStandardFinancialUploadFileName } from '@src/utils/documents.utils';
 import {
   getBlockingDocumentKeysForLink,
@@ -213,10 +214,18 @@ export const handleFileUpload = async () => {
     await Promise.all(
       uploads.map(async (slot, i) => {
         const file = fileBlobs[i];
-        const storageRef = storage.ref(slot.storagePath);
-        await storageRef.put(file, { contentType: file.type });
+        const uploaded = await uploadToFirebase(file, slot.uploadUrl);
+        if (!uploaded) {
+          throw new Error(`Failed to upload ${slot.fileName ?? file.name}`);
+        }
       }),
     );
+
+    await confirmUploadsViaToken(token, uploads.map((slot) => ({
+      documentId: slot.documentId,
+      storagePath: slot.storagePath,
+      uploadSource: slot.uploadSource ?? 'financial',
+    })));
 
     if (extractTaskId) {
       await notifyExtractReadyViaToken(token, extractTaskId);

@@ -56,6 +56,25 @@ export const FINANCIALS_TABLE_HEADERS = [
 
 export const formatFinancialDate = formatDate;
 
+export const getFinancialDocumentLabel = (documentType) => (
+  FINANCIAL_DOC_TYPES.find((type) => type.value === documentType)?.label ?? documentType ?? 'Document'
+);
+
+export const financialHasUploadedDocuments = (financial) => (
+  getUploadedFinancialDocuments(financial).length > 0
+);
+
+export const getUploadedFinancialDocuments = (financial) => {
+  if (financial?.documents?.length) {
+    return financial.documents;
+  }
+  return (financial?.documentIds ?? []).map((id) => ({ id, documentType: null, fileName: null }));
+};
+
+export const getUploadedFinancialDocumentIds = (financial) => (
+  getUploadedFinancialDocuments(financial).map((doc) => doc.id).filter(Boolean)
+);
+
 /**
  * Build upload link URL from permanent link token (for copy button).
  */
