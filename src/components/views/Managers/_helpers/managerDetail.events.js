@@ -1,5 +1,19 @@
 import { $relationshipManagers, $relationshipManagersView, $relationshipManagersForm, $managerDetail } from '@src/signals';
 
+const getManagerId = () => $managerDetail.value?.manager?.id;
+
+export const buildManagerBorrowersUrl = () => {
+  const params = new URLSearchParams();
+  const managerId = getManagerId();
+
+  if (managerId) {
+    params.set('relationshipManager', managerId);
+  }
+
+  const queryString = params.toString();
+  return queryString ? `/borrowers?${queryString}` : '/borrowers';
+};
+
 export const buildManagerLoansUrl = (watchScore) => {
   const params = new URLSearchParams();
 
@@ -7,7 +21,7 @@ export const buildManagerLoansUrl = (watchScore) => {
     params.set('watchScore', String(watchScore));
   }
 
-  const managerId = $managerDetail.value?.manager?.id;
+  const managerId = getManagerId();
   if (managerId) {
     params.set('relationshipManager', managerId);
   }
@@ -40,8 +54,20 @@ export const handlePieClick = (data, navigate) => {
   }
 };
 
-export const handleMetricCardClick = (path) => {
-  window.location.href = path;
+export const handleMetricCardClick = (path, navigate) => {
+  if (!navigate) return;
+
+  if (path === '/borrowers') {
+    navigate(buildManagerBorrowersUrl());
+    return;
+  }
+
+  if (path === '/loans') {
+    navigate(buildManagerLoansUrl());
+    return;
+  }
+
+  navigate(path);
 };
 
 export const handleEditClick = (manager) => {
