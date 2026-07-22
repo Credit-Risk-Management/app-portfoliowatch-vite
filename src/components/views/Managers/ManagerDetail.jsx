@@ -80,7 +80,7 @@ const ManagerDetail = () => {
             <MetricCard
               title="Portfolio Value"
               value={formatCurrency(metrics.portfolioValue)}
-              onClick={() => events.handleMetricCardClick('/loans')}
+              onClick={() => events.handleMetricCardClick('/loans', navigate)}
               variant="secondary"
             />
           </Col>
@@ -89,7 +89,7 @@ const ManagerDetail = () => {
             <MetricCard
               title="Total Borrowers"
               value={metrics.totalBorrowers}
-              onClick={() => events.handleMetricCardClick('/borrowers')}
+              onClick={() => events.handleMetricCardClick('/borrowers', navigate)}
               variant="primary"
             />
           </Col>
@@ -98,7 +98,7 @@ const ManagerDetail = () => {
             <MetricCard
               title="Active Loans"
               value={metrics.activeLoans}
-              onClick={() => events.handleMetricCardClick('/loans')}
+              onClick={() => events.handleMetricCardClick('/loans', navigate)}
               variant="info"
             />
           </Col>
