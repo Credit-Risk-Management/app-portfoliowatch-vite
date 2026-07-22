@@ -3,7 +3,7 @@ import { formatMoneyShorthand } from '@src/utils/currency';
 import { WATCH_SCORE_OPTIONS } from '@src/consts/consts';
 import * as consts from '../_helpers/dashboard.consts';
 
-const WatchScoreLegend = ({ data = [], metric = 'totalAmount' }) => {
+const WatchScoreLegend = ({ data = [], metric = 'totalAmount', relationshipManagerId }) => {
   const navigate = useNavigate();
   const overallAmount = data.reduce((sum, entry) => sum + (entry.value || 0), 0);
 
@@ -24,7 +24,11 @@ const WatchScoreLegend = ({ data = [], metric = 'totalAmount' }) => {
 
         const handleClick = () => {
           if (rating >= 1 && rating <= 5) {
-            navigate(`/loans?watchScore=${rating}`);
+            const params = new URLSearchParams({ watchScore: String(rating) });
+            if (relationshipManagerId) {
+              params.set('relationshipManager', relationshipManagerId);
+            }
+            navigate(`/loans?${params.toString()}`);
           }
         };
 

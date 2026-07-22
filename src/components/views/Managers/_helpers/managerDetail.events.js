@@ -1,5 +1,21 @@
 import { $relationshipManagers, $relationshipManagersView, $relationshipManagersForm, $managerDetail } from '@src/signals';
 
+export const buildManagerLoansUrl = (watchScore) => {
+  const params = new URLSearchParams();
+
+  if (watchScore !== null && watchScore !== undefined) {
+    params.set('watchScore', String(watchScore));
+  }
+
+  const managerId = $managerDetail.value?.manager?.id;
+  if (managerId) {
+    params.set('relationshipManager', managerId);
+  }
+
+  const queryString = params.toString();
+  return queryString ? `/loans?${queryString}` : '/loans';
+};
+
 export const handlePieClick = (data, navigate) => {
   if (!data || !navigate) return;
 
@@ -20,7 +36,7 @@ export const handlePieClick = (data, navigate) => {
 
   // Navigate if we have a valid rating (1-5, not null/undefined)
   if (rating !== null && rating !== undefined && rating >= 1 && rating <= 5) {
-    navigate(`/loans?watchScore=${rating}`);
+    navigate(buildManagerLoansUrl(rating));
   }
 };
 

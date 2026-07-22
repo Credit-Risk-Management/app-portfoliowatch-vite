@@ -32,16 +32,32 @@ const Loans = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const isInitialMount = useRef(true);
 
-  // Mount: optional watchScore from URL; reset list filters when URL has no query (stale filters from SPA session)
+  // Mount: optional URL filters; reset list filters when URL has no query (stale filters from SPA session)
   useEffectAsync(async () => {
-    const watchScoreParam = searchParams.get('watchScore');
-    if (watchScoreParam !== null && watchScoreParam !== '') {
-      const watchScore = Number(watchScoreParam);
-      if (!Number.isNaN(watchScore) && watchScore >= 0) {
-        $loansFilter.update({ watchScore, page: 1 });
+    const queryString = searchParams.toString();
+
+    if (queryString) {
+      const filterUpdates = { page: 1 };
+      const watchScoreParam = searchParams.get('watchScore');
+
+      if (watchScoreParam !== null && watchScoreParam !== '') {
+        const watchScore = Number(watchScoreParam);
+        if (!Number.isNaN(watchScore) && watchScore >= 0) {
+          filterUpdates.watchScore = watchScore;
+        }
       }
+
+      const relationshipManagerParam = searchParams.get('relationshipManager');
+      if (relationshipManagerParam) {
+        filterUpdates.relationshipManager = relationshipManagerParam;
+      }
+
+      if (filterUpdates.watchScore !== undefined || filterUpdates.relationshipManager) {
+        $loansFilter.update(filterUpdates);
+      }
+
       setSearchParams({}, { replace: true });
-    } else if (!searchParams.toString()) {
+    } else {
       $loansFilter.reset();
     }
 

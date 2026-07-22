@@ -8,7 +8,7 @@ import * as events from '../_helpers/managerDetail.events';
 
 const WatchScoreCountChart = () => {
   const navigate = useNavigate();
-  const { metrics } = $managerDetail.value;
+  const { metrics, manager } = $managerDetail.value;
 
   return (
     <UniversalCard headerText="Loans by WATCH Score (Count)">
@@ -33,7 +33,11 @@ const WatchScoreCountChart = () => {
           </Pie>
         </PieChart>
       </ResponsiveContainer>
-      <WatchScoreLegend data={metrics.watchScoreCountData || []} metric="count" />
+      <WatchScoreLegend
+        data={metrics.watchScoreCountData || []}
+        metric="count"
+        relationshipManagerId={manager?.id}
+      />
     </UniversalCard>
   );
 };
