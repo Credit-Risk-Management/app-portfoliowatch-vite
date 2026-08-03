@@ -23,7 +23,7 @@ export const DEFAULT_QUARTERLY_REQUIRED_KEYS = [
  * @param {string|Date} reportingPeriodEndDate
  * @returns {Date}
  */
-export const resolveBusinessTaxReturnExtensionDeadline = (reportingPeriodEndDate) => {
+export const resolveBusinessTaxReturnExtensionDeadline = reportingPeriodEndDate => {
   const d = new Date(reportingPeriodEndDate);
   const filingYear = d.getUTCFullYear() + 1;
   return new Date(Date.UTC(filingYear, 8, 15));
@@ -56,30 +56,58 @@ export const buildDefaultAnnualBorrowerTaxReturnDocumentRequirements = () => [
 /**
  * Quarterly test upload link — mirrors `financialSubmissionInviteCron` period math and
  * `DEFAULT_QUARTERLY_REQUIRED_KEYS` (balance sheet, quarterly P&L, debt schedule).
+ * Instructions only mention the keys on the link.
  * @param {Date} [referenceDate]
+ * @param {string[]} [requiredDocumentKeys]
  * @returns {object} createUploadLink options
  */
-export const buildQuarterlyTestUploadLinkOptions = (referenceDate = new Date()) => {
-  const reportingPeriodEndDate = new Date(Date.UTC(
-    referenceDate.getUTCFullYear(),
-    referenceDate.getUTCMonth(),
-    0,
-  ));
+export const buildQuarterlyTestUploadLinkOptions = (
+  referenceDate = new Date(),
+  requiredDocumentKeys = [...DEFAULT_QUARTERLY_REQUIRED_KEYS],
+) => {
+  const reportingPeriodEndDate = new Date(
+    Date.UTC(referenceDate.getUTCFullYear(), referenceDate.getUTCMonth(), 0),
+  );
   const quarter = Math.floor(reportingPeriodEndDate.getUTCMonth() / 3) + 1;
   const year = reportingPeriodEndDate.getUTCFullYear();
   const periodLabel = `Q${quarter} ${year}`;
   const isoDate = reportingPeriodEndDate.toISOString().slice(0, 10);
+  const keySet = new Set(requiredDocumentKeys);
+  const parts = [];
+  if (keySet.has(REQUIRED_DOCUMENT_KEYS.BALANCE_SHEET)) {
+    parts.push(`balance sheet as of ${isoDate}`);
+  }
+  if (keySet.has(REQUIRED_DOCUMENT_KEYS.INCOME_STATEMENT_YTD)) {
+    parts.push(`year-to-date income statement through ${isoDate}`);
+  }
+  if (keySet.has(REQUIRED_DOCUMENT_KEYS.INCOME_STATEMENT_QUARTERLY)) {
+    parts.push(`quarterly P&L for the quarter ending ${isoDate}`);
+  }
+  if (keySet.has(REQUIRED_DOCUMENT_KEYS.DEBT_SCHEDULE)) {
+    parts.push('debt schedule');
+  }
+  if (keySet.has(REQUIRED_DOCUMENT_KEYS.BUSINESS_TAX_RETURN)) {
+    parts.push(`${year - 1} business tax return`);
+  }
+  if (keySet.has(REQUIRED_DOCUMENT_KEYS.BUSINESS_TAX_RETURN_EXTENSION)) {
+    parts.push('filed tax-return extension (Form 7004), if applicable');
+  }
+  let lenderInstructions = `Quarterly package for ${periodLabel} (calendar). Please upload the requested financial documents.`;
+  if (parts.length === 1) {
+    lenderInstructions = `Quarterly package for ${periodLabel} (calendar). Please upload your ${parts[0]}.`;
+  } else if (parts.length > 1) {
+    const last = parts[parts.length - 1];
+    const leading = parts.slice(0, -1).join(', ');
+    lenderInstructions = `Quarterly package for ${periodLabel} (calendar). Please upload your ${leading}, and ${last}.`;
+  }
 
   return {
     submissionCadence: 'QUARTERLY',
     reportingPeriodEndDate: isoDate,
     fiscalYearEndMonth: 12,
-    requiredDocumentKeys: [...DEFAULT_QUARTERLY_REQUIRED_KEYS],
+    requiredDocumentKeys: [...requiredDocumentKeys],
     periodLabel,
-    lenderInstructions:
-      `Quarterly package for ${periodLabel} (calendar). Balance sheet as of ${isoDate}, `
-      + `YTD income through ${isoDate}, and quarterly P&L for the quarter ending ${isoDate}. `
-      + `A debt schedule is also required. Your ${year - 1} business tax return is also required.`,
+    lenderInstructions,
   };
 };
 
@@ -105,9 +133,9 @@ export const buildAnnualBorrowerTestUploadLinkOptions = (referenceDate = new Dat
     requiredDocumentKeys: buildDefaultAnnualBorrowerTaxReturnDocumentRequirements(),
     periodLabel,
     lenderInstructions:
-      `Please upload your ${periodLabel} business tax return. `
-      + `If on extension, upload your filed extension form (Form 7004) below; `
-      + `your return is due by September 15, ${filingYear} (${extensionIso}).`,
+      `Please upload your ${periodLabel} business tax return. ` +
+      'If on extension, upload your filed extension form (Form 7004) below; ' +
+      `your return is due by September 15, ${filingYear} (${extensionIso}).`,
   };
 };
 
