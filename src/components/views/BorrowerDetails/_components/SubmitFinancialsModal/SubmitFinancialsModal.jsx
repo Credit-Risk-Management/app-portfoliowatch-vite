@@ -64,25 +64,43 @@ const SubmitFinancialsModal = () => {
   }, [activeModalKey, isEditMode, editingFinancialId]);
 
   useEffectAsync(async () => {
-    if (activeTab === 'triggers' && $borrowerFinancialsView.value.currentBorrowerId && !previousFinancial) {
-      $modalState.update({ isLoadingPrevious: true });
-      try {
-        const response = await borrowerFinancialsApi.getByBorrowerId(
-          $borrowerFinancialsView.value.currentBorrowerId,
-          { limit: 10, sortKey: 'asOfDate', sortDirection: 'desc' },
-        );
-        const data = response?.data ?? (Array.isArray(response) ? response : []);
-        const previous = data.find(hasIncomeStatementAndBalanceSheet);
-        if (previous) {
-          $modalState.update({ previousFinancial: previous });
-        }
-      } catch (err) {
-        // no-op
-      } finally {
-        $modalState.update({ isLoadingPrevious: false });
-      }
+    if (activeTab !== 'triggers' || !$borrowerFinancialsView.value.currentBorrowerId) {
+      return;
     }
-  }, [activeTab, previousFinancial]);
+    $modalState.update({ isLoadingPrevious: true });
+    try {
+      const response = await borrowerFinancialsApi.getByBorrowerId(
+        $borrowerFinancialsView.value.currentBorrowerId,
+        { limit: 10, sortKey: 'asOfDate', sortDirection: 'desc' },
+      );
+      const data = response?.data ?? (Array.isArray(response) ? response : []);
+      const editingId = $borrowerFinancialsView.value.editingFinancialId;
+      const asOf = $borrowerFinancialsForm.value.asOfDate;
+
+      let previous = null;
+      if (editingId) {
+        const idx = data.findIndex((f) => f.id === editingId);
+        previous = (idx >= 0 ? data.slice(idx + 1) : data.slice(1))
+          .find(hasIncomeStatementAndBalanceSheet) ?? null;
+      } else if (asOf) {
+        const asOfTime = new Date(asOf).getTime();
+        previous = data.find((f) => (
+          hasIncomeStatementAndBalanceSheet(f)
+          && f.asOfDate
+          && !Number.isNaN(asOfTime)
+          && new Date(f.asOfDate).getTime() < asOfTime
+        )) ?? null;
+      } else {
+        previous = data.find(hasIncomeStatementAndBalanceSheet) ?? null;
+      }
+
+      $modalState.update({ previousFinancial: previous });
+    } catch (err) {
+      // no-op
+    } finally {
+      $modalState.update({ isLoadingPrevious: false });
+    }
+  }, [activeTab, formAsOfDate, editingFinancialId, isEditMode]);
 
   const hasAsOfDate = Boolean(formAsOfDate && String(formAsOfDate).trim());
   const hasQuarterlyIncome = (documentsByType.incomeStatementQuarterly || []).length > 0;
