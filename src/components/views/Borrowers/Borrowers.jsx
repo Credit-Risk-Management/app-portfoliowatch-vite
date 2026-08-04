@@ -151,21 +151,22 @@ const Borrowers = () => {
       <span className="d-flex align-items-center flex-wrap py-4">
         <span className="text-break me-8">{borrower.name}</span>
         <span className="d-inline-flex align-items-center flex-wrap gap-4">
-          {borrower.quarterlyPackageComplete ? (
+          {(borrower.quarterlyPackagesOnFile || []).map((periodLabel) => (
             <OverlayTrigger
+              key={`borrower-${borrower.id}-quarterly-${periodLabel}`}
               placement="top"
               trigger={['hover', 'focus']}
               overlay={(
-                <Tooltip id={`borrower-${borrower.id}-quarterly-badge`}>
-                  Quarterly financial package on file for the current reporting period.
+                <Tooltip id={`borrower-${borrower.id}-quarterly-badge-${periodLabel}`}>
+                  {helpers.quarterlyPackageBadgeTooltip(periodLabel)}
                 </Tooltip>
               )}
             >
               <Badge bg="success-600" pill className="text-dark">
-                Q1
+                {helpers.quarterlyPackageBadgeShortLabel(periodLabel)}
               </Badge>
             </OverlayTrigger>
-          ) : null}
+          ))}
           {borrower.impactQuestionnaireComplete ? (
             <OverlayTrigger
               placement="top"

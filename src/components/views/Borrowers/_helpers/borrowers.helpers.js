@@ -2,6 +2,20 @@ import { COMPLIANCE_FILTER_GROUPS } from './borrowers.consts';
 
 export { getManagerName, getManagerOptions } from '@src/utils/relationshipManagers.utils';
 
+/** Display label for list badges, e.g. `Q1 2026` → `Q1`. */
+export const quarterlyPackageBadgeShortLabel = (periodLabel) => {
+  const match = /^Q(\d+)/.exec(String(periodLabel ?? '').trim());
+  return match ? `Q${match[1]}` : periodLabel;
+};
+
+export const quarterlyPackageBadgeTooltip = (periodLabel) => {
+  const trimmed = String(periodLabel ?? '').trim();
+  if (!trimmed) {
+    return 'Quarterly financial package on file for the current reporting period.';
+  }
+  return `Quarterly financial package on file for ${trimmed}.`;
+};
+
 export const hasActiveComplianceFilters = (filterValue) => COMPLIANCE_FILTER_GROUPS.some(
   (group) => ['true', 'false'].includes(filterValue?.[group.key]),
 );
