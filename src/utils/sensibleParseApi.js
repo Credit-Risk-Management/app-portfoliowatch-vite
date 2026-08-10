@@ -80,11 +80,10 @@ function isFirstAllianceGuarantorPfs(parserOptions) {
 function parseMoneyLike(v) {
   if (v == null) return undefined;
   if (typeof v === 'number' && Number.isFinite(v)) return v;
-  if (typeof v === 'string') {
-    const n = parseFloat(String(v).replace(/[$,]/g, '').trim());
-    return Number.isFinite(n) ? n : undefined;
-  }
-  return undefined;
+  if (typeof v !== 'string') return undefined;
+
+  const n = parseApiNumber(v);
+  return Number.isFinite(n) ? n : undefined;
 }
 
 function cellValue(cell) {
@@ -307,12 +306,55 @@ export function extractDataFromApiResponse(
   );
 
   if (source === 'tax') {
-    const grossReceipts = num(getVal(parsedDocument.scheduleC_grossReceipts) ?? getVal(parsedDocument.totalIncome));
-    const grossProfit = num(getVal(parsedDocument.scheduleC_grossProfit));
-    const netIncome = num(getVal(parsedDocument.scheduleC_netProfit));
-    const depreciationExpense = num(getVal(parsedDocument.scheduleC_depreciationExpense));
-    const interestExpense = num(getVal(parsedDocument.scheduleC_interestExpense));
-    const ebitdaComputed = netIncome + depreciationExpense + interestExpense;
+    const grossReceipts = num(
+      getVal(parsedDocument.scheduleC_grossReceipts)
+      ?? getVal(parsedDocument.form1065_grossReceipts)
+      ?? getVal(parsedDocument.form1120s_grossReceipts)
+      ?? getVal(parsedDocument.totalIncome),
+    );
+    const grossProfit = num(
+      getVal(parsedDocument.scheduleC_grossProfit)
+      ?? getVal(parsedDocument.form1065_grossProfit)
+      ?? getVal(parsedDocument.form1120s_grossProfit),
+    );
+    const netIncome = num(
+      getVal(parsedDocument.scheduleC_netProfit)
+      ?? getVal(parsedDocument.form1065_ordinaryIncome)
+      ?? getVal(parsedDocument.form1120s_ordinaryIncome)
+      ?? getVal(parsedDocument.form1120s_totalIncome),
+    );
+    const depreciationExpense = num(
+      getVal(parsedDocument.scheduleC_depreciationExpense)
+      ?? getVal(parsedDocument.form1065_depreciationExpense)
+      ?? getVal(parsedDocument.form1120s_depreciationExpense),
+    );
+    const interestFrom1120s = numOrUndefined(getVal(parsedDocument.form1120s_interestExpense));
+    const interestDirect = numOrUndefined(getVal(parsedDocument.scheduleC_interestExpense));
+    const mortgageInterest = num(getVal(parsedDocument.scheduleC_mortgageInterest));
+    const otherInterest = num(getVal(parsedDocument.scheduleC_otherInterest));
+    const interestFromScheduleCParts = (mortgageInterest || otherInterest)
+      ? mortgageInterest + otherInterest
+      : undefined;
+    const interestExpense = interestFrom1120s
+      ?? interestDirect
+      ?? interestFromScheduleCParts
+      ?? numOrUndefined(getVal(parsedDocument.form1065_interestExpense))
+      ?? 0;
+    const amortizationExpense = num(
+      getVal(parsedDocument.scheduleC_amortizationExpense)
+      ?? getVal(parsedDocument.form1065_amortizationExpense)
+      ?? getVal(parsedDocument.form1120s_amortizationExpense),
+    );
+    const ownerAddBack = num(
+      getVal(parsedDocument.form1065_guaranteedPayments)
+      ?? getVal(parsedDocument.form1120s_officerCompensation)
+      ?? getVal(parsedDocument.scheduleC_section179Expense),
+    );
+    const ebitdaComputed = netIncome
+      + depreciationExpense
+      + interestExpense
+      + amortizationExpense
+      + ownerAddBack;
     // Canonical format is percentage (0–100)
     const profitMargin = grossReceipts > 0
       ? parseFloat(((grossProfit / grossReceipts) * 100).toFixed(4))
@@ -322,7 +364,9 @@ export function extractDataFromApiResponse(
       grossRevenue: grossReceipts,
       netIncome,
       profitMargin,
-      ebitda: ebitdaComputed !== 0 ? ebitdaComputed : num(getVal(parsedDocument.ebitda)),
+      ebitda: ebitdaComputed !== 0
+        ? ebitdaComputed
+        : numOrUndefined(getVal(parsedDocument.ebitda)),
     };
   }
 

@@ -6,8 +6,16 @@
 
 export function parseApiNumber(str) {
   if (str == null || str === '') return NaN;
-  const cleaned = String(str).replace(/[$,\s]/g, '');
-  return Number(cleaned);
+  const raw = String(str).trim();
+  if (!raw) return NaN;
+
+  // Accounting negatives like "( $1,234.56 )"
+  const isParenNegative = /^\(.*\)$/.test(raw);
+  const unsigned = isParenNegative ? raw.slice(1, -1) : raw;
+  const cleaned = unsigned.replace(/[$,%\s]/g, '');
+  const parsed = Number(cleaned);
+  if (Number.isNaN(parsed)) return NaN;
+  return isParenNegative ? -Math.abs(parsed) : parsed;
 }
 
 /** Read `.value` from Sensible scalar objects (and compatible shapes). */
