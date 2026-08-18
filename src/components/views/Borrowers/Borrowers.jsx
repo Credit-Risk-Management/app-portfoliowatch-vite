@@ -4,9 +4,6 @@ import {
   Container,
   Row,
   Col,
-  Badge,
-  OverlayTrigger,
-  Tooltip,
 } from 'react-bootstrap';
 import { faEdit, faEye, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';
@@ -38,6 +35,7 @@ import EditBorrowerModal from './_components/EditBorrowerModal';
 import DeleteBorrowerModal from './_components/DeleteBorrowerModal';
 import AddBorrowerModal from './_components/AddBorrowerModal';
 import BorrowersComplianceFilter from './_components/BorrowersComplianceFilter/BorrowersComplianceFilter';
+import BorrowerComplianceBadges from '@src/components/global/BorrowerComplianceBadges/BorrowerComplianceBadges';
 
 const Borrowers = () => {
   const navigate = useNavigate();
@@ -150,54 +148,7 @@ const Borrowers = () => {
     name: () => (
       <span className="d-flex align-items-center flex-wrap py-4">
         <span className="text-break me-8">{borrower.name}</span>
-        <span className="d-inline-flex align-items-center flex-wrap gap-4">
-          {(borrower.quarterlyPackagesOnFile || []).map((periodLabel) => (
-            <OverlayTrigger
-              key={`borrower-${borrower.id}-quarterly-${periodLabel}`}
-              placement="top"
-              trigger={['hover', 'focus']}
-              overlay={(
-                <Tooltip id={`borrower-${borrower.id}-quarterly-badge-${periodLabel}`}>
-                  {helpers.quarterlyPackageBadgeTooltip(periodLabel)}
-                </Tooltip>
-              )}
-            >
-              <Badge bg="success-600" pill className="text-dark">
-                {helpers.quarterlyPackageBadgeShortLabel(periodLabel)}
-              </Badge>
-            </OverlayTrigger>
-          ))}
-          {borrower.impactQuestionnaireComplete ? (
-            <OverlayTrigger
-              placement="top"
-              trigger={['hover', 'focus']}
-              overlay={(
-                <Tooltip id={`borrower-${borrower.id}-impact-badge`}>
-                  Borrower impact questionnaire has been submitted.
-                </Tooltip>
-              )}
-            >
-              <Badge bg="info-600" pill className="text-dark">
-                I-Q
-              </Badge>
-            </OverlayTrigger>
-          ) : null}
-          {borrower.taxReturn2025Complete ? (
-            <OverlayTrigger
-              placement="top"
-              trigger={['hover', 'focus']}
-              overlay={(
-                <Tooltip id={`borrower-${borrower.id}-tax-return-2025-badge`}>
-                  FY 2025 business tax return is on file.
-                </Tooltip>
-              )}
-            >
-              <Badge bg="warning-600" pill className="text-dark">
-                2025 TR
-              </Badge>
-            </OverlayTrigger>
-          ) : null}
-        </span>
+        <BorrowerComplianceBadges entity={borrower} idPrefix={`borrower-${borrower.id}`} />
       </span>
     ),
     borrowerType: borrower.borrowerType || '-',

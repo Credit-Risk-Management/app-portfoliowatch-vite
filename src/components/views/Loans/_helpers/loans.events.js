@@ -21,6 +21,22 @@ import {
   $loanDetailView,
 } from './loans.consts';
 
+/** Toggle one compliance checklist row (mutually exclusive within each group). */
+export const toggleLoansComplianceFilter = (filterKey, value) => {
+  const current = $loansFilter.value?.[filterKey];
+  const nextValue = current === value ? '' : value;
+  $loansFilter.update({ [filterKey]: nextValue, page: 1 });
+};
+
+export const clearLoansComplianceFilters = () => {
+  $loansFilter.update({
+    quarterlyPackageComplete: '',
+    impactQuestionnaireComplete: '',
+    taxReturn2025Complete: '',
+    page: 1,
+  });
+};
+
 export const handleAddLoan = async () => {
   try {
     const formData = $loansForm.value;
@@ -118,6 +134,9 @@ export const handleSaveReport = async () => {
     interestType: $loansFilter.value.interestType,
     watchScore: $loansFilter.value.watchScore,
     relationshipManager: $loansFilter.value.relationshipManager,
+    quarterlyPackageComplete: $loansFilter.value.quarterlyPackageComplete,
+    impactQuestionnaireComplete: $loansFilter.value.impactQuestionnaireComplete,
+    taxReturn2025Complete: $loansFilter.value.taxReturn2025Complete,
   };
 
   await reportsApi.create({

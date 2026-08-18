@@ -122,6 +122,101 @@ export const resetPdfZoom = () => {
   $documentsContainerView.update({ pdfZoomScale: 1 });
 };
 
+export const createInitialPdfPanDragState = () => ({
+  isDragging: false,
+  startX: 0,
+  startY: 0,
+  scrollLeft: 0,
+  scrollTop: 0,
+});
+
+export const canPanZoomedPdf = (zoomScale = 1) => zoomScale > 1;
+
+export const resetPdfScrollPosition = (scrollEl) => {
+  if (!scrollEl) return;
+  scrollEl.scrollLeft = 0;
+  scrollEl.scrollTop = 0;
+};
+
+let activePdfPanSession = null;
+
+const clearActivePdfPanSession = () => {
+  if (!activePdfPanSession) return;
+  window.removeEventListener('mousemove', handlePdfPanWindowMouseMove);
+  window.removeEventListener('mouseup', handlePdfPanWindowMouseUp);
+  activePdfPanSession = null;
+};
+
+const applyPdfPanCursor = (scrollEl) => {
+  if (!scrollEl) return;
+  const { pdfZoomScale = 1 } = $documentsContainerView.value;
+  scrollEl.style.cursor = canPanZoomedPdf(pdfZoomScale) ? 'grab' : '';
+};
+
+export const endPdfPan = (scrollEl, dragState) => {
+  if (!dragState?.isDragging) return;
+  dragState.isDragging = false;
+  if (scrollEl) {
+    applyPdfPanCursor(scrollEl);
+    scrollEl.style.userSelect = '';
+  }
+  clearActivePdfPanSession();
+};
+
+const handlePdfPanWindowMouseMove = (e) => {
+  if (!activePdfPanSession) return;
+  const { scrollEl, dragState } = activePdfPanSession;
+  if (!dragState.isDragging || !scrollEl) return;
+  const dx = e.clientX - dragState.startX;
+  const dy = e.clientY - dragState.startY;
+  scrollEl.scrollLeft = dragState.scrollLeft - dx;
+  scrollEl.scrollTop = dragState.scrollTop - dy;
+  e.preventDefault();
+};
+
+const handlePdfPanWindowMouseUp = () => {
+  if (!activePdfPanSession) return;
+  const { scrollEl, dragState } = activePdfPanSession;
+  endPdfPan(scrollEl, dragState);
+};
+
+export const handlePdfPanMouseDown = (e, scrollEl, dragState) => {
+  const { pdfZoomScale = 1 } = $documentsContainerView.value;
+  if (!canPanZoomedPdf(pdfZoomScale) || !scrollEl || !dragState) return;
+  if (e.button !== 0) return;
+
+  dragState.isDragging = true;
+  dragState.startX = e.clientX;
+  dragState.startY = e.clientY;
+  dragState.scrollLeft = scrollEl.scrollLeft;
+  dragState.scrollTop = scrollEl.scrollTop;
+  scrollEl.style.cursor = 'grabbing';
+  scrollEl.style.userSelect = 'none';
+
+  activePdfPanSession = { scrollEl, dragState };
+  window.addEventListener('mousemove', handlePdfPanWindowMouseMove);
+  window.addEventListener('mouseup', handlePdfPanWindowMouseUp);
+  e.preventDefault();
+};
+
+export const syncPdfPanScrollContainer = (scrollEl) => {
+  if (!scrollEl) return;
+  const { pdfZoomScale = 1 } = $documentsContainerView.value;
+  if (!canPanZoomedPdf(pdfZoomScale)) {
+    resetPdfScrollPosition(scrollEl);
+    scrollEl.style.cursor = '';
+    scrollEl.style.userSelect = '';
+    return;
+  }
+  applyPdfPanCursor(scrollEl);
+};
+
+export const disposePdfPanListeners = () => {
+  if (!activePdfPanSession) return;
+  const { scrollEl, dragState } = activePdfPanSession;
+  endPdfPan(scrollEl, dragState);
+};
+
 const toNumberFromFormValue = (value) => {
   if (value == null || value === '') return null;
   const num = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.-]/g, '')) : Number(value);

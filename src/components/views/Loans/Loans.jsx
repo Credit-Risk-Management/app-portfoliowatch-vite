@@ -26,6 +26,8 @@ import { handleSaveToReports, handleComputeWatchScores } from './_helpers/loans.
 import { loadReferenceData, fetchAndSetLoans } from './_helpers/loans.resolvers';
 import { formatDate, getRelationshipManagerOptions } from './_helpers/loans.helpers';
 import * as loansConsts from './_helpers/loans.consts';
+import BorrowerComplianceBadges from '@src/components/global/BorrowerComplianceBadges/BorrowerComplianceBadges';
+import LoansComplianceFilter from './_components/LoansComplianceFilter/LoansComplianceFilter';
 
 const Loans = () => {
   const navigate = useNavigate();
@@ -79,12 +81,20 @@ const Loans = () => {
     $loansFilter.value.limit,
     $loansFilter.value.sortKey,
     $loansFilter.value.sortDirection,
+    $loansFilter.value.quarterlyPackageComplete,
+    $loansFilter.value.impactQuestionnaireComplete,
+    $loansFilter.value.taxReturn2025Complete,
   ]);
 
   const rows = ($loans.value?.list || []).map((loan) => ({
     ...loan,
     loanId: loan.loanId || loan.loanNumber || loan.id || '-',
-    borrowerName: loan.borrowerName || '-',
+    borrowerName: () => (
+      <span className="d-flex align-items-center flex-wrap py-4">
+        <span className="text-break me-8">{loan.borrowerName || '-'}</span>
+        <BorrowerComplianceBadges entity={loan} idPrefix={`loan-${loan.id}`} />
+      </span>
+    ),
     principalAmount: formatCurrency(loan.principalAmount),
     paymentAmount: formatCurrency(loan.paymentAmount),
     nextPaymentDueDate: formatDate(loan.nextPaymentDueDate),
@@ -140,8 +150,8 @@ const Loans = () => {
           )}
         />
 
-        <Row className="mb-16 mb-md-24">
-          <Col xs={12} md={6} className="mb-12 mb-md-0">
+        <Row className="mb-16 mb-md-24 align-items-end">
+          <Col xs={12} lg={3} className="mb-12 mb-lg-0">
             <Search
               placeholder="Search loans..."
               value={$loansFilter.value.searchTerm}
@@ -149,7 +159,7 @@ const Loans = () => {
               name="searchTerm"
             />
           </Col>
-          <Col xs={12} md={2} className="mb-12 mb-md-0">
+          <Col xs={12} sm={6} lg={2} className="mb-12 mb-lg-0">
             <SelectInput
               name="interestType"
               signal={$loansFilter}
@@ -163,7 +173,7 @@ const Loans = () => {
               notClearable
             />
           </Col>
-          <Col xs={12} md={2} className="mb-12 mb-md-0">
+          <Col xs={12} sm={6} lg={2} className="mb-12 mb-lg-0">
             <SelectInput
               name="watchScore"
               signal={$loansFilter}
@@ -177,7 +187,7 @@ const Loans = () => {
               notClearable
             />
           </Col>
-          <Col xs={12} md={2} className="mb-12 mb-md-0">
+          <Col xs={12} sm={6} lg={2} className="mb-12 mb-lg-0">
             <SelectInput
               name="relationshipManager"
               signal={$loansFilter}
@@ -190,6 +200,9 @@ const Loans = () => {
               placeholder="All Managers"
               notClearable
             />
+          </Col>
+          <Col xs={12} sm={6} lg={3}>
+            <LoansComplianceFilter />
           </Col>
         </Row>
 

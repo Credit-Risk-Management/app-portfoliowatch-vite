@@ -150,6 +150,9 @@ export const fetchAndSetLoans = async ({ isShowLoader = true }) => {
       sortKey,
       sortDirection,
       limit,
+      quarterlyPackageComplete,
+      impactQuestionnaireComplete,
+      taxReturn2025Complete,
     } = $loansFilter.value;
 
     const filters = {
@@ -157,6 +160,9 @@ export const fetchAndSetLoans = async ({ isShowLoader = true }) => {
       interestType,
       watchScore,
       relationshipManager,
+      quarterlyPackageComplete,
+      impactQuestionnaireComplete,
+      taxReturn2025Complete,
       page: page || 1,
       limit: resolvePageLimit(limit),
       sortKey,

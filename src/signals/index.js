@@ -91,6 +91,12 @@ export const $loansFilter = Signal({
   interestType: '',
   watchScore: '',
   relationshipManager: '',
+  /** '' | 'true' | 'false' — quarterly package on file for current reporting period */
+  quarterlyPackageComplete: '',
+  /** '' | 'true' | 'false' — any submitted impact questionnaire link */
+  impactQuestionnaireComplete: '',
+  /** '' | 'true' | 'false' — FY 2025 business tax return on file (as-of 12/31/2025) */
+  taxReturn2025Complete: '',
 });
 
 export const $loansView = Signal({

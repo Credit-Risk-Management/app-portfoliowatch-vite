@@ -43,7 +43,7 @@ export const getQuarterFromAsOfDate = (asOfDate) => {
   if (!asOfDate) return null;
   const d = new Date(asOfDate);
   if (Number.isNaN(d.getTime())) return null;
-  return Math.floor(d.getMonth() / 3) + 1;
+  return Math.floor(d.getUTCMonth() / 3) + 1;
 };
 
 export const formatQuarterBadge = (asOfDate) => {
@@ -57,13 +57,54 @@ const quarterYearIndex = (asOfDate) => {
   if (Number.isNaN(d.getTime())) return null;
   const quarter = getQuarterFromAsOfDate(asOfDate);
   if (!quarter) return null;
-  return d.getFullYear() * 4 + quarter;
+  return d.getUTCFullYear() * 4 + quarter;
 };
 
 const isCalendarYearEnd = (asOfDate) => {
   const d = new Date(asOfDate);
   if (Number.isNaN(d.getTime())) return false;
-  return d.getMonth() === 11 && d.getDate() === 31;
+  return d.getUTCMonth() === 11 && d.getUTCDate() === 31;
+};
+
+const isCalendarQuarterEnd = (asOfDate) => {
+  const d = new Date(asOfDate);
+  if (Number.isNaN(d.getTime())) return false;
+  const month = d.getUTCMonth();
+  const day = d.getUTCDate();
+  return (month === 2 && day === 31)
+    || (month === 5 && day === 30)
+    || (month === 8 && day === 30)
+    || (month === 11 && day === 31);
+};
+
+const isSameAsOfDate = (left, right) => {
+  if (!left || !right) return false;
+  return new Date(left).getTime() === new Date(right).getTime();
+};
+
+/**
+ * Most recent quarter-end filing with EBITDA (includes YTD quarterly-cycle packages),
+ * excluding the yearend annual/tax return row used in the Last Yearend section.
+ */
+const resolveLastQuarterFinancial = (sortedFinancials, yearendFinancial) => {
+  const quarterEndFilings = sortedFinancials.filter((financial) => {
+    if (!isCalendarQuarterEnd(financial.asOfDate)) return false;
+    if (parseEbitda(financial) == null) return false;
+    if (
+      yearendFinancial
+      && isSameAsOfDate(financial.asOfDate, yearendFinancial.asOfDate)
+      && !financial.incomeStatementPackageQuarterly
+    ) {
+      return false;
+    }
+    return true;
+  });
+
+  if (quarterEndFilings.length > 0) {
+    return quarterEndFilings[0];
+  }
+
+  return sortedFinancials.find((financial) => Boolean(financial.incomeStatementPackageQuarterly)) ?? null;
 };
 
 const areConsecutiveQuarterChain = (financials, count) => {
@@ -237,8 +278,8 @@ export const formatSummaryDscr = (value) => {
 
 /**
  * Builds the three debt service summary sections (last yearend, last four quarters, last quarter).
- * Last quarter metrics are only populated when at least one quarterly income statement package exists;
- * otherwise that section shows N/A (no fallback to annual-only filings).
+ * Last yearend DSCR uses the stored value on the annual/tax-return filing (not recomputed from debt worksheet).
+ * Last quarter uses the most recent quarter-end filing with EBITDA, including YTD quarterly-cycle packages.
  */
 export const buildQuarterlyDebtServiceSummary = ({
   financialsList = [],
@@ -260,8 +301,7 @@ export const buildQuarterlyDebtServiceSummary = ({
     ?? null;
 
   const yearendEbitda = parseEbitda(yearendFinancial);
-  const yearendDscr = computeDscr(yearendEbitda, annualDebtService)
-    ?? parseStoredDscr(yearendFinancial);
+  const yearendDscr = parseStoredDscr(yearendFinancial);
 
   const lastFourQuarterly = quarterlyFinancials.slice(0, 4);
   const ttmEbitda = lastFourQuarterly.length === 4
@@ -271,12 +311,21 @@ export const buildQuarterlyDebtServiceSummary = ({
   const ttmDscr = computeDscr(ttmEbitda, annualDebtService);
   const ttmTotalDebtService = ttmEbitda != null ? annualDebtService : null;
 
-  const hasQuarterlyIncomeFinancials = quarterlyFinancials.length > 0;
-  const lastQuarterFinancial = hasQuarterlyIncomeFinancials ? quarterlyFinancials[0] : null;
-  const lastQuarterEbitda = hasQuarterlyIncomeFinancials ? parseEbitda(lastQuarterFinancial) : null;
-  const lastQuarterTotalDebtService = hasQuarterlyIncomeFinancials ? quarterlyDebtService : null;
-  const lastQuarterDscr = hasQuarterlyIncomeFinancials
-    ? computeDscr(lastQuarterEbitda, quarterlyDebtService)
+  const lastQuarterFinancial = resolveLastQuarterFinancial(sorted, yearendFinancial);
+  const hasLastQuarterFinancial = lastQuarterFinancial != null;
+  const lastQuarterIsQuarterlyPackage = Boolean(lastQuarterFinancial?.incomeStatementPackageQuarterly);
+  const lastQuarterEbitda = hasLastQuarterFinancial ? parseEbitda(lastQuarterFinancial) : null;
+  const lastQuarterTotalDebtService = hasLastQuarterFinancial
+    ? (lastQuarterIsQuarterlyPackage ? quarterlyDebtService : annualDebtService)
+    : null;
+  const lastQuarterDscr = hasLastQuarterFinancial
+    ? (
+      parseStoredDscr(lastQuarterFinancial)
+      ?? computeDscr(
+        lastQuarterEbitda,
+        lastQuarterIsQuarterlyPackage ? quarterlyDebtService : annualDebtService,
+      )
+    )
     : null;
 
   return {
@@ -306,14 +355,14 @@ export const buildQuarterlyDebtServiceSummary = ({
       {
         key: 'lastQuarter',
         title: 'Last Quarter',
-        badge: hasQuarterlyIncomeFinancials
+        badge: hasLastQuarterFinancial
           ? formatQuarterBadge(lastQuarterFinancial?.asOfDate)
           : null,
         ebitda: lastQuarterEbitda,
         totalDebtService: lastQuarterTotalDebtService,
         dscr: lastQuarterDscr,
         covenantDSCR,
-        lastQuarterUsesQuarterlyFinancials: hasQuarterlyIncomeFinancials,
+        lastQuarterUsesQuarterlyFinancials: hasLastQuarterFinancial,
       },
     ],
   };

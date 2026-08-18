@@ -50,6 +50,8 @@ const DocumentsContainer = ({
   const { documentsByType, currentDocumentIndex, isLoading: modalDocLoading } = $modalState.value;
   const hasPendingExtraction = helpers.hasPendingExtraction(documentsByType);
   const fileInputRef = useRef(null);
+  const pdfScrollRef = useRef(null);
+  const pdfPanDragRef = useRef(events.createInitialPdfPanDragState());
 
   const currentDocs = documentsByType[documentType] || [];
   const currentIndex = currentDocumentIndex[documentType] || 0;
@@ -96,6 +98,14 @@ const DocumentsContainer = ({
   useEffect(() => {
     resolvers.resetPdfState();
   }, [pdfUrl, pdfBlobUrl]);
+
+  useEffect(() => {
+    events.syncPdfPanScrollContainer(pdfScrollRef.current);
+  }, [pdfZoomScale, pdfPageNumber, pdfUrl, pdfBlobUrl]);
+
+  useEffect(() => () => {
+    events.disposePdfPanListeners();
+  }, []);
 
   useEffect(() => {
     if (isTaxReturnUploaded && documentType !== 'taxReturn') {
@@ -269,6 +279,7 @@ const DocumentsContainer = ({
             </div>
 
             <div
+              ref={pdfScrollRef}
               className="flex-grow-1 overflow-auto position-relative"
               style={{
                 minHeight: 0,
@@ -276,7 +287,14 @@ const DocumentsContainer = ({
                 ...(pdfNumPages && pdfNumPages > 1 ? { paddingBottom: '3.25rem' } : {}),
                 backgroundColor: '#525252',
                 zIndex: 0,
+                cursor: events.canPanZoomedPdf(pdfZoomScale) ? 'grab' : undefined,
               }}
+              title={events.canPanZoomedPdf(pdfZoomScale) ? 'Click and drag to pan' : undefined}
+              onMouseDown={(e) => events.handlePdfPanMouseDown(
+                e,
+                pdfScrollRef.current,
+                pdfPanDragRef.current,
+              )}
             >
               <Document
                 file={pdfBlobUrl || pdfUrl}
