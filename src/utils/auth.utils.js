@@ -6,7 +6,29 @@ import {
   signOut as firebaseSignOut,
   getIdToken,
   onAuthStateChanged,
+  auth,
 } from './firebase';
+
+const getLoginErrorMessage = (error) => {
+  const code = error?.code;
+
+  switch (code) {
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential':
+    case 'auth/invalid-login-credentials':
+      return 'Incorrect email or password.';
+    case 'auth/user-not-found':
+      return 'No account found with this email address.';
+    case 'auth/too-many-requests':
+      return 'Too many failed attempts. Please try again later.';
+    case 'auth/user-disabled':
+      return 'This account has been disabled.';
+    case 'auth/invalid-email':
+      return 'Please enter a valid email address.';
+    default:
+      return error?.message || 'Login failed. Please try again.';
+  }
+};
 
 /**
  * Initialize auth listener
@@ -17,6 +39,8 @@ export const initAuthListener = () => {
 
   return onAuthStateChanged(async (firebaseUser) => {
     if (firebaseUser) {
+      $global.value = { ...$global.value, isLoading: true };
+
       try {
         // Get Firebase ID token
         const token = await firebaseUser.getIdToken();
@@ -74,14 +98,21 @@ export const initAuthListener = () => {
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
-        // User is signed in with Firebase but not in backend
-        // This means they haven't completed account setup
+        // User is signed in with Firebase but not in backend — sign out so login can retry cleanly
+        try {
+          await firebaseSignOut();
+        } catch (signOutError) {
+          console.error('Error signing out after failed backend verification:', signOutError);
+        }
+
         $global.value = {
           ...$global.value,
           isLoading: false,
           isSignedIn: false,
         };
         $auth.value = { user: null, token: null, isLoading: false };
+        $user.value = {};
+        $organization.value = {};
       }
     } else {
       // User is signed out
@@ -111,7 +142,14 @@ export const loginUser = async (email, password) => {
     return { success: true, user };
   } catch (error) {
     console.error('Login error:', error);
-    return { success: false, error: error.message };
+
+    try {
+      await firebaseSignOut();
+    } catch (signOutError) {
+      console.error('Error signing out after failed login:', signOutError);
+    }
+
+    return { success: false, error: getLoginErrorMessage(error) };
   }
 };
 
@@ -128,7 +166,14 @@ export const loginWithGoogle = async () => {
     return { success: true, user };
   } catch (error) {
     console.error('Google login error:', error);
-    return { success: false, error: error.message };
+
+    try {
+      await firebaseSignOut();
+    } catch (signOutError) {
+      console.error('Error signing out after failed Google login:', signOutError);
+    }
+
+    return { success: false, error: getLoginErrorMessage(error) };
   }
 };
 
@@ -136,20 +181,31 @@ export const loginWithGoogle = async () => {
  * Wait for auth state to be fully updated
  * This ensures user data is fetched from backend before proceeding
  */
-const waitForAuthStateUpdate = () => new Promise((resolve) => {
+const waitForAuthStateUpdate = () => new Promise((resolve, reject) => {
+  const timeoutId = setTimeout(() => {
+    clearInterval(checkInterval);
+    reject(new Error('Login timed out. Please try again.'));
+  }, 10000);
+
   const checkInterval = setInterval(() => {
-    // Wait until auth is no longer loading and user is signed in
-    if (!$global.value.isLoading && $global.value.isSignedIn) {
+    if ($global.value.isSignedIn && !$global.value.isLoading) {
       clearInterval(checkInterval);
+      clearTimeout(timeoutId);
       resolve();
+      return;
+    }
+
+    // Firebase session cleared and app state settled — backend verification failed
+    if (
+      !$global.value.isLoading
+      && !$global.value.isSignedIn
+      && !auth.currentUser
+    ) {
+      clearInterval(checkInterval);
+      clearTimeout(timeoutId);
+      reject(new Error('No account found. Please check your credentials or contact your administrator.'));
     }
   }, 100);
-
-  // Timeout after 10 seconds
-  setTimeout(() => {
-    clearInterval(checkInterval);
-    resolve();
-  }, 10000);
 });
 
 /**

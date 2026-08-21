@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Container, Row, Col, Form, Button, Card, Alert } from 'react-bootstrap';
+import { Container, Row, Col, Form, Button, Card } from 'react-bootstrap';
 import { loginUser } from '@src/utils/auth.utils';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
+import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import { $form } from '@src/signals';
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect') || '/dashboard';
@@ -19,7 +19,6 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     const { email, password } = $form.value;
@@ -30,7 +29,7 @@ const Login = () => {
       $form.update({ email: '', password: '' });
       navigate(redirect, { replace: true });
     } else {
-      setError(result.error || 'Login failed. Please try again.');
+      dangerAlert(result.error || 'Login failed. Please try again.');
       setLoading(false);
     }
   };
@@ -62,12 +61,6 @@ const Login = () => {
                 <h3 className="fw-bold">Login</h3>
                 <p>Sign in to your account</p>
               </div>
-
-              {error && (
-                <Alert variant="danger" onClose={() => setError('')} dismissible>
-                  {error}
-                </Alert>
-              )}
 
               <Form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3" controlId="email">
