@@ -55,6 +55,7 @@ const UniversalModal = ({
       </Modal.Body>
       <Modal.Footer className={`border-info border-top bg-info-900 shadow-sm border-0 ${isFullscreen ? 'modal-fullscreen-footer border-info border-top bg-info-900 shadow-sm border-0' : ''} ${footerClass}`}>
         <Button
+          type="button"
           className={leftBtnClass}
           onClick={leftBtnOnClick}
           disabled={leftButtonDisabled}
@@ -63,6 +64,7 @@ const UniversalModal = ({
         </Button>
         {rightBtnText !== null && (
           <Button
+            type="button"
             className={rightBtnClass}
             onClick={rightBtnOnClick}
             disabled={rightButtonDisabled}

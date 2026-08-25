@@ -47,6 +47,7 @@ const SubmitFinancialsModal = () => {
         const response = await borrowerFinancialsApi.getById(editingId);
         if (cancelled) return;
         if ($borrowerFinancialsView.value.editingFinancialId !== editingId) return;
+        if ($borrowerFinancialsView.value.activeModalKey !== 'submitFinancials') return;
         if (response?.success && response?.data) {
           await resolvers.handleOpenEditMode(response.data);
         }
@@ -118,7 +119,7 @@ const SubmitFinancialsModal = () => {
     : (isEditMode ? 'Update' : 'Submit');
 
   const handleCloseWithRevoke = async () => events.handleClose(pdfUrl);
-  const handleSubmitClick = () => resolvers.handleSubmit(handleCloseWithRevoke);
+  const handleSubmitClick = () => resolvers.handleSubmit();
   const handleStageDocuments = () => resolvers.stageFinancialDocuments();
 
   return (
