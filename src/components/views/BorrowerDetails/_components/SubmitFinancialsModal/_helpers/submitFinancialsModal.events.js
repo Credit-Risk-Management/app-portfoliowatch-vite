@@ -12,17 +12,22 @@ const deleteStoragePath = async (path) => {
   await deleteRef.delete().catch(() => { });
 };
 
+/** Hide the modal immediately (sync). Safe to call multiple times. */
+export const hideSubmitFinancialsModal = () => {
+  $borrowerFinancialsView.update({
+    activeModalKey: null,
+    isEditMode: false,
+    editingFinancialId: null,
+  });
+};
+
 export const handleClose = async (pdfUrlOrEvent) => {
   const { $financialDocsUploader, $modalState } = consts;
   const { documentsByType, downloadSensibleUrl, pdfUrl: statePdfUrl } = $modalState.value;
   const pdfUrlToRevoke = typeof pdfUrlOrEvent === 'string' ? pdfUrlOrEvent : statePdfUrl;
 
   // Hide immediately so the modal does not wait on Firebase/async cleanup.
-  $borrowerFinancialsView.update({
-    activeModalKey: null,
-    isEditMode: false,
-    editingFinancialId: null,
-  });
+  hideSubmitFinancialsModal();
 
   Object.values(documentsByType || {}).forEach((docs) => {
     (docs || []).forEach((doc) => {

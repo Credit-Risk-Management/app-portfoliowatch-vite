@@ -7,6 +7,13 @@ import { storage } from '@src/utils/firebase';
 import { profitMarginPercentFromNetIncome } from '@src/utils/sensibleExtractPrimitives';
 import { formatDateForInput } from '@src/utils/formatDate';
 import * as consts from './submitFinancialsModal.consts';
+import { hideSubmitFinancialsModal } from './submitFinancialsModal.events';
+
+const isSubmitFinancialSuccess = (response) => (
+  Boolean(response?.success)
+  || Boolean(response?.data?.id)
+  || Boolean(response?.id)
+);
 
 const { MODAL_FINANCIAL_DOCUMENT_BUCKET_KEYS, INCOME_STATEMENT_MODAL_KEYS } = consts;
 
@@ -617,15 +624,21 @@ export const handleSubmit = async (onCloseCallback) => {
       response = await borrowerFinancialsApi.create(financialData);
     }
 
-    if (response?.success) {
+    if (isSubmitFinancialSuccess(response)) {
       const wasEditMode = $borrowerFinancialsView.value.isEditMode;
+      const responseData = response?.data ?? response;
+      const updatedLoans = responseData?.updatedLoans || [];
 
+      // Close synchronously before refresh/cleanup so the modal never waits on Firebase or multipart I/O.
+      hideSubmitFinancialsModal();
       $borrowerFinancialsView.update({
         refreshTrigger: $borrowerFinancialsView.value.refreshTrigger + 1,
       });
 
-      const updatedLoans = response.data?.updatedLoans || [];
-      await onCloseCallback();
+      if (typeof onCloseCallback === 'function') {
+        void onCloseCallback().catch(() => {});
+      }
+
       $modalState.update({
         showWatchScoreResults: updatedLoans.length > 0,
         updatedLoans,
