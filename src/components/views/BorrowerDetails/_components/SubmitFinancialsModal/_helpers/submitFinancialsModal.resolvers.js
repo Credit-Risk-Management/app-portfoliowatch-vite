@@ -7,12 +7,13 @@ import { storage } from '@src/utils/firebase';
 import { profitMarginPercentFromNetIncome } from '@src/utils/sensibleExtractPrimitives';
 import { formatDateForInput } from '@src/utils/formatDate';
 import * as consts from './submitFinancialsModal.consts';
-import { hideSubmitFinancialsModal } from './submitFinancialsModal.events';
+import {
+  resetSubmitFinancialsModalSync,
+  cleanupSubmitFinancialsModalStorage,
+} from './submitFinancialsModal.events';
 
-const isSubmitFinancialSuccess = (response) => (
-  Boolean(response?.success)
-  || Boolean(response?.data?.id)
-  || Boolean(response?.id)
+const isSubmitFinancialFailure = (response) => (
+  response?.success === false || response?.data?.success === false
 );
 
 const { MODAL_FINANCIAL_DOCUMENT_BUCKET_KEYS, INCOME_STATEMENT_MODAL_KEYS } = consts;
@@ -350,6 +351,9 @@ export const handleOpenEditMode = async (financial) => {
   if ($borrowerFinancialsView.value.editingFinancialId !== expectedFinancialId) {
     return;
   }
+  if ($borrowerFinancialsView.value.activeModalKey !== 'submitFinancials') {
+    return;
+  }
   const firstDocType = Object.keys(documentsByType).find((type) => documentsByType[type].length > 0);
   const firstDoc = firstDocType ? documentsByType[firstDocType][0] : null;
 
@@ -483,7 +487,7 @@ const computeRemovedStoredDocumentIds = (documentsByType, initialStoredDocumentI
   return removed;
 };
 
-export const handleSubmit = async (onCloseCallback) => {
+export const handleSubmit = async () => {
   const { $modalState } = consts;
   try {
     $modalState.update({ isSubmitting: true, error: null });
@@ -624,25 +628,27 @@ export const handleSubmit = async (onCloseCallback) => {
       response = await borrowerFinancialsApi.create(financialData);
     }
 
-    if (isSubmitFinancialSuccess(response)) {
+    if (!isSubmitFinancialFailure(response)) {
       const wasEditMode = $borrowerFinancialsView.value.isEditMode;
       const responseData = response?.data ?? response;
       const updatedLoans = responseData?.updatedLoans || [];
+      const pdfUrl = $modalState.value.pdfUrl;
 
-      // Close synchronously before refresh/cleanup so the modal never waits on Firebase or multipart I/O.
-      hideSubmitFinancialsModal();
       $borrowerFinancialsView.update({
         refreshTrigger: $borrowerFinancialsView.value.refreshTrigger + 1,
       });
 
-      if (typeof onCloseCallback === 'function') {
-        void onCloseCallback().catch(() => {});
+      // Same synchronous reset as Cancel/X — updates all signals the modal reads.
+      const cleanupContext = resetSubmitFinancialsModalSync(pdfUrl);
+      void cleanupSubmitFinancialsModalStorage(cleanupContext).catch(() => {});
+
+      if (updatedLoans.length > 0) {
+        $modalState.update({
+          showWatchScoreResults: true,
+          updatedLoans,
+        });
       }
 
-      $modalState.update({
-        showWatchScoreResults: updatedLoans.length > 0,
-        updatedLoans,
-      });
       let successMessage;
       if (didQueueExtraction) {
         successMessage = wasEditMode
