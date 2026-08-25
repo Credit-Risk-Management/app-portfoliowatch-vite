@@ -124,7 +124,7 @@ const SubmitFinancialsModal = () => {
   return (
     <>
       <UniversalModal
-        show={activeModalKey === 'submitFinancials'}
+        show={$borrowerFinancialsView.value.activeModalKey === 'submitFinancials'}
         onHide={handleCloseWithRevoke}
         headerText={modalTitle}
         leftBtnText="Cancel"
