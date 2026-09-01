@@ -187,16 +187,13 @@ const sumQuarterlyEbitdaThroughLastYearend = (financialsList = []) => {
 };
 
 /**
- * Business EBITDA for loan global cash flow — same path as covenant DSCR:
- * four consecutive quarterly EBITDA through last yearend → TTM (loan-level or summed quarters);
- * otherwise EBITDA from the last annual (yearend) filing.
+ * Business EBITDA for loan global cash flow (annual/TTM basis, paired with annual debt service):
+ * — Four consecutive quarterly EBITDA through last yearend → TTM (sum of those four quarters);
+ * — Otherwise → EBITDA from the last calendar yearend (Dec 31) annual filing only.
+ * Ignores loan-level "latest available" EBITDA (often a partial quarter or YTD, e.g. 2Q).
  */
 export const resolveLoanDetailBusinessEbitda = (loanLevelEbitda, financialsList = []) => {
   if (hasFourConsecutiveQuartersWithEbitdaThroughLastYearend(financialsList)) {
-    if (loanLevelEbitda != null && loanLevelEbitda !== '') {
-      const n = Number(loanLevelEbitda);
-      if (Number.isFinite(n)) return n;
-    }
     return sumQuarterlyEbitdaThroughLastYearend(financialsList);
   }
 
@@ -209,7 +206,10 @@ export const resolveLoanDetailBusinessEbitda = (loanLevelEbitda, financialsList 
   }
 
   const sorted = sortFinancialsByAsOfDesc(financialsList);
-  const yearend = resolveLastYearendFinancial(sorted);
+  const annualFinancials = sorted.filter((f) => !f.incomeStatementPackageQuarterly);
+  const yearend = annualFinancials.find(
+    (f) => isCalendarYearEnd(f.asOfDate) && parseEbitda(f) != null,
+  ) ?? annualFinancials.find((f) => isCalendarYearEnd(f.asOfDate));
   return parseEbitda(yearend);
 };
 
@@ -314,17 +314,15 @@ export const buildQuarterlyDebtServiceSummary = ({
   const lastQuarterFinancial = resolveLastQuarterFinancial(sorted, yearendFinancial);
   const hasLastQuarterFinancial = lastQuarterFinancial != null;
   const lastQuarterIsQuarterlyPackage = Boolean(lastQuarterFinancial?.incomeStatementPackageQuarterly);
+  const lastQuarterDebtServiceBasis = lastQuarterIsQuarterlyPackage
+    ? quarterlyDebtService
+    : annualDebtService;
   const lastQuarterEbitda = hasLastQuarterFinancial ? parseEbitda(lastQuarterFinancial) : null;
-  const lastQuarterTotalDebtService = hasLastQuarterFinancial
-    ? (lastQuarterIsQuarterlyPackage ? quarterlyDebtService : annualDebtService)
-    : null;
+  const lastQuarterTotalDebtService = hasLastQuarterFinancial ? lastQuarterDebtServiceBasis : null;
   const lastQuarterDscr = hasLastQuarterFinancial
     ? (
       parseStoredDscr(lastQuarterFinancial)
-      ?? computeDscr(
-        lastQuarterEbitda,
-        lastQuarterIsQuarterlyPackage ? quarterlyDebtService : annualDebtService,
-      )
+      ?? computeDscr(lastQuarterEbitda, lastQuarterDebtServiceBasis)
     )
     : null;
 
