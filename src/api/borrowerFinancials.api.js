@@ -35,6 +35,21 @@ const borrowerFinancialsApiBase = {
   // Delete financial record
   delete: async (id) => apiClient.delete(`/borrower-financials/${id}`),
 
+  prepareDocumentUploadSlots: async (id, { files, uploadedBy }) => apiClient.post(
+    `/borrower-financials/${id}/document-upload-slots`,
+    { files, uploadedBy },
+  ),
+
+  confirmDocumentUploads: async (id, uploads) => apiClient.post(
+    `/borrower-financials/${id}/confirm-document-uploads`,
+    { uploads },
+  ),
+
+  notifyExtractReady: async (id, taskId) => apiClient.post(
+    `/borrower-financials/${id}/extract-ready`,
+    { taskId },
+  ),
+
   rerunExtract: async (id, data = {}) => apiClient.post(`/borrower-financials/${id}/rerun-extract`, data),
 
   rerunCalculations: async (id) => apiClient.post(`/borrower-financials/${id}/rerun-calculations`),

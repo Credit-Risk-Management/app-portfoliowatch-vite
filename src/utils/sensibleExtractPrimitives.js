@@ -61,14 +61,6 @@ export function deriveProfitMarginPercentFromIncomeScalars(parsedDocument, optio
     grossRevenue = Number.isNaN(n) ? undefined : n;
   }
 
-  const explicitRaw = get(parsedDocument.profitMargin);
-  if (explicitRaw != null && explicitRaw !== '') {
-    const explicitPm = parseApiNumber(explicitRaw);
-    if (!Number.isNaN(explicitPm)) {
-      return normalizeProfitMarginForStorage(explicitPm);
-    }
-  }
-
   if (grossRevenue === undefined || grossRevenue === 0 || !Number.isFinite(grossRevenue)) {
     return undefined;
   }
@@ -76,11 +68,19 @@ export function deriveProfitMarginPercentFromIncomeScalars(parsedDocument, optio
   const cogsRaw = get(parsedDocument.costOfGoodsSold)
     ?? get(parsedDocument.is_costOfGoodsSold);
   const cogs = parseApiNumber(cogsRaw);
-  const useGrossMargin = !Number.isNaN(cogs) && cogs !== 0;
+  const gpRaw = get(parsedDocument.grossProfit) ?? get(parsedDocument.is_grossProfit);
+  const grossProfit = parseApiNumber(gpRaw);
+  const hasCogs = !Number.isNaN(cogs) && cogs !== 0;
+  const hasGrossProfit = !Number.isNaN(grossProfit) && Number.isFinite(grossProfit);
+  const useGrossMargin = hasCogs || hasGrossProfit;
 
   if (useGrossMargin) {
-    const gpRaw = get(parsedDocument.grossProfit) ?? get(parsedDocument.is_grossProfit);
-    const gp = parseApiNumber(gpRaw);
+    let gp = NaN;
+    if (hasGrossProfit) {
+      gp = grossProfit;
+    } else if (hasCogs) {
+      gp = grossRevenue - cogs;
+    }
     if (!Number.isNaN(gp) && Number.isFinite(gp)) {
       return normalizeProfitMarginForStorage(gp / grossRevenue);
     }
@@ -90,6 +90,14 @@ export function deriveProfitMarginPercentFromIncomeScalars(parsedDocument, optio
   const ni = parseApiNumber(niRaw);
   if (!Number.isNaN(ni) && Number.isFinite(ni)) {
     return normalizeProfitMarginForStorage(ni / grossRevenue);
+  }
+
+  const explicitRaw = get(parsedDocument.profitMargin);
+  if (explicitRaw != null && explicitRaw !== '') {
+    const explicitPm = parseApiNumber(explicitRaw);
+    if (!Number.isNaN(explicitPm)) {
+      return normalizeProfitMarginForStorage(explicitPm);
+    }
   }
 
   return undefined;
