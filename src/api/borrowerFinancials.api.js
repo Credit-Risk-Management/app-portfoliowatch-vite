@@ -50,6 +50,10 @@ const borrowerFinancialsApiBase = {
     { taskId },
   ),
 
+  getExtractTaskStatus: async (id, taskId) => apiClient.get(
+    `/borrower-financials/${id}/extract-tasks/${taskId}`,
+  ),
+
   rerunExtract: async (id, data = {}) => apiClient.post(`/borrower-financials/${id}/rerun-extract`, data),
 
   rerunCalculations: async (id) => apiClient.post(`/borrower-financials/${id}/rerun-calculations`),
