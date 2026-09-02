@@ -542,6 +542,58 @@ const runBackgroundDocumentUploadAndExtraction = async ({
   if (extractTaskId) {
     await borrowerFinancialsApi.notifyExtractReady(financialId, extractTaskId);
   }
+
+  return extractTaskId ?? null;
+};
+
+const EXTRACT_TASK_POLL_INTERVAL_MS = 5000;
+const EXTRACT_TASK_MAX_POLL_ATTEMPTS = 120;
+
+const pollExtractTaskUntilSettled = async (financialId, taskId) => {
+  for (let attempt = 0; attempt < EXTRACT_TASK_MAX_POLL_ATTEMPTS; attempt += 1) {
+    const response = await borrowerFinancialsApi.getExtractTaskStatus(financialId, taskId);
+    const payload = response?.data ?? response;
+    const status = payload?.status;
+
+    if (status === 'COMPLETED') {
+      return {
+        status,
+        updatedLoans: payload?.updatedLoans ?? [],
+      };
+    }
+    if (status === 'FAILED') {
+      throw new Error(payload?.errorMessage || 'Document extraction failed');
+    }
+
+    await new Promise((resolve) => {
+      setTimeout(resolve, EXTRACT_TASK_POLL_INTERVAL_MS);
+    });
+  }
+
+  throw new Error('Document extraction timed out. Check the financial record and try again.');
+};
+
+const handleBackgroundExtractionCompletion = async ({
+  financialId,
+  extractTaskId,
+}) => {
+  if (!financialId || !extractTaskId) return;
+
+  const { updatedLoans } = await pollExtractTaskUntilSettled(financialId, extractTaskId);
+
+  $borrowerFinancialsView.update({
+    refreshTrigger: $borrowerFinancialsView.value.refreshTrigger + 1,
+  });
+
+  if (updatedLoans.length > 0) {
+    consts.$modalState.update({
+      showWatchScoreResults: true,
+      updatedLoans,
+    });
+  }
+
+  const completionMessage = 'Document extraction complete. Financial data and loan scores have been updated.';
+  successAlert(completionMessage, 'toast');
 };
 
 export const handleSubmit = async () => {
@@ -647,6 +699,7 @@ export const handleSubmit = async () => {
     let response;
     let didQueueExtraction = false;
     let backgroundUploadPromise = null;
+    let pendingExtractTaskId = null;
 
     const stagedNewUploads = hasStagedNewUploads ? collectStagedNewUploads(stagedByType) : [];
 
@@ -687,17 +740,19 @@ export const handleSubmit = async () => {
 
       const uploadPlan = slotResponse?.data ?? slotResponse;
       didQueueExtraction = Boolean(uploadPlan?.extractTask?.id);
+      pendingExtractTaskId = uploadPlan?.extractTask?.id ?? null;
       backgroundUploadPromise = runBackgroundDocumentUploadAndExtraction({
         financialId,
         stagedNewUploads,
         uploads: uploadPlan?.uploads ?? [],
-        extractTaskId: uploadPlan?.extractTask?.id,
+        extractTaskId: pendingExtractTaskId,
       });
     }
 
     const wasEditMode = $borrowerFinancialsView.value.isEditMode;
     const updatedLoans = responseData?.updatedLoans || [];
     const { pdfUrl } = $modalState.value;
+    const submittedFinancialId = financialId;
 
     $borrowerFinancialsView.update({
       refreshTrigger: $borrowerFinancialsView.value.refreshTrigger + 1,
@@ -726,7 +781,18 @@ export const handleSubmit = async () => {
     }
     successAlert(successMessage, 'toast');
 
-    backgroundUploadPromise?.catch((err) => {
+    backgroundUploadPromise?.then(async () => {
+      if (!pendingExtractTaskId) return;
+      try {
+        await handleBackgroundExtractionCompletion({
+          financialId: submittedFinancialId,
+          extractTaskId: pendingExtractTaskId,
+        });
+      } catch (err) {
+        const message = err?.error || err?.message || 'Document extraction failed';
+        dangerAlert(`${message}. Re-open the financial to review or retry.`, 'toast');
+      }
+    }).catch((err) => {
       const message = err?.error || err?.message || 'Document upload failed';
       dangerAlert(`${message}. Re-open the financial to retry uploading documents.`, 'toast');
     });
