@@ -57,6 +57,6 @@ export const TABLE_HEADERS = [
   { key: 'borrowerType', value: 'Type' },
   { key: 'relationshipManager', value: 'Manager' },
   { key: 'loanCount', value: 'Loans' },
-  { key: 'totalBalance', value: 'Total Balance' },
+  { key: 'totalBalance', value: 'Total Balance', sortKey: 'totalBalance' },
   { key: 'actions', value: 'Actions' },
 ];

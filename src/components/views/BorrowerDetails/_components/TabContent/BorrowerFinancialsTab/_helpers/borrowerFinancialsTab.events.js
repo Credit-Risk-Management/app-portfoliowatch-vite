@@ -5,6 +5,7 @@ import { createUploadLink } from '@src/api/borrowerFinancialUploadLink.api';
 import {
   buildQuarterlyTestUploadLinkOptions,
   buildAnnualBorrowerTestUploadLinkOptions,
+  DEFAULT_QUARTERLY_REQUIRED_KEYS,
 } from '@src/constants/financialSubmissionRequirements';
 import * as consts from './borrowerFinancialsTab.consts';
 import { getUploadLinkUrl, getUploadedFinancialDocumentIds } from './borrowerFinancialsTab.helpers';
@@ -210,10 +211,19 @@ const copyToClipboard = async (url, linkKind = 'quarterly') => {
   }
 };
 
+/** Q2 2026 calendar quarter-end (2026-06-30) for dev/test upload links. */
+const Q2_2026_TEST_UPLOAD_REFERENCE_DATE = new Date('2026-07-01T00:00:00.000Z');
+
 export const handleCreateQ1TestUploadLink = async (borrowerId) => {
   if (!borrowerId) return;
   try {
-    const response = await createUploadLink(borrowerId, buildQuarterlyTestUploadLinkOptions());
+    const response = await createUploadLink(
+      borrowerId,
+      buildQuarterlyTestUploadLinkOptions(
+        Q2_2026_TEST_UPLOAD_REFERENCE_DATE,
+        DEFAULT_QUARTERLY_REQUIRED_KEYS,
+      ),
+    );
     const data = response?.data ?? response;
     const url = data?.uploadLinkUrl ?? data?.upload_link_url;
     if (response?.status === 'success' && url) {
