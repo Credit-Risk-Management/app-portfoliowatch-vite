@@ -1,5 +1,4 @@
 import {
-  UPLOADER_BY_SECTION,
   KNOWN_SECTION_IDS,
   SECTION_DEF_BY_ID,
   DEFAULT_SECTION_IDS,
@@ -8,7 +7,43 @@ import {
   DEBT_SCHEDULE_FORM_COLUMN_KEYS,
   debtScheduleFormField,
   $publicFinancialUploadView,
+  SECTION_ID_TO_DOCUMENT_TYPE,
+  buildBusinessTaxReturnSectionId,
+  parseBusinessTaxReturnSectionId,
+  resolvePublicUploaderSignal,
 } from './publicFinancialUpload.consts';
+
+const requirementSectionIdentity = (req) => {
+  if (req?.type === 'businessTaxReturn' && req.taxYear != null) {
+    return buildBusinessTaxReturnSectionId(req.taxYear);
+  }
+  return req?.type ?? '';
+};
+
+const buildSectionFromRequirement = (req) => {
+  const baseSectionId = API_KEY_TO_SECTION_ID[req.type];
+  if (!baseSectionId) return null;
+  const sectionId = req.type === 'businessTaxReturn' && req.taxYear != null
+    ? buildBusinessTaxReturnSectionId(req.taxYear)
+    : baseSectionId;
+  const def = SECTION_DEF_BY_ID[baseSectionId];
+  if (!def) return null;
+  const taxYear = req.taxYear ?? null;
+  return {
+    ...def,
+    sectionId,
+    title: taxYear != null && req.type === 'businessTaxReturn'
+      ? `Business tax return (FY ${taxYear})`
+      : def.title,
+    inputId: taxYear != null && req.type === 'businessTaxReturn'
+      ? `public-financial-tax-return-${taxYear}`
+      : def.inputId,
+    apiDocumentKey: req.type,
+    taxYear,
+    requiredForSubmit: Boolean(req.requiredForSubmit && req.status === 'PENDING'),
+    requirementStatus: req.status,
+  };
+};
 
 /**
  * Sept 15 of the calendar year after the FY period end (UTC), matching API extension deadline.
@@ -70,7 +105,7 @@ export const getBlockingDocumentKeysForLink = (linkData) => {
         }
         return false;
       })
-      .map((r) => r.type);
+      .map((r) => requirementSectionIdentity(r));
   }
   return Array.isArray(linkData?.requiredDocumentKeys) ? linkData.requiredDocumentKeys : [];
 };
@@ -90,17 +125,13 @@ export const getRequiredPdfSectionsForLink = (linkData) => {
     const out = [];
     reqs.forEach((r) => {
       if (!r?.visible || r?.status === 'WAIVED') return;
-      const sectionId = API_KEY_TO_SECTION_ID[r.type];
-      if (!sectionId || !KNOWN_SECTION_IDS.has(sectionId) || seen.has(sectionId)) return;
-      seen.add(sectionId);
-      const def = SECTION_DEF_BY_ID[sectionId];
-      if (!def) return;
-      out.push({
-        ...def,
-        apiDocumentKey: r.type,
-        requiredForSubmit: Boolean(r.requiredForSubmit && r.status === 'PENDING'),
-        requirementStatus: r.status,
-      });
+      const baseSectionId = API_KEY_TO_SECTION_ID[r.type];
+      if (!baseSectionId || !KNOWN_SECTION_IDS.has(baseSectionId)) return;
+      const identity = requirementSectionIdentity(r);
+      if (seen.has(identity)) return;
+      seen.add(identity);
+      const section = buildSectionFromRequirement(r);
+      if (section) out.push(section);
     });
     if (out.length > 0) return appendImpactQuestionnaireSectionIfNeeded(linkData, out);
   }
@@ -204,52 +235,38 @@ export const getRequirementPolicyLabel = (section) => {
  * @param {Record<string, string>} debtWorksheetForm
  */
 export const canSubmitBorrowerLink = (linkData, requiredPdfSections, debtWorksheetForm) => {
-  const blockingKeys = getBlockingDocumentKeysForLink(linkData);
-  const extensionStaged = hasPdfStagedForSection('businessTaxReturnExtension');
-  const blockingOk = blockingKeys.length === 0
-    || blockingKeys.every((key) => {
-      if (
-        key === 'businessTaxReturn'
-        && extensionStaged
-        && !hasPdfStagedForSection('businessTaxReturn')
-      ) {
-        const taxReq = linkData?.documentRequirements?.find((r) => r.type === 'businessTaxReturn');
-        if (taxReq?.status === 'PENDING') return true;
-      }
-      if (key === 'debtScheduleWorksheet') {
-        return validateDebtScheduleWorksheetForPdf(debtWorksheetForm || {}).valid;
-      }
-      const section = requiredPdfSections.find(
-        (s) => (s.apiDocumentKey ?? s.sectionId) === key || s.sectionId === key,
-      );
-      if (!section) return true;
-      if (
-        section.sectionId === 'businessTaxReturn'
-        && section.requirementStatus === 'EXTENDED'
-        && !isPastBusinessTaxReturnExtensionDeadline(linkData?.reportingPeriodEndDate)
-      ) {
-        return true;
-      }
-      return isSectionReadyForSubmit(section.sectionId, debtWorksheetForm);
-    });
-  const hasAnyStaged = requiredPdfSections.some((s) => (
-    isSectionReadyForSubmit(s.sectionId, debtWorksheetForm)
+  const readySections = requiredPdfSections.filter((s) => (
+    s.requirementStatus !== 'COMPLETED'
+    && isSectionReadyForSubmit(s.sectionId, debtWorksheetForm)
   ));
   const guarantorContactOk = !Array.isArray(linkData?.guarantorsNeedingContact)
     || linkData.guarantorsNeedingContact.length === 0
     || Boolean($publicFinancialUploadView.value.guarantorContactComplete);
-  return blockingOk && hasAnyStaged && guarantorContactOk;
+  return readySections.length > 0 && guarantorContactOk;
 };
 
 export const hasPdfStagedForSection = (sectionId) => {
-  const uploader = UPLOADER_BY_SECTION[sectionId];
+  const uploader = resolvePublicUploaderSignal(sectionId);
   return ((uploader?.value?.financialDocs || []).length > 0);
 };
 
 /** FileUploader `signal` prop for a section id. */
 export const getPublicUploaderSignalForSection = (sectionId) => (
-  UPLOADER_BY_SECTION[sectionId]
+  resolvePublicUploaderSignal(sectionId)
 );
+
+/** Document type + optional tax year for API submit payload. */
+export const resolveSubmitDescriptorForSection = (section) => {
+  const documentType = SECTION_ID_TO_DOCUMENT_TYPE[section.apiDocumentKey ?? section.sectionId]
+    ?? SECTION_ID_TO_DOCUMENT_TYPE.businessTaxReturn
+    ?? section.apiDocumentKey
+    ?? section.sectionId;
+  const taxYear = section.taxYear ?? parseBusinessTaxReturnSectionId(section.sectionId);
+  return {
+    documentType,
+    ...(taxYear != null ? { taxYear } : {}),
+  };
+};
 
 /** @param {string|undefined} raw */
 export const parseDebtScheduleNumeric = (raw) => {

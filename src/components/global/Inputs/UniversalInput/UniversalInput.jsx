@@ -185,7 +185,10 @@ const UniversalInput = ({
       <CheckBoxInput
         name={name}
         signal={signal}
+        label={label}
+        labelClassName={labelClassName}
         className={className}
+        customOnChange={customOnChange}
         {...props}
       />
     );

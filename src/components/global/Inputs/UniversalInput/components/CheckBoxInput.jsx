@@ -5,17 +5,25 @@ const CheckBoxInput = ({
   name,
   signal = $form,
   label,
+  labelClassName,
   className,
+  customOnChange,
   ...rest
 }) => (
   <Form.Group>
     <Form.Check
       type="checkbox"
-      label={label}
+      label={labelClassName ? <span className={labelClassName}>{label}</span> : label}
       name={name}
-      className={`${className} small custom-checkbox`}
+      className={[className, 'custom-checkbox'].filter(Boolean).join(' ')}
       checked={signal.value?.[name] ?? false}
-      onChange={() => signal.update({ [name]: !signal.value?.[name] })}
+      onChange={() => {
+        if (customOnChange) {
+          customOnChange();
+          return;
+        }
+        signal.update({ [name]: !signal.value?.[name] });
+      }}
       {...rest}
     />
   </Form.Group>

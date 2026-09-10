@@ -12,10 +12,11 @@ import {
 import { uploadToFirebase } from '@src/components/views/Loans/_helpers/loans.upload';
 import { buildStandardFinancialUploadFileName } from '@src/utils/documents.utils';
 import {
-  getBlockingDocumentKeysForLink,
   getRequiredPdfSectionsForLink,
   hasPdfStagedForSection,
+  isSectionReadyForSubmit,
   mergePriorWorksheetRowsIntoForm,
+  resolveSubmitDescriptorForSection,
   validateDebtScheduleWorksheetForPdf,
   parseImpactQuestionnaireTokenFromUrl,
 } from './publicFinancialUpload.helpers';
@@ -30,8 +31,8 @@ import {
   $publicDebtScheduleUploader,
   $publicBusinessTaxReturnExtensionUploader,
   $publicFinancialUploadView,
-  UPLOADER_BY_SECTION,
-  SECTION_ID_TO_DOCUMENT_TYPE,
+  resolvePublicUploaderSignal,
+  resetPublicTaxReturnUploadersByYear,
 } from './publicFinancialUpload.consts';
 import { fetchUploadLinkData } from './publicFinancialUpload.resolvers';
 import { $debtScheduleWorksheetWrapCellEdit } from '../_components/DebtScheduleWorksheetModal/_helpers/debtScheduleWorksheetModal.consts';
@@ -51,11 +52,12 @@ export const resetAllPublicFinancialUploaders = () => {
   $publicOtherFinancialsUploader.update({ financialDocs: [] });
   $publicDebtScheduleUploader.update({ financialDocs: [] });
   $publicBusinessTaxReturnExtensionUploader.update({ financialDocs: [] });
+  resetPublicTaxReturnUploadersByYear();
 };
 
 /** Clear staged files for one public-upload section (show dropzone again). */
 export const clearPublicFinancialSectionFiles = (sectionId) => {
-  const uploader = UPLOADER_BY_SECTION[sectionId];
+  const uploader = resolvePublicUploaderSignal(sectionId);
   if (uploader) uploader.update({ financialDocs: [] });
 };
 
@@ -84,47 +86,28 @@ export const handleFileUpload = async () => {
     const borrowerName = linkData?.borrower?.name;
     const periodDate = linkData?.reportingPeriodEndDate;
     const requiredPdfSections = getRequiredPdfSectionsForLink(linkData);
-    const includeDebtWorksheetJson = requiredPdfSections.some((s) => s.sectionId === 'debtScheduleWorksheet');
-    const debtScheduleWorksheet = includeDebtWorksheetJson
-      ? { ...$debtScheduleWorksheetForm.value }
-      : undefined;
+    const debtWorksheetForm = $debtScheduleWorksheetForm.value || {};
+    const sectionsToSubmit = requiredPdfSections.filter((s) => (
+      s.requirementStatus !== 'COMPLETED'
+      && s.sectionId !== 'impactQuestionnaire'
+      && s.sectionId !== 'guarantorContact'
+      && isSectionReadyForSubmit(s.sectionId, debtWorksheetForm)
+    ));
 
-    const blockingKeys = new Set(getBlockingDocumentKeysForLink(linkData));
-    const blockingSections = requiredPdfSections.filter((s) => {
-      if (s.sectionId === 'impactQuestionnaire' || s.sectionId === 'guarantorContact') return false;
-      const docType = SECTION_ID_TO_DOCUMENT_TYPE[s.sectionId] ?? s.sectionId;
-      if (s.sectionId === 'debtScheduleWorksheet') {
-        return blockingKeys.has('debtScheduleWorksheet');
-      }
-      return blockingKeys.has(docType) || blockingKeys.has(s.sectionId);
-    });
-    const missingBlockingUpload = blockingSections.some((s) => {
-      if (s.sectionId === 'debtScheduleWorksheet') {
-        return !validateDebtScheduleWorksheetForPdf($debtScheduleWorksheetForm.value || {}).valid;
-      }
-      if (
-        s.sectionId === 'businessTaxReturn'
-        && hasPdfStagedForSection('businessTaxReturnExtension')
-        && !hasPdfStagedForSection('businessTaxReturn')
-      ) {
-        const taxReq = linkData?.documentRequirements?.find((r) => r.type === 'businessTaxReturn');
-        if (taxReq?.status === 'PENDING') return false;
-      }
-      if (
-        s.sectionId === 'businessTaxReturn'
-        && s.requirementStatus === 'EXTENDED'
-      ) {
-        return false;
-      }
-      return !hasPdfStagedForSection(s.sectionId);
-    });
-    if (missingBlockingUpload) {
+    if (sectionsToSubmit.length === 0) {
       $publicFinancialUploadView.update({
-        error: 'Please complete all required items before submitting.',
+        error: 'Complete at least one document before submitting.',
         isSubmitting: false,
       });
       return;
     }
+
+    const submittingDebtSchedule = sectionsToSubmit.some(
+      (s) => s.sectionId === 'debtScheduleWorksheet',
+    );
+    const debtScheduleWorksheet = submittingDebtSchedule
+      ? { ...debtWorksheetForm }
+      : undefined;
 
     const needsImpactQuestionnaire = Boolean(linkData?.impactQuestionnaireUrl);
     if (needsImpactQuestionnaire && !$publicFinancialUploadView.value.impactQuestionnairePublicComplete) {
@@ -149,20 +132,14 @@ export const handleFileUpload = async () => {
       }
     }
 
-    requiredPdfSections.forEach((section) => {
-      if (
-        section.sectionId === 'debtScheduleWorksheet'
-        || section.sectionId === 'impactQuestionnaire'
-        || section.sectionId === 'guarantorContact'
-      ) {
-        return;
-      }
-      const uploader = UPLOADER_BY_SECTION[section.sectionId];
-      const documentType = SECTION_ID_TO_DOCUMENT_TYPE[section.sectionId] ?? section.sectionId;
+    sectionsToSubmit.forEach((section) => {
+      if (section.sectionId === 'debtScheduleWorksheet') return;
+      const uploader = resolvePublicUploaderSignal(section.sectionId);
       if (!uploader) return;
       const files = uploader.value?.financialDocs ?? [];
       const [file] = files;
       if (!file) return;
+      const { documentType, taxYear } = resolveSubmitDescriptorForSection(section);
       filesToUpload.push({
         fileName: buildStandardFinancialUploadFileName({
           entityName: borrowerName,
@@ -174,11 +151,12 @@ export const handleFileUpload = async () => {
         mimeType: file.type,
         contentType: file.type,
         documentType,
+        ...(taxYear != null ? { taxYear } : {}),
       });
       fileBlobs.push(file);
     });
 
-    if (includeDebtWorksheetJson) {
+    if (submittingDebtSchedule) {
       const { valid, errors } = validateDebtScheduleWorksheetForPdf(debtScheduleWorksheet || {});
       if (!valid) {
         $publicFinancialUploadView.update({
@@ -191,7 +169,7 @@ export const handleFileUpload = async () => {
       }
     }
 
-    if (filesToUpload.length === 0 && !includeDebtWorksheetJson) {
+    if (filesToUpload.length === 0 && !submittingDebtSchedule) {
       $publicFinancialUploadView.update({
         error: 'Nothing to submit. Add the required documents or complete the debt schedule worksheet.',
         isSubmitting: false,

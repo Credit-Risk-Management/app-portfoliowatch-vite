@@ -48,6 +48,47 @@ export const $publicBusinessTaxReturnExtensionUploader = Signal({ financialDocs:
 /** Quarterly P&L slot (API key `incomeStatementQuarterly`); reuses cash-flow uploader signal. */
 export const $publicDebtScheduleUploader = Signal({ financialDocs: [] });
 
+/** Per-year business tax return uploaders keyed by calendar year string. */
+export const $publicTaxReturnUploadersByYear = Signal({});
+
+export const buildBusinessTaxReturnSectionId = (taxYear) => (
+  taxYear != null && Number.isFinite(taxYear)
+    ? `businessTaxReturn_${Math.trunc(taxYear)}`
+    : 'businessTaxReturn'
+);
+
+export const parseBusinessTaxReturnSectionId = (sectionId) => {
+  if (!sectionId || typeof sectionId !== 'string') return null;
+  const match = /^businessTaxReturn_(\d{4})$/.exec(sectionId);
+  return match ? Number.parseInt(match[1], 10) : null;
+};
+
+export const getOrCreateTaxReturnUploaderForYear = (taxYear) => {
+  const key = String(Math.trunc(taxYear));
+  const current = $publicTaxReturnUploadersByYear.value;
+  if (current[key]) return current[key];
+  const created = Signal({ financialDocs: [] });
+  $publicTaxReturnUploadersByYear.update({ ...current, [key]: created });
+  return created;
+};
+
+export const syncTaxReturnUploadersForLink = (linkData) => {
+  const reqs = linkData?.documentRequirements;
+  if (!Array.isArray(reqs)) return;
+  const next = { ...$publicTaxReturnUploadersByYear.value };
+  reqs.forEach((r) => {
+    if (r?.type === 'businessTaxReturn' && r.taxYear != null && Number.isFinite(r.taxYear)) {
+      const key = String(Math.trunc(r.taxYear));
+      if (!next[key]) next[key] = Signal({ financialDocs: [] });
+    }
+  });
+  $publicTaxReturnUploadersByYear.update(next);
+};
+
+export const resetPublicTaxReturnUploadersByYear = () => {
+  $publicTaxReturnUploadersByYear.update({});
+};
+
 /** Matches `Template - Debt Schedule.xlsx`: 6 data rows (R6–R11), 10 columns; footer signature line. */
 export const DEBT_SCHEDULE_XLSX_DATA_ROW_COUNT = 6;
 
@@ -123,6 +164,15 @@ export const UPLOADER_BY_SECTION = {
   debtScheduleWorksheet: $publicDebtScheduleUploader,
   cashFlow: $publicCashFlowUploader,
   otherFinancials: $publicOtherFinancialsUploader,
+};
+
+/** Resolve uploader signal for static or per-year tax return section ids. */
+export const resolvePublicUploaderSignal = (sectionId) => {
+  const taxYear = parseBusinessTaxReturnSectionId(sectionId);
+  if (taxYear != null) {
+    return getOrCreateTaxReturnUploaderForYear(taxYear);
+  }
+  return UPLOADER_BY_SECTION[sectionId];
 };
 
 /** UI row metadata keyed by internal sectionId (matches API document keys via API_KEY_TO_SECTION_ID). */

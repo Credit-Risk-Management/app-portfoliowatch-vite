@@ -16,6 +16,7 @@ import DeleteBorrowerFinancialModal from '@src/components/views/BorrowerDetails/
 import ExtractFinancialsModal from '@src/components/views/BorrowerDetails/_components/ExtractFinancialsModal';
 import RerunCalculationsModal from '@src/components/views/BorrowerDetails/_components/RerunCalculationsModal';
 import NoPriorExtractionModal from '@src/components/views/BorrowerDetails/_components/NoPriorExtractionModal';
+import CreatePublicUploadLinkModal from '@src/components/views/BorrowerDetails/_components/CreatePublicUploadLinkModal/CreatePublicUploadLinkModal';
 import UniversalCard from '@src/components/global/UniversalCard';
 import DeleteGuarantorConfirmModal from '@src/components/views/GuarantorDetails/_components/DeleteGuarantorConfirmModal';
 import { $borrowerDetailView } from './_helpers/borrowerDetail.consts';
@@ -172,6 +173,7 @@ export function BorrowerDetailsContainer() {
         <ExtractFinancialsModal />
         <RerunCalculationsModal />
         <NoPriorExtractionModal />
+        <CreatePublicUploadLinkModal />
 
         {/* Edit Borrower Modal */}
         <EditBorrowerDetailModal />

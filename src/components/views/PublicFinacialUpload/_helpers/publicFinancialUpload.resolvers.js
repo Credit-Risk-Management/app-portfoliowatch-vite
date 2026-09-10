@@ -3,6 +3,7 @@ import { getImpactQuestionnairePublic } from '@src/api/publicImpactQuestionnaire
 import { dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import {
   $publicFinancialUploadView,
+  syncTaxReturnUploadersForLink,
 } from './publicFinancialUpload.consts';
 import { parseImpactQuestionnaireTokenFromUrl } from './publicFinancialUpload.helpers';
 import { hydrateGuarantorContactForms } from '../_components/GuarantorContactModal/_helpers/guarantorContactModal.helpers';
@@ -40,6 +41,7 @@ export const fetchUploadLinkData = async (token) => {
       guarantorContactErrors: null,
     });
 
+    syncTaxReturnUploadersForLink(linkPayload);
     clearGuarantorContactSignalCache();
     hydrateGuarantorContactForms(linkPayload?.guarantorsNeedingContact);
 

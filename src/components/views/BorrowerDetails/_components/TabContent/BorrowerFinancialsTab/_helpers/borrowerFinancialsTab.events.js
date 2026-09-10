@@ -4,9 +4,9 @@ import borrowersApi from '@src/api/borrowers.api';
 import { createUploadLink } from '@src/api/borrowerFinancialUploadLink.api';
 import {
   buildQuarterlyTestUploadLinkOptions,
-  buildAnnualBorrowerTestUploadLinkOptions,
   DEFAULT_QUARTERLY_REQUIRED_KEYS,
 } from '@src/constants/financialSubmissionRequirements';
+import { openCreatePublicUploadLinkModal } from '@src/components/views/BorrowerDetails/_components/CreatePublicUploadLinkModal/_helpers/createPublicUploadLinkModal.events';
 import * as consts from './borrowerFinancialsTab.consts';
 import { getUploadLinkUrl, getUploadedFinancialDocumentIds } from './borrowerFinancialsTab.helpers';
 import * as resolvers from './borrowerFinancialsTab.resolvers';
@@ -239,23 +239,8 @@ export const handleCreateQ1TestUploadLink = async (borrowerId) => {
   }
 };
 
-export const handleCreateAnnualTestUploadLink = async (borrowerId) => {
-  if (!borrowerId) return;
-  try {
-    const response = await createUploadLink(borrowerId, buildAnnualBorrowerTestUploadLinkOptions());
-    const data = response?.data ?? response;
-    const url = data?.uploadLinkUrl ?? data?.upload_link_url;
-    if (response?.status === 'success' && url) {
-      const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-      const annualUrl = `${baseUrl}/upload-financials/${data?.token}`;
-      await copyToClipboard(annualUrl, 'annual');
-      successAlert('Annual link copied to clipboard!', 'toast');
-    } else {
-      dangerAlert('Could not create annual upload link.');
-    }
-  } catch (error) {
-    dangerAlert(error?.message || 'Failed to create annual upload link.');
-  }
+export const handleCreateAnnualTestUploadLink = (borrowerId) => {
+  openCreatePublicUploadLinkModal(borrowerId);
 };
 
 export const handleCreateImpactQuestionnairePublicLink = async (borrowerId) => {

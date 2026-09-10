@@ -146,6 +146,191 @@ export const Q1_TEST_UPLOAD_LINK_OPTIONS = buildQuarterlyTestUploadLinkOptions(
 /** @deprecated Use {@link buildAnnualBorrowerTestUploadLinkOptions} */
 export const ANNUAL_TEST_UPLOAD_LINK_OPTIONS = buildAnnualBorrowerTestUploadLinkOptions();
 
+/**
+ * Default calendar tax years for annual public links (prior 3 years).
+ * @param {Date} [referenceDate]
+ * @returns {number[]}
+ */
+export const defaultAnnualPublicLinkTaxYears = (referenceDate = new Date()) => {
+  const currentYear = referenceDate.getUTCFullYear();
+  return [currentYear - 3, currentYear - 2, currentYear - 1];
+};
+
+/**
+ * Structured requirement row for createUploadLink (matches API JSON).
+ * @param {string} type
+ * @param {object} [overrides]
+ * @returns {object}
+ */
+export const buildUploadLinkRequirementRow = (type, overrides = {}) => ({
+  type,
+  status: 'PENDING',
+  requiredForSubmit: true,
+  visible: true,
+  remind: true,
+  nextRunDate: null,
+  ...overrides,
+});
+
+const formatDocumentList = (items) => {
+  if (items.length === 0) return '';
+  if (items.length === 1) return items[0];
+  const last = items[items.length - 1];
+  const leading = items.slice(0, -1).join(', ');
+  return `${leading}, and ${last}`;
+};
+
+/**
+ * Build lender instructions from selected document requirements.
+ * @param {object} params
+ * @param {Array<{ taxYear: number, requiredForSubmit: boolean }>} [params.taxYearItems]
+ * @param {{ requiredForSubmit: boolean }|null} [params.debtSchedule]
+ * @param {boolean} [params.includeTaxReturnExtension]
+ * @returns {string}
+ */
+export const buildCustomAnnualUploadLinkInstructions = ({
+  taxYearItems = [],
+  debtSchedule = null,
+  includeTaxReturnExtension = false,
+}) => {
+  const requiredParts = [];
+  const optionalParts = [];
+
+  taxYearItems.forEach(({ taxYear, requiredForSubmit }) => {
+    const label = `FY ${taxYear} business tax return`;
+    if (requiredForSubmit) requiredParts.push(label);
+    else optionalParts.push(label);
+  });
+
+  if (debtSchedule) {
+    if (debtSchedule.requiredForSubmit) requiredParts.push('debt schedule');
+    else optionalParts.push('debt schedule');
+  }
+
+  if (includeTaxReturnExtension) {
+    optionalParts.push('filed tax-return extension (Form 7004), if applicable');
+  }
+
+  if (requiredParts.length === 0 && optionalParts.length === 0) {
+    return 'Please upload the requested financial documents.';
+  }
+
+  const sentences = [];
+  if (requiredParts.length > 0) {
+    sentences.push(`Please upload your ${formatDocumentList(requiredParts)}.`);
+  }
+  if (optionalParts.length > 0) {
+    sentences.push(`${requiredParts.length > 0 ? 'Also provide' : 'Please upload'} ${formatDocumentList(optionalParts)} if available.`);
+  }
+  return sentences.join(' ');
+};
+
+/**
+ * Configurable annual/custom public upload link for lender-created packages.
+ * @param {object} params
+ * @param {Array<{ taxYear: number, requiredForSubmit: boolean }>} [params.taxYearItems]
+ * @param {{ included: boolean, requiredForSubmit: boolean }|null} [params.debtSchedule]
+ * @param {boolean} [params.includeTaxReturnExtension]
+ * @param {string} [params.lenderInstructions]
+ * @param {Date} [params.referenceDate]
+ * @returns {object} createUploadLink options
+ */
+export const buildCustomAnnualUploadLinkOptions = ({
+  taxYearItems = defaultAnnualPublicLinkTaxYears().map(taxYear => ({
+    taxYear,
+    requiredForSubmit: taxYear === Math.max(...defaultAnnualPublicLinkTaxYears()),
+  })),
+  debtSchedule = { included: true, requiredForSubmit: false },
+  includeTaxReturnExtension = false,
+  lenderInstructions,
+  referenceDate = new Date(),
+} = {}) => {
+  const sortedTaxYearItems = [...taxYearItems]
+    .filter(item => Number.isFinite(item?.taxYear))
+    .sort((a, b) => a.taxYear - b.taxYear);
+  const sortedYears = sortedTaxYearItems.map(item => item.taxYear);
+  const maxYear = sortedYears.length > 0
+    ? sortedYears[sortedYears.length - 1]
+    : referenceDate.getUTCFullYear() - 1;
+  const reportingPeriodEndDate = `${maxYear}-12-31`;
+  let periodLabel = 'Custom financial package';
+  if (sortedYears.length > 1) {
+    periodLabel = `Tax returns ${sortedYears[0]}–${maxYear}`;
+  } else if (sortedYears.length === 1) {
+    periodLabel = `FY ${sortedYears[0]}`;
+  } else if (debtSchedule?.included) {
+    periodLabel = 'Debt schedule';
+  }
+
+  const requiredDocumentKeys = sortedTaxYearItems.map(({ taxYear, requiredForSubmit }) => (
+    buildUploadLinkRequirementRow(
+      REQUIRED_DOCUMENT_KEYS.BUSINESS_TAX_RETURN,
+      {
+        taxYear,
+        requiredForSubmit: Boolean(requiredForSubmit),
+        remind: Boolean(requiredForSubmit),
+      },
+    )
+  ));
+
+  if (debtSchedule?.included) {
+    requiredDocumentKeys.push(buildUploadLinkRequirementRow(
+      REQUIRED_DOCUMENT_KEYS.DEBT_SCHEDULE,
+      {
+        requiredForSubmit: Boolean(debtSchedule.requiredForSubmit),
+        remind: Boolean(debtSchedule.requiredForSubmit),
+      },
+    ));
+  }
+
+  const instructionDebtSchedule = debtSchedule?.included
+    ? { requiredForSubmit: Boolean(debtSchedule.requiredForSubmit) }
+    : null;
+
+  if (includeTaxReturnExtension && sortedYears.length > 0) {
+    const latestYear = sortedYears[sortedYears.length - 1];
+    const filingYear = latestYear + 1;
+    const extensionIso = resolveBusinessTaxReturnExtensionDeadline(`${latestYear}-12-31`)
+      .toISOString()
+      .slice(0, 10);
+    requiredDocumentKeys.push(buildUploadLinkRequirementRow(
+      REQUIRED_DOCUMENT_KEYS.BUSINESS_TAX_RETURN_EXTENSION,
+      { requiredForSubmit: false, remind: false },
+    ));
+    if (!lenderInstructions) {
+      return {
+        submissionCadence: 'CUSTOM',
+        reportingPeriodEndDate,
+        fiscalYearEndMonth: 12,
+        requiredDocumentKeys,
+        periodLabel,
+        lenderInstructions:
+          `${buildCustomAnnualUploadLinkInstructions({
+            taxYearItems: sortedTaxYearItems,
+            debtSchedule: instructionDebtSchedule,
+            includeTaxReturnExtension,
+          })} `
+          + `If on extension for FY ${latestYear}, upload Form 7004 below; `
+          + `your return is due by September 15, ${filingYear} (${extensionIso}).`,
+      };
+    }
+  }
+
+  return {
+    submissionCadence: 'CUSTOM',
+    reportingPeriodEndDate,
+    fiscalYearEndMonth: 12,
+    requiredDocumentKeys,
+    periodLabel,
+    lenderInstructions: lenderInstructions?.trim()
+      || buildCustomAnnualUploadLinkInstructions({
+        taxYearItems: sortedTaxYearItems,
+        debtSchedule: instructionDebtSchedule,
+        includeTaxReturnExtension,
+      }),
+  };
+};
+
 /** Keys for public guarantor upload (must match API). */
 const GKeys = {
   personalTaxReturn: 'personalTaxReturn',

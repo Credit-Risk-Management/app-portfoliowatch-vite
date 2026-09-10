@@ -251,7 +251,10 @@ const PublicFinancialUpload = () => {
                         notUploadedLabel = 'Questionnaire not complete';
                       } else if (isGuarantorContact) {
                         notUploadedLabel = 'Contact not complete';
-                      } else if (sectionId === 'businessTaxReturn' && requirementStatus === 'EXTENDED') {
+                      } else if (
+                        sectionId.startsWith('businessTaxReturn')
+                        && requirementStatus === 'EXTENDED'
+                      ) {
                         notUploadedLabel = 'On extension — return due later';
                       }
                       let uploadedStatusLabel = 'Uploaded';
