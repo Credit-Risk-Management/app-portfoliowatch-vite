@@ -20,6 +20,13 @@ const requirementSectionIdentity = (req) => {
   return req?.type ?? '';
 };
 
+/** Tax return rows with COMPLETED status are omitted from the public upload table. */
+const isRequirementShownOnPublicUpload = (req) => (
+  Boolean(req?.visible)
+  && req?.status !== 'WAIVED'
+  && req?.status !== 'COMPLETED'
+);
+
 const buildSectionFromRequirement = (req) => {
   const baseSectionId = API_KEY_TO_SECTION_ID[req.type];
   if (!baseSectionId) return null;
@@ -124,7 +131,7 @@ export const getRequiredPdfSectionsForLink = (linkData) => {
     const seen = new Set();
     const out = [];
     reqs.forEach((r) => {
-      if (!r?.visible || r?.status === 'WAIVED') return;
+      if (!isRequirementShownOnPublicUpload(r)) return;
       const baseSectionId = API_KEY_TO_SECTION_ID[r.type];
       if (!baseSectionId || !KNOWN_SECTION_IDS.has(baseSectionId)) return;
       const identity = requirementSectionIdentity(r);

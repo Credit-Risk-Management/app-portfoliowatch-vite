@@ -77,6 +77,7 @@ export const syncTaxReturnUploadersForLink = (linkData) => {
   if (!Array.isArray(reqs)) return;
   const next = { ...$publicTaxReturnUploadersByYear.value };
   reqs.forEach((r) => {
+    if (r?.status === 'COMPLETED' || r?.status === 'WAIVED' || !r?.visible) return;
     if (r?.type === 'businessTaxReturn' && r.taxYear != null && Number.isFinite(r.taxYear)) {
       const key = String(Math.trunc(r.taxYear));
       if (!next[key]) next[key] = Signal({ financialDocs: [] });
