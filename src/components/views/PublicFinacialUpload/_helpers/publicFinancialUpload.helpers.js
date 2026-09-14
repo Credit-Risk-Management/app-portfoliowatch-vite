@@ -264,11 +264,13 @@ export const getPublicUploaderSignalForSection = (sectionId) => (
 
 /** Document type + optional tax year for API submit payload. */
 export const resolveSubmitDescriptorForSection = (section) => {
-  const documentType = SECTION_ID_TO_DOCUMENT_TYPE[section.apiDocumentKey ?? section.sectionId]
-    ?? SECTION_ID_TO_DOCUMENT_TYPE.businessTaxReturn
-    ?? section.apiDocumentKey
-    ?? section.sectionId;
   const taxYear = section.taxYear ?? parseBusinessTaxReturnSectionId(section.sectionId);
+  const baseSectionId = taxYear != null && String(section.sectionId || '').startsWith('businessTaxReturn')
+    ? 'businessTaxReturn'
+    : section.sectionId;
+  const documentType = SECTION_ID_TO_DOCUMENT_TYPE[baseSectionId]
+    ?? section.apiDocumentKey
+    ?? baseSectionId;
   return {
     documentType,
     ...(taxYear != null ? { taxYear } : {}),
