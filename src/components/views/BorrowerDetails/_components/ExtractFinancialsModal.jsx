@@ -52,7 +52,7 @@ const ExtractFinancialsModal = () => {
           </p>
           {hasDocuments ? (
             <>
-              <p className="mb-8">Select the documents to send to Sensible for extraction:</p>
+              <p className="mb-8">Select the documents to send for extraction:</p>
               <ListGroup variant="flush" className="extract-financials-modal__doc-list border rounded">
                 {documents.map((doc) => {
                   const isSelected = selectedDocumentIds.includes(doc.id);
