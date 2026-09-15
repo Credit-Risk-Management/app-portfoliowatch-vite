@@ -6,7 +6,7 @@ import { dangerAlert, successAlert } from '@src/components/global/Alert/_helpers
 import postToSensibleApi, { initiateUploadToSensibleApi, getSensibleEnvironment } from '@src/api/sensible.api';
 import { storage } from '@src/utils/firebase';
 import { fetchGuarantorDetail } from '@src/components/views/GuarantorDetails/_helpers/guarantorDetails.resolvers';
-import { parseSingleDocResponse, GUARANTOR_SENSIBLE_NORMALIZER_V1 } from '@src/utils/sensibleParseApi';
+import { parseExtractApiResponse } from '@src/utils/documentExtractParseApi';
 import { normalizeRatioDecimalToPercent } from '@src/utils/ratioPercent';
 import { formatDateForInput } from '@src/utils/formatDate';
 import { computeDebtToIncomeRatio } from '../../../_utils/guarantorDebtToIncome';
@@ -107,13 +107,11 @@ export const handleFileUpload = async ($financialDocsUploader, $modalState, ocrA
           environment: getSensibleEnvironment(),
           documentName: file.name,
         };
-        const sensibleResponse = await postToSensibleApi(sensibleBody);
-        const parsedDocument = sensibleResponse?.data?.parsed_document ?? sensibleResponse?.parsed_document ?? null;
+        const extractResponse = await postToSensibleApi(sensibleBody);
 
-        if (documentType === 'personalFinancialStatement' && parsedDocument) {
+        if (documentType === 'personalFinancialStatement') {
           const orgName = $organization.value?.name;
-          const pfsData = parseSingleDocResponse(parsedDocument, 'personalFinancialStatement', {
-            normalizerVersion: GUARANTOR_SENSIBLE_NORMALIZER_V1,
+          const pfsData = parseExtractApiResponse(extractResponse, 'personalFinancialStatement', {
             ...(orgName != null && String(orgName).trim() !== ''
               ? {
                 organizationName: String(orgName).trim(),
@@ -133,10 +131,8 @@ export const handleFileUpload = async ($financialDocsUploader, $modalState, ocrA
             });
           }
         }
-        if (documentType === 'personalTaxReturn' && parsedDocument) {
-          const extractedData = parseSingleDocResponse(parsedDocument, 'personalTaxReturn', {
-            normalizerVersion: GUARANTOR_SENSIBLE_NORMALIZER_V1,
-          });
+        if (documentType === 'personalTaxReturn') {
+          const extractedData = parseExtractApiResponse(extractResponse, 'personalTaxReturn');
           if (extractedData != null && typeof extractedData === 'object' && !Array.isArray(extractedData)) {
             $submitPFSModalDetails.update({
               asOfDate: extractedData.asOfDate,
@@ -156,7 +152,7 @@ export const handleFileUpload = async ($financialDocsUploader, $modalState, ocrA
           await deleteStorageRef.delete();
           $submitPFSModalDetails.update({ downloadSensibleUrl: null });
         }
-        throw new Error(sensibleError?.message ?? 'Sensible extraction failed');
+        throw new Error(sensibleError?.message ?? 'Document extraction failed');
       }
     }
   } catch (error) {
