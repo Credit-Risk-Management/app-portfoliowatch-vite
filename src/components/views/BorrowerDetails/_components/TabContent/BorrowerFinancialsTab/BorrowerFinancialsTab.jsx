@@ -82,7 +82,7 @@ export function BorrowerFinancialsTab() {
           </Button>
           <Button
             variant={consts.$copiedLink.value ? 'success' : 'info-100'}
-            onClick={() => events.handleCreateQ1TestUploadLink(borrowerId)}
+            onClick={() => events.handleCreateQuarterlyUploadLink(borrowerId)}
             className="me-8"
             size="sm"
           >
@@ -91,7 +91,7 @@ export function BorrowerFinancialsTab() {
           </Button>
           <Button
             variant={consts.$copiedAnnualLink.value ? 'success' : 'warning-100'}
-            onClick={() => events.handleCreateAnnualTestUploadLink(borrowerId)}
+            onClick={() => events.handleCreateAnnualUploadLink(borrowerId)}
             className="me-8"
             size="sm"
           >

@@ -53,25 +53,57 @@ export const buildDefaultAnnualBorrowerTaxReturnDocumentRequirements = () => [
 ];
 
 /**
- * Quarterly test upload link — mirrors `financialSubmissionInviteCron` period math and
- * `DEFAULT_QUARTERLY_REQUIRED_KEYS` (balance sheet, quarterly P&L, debt schedule).
- * Instructions only mention the keys on the link.
- * @param {Date} [referenceDate]
- * @param {string[]} [requiredDocumentKeys]
- * @returns {object} createUploadLink options
+ * Last calendar day of a quarter (UTC), ISO YYYY-MM-DD.
+ * @param {number} year
+ * @param {number} quarter 1–4
+ * @returns {string}
  */
-export const buildQuarterlyTestUploadLinkOptions = (
-  referenceDate = new Date(),
-  requiredDocumentKeys = [...DEFAULT_QUARTERLY_REQUIRED_KEYS],
-) => {
+export const calendarQuarterReportingPeriodEnd = (year, quarter) => {
+  const q = Math.min(4, Math.max(1, Math.floor(Number(quarter)) || 1));
+  const y = Math.floor(Number(year));
+  return new Date(Date.UTC(y, q * 3, 0)).toISOString().slice(0, 10);
+};
+
+/**
+ * Reporting year + quarter from a reference date (same math as invite cron).
+ * @param {Date} [referenceDate]
+ * @returns {{ year: number, quarter: number }}
+ */
+export const defaultQuarterlyPublicLinkPeriod = (referenceDate = new Date()) => {
   const reportingPeriodEndDate = new Date(
     Date.UTC(referenceDate.getUTCFullYear(), referenceDate.getUTCMonth(), 0),
   );
   const quarter = Math.floor(reportingPeriodEndDate.getUTCMonth() / 3) + 1;
   const year = reportingPeriodEndDate.getUTCFullYear();
-  const periodLabel = `Q${quarter} ${year}`;
-  const isoDate = reportingPeriodEndDate.toISOString().slice(0, 10);
-  const keySet = new Set(requiredDocumentKeys);
+  return { year, quarter };
+};
+
+/**
+ * Year options for quarterly public-link modal (current UTC year and prior two).
+ * @param {Date} [referenceDate]
+ * @returns {number[]}
+ */
+export const defaultQuarterlyPublicLinkYears = (referenceDate = new Date()) => {
+  const currentYear = referenceDate.getUTCFullYear();
+  return [currentYear - 2, currentYear - 1, currentYear];
+};
+
+/**
+ * Lender instructions for quarterly packages (matches API cron copy).
+ * @param {string} periodLabel
+ * @param {string} isoDate
+ * @param {number} year reporting period year
+ * @param {readonly string[]} requiredDocumentKeys legacy keys or types from structured rows
+ * @returns {string}
+ */
+export const buildQuarterlyUploadLinkInstructions = (
+  periodLabel,
+  isoDate,
+  year,
+  requiredDocumentKeys,
+) => {
+  const types = requiredDocumentKeys.map((k) => (typeof k === 'string' ? k : k?.type)).filter(Boolean);
+  const keySet = new Set(types);
   const parts = [];
   if (keySet.has(REQUIRED_DOCUMENT_KEYS.BALANCE_SHEET)) {
     parts.push(`balance sheet as of ${isoDate}`);
@@ -91,14 +123,37 @@ export const buildQuarterlyTestUploadLinkOptions = (
   if (keySet.has(REQUIRED_DOCUMENT_KEYS.BUSINESS_TAX_RETURN_EXTENSION)) {
     parts.push('filed tax-return extension (Form 7004), if applicable');
   }
-  let lenderInstructions = `Quarterly package for ${periodLabel} (calendar). Please upload the requested financial documents.`;
-  if (parts.length === 1) {
-    lenderInstructions = `Quarterly package for ${periodLabel} (calendar). Please upload your ${parts[0]}.`;
-  } else if (parts.length > 1) {
-    const last = parts[parts.length - 1];
-    const leading = parts.slice(0, -1).join(', ');
-    lenderInstructions = `Quarterly package for ${periodLabel} (calendar). Please upload your ${leading}, and ${last}.`;
+  if (parts.length === 0) {
+    return `Quarterly package for ${periodLabel} (calendar). Please upload the requested financial documents.`;
   }
+  if (parts.length === 1) {
+    return `Quarterly package for ${periodLabel} (calendar). Please upload your ${parts[0]}.`;
+  }
+  const last = parts[parts.length - 1];
+  const leading = parts.slice(0, -1).join(', ');
+  return `Quarterly package for ${periodLabel} (calendar). Please upload your ${leading}, and ${last}.`;
+};
+
+/**
+ * Quarterly upload link — mirrors `financialSubmissionInviteCron` period math and
+ * `DEFAULT_QUARTERLY_REQUIRED_KEYS`.
+ * @param {Date} [referenceDate]
+ * @param {string[]} [requiredDocumentKeys]
+ * @returns {object} createUploadLink options
+ */
+export const buildQuarterlyUploadLinkOptions = (
+  referenceDate = new Date(),
+  requiredDocumentKeys = [...DEFAULT_QUARTERLY_REQUIRED_KEYS],
+) => {
+  const { year, quarter } = defaultQuarterlyPublicLinkPeriod(referenceDate);
+  const isoDate = calendarQuarterReportingPeriodEnd(year, quarter);
+  const periodLabel = `Q${quarter} ${year}`;
+  const lenderInstructions = buildQuarterlyUploadLinkInstructions(
+    periodLabel,
+    isoDate,
+    year,
+    requiredDocumentKeys,
+  );
 
   return {
     submissionCadence: 'QUARTERLY',
@@ -107,6 +162,53 @@ export const buildQuarterlyTestUploadLinkOptions = (
     requiredDocumentKeys: [...requiredDocumentKeys],
     periodLabel,
     lenderInstructions,
+  };
+};
+
+/** @deprecated Use {@link buildQuarterlyUploadLinkOptions} */
+export const buildQuarterlyTestUploadLinkOptions = buildQuarterlyUploadLinkOptions;
+
+/**
+ * Configurable quarterly public upload link for lender-created packages.
+ * @param {object} params
+ * @param {number} params.year
+ * @param {number} params.quarter 1–4
+ * @param {Array<{ type: string, requiredForSubmit: boolean }>} [params.documentItems]
+ * @param {string} [params.lenderInstructions]
+ * @returns {object} createUploadLink options
+ */
+export const buildCustomQuarterlyUploadLinkOptions = ({
+  year,
+  quarter,
+  documentItems = [],
+  lenderInstructions,
+} = {}) => {
+  const isoDate = calendarQuarterReportingPeriodEnd(year, quarter);
+  const periodLabel = `Q${quarter} ${year}`;
+  const reportingYear = Math.floor(Number(year));
+
+  const requiredDocumentKeys = documentItems
+    .filter((item) => item?.type)
+    .map(({ type, requiredForSubmit }) => buildUploadLinkRequirementRow(type, {
+      requiredForSubmit: Boolean(requiredForSubmit),
+      remind: Boolean(requiredForSubmit),
+    }));
+
+  const instructionKeys = requiredDocumentKeys.map((row) => row.type);
+
+  return {
+    submissionCadence: 'QUARTERLY',
+    reportingPeriodEndDate: isoDate,
+    fiscalYearEndMonth: 12,
+    requiredDocumentKeys,
+    periodLabel,
+    lenderInstructions: lenderInstructions?.trim()
+      || buildQuarterlyUploadLinkInstructions(
+        periodLabel,
+        isoDate,
+        reportingYear,
+        instructionKeys,
+      ),
   };
 };
 
@@ -138,8 +240,8 @@ export const buildAnnualBorrowerTestUploadLinkOptions = (referenceDate = new Dat
   };
 };
 
-/** @deprecated Use {@link buildQuarterlyTestUploadLinkOptions} */
-export const Q1_TEST_UPLOAD_LINK_OPTIONS = buildQuarterlyTestUploadLinkOptions(
+/** @deprecated Use {@link buildQuarterlyUploadLinkOptions} */
+export const Q1_TEST_UPLOAD_LINK_OPTIONS = buildQuarterlyUploadLinkOptions(
   new Date('2026-04-01T00:00:00.000Z'),
 );
 

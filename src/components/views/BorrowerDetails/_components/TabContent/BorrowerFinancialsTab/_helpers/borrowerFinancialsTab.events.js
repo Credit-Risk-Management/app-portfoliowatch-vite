@@ -1,12 +1,8 @@
 import { $borrowerFinancialsView } from '@src/signals';
 import { successAlert, dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import borrowersApi from '@src/api/borrowers.api';
-import { createUploadLink } from '@src/api/borrowerFinancialUploadLink.api';
-import {
-  buildQuarterlyTestUploadLinkOptions,
-  DEFAULT_QUARTERLY_REQUIRED_KEYS,
-} from '@src/constants/financialSubmissionRequirements';
 import { openCreatePublicUploadLinkModal } from '@src/components/views/BorrowerDetails/_components/CreatePublicUploadLinkModal/_helpers/createPublicUploadLinkModal.events';
+import { openCreateQuarterlyPublicUploadLinkModal } from '@src/components/views/BorrowerDetails/_components/CreateQuarterlyPublicUploadLinkModal/_helpers/createQuarterlyPublicUploadLinkModal.events';
 import * as consts from './borrowerFinancialsTab.consts';
 import { getUploadLinkUrl, getUploadedFinancialDocumentIds } from './borrowerFinancialsTab.helpers';
 import * as resolvers from './borrowerFinancialsTab.resolvers';
@@ -211,35 +207,11 @@ const copyToClipboard = async (url, linkKind = 'quarterly') => {
   }
 };
 
-/** Q2 2026 calendar quarter-end (2026-06-30) for dev/test upload links. */
-const Q2_2026_TEST_UPLOAD_REFERENCE_DATE = new Date('2026-07-01T00:00:00.000Z');
-
-export const handleCreateQ1TestUploadLink = async (borrowerId) => {
-  if (!borrowerId) return;
-  try {
-    const response = await createUploadLink(
-      borrowerId,
-      buildQuarterlyTestUploadLinkOptions(
-        Q2_2026_TEST_UPLOAD_REFERENCE_DATE,
-        DEFAULT_QUARTERLY_REQUIRED_KEYS,
-      ),
-    );
-    const data = response?.data ?? response;
-    const url = data?.uploadLinkUrl ?? data?.upload_link_url;
-    if (response?.status === 'success' && url) {
-      const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
-      const quarterlyUrl = `${baseUrl}/upload-financials/${data?.token}`;
-      await copyToClipboard(quarterlyUrl, 'quarterly');
-      successAlert('Quarterly link copied to clipboard!', 'toast');
-    } else {
-      dangerAlert('Could not create quarterly upload link.');
-    }
-  } catch (error) {
-    dangerAlert(error?.message || 'Failed to create quarterly upload link.');
-  }
+export const handleCreateQuarterlyUploadLink = (borrowerId) => {
+  openCreateQuarterlyPublicUploadLinkModal(borrowerId);
 };
 
-export const handleCreateAnnualTestUploadLink = (borrowerId) => {
+export const handleCreateAnnualUploadLink = (borrowerId) => {
   openCreatePublicUploadLinkModal(borrowerId);
 };
 

@@ -1,30 +1,18 @@
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import {
-  Container,
-  Row,
-  Col,
-} from 'react-bootstrap';
+import { Container, Row, Col } from 'react-bootstrap';
 import { faEdit, faEye, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
 import PageHeader from '@src/components/global/PageHeader';
 import SignalTable from '@src/components/global/SignalTable';
 import Search from '@src/components/global/Inputs/Search';
 import StatusBadge from '@src/components/global/StatusBadge';
 import ContextMenu from '@src/components/global/ContextMenu';
-import {
-  $borrowersView,
-  $borrowersFilter,
-  $borrowers,
-  $relationshipManagers,
-} from '@src/signals';
+import { $borrowersView, $borrowersFilter, $borrowers, $relationshipManagers } from '@src/signals';
 import SelectInput from '@src/components/global/Inputs/SelectInput';
 import { formatCurrency } from '@src/utils/formatCurrency';
 import { borrowersFilterToUrlParams } from '@src/utils/tableFilterUrlParams';
-import {
-  DEFAULT_PAGE_LIMIT,
-  PAGE_LIMIT_OPTIONS,
-  resolvePageLimit,
-} from '@src/consts/consts';
+import BorrowerComplianceBadges from '@src/components/global/BorrowerComplianceBadges/BorrowerComplianceBadges';
+import { DEFAULT_PAGE_LIMIT, PAGE_LIMIT_OPTIONS, resolvePageLimit } from '@src/consts/consts';
 import { useRef } from 'react';
 import * as consts from './_helpers/borrowers.consts';
 import * as resolvers from './_helpers/borrowers.resolvers';
@@ -35,7 +23,6 @@ import EditBorrowerModal from './_components/EditBorrowerModal';
 import DeleteBorrowerModal from './_components/DeleteBorrowerModal';
 import AddBorrowerModal from './_components/AddBorrowerModal';
 import BorrowersComplianceFilter from './_components/BorrowersComplianceFilter/BorrowersComplianceFilter';
-import BorrowerComplianceBadges from '@src/components/global/BorrowerComplianceBadges/BorrowerComplianceBadges';
 
 const Borrowers = () => {
   const navigate = useNavigate();
@@ -61,7 +48,7 @@ const Borrowers = () => {
       const taxReturn2025Param = searchParams.get('taxReturn2025Complete') || '';
       const limitParam = searchParams.get('limit');
       const parsedLimit = limitParam ? Number(limitParam) : DEFAULT_PAGE_LIMIT;
-      const limit = PAGE_LIMIT_OPTIONS.some((option) => option.value === parsedLimit)
+      const limit = PAGE_LIMIT_OPTIONS.some(option => option.value === parsedLimit)
         ? parsedLimit
         : DEFAULT_PAGE_LIMIT;
       $borrowersFilter.update({
@@ -71,9 +58,15 @@ const Borrowers = () => {
         sortKey,
         sortDirection,
         borrowerType: borrowerTypeParam ? borrowerTypeParam.split(',').filter(Boolean) : [],
-        relationshipManager: relationshipManagerParam ? relationshipManagerParam.split(',').filter(Boolean) : [],
-        quarterlyPackageComplete: ['true', 'false'].includes(quarterlyPackageParam) ? quarterlyPackageParam : '',
-        impactQuestionnaireComplete: ['true', 'false'].includes(impactQuestionnaireParam) ? impactQuestionnaireParam : '',
+        relationshipManager: relationshipManagerParam
+          ? relationshipManagerParam.split(',').filter(Boolean)
+          : [],
+        quarterlyPackageComplete: ['true', 'false'].includes(quarterlyPackageParam)
+          ? quarterlyPackageParam
+          : '',
+        impactQuestionnaireComplete: ['true', 'false'].includes(impactQuestionnaireParam)
+          ? impactQuestionnaireParam
+          : '',
         taxReturn2025Complete: ['true', 'false'].includes(taxReturn2025Param) ? taxReturn2025Param : '',
       });
     }
@@ -87,11 +80,11 @@ const Borrowers = () => {
     if (isInitialMount.current) return;
 
     const borrowerTypeValue = Array.isArray($borrowersFilter.value.borrowerType)
-      ? $borrowersFilter.value.borrowerType.filter((type) => type !== '').join(',')
+      ? $borrowersFilter.value.borrowerType.filter(type => type !== '').join(',')
       : $borrowersFilter.value.borrowerType;
 
     const relationshipManagerValue = Array.isArray($borrowersFilter.value.relationshipManager)
-      ? $borrowersFilter.value.relationshipManager.filter((manager) => manager !== '').join(',')
+      ? $borrowersFilter.value.relationshipManager.filter(manager => manager !== '').join(',')
       : $borrowersFilter.value.relationshipManager;
 
     const filters = {
@@ -122,16 +115,16 @@ const Borrowers = () => {
       clearTimeout(searchDebounceTimerRef.current);
     }
 
-    await new Promise((resolve) => {
+    await new Promise(resolve => {
       searchDebounceTimerRef.current = setTimeout(resolve, BORROWERS_SEARCH_DEBOUNCE_MS);
     });
 
     const borrowerTypeValue = Array.isArray($borrowersFilter.value.borrowerType)
-      ? $borrowersFilter.value.borrowerType.filter((type) => type !== '').join(',')
+      ? $borrowersFilter.value.borrowerType.filter(type => type !== '').join(',')
       : $borrowersFilter.value.borrowerType;
 
     const relationshipManagerValue = Array.isArray($borrowersFilter.value.relationshipManager)
-      ? $borrowersFilter.value.relationshipManager.filter((manager) => manager !== '').join(',')
+      ? $borrowersFilter.value.relationshipManager.filter(manager => manager !== '').join(',')
       : $borrowersFilter.value.relationshipManager;
 
     await resolvers.fetchAndSetBorrowerData({
@@ -143,7 +136,7 @@ const Borrowers = () => {
     });
   }, [$borrowersFilter.value.searchTerm]);
 
-  const rows = $borrowers.value.list.map((borrower) => ({
+  const rows = $borrowers.value.list.map(borrower => ({
     ...borrower,
     name: () => (
       <span className="d-flex align-items-center flex-wrap py-4">
@@ -163,7 +156,7 @@ const Borrowers = () => {
           { label: 'Edit', icon: faEdit, action: 'edit' },
           { label: 'Delete', icon: faTrash, action: 'delete' },
         ]}
-        onItemClick={(item) => {
+        onItemClick={item => {
           if (item.action === 'detail') {
             const params = borrowersFilterToUrlParams($borrowersFilter.value);
             window.localStorage.setItem('filterQueryString', params.toString());
@@ -242,7 +235,7 @@ const Borrowers = () => {
           <SelectInput
             options={PAGE_LIMIT_OPTIONS}
             value={$borrowersFilter.value.limit}
-            onChange={(selectedOption) => {
+            onChange={selectedOption => {
               const limit = resolvePageLimit(selectedOption?.value);
               syncBorrowersListUrl(setSearchParams, { limit, page: 1 });
             }}
@@ -257,7 +250,9 @@ const Borrowers = () => {
       </Row>
       <Row className="mb-8">
         <Col xs={12}>
-          <div style={$borrowersView.value.showAllMode ? { maxHeight: '70vh', overflowY: 'auto' } : undefined}>
+          <div
+            style={$borrowersView.value.showAllMode ? { maxHeight: '70vh', overflowY: 'auto' } : undefined}
+          >
             <SignalTable
               $filter={$borrowersFilter}
               $view={$borrowersView}
@@ -269,7 +264,7 @@ const Borrowers = () => {
               itemsPerPageAmount={resolvePageLimit($borrowersFilter.value.limit)}
               hasPagination={!$borrowersView.value.showAllMode}
               className="shadow"
-              onRowClick={(borrower) => {
+              onRowClick={borrower => {
                 const params = borrowersFilterToUrlParams($borrowersFilter.value);
                 window.localStorage.setItem('filterQueryString', params.toString());
                 navigate(`/borrowers/${borrower.id}`);

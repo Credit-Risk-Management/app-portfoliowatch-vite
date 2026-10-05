@@ -1,8 +1,16 @@
 import { successAlert, dangerAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import { createUploadLink } from '@src/api/borrowerFinancialUploadLink.api';
 import { buildCustomAnnualUploadLinkOptions } from '@src/constants/financialSubmissionRequirements';
-import * as consts from './createPublicUploadLinkModal.consts';
-import * as events from './createPublicUploadLinkModal.events';
+import { $borrowerFinancialsView } from '@src/signals';
+import { $copiedAnnualLink } from '@src/components/views/BorrowerDetails/_components/TabContent/BorrowerFinancialsTab/_helpers/borrowerFinancialsTab.consts';
+import {
+  resetCreatePublicUploadLinkForm,
+  $createPublicUploadLinkForm,
+  $createPublicUploadLinkState,
+  buildDocumentItemsFromForm,
+  hasAtLeastOneDocumentSelected,
+  hasAtLeastOneRequiredForSubmit,
+} from './createPublicUploadLinkModal.consts';
 
 const COPIED_RESET_MS = 2000;
 
@@ -24,22 +32,22 @@ const copyToClipboard = async (url) => {
 export const createAndCopyPublicUploadLink = async (borrowerId) => {
   if (!borrowerId) return;
 
-  const formValue = consts.$createPublicUploadLinkForm.value;
-  const { availableTaxYears } = consts.$createPublicUploadLinkState.value;
-  const { taxYearItems, debtSchedule } = consts.buildDocumentItemsFromForm(
+  const formValue = $createPublicUploadLinkForm.value;
+  const { availableTaxYears } = $createPublicUploadLinkState.value;
+  const { taxYearItems, debtSchedule } = buildDocumentItemsFromForm(
     formValue,
     availableTaxYears,
   );
 
-  if (!consts.hasAtLeastOneDocumentSelected(formValue, availableTaxYears)) {
-    consts.$createPublicUploadLinkState.update({
+  if (!hasAtLeastOneDocumentSelected(formValue, availableTaxYears)) {
+    $createPublicUploadLinkState.update({
       error: 'Select at least one tax year or debt schedule.',
     });
     return;
   }
 
-  if (!consts.hasAtLeastOneRequiredForSubmit(formValue, availableTaxYears)) {
-    consts.$createPublicUploadLinkState.update({
+  if (!hasAtLeastOneRequiredForSubmit(formValue, availableTaxYears)) {
+    $createPublicUploadLinkState.update({
       error: 'Mark at least one included document as required to submit.',
     });
     return;
@@ -58,7 +66,7 @@ export const createAndCopyPublicUploadLink = async (borrowerId) => {
   );
 
   try {
-    consts.$createPublicUploadLinkState.update({ isCreating: true, error: null });
+    $createPublicUploadLinkState.update({ isCreating: true, error: null });
 
     const options = buildCustomAnnualUploadLinkOptions({
       taxYearItems,
@@ -75,25 +83,28 @@ export const createAndCopyPublicUploadLink = async (borrowerId) => {
       const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
       const publicUrl = `${baseUrl}/upload-financials/${token}`;
       await copyToClipboard(publicUrl);
-      consts.$createPublicUploadLinkState.update({ isCreating: false, error: null });
-      events.closeCreatePublicUploadLinkModal();
+      $copiedAnnualLink.update(true);
+      setTimeout(() => $copiedAnnualLink.update(false), COPIED_RESET_MS);
+      $createPublicUploadLinkState.update({ isCreating: false, error: null });
+      $borrowerFinancialsView.update({ activeModalKey: null });
+      resetCreatePublicUploadLinkForm();
       successAlert('Public upload link copied to clipboard!', 'toast');
     } else {
-      consts.$createPublicUploadLinkState.update({
+      $createPublicUploadLinkState.update({
         error: 'Could not create public upload link.',
         isCreating: false,
       });
       dangerAlert('Could not create public upload link.');
     }
   } catch (error) {
-    consts.$createPublicUploadLinkState.update({
+    $createPublicUploadLinkState.update({
       error: error?.message || 'Failed to create public upload link.',
       isCreating: false,
     });
     dangerAlert(error?.message || 'Failed to create public upload link.');
   } finally {
-    if (consts.$createPublicUploadLinkState.value.isCreating) {
-      consts.$createPublicUploadLinkState.update({ isCreating: false });
+    if ($createPublicUploadLinkState.value.isCreating) {
+      $createPublicUploadLinkState.update({ isCreating: false });
     }
   }
 };
