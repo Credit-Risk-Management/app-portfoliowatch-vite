@@ -1,4 +1,5 @@
 import { Form, Row, Col } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import UniversalModal from '@src/components/global/UniversalModal';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
 import SelectInput from '@src/components/global/Inputs/SelectInput';
@@ -8,10 +9,11 @@ import {
   $onboardingTenantPick,
   $onboardingView,
 } from '../_helpers/onboarding.consts';
-import { closeCreateModal, handleCreateRun } from '../_helpers/onboarding.events';
-import { applySelectedTenant } from '../_helpers/onboarding.resolvers';
+import { closeCreateModal, handleCreateRun, handleTenantChange } from '../_helpers/onboarding.events';
 
 const CreateOnboardingRunModal = () => {
+  const navigate = useNavigate();
+
   const tenantOptions = [
     { value: '', label: 'Select tenant…' },
     ...($onboardingTenants.value || []).map(t => ({
@@ -28,7 +30,7 @@ const CreateOnboardingRunModal = () => {
       headerText="New onboarding run"
       leftBtnText="Cancel"
       rightBtnText="Create run"
-      rightBtnOnClick={handleCreateRun}
+      rightBtnOnClick={() => handleCreateRun(navigate)}
       size="lg"
     >
       <Form className="text-white align-items-start mt-16">
@@ -41,14 +43,7 @@ const CreateOnboardingRunModal = () => {
               options={tenantOptions}
               value={$onboardingTenantPick.value.orgDb}
               notClearable
-              onChange={(selected) => {
-                const tenant = ($onboardingTenants.value || []).find(
-                  t => t.orgDb === selected?.value,
-                );
-                if (tenant) {
-                  applySelectedTenant(tenant);
-                }
-              }}
+              onChange={handleTenantChange}
             />
           </Col>
         </Row>

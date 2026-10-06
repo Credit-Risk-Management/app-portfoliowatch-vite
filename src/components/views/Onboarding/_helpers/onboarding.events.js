@@ -5,12 +5,16 @@ import {
   $onboardingView,
   $onboardingMatchForm,
   $onboardingTenantPick,
+  $onboardingTenants,
+  $onboardingSelectedTenant,
 } from './onboarding.consts';
+import { handleNotification } from '@src/components/global/Alert/_helpers/alert.events';
 import {
   applySelectedTenant,
   fetchRunDetail,
   fetchRuns,
   loadMatchCandidates,
+  syncTenantFromPickSignal,
 } from './onboarding.resolvers';
 
 const UPLOAD_CONCURRENCY = 5;
@@ -27,7 +31,12 @@ export const openCreateModal = () => {
 export const closeCreateModal = () => {
   $onboardingView.update({ showCreateModal: false });
   $onboardingCreateForm.reset();
-  $onboardingTenantPick.reset();
+  const orgDb = $onboardingSelectedTenant.value?.orgDb;
+  if (orgDb) {
+    $onboardingTenantPick.update({ orgDb });
+  } else {
+    $onboardingTenantPick.reset();
+  }
 };
 
 export const openUploadModal = (runId) => {
@@ -48,15 +57,50 @@ export const closeMatchModal = () => {
   $onboardingView.update({ showMatchModal: false, selectedItemId: null });
 };
 
-export const handleCreateRun = async () => {
+export const handleCreateRun = async (navigate) => {
+  if (!syncTenantFromPickSignal()) {
+    handleNotification({
+      variant: 'danger',
+      message: 'Select a tenant before creating a run.',
+    });
+    return;
+  }
+
   const form = $onboardingCreateForm.value;
+  if (!form.name?.trim()) {
+    handleNotification({
+      variant: 'danger',
+      message: 'Run name is required.',
+    });
+    return;
+  }
+
   const fd = new FormData();
-  fd.append('name', form.name);
+  fd.append('name', form.name.trim());
   if (form.dropboxFolderName) fd.append('dropboxFolderName', form.dropboxFolderName);
   if (form.masterListFile) fd.append('masterList', form.masterListFile);
-  await onboardingApi.createRun(fd);
+  const res = await onboardingApi.createRun(fd);
+  const run = res?.data ?? res;
+  if (run?.orgDb) {
+    const tenant = ($onboardingTenants.value || []).find(t => t.orgDb === run.orgDb);
+    applySelectedTenant(tenant || { orgDb: run.orgDb, displayName: run.orgDb });
+  }
   closeCreateModal();
   await fetchRuns();
+  if (run?.id && typeof navigate === 'function') {
+    navigate(`/onboarding/${run.id}`);
+  }
+};
+
+export const handleTenantChange = (selectedOption) => {
+  const orgDb = selectedOption?.value;
+  if (!orgDb) {
+    applySelectedTenant(null);
+    fetchRuns();
+    return;
+  }
+  const tenant = ($onboardingTenants.value || []).find(t => t.orgDb === orgDb);
+  handleSelectTenant(tenant || { orgDb, displayName: selectedOption?.label || orgDb });
 };
 
 export const uploadFolderFiles = async (runId, fileList) => {

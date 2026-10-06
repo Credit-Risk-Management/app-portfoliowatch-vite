@@ -9,7 +9,7 @@ import {
   ITEM_TABLE_HEADERS,
   MATCH_STATUS_BADGE,
 } from './_helpers/onboarding.consts';
-import { fetchRunDetail } from './_helpers/onboarding.resolvers';
+import { fetchRunDetail, fetchTenants } from './_helpers/onboarding.resolvers';
 import {
   handleStartDiff,
   handleStartImport,
@@ -37,6 +37,7 @@ const OnboardingRunDetail = () => {
   );
 
   useEffectAsync(async () => {
+    await fetchTenants();
     if (runId) await fetchRunDetail(runId);
   }, [runId]);
 

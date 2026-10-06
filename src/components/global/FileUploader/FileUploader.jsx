@@ -13,8 +13,17 @@ const FileUploader = ({
   /** `'dropzone'` — centered layout, dashed border, drag-over highlight (still uses same signal + handlers). */
   variant = 'default',
   directory = false,
+  browseButtonText,
+  dropHintText,
+  dropzoneDark = false,
   children,
 }) => {
+  const browseLabel = browseButtonText ?? (directory ? 'Choose folder' : 'Choose File');
+  const dropHint = dropHintText ?? (
+    directory
+      ? 'or drag and drop a folder here'
+      : 'or drag and drop your files here'
+  );
   const [dragDepth, setDragDepth] = useState(0);
   const isDragOver = variant === 'dropzone' && dragDepth > 0;
 
@@ -37,6 +46,13 @@ const FileUploader = ({
     setDragDepth((d) => Math.max(0, d - 1));
   }, []);
 
+  const dropzoneIdleClass = dropzoneDark
+    ? 'border-dashed border-info-600 bg-info-800'
+    : 'border-dashed border-grey-400 bg-light-100';
+  const dropzoneDragClass = dropzoneDark
+    ? 'border-primary border-2 bg-info-700'
+    : 'border-primary border-2 bg-primary-50';
+
   const dropzoneClass = variant === 'dropzone'
     ? [
       'file-uploader',
@@ -46,7 +62,8 @@ const FileUploader = ({
       'py-32',
       'text-center',
       'border',
-      isDragOver ? 'border-primary border-2 bg-primary-50' : 'border-dashed border-grey-400 bg-light-100',
+      'rounded',
+      isDragOver ? dropzoneDragClass : dropzoneIdleClass,
     ].join(' ')
     : 'file-uploader';
 
@@ -90,11 +107,11 @@ const FileUploader = ({
             ].filter(Boolean).join(' ')}
             onClick={() => handleBrowse(id)}
           >
-            Choose File
+            {browseLabel}
           </Button>
           {variant === 'dropzone' && (
-            <p className="text-grey-600 small mt-16 mb-0">
-              or drag and drop your PDF here
+            <p className={`small mt-16 mb-0 ${dropzoneDark ? 'text-info-300' : 'text-grey-600'}`}>
+              {dropHint}
             </p>
           )}
         </Col>

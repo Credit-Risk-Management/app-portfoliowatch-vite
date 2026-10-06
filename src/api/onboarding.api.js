@@ -1,18 +1,36 @@
 import apiClient from './client';
+import {
+  $onboardingSelectedTenant,
+  $onboardingTenantPick,
+  ONBOARDING_ORG_DB_STORAGE_KEY,
+} from '@src/components/views/Onboarding/_helpers/onboarding.consts';
 
 let selectedOrgDb = null;
 
 export const setOnboardingOrgDb = (orgDb) => {
-  selectedOrgDb = orgDb;
+  selectedOrgDb = orgDb || null;
 };
 
-const withOrgDbHeader = (config = {}) => ({
-  ...config,
-  headers: {
-    ...(config.headers || {}),
-    ...(selectedOrgDb ? { 'X-Onboarding-Org-Db': selectedOrgDb } : {}),
-  },
-});
+function resolveOrgDbForHeader() {
+  const fromSignal = $onboardingSelectedTenant.value?.orgDb
+    || $onboardingTenantPick.value?.orgDb
+    || selectedOrgDb;
+  if (fromSignal) return fromSignal;
+  try {
+    return window.localStorage.getItem(ONBOARDING_ORG_DB_STORAGE_KEY) || null;
+  } catch {
+    return null;
+  }
+}
+
+const withOrgDbHeader = (config = {}) => {
+  const orgDb = resolveOrgDbForHeader();
+  const headers = { ...(config.headers || {}) };
+  if (orgDb) {
+    headers['X-Onboarding-Org-Db'] = orgDb;
+  }
+  return { ...config, headers };
+};
 
 export const onboardingApi = {
   getTenants: () => apiClient.get('/onboarding/tenants'),
@@ -23,9 +41,7 @@ export const onboardingApi = {
 
   getRunItems: (runId) => apiClient.get(`/onboarding/runs/${runId}/items`, withOrgDbHeader()),
 
-  createRun: (formData) => apiClient.post('/onboarding/runs', formData, withOrgDbHeader({
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })),
+  createRun: (formData) => apiClient.post('/onboarding/runs', formData, withOrgDbHeader()),
 
   getSignedUploadUrls: (runId, relativePaths) => apiClient.post(
     `/onboarding/runs/${runId}/files/signed-urls`,

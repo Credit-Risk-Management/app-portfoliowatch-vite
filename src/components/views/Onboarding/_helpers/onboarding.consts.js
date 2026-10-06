@@ -1,5 +1,7 @@
 import { Signal } from '@fyclabs/tools-fyc-react/signals';
 
+export const ONBOARDING_ORG_DB_STORAGE_KEY = 'onboardingSelectedOrgDb';
+
 export const $onboardingView = Signal({
   isTableLoading: false,
   selectedRunId: null,
