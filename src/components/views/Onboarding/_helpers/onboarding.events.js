@@ -109,49 +109,75 @@ export const uploadFolderFiles = async (runId, fileList) => {
 
   $onboardingUploadState.update({ isUploading: true, files, progress: 0 });
 
-  const relativePaths = files.map((f) => f.webkitRelativePath || f.name);
-  const signed = await onboardingApi.getSignedUploadUrls(runId, relativePaths);
-  const urlEntries = signed?.data || signed || [];
+  try {
+    const relativePaths = files.map((f) => f.webkitRelativePath || f.name);
+    const signed = await onboardingApi.getSignedUploadUrls(runId, relativePaths);
+    const urlEntries = signed?.data || signed || [];
 
-  let completed = 0;
-  const queue = [...urlEntries];
+    let completed = 0;
+    const queue = [...urlEntries];
+    const failedPaths = [];
 
-  const worker = async () => {
-    while (queue.length) {
-      const entry = queue.shift();
-      if (!entry) break;
-      const file = files.find(
-        (f) => (f.webkitRelativePath || f.name) === entry.relativePath,
-      );
-      if (!file) continue;
-      await fetch(entry.uploadUrl, {
-        method: 'PUT',
-        body: file,
-        headers: { 'Content-Type': file.type || 'application/octet-stream' },
+    const worker = async () => {
+      while (queue.length) {
+        const entry = queue.shift();
+        if (!entry) break;
+        const file = files.find(
+          (f) => (f.webkitRelativePath || f.name) === entry.relativePath,
+        );
+        if (!file) continue;
+        const contentType = entry.uploadContentType || 'application/octet-stream';
+        const response = await fetch(entry.uploadUrl, {
+          method: 'PUT',
+          body: file,
+          headers: { 'Content-Type': contentType },
+        });
+        if (!response.ok) {
+          failedPaths.push(entry.relativePath);
+        }
+        completed += 1;
+        $onboardingUploadState.update({
+          progress: Math.round((completed / urlEntries.length) * 100),
+        });
+      }
+    };
+
+    await Promise.all(
+      Array.from({ length: UPLOAD_CONCURRENCY }, () => worker()),
+    );
+
+    if (failedPaths.length) {
+      handleNotification({
+        type: 'error',
+        message: `Upload failed for ${failedPaths.length} file(s). Nothing was saved — check the network tab and try again.`,
       });
-      completed += 1;
-      $onboardingUploadState.update({
-        progress: Math.round((completed / urlEntries.length) * 100),
-      });
+      return;
     }
-  };
 
-  await Promise.all(
-    Array.from({ length: UPLOAD_CONCURRENCY }, () => worker()),
-  );
+    await onboardingApi.confirmUploadedFiles(
+      runId,
+      urlEntries.map((e) => ({
+        relativePath: e.relativePath,
+        storagePath: e.storagePath,
+        sizeBytes: files.find((f) => (f.webkitRelativePath || f.name) === e.relativePath)?.size,
+      })),
+    );
 
-  await onboardingApi.confirmUploadedFiles(
-    runId,
-    urlEntries.map((e) => ({
-      relativePath: e.relativePath,
-      storagePath: e.storagePath,
-      sizeBytes: files.find((f) => (f.webkitRelativePath || f.name) === e.relativePath)?.size,
-    })),
-  );
-
-  $onboardingUploadState.update({ isUploading: false, progress: 100 });
-  closeUploadModal();
-  await fetchRunDetail(runId);
+    handleNotification({
+      type: 'success',
+      message: `${urlEntries.length} file(s) uploaded to storage.`,
+    });
+    $onboardingUploadState.update({ isUploading: false, progress: 100 });
+    closeUploadModal();
+    await fetchRunDetail(runId);
+  } catch (err) {
+    handleNotification({
+      type: 'error',
+      message: err?.message || 'Folder upload failed.',
+    });
+  } finally {
+    $onboardingUploadState.update({ isUploading: false });
+  }
 };
 
 export const handleStartDiff = async (runId) => {
