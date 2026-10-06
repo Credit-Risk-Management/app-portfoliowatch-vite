@@ -15,6 +15,7 @@ export const $user = Signal({
   name: null,
   organizationId: null,
   role: null,
+  isSuperAdmin: false,
 });
 export const $organization = Signal({
   id: null,

@@ -12,6 +12,7 @@ const FileUploader = ({
   id = 'file-input',
   /** `'dropzone'` — centered layout, dashed border, drag-over highlight (still uses same signal + handlers). */
   variant = 'default',
+  directory = false,
   children,
 }) => {
   const [dragDepth, setDragDepth] = useState(0);
@@ -66,6 +67,7 @@ const FileUploader = ({
           className="d-none"
           onChange={(e) => handleFileSelection(e, signal, name, onUpload)}
           multiple
+          {...(directory ? { webkitdirectory: 'true', directory: 'true' } : {})}
           accept={acceptedTypes}
         />
         <Col

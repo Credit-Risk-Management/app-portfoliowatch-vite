@@ -68,6 +68,7 @@ export const initAuthListener = () => {
             name: user.name,
             organizationId: user.organizationId,
             role: user.role,
+            isSuperAdmin: Boolean(user.isSuperAdmin),
           };
 
           $organization.value = {
