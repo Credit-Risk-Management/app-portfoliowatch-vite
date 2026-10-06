@@ -55,6 +55,21 @@ export const $onboardingMatchForm = Signal({
   selectedBorrowerName: null,
 });
 
+export const $onboardingFiles = Signal({
+  list: [],
+  documentTypeOptions: [],
+  loadedRunId: null,
+});
+
+export const $onboardingFileDrafts = Signal({});
+
+export const $onboardingFileView = Signal({
+  isTableLoading: true,
+  hasLoaded: false,
+  savingFileId: null,
+  dirtyFileIds: {},
+});
+
 export const RUN_TABLE_HEADERS = [
   { key: 'name', value: 'Run name' },
   { key: 'status', value: 'Status' },
@@ -79,4 +94,29 @@ export const MATCH_STATUS_BADGE = {
   AUTO_MATCHED: 'info',
   CONFIRMED: 'success',
   IGNORED: 'secondary',
+};
+
+export const FILE_TABLE_HEADERS = [
+  { key: 'fileName', value: 'File name' },
+  { key: 'folder', value: 'Folder' },
+  { key: 'borrowerName', value: 'Borrower' },
+  { key: 'documentType', value: 'Document type' },
+  { key: 'confidence', value: 'Confidence' },
+  { key: 'diffStatus', value: 'Diff status' },
+  { key: 'geminiScan', value: 'Gemini scan' },
+];
+
+export const DIFF_STATUS_BADGE = {
+  NEW: 'info',
+  ALREADY_IMPORTED: 'success',
+  EXTRA: 'warning',
+  MISSING: 'secondary',
+};
+
+export const GEMINI_SCAN_STATUS_BADGE = {
+  none: 'secondary',
+  queued: 'info',
+  running: 'warning',
+  completed: 'success',
+  failed: 'danger',
 };

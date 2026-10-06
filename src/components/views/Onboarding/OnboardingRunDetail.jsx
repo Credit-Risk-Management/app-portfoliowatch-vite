@@ -18,6 +18,7 @@ import {
   handleStartImport,
   openMatchModal,
   openUploadModal,
+  resetOnboardingFileReview,
   resumeDiffPollingIfNeeded,
 } from './_helpers/onboarding.events';
 import {
@@ -26,11 +27,13 @@ import {
 } from './_helpers/onboarding.helpers';
 import UploadFolderModal from './_components/UploadFolderModal';
 import MatchRelationshipModal from './_components/MatchRelationshipModal';
+import OnboardingFileClassifications from './_components/OnboardingFileClassifications';
 
 const OnboardingRunDetail = () => {
   const { runId } = useParams();
 
   useEffect(() => {
+    resetOnboardingFileReview();
     $onboardingDiff.update({ activeRunId: runId || null });
     return () => {
       clearOnboardingDiffPoll();
@@ -129,6 +132,7 @@ const OnboardingRunDetail = () => {
         rows={rows}
         hasPagination={false}
       />
+      <OnboardingFileClassifications />
       <UploadFolderModal />
       <MatchRelationshipModal />
     </Container>

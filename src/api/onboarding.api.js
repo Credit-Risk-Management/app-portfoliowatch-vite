@@ -63,5 +63,13 @@ export const onboardingApi = {
 
   confirmItemMatch: (itemId, body) => apiClient.patch(`/onboarding/items/${itemId}/match`, body, withOrgDbHeader()),
 
+  getRunFiles: (runId) => apiClient.get(`/onboarding/runs/${runId}/files`, withOrgDbHeader()),
+
+  updateFileDocumentType: (fileId, documentType) => apiClient.patch(
+    `/onboarding/files/${fileId}`,
+    { documentType },
+    withOrgDbHeader(),
+  ),
+
   startImport: (runId) => apiClient.post(`/onboarding/runs/${runId}/import`, {}, withOrgDbHeader()),
 };

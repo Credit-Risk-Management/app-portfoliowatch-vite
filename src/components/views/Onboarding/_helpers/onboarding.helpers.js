@@ -42,3 +42,29 @@ export function onboardingDiffStatusMessage(runStatus) {
   }
   return 'Diffing files. The table will update when this finishes.';
 }
+
+export function formatDocumentTypeConfidence(value) {
+  if (value == null || Number.isNaN(Number(value))) return '—';
+  return `${Math.round(Number(value) * 100)}%`;
+}
+
+export function geminiScanStatusLabel(status) {
+  if (status === 'queued') return 'Queued';
+  if (status === 'running') return 'Running';
+  if (status === 'completed') return 'Completed';
+  if (status === 'failed') return 'Failed';
+  return 'Not scanned';
+}
+
+export function documentTypeOptionsForFile(options, currentType) {
+  const list = options || [];
+  if (currentType && !list.some((option) => option.value === currentType)) {
+    return [...list, { value: currentType, label: currentType }];
+  }
+  return list;
+}
+
+export function canSaveFileDocumentType(savedType, draft, isSaving) {
+  if (isSaving || !draft) return false;
+  return draft !== (savedType || '');
+}

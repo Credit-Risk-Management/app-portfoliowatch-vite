@@ -10,12 +10,16 @@ import {
   $onboardingSelectedTenant,
   $onboardingDiff,
   $onboardingRunDetail,
+  $onboardingFiles,
+  $onboardingFileDrafts,
+  $onboardingFileView,
   ONBOARDING_DIFF_POLL_MS,
   ONBOARDING_DIFF_POLL_TIMEOUT_MS,
 } from './onboarding.consts';
 import {
   applySelectedTenant,
   fetchRunDetail,
+  fetchRunFiles,
   fetchRuns,
   loadMatchCandidates,
   syncTenantFromPickSignal,
@@ -377,4 +381,51 @@ export const handleIgnoreItem = async (itemId, runId) => {
   await onboardingApi.confirmItemMatch(itemId, { ignored: true });
   closeMatchModal();
   await fetchRunDetail(runId);
+};
+
+export const resetOnboardingFileReview = () => {
+  $onboardingFiles.update({ list: [], documentTypeOptions: [], loadedRunId: null });
+  $onboardingFileDrafts.reset();
+  $onboardingFileView.update({
+    isTableLoading: true,
+    hasLoaded: false,
+    savingFileId: null,
+    dirtyFileIds: {},
+  });
+};
+
+export const markFileDocumentTypeDirty = (fileId) => {
+  const files = $onboardingFiles.value.list || [];
+  const saved = files.find((file) => file.id === fileId)?.documentType || '';
+  const draft = ($onboardingFileDrafts.value || {})[fileId] || '';
+  const dirtyFileIds = { ...($onboardingFileView.value.dirtyFileIds || {}) };
+  if (draft !== saved) dirtyFileIds[fileId] = true;
+  else delete dirtyFileIds[fileId];
+  $onboardingFileView.update({ dirtyFileIds });
+};
+
+export const handleSaveFileDocumentType = async (fileId, runId) => {
+  const documentType = ($onboardingFileDrafts.value || {})[fileId];
+  if (!documentType || !runId) return;
+  $onboardingFileView.update({ savingFileId: fileId });
+  try {
+    await onboardingApi.updateFileDocumentType(fileId, documentType);
+    const dirtyFileIds = { ...($onboardingFileView.value.dirtyFileIds || {}) };
+    delete dirtyFileIds[fileId];
+    $onboardingFileView.update({ dirtyFileIds });
+    await fetchRunFiles(runId);
+    handleNotification({
+      variant: 'success',
+      message: 'Document type saved.',
+    });
+  } catch (err) {
+    handleNotification({
+      variant: 'danger',
+      message: notificationMessage(err, 'Could not save document type.'),
+    });
+  } finally {
+    if ($onboardingFileView.value.savingFileId === fileId) {
+      $onboardingFileView.update({ savingFileId: null });
+    }
+  }
 };

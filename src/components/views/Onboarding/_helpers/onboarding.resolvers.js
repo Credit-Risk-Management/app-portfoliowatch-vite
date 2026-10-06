@@ -7,6 +7,10 @@ import {
   $onboardingMatchForm,
   $onboardingSelectedTenant,
   $onboardingTenantPick,
+  $onboardingFiles,
+  $onboardingFileDrafts,
+  $onboardingFileView,
+  $onboardingDiff,
   ONBOARDING_ORG_DB_STORAGE_KEY,
 } from './onboarding.consts';
 
@@ -92,15 +96,67 @@ const asList = (payload) => {
   return Array.isArray(value) ? value : [];
 };
 
+const unwrapRunFiles = (payload) => {
+  const value = payload?.data ?? payload ?? {};
+  if (Array.isArray(value)) {
+    return { files: value, documentTypes: [] };
+  }
+  return {
+    files: Array.isArray(value.files) ? value.files : [],
+    documentTypes: Array.isArray(value.documentTypes) ? value.documentTypes : [],
+  };
+};
+
+export const applyOnboardingRunFiles = (payload, runId) => {
+  const { files, documentTypes } = unwrapRunFiles(payload);
+  const dirty = $onboardingFileView.value.dirtyFileIds || {};
+  const drafts = $onboardingFileDrafts.value || {};
+  const nextDrafts = {};
+  const nextDirty = {};
+  files.forEach((file) => {
+    const saved = file.documentType || '';
+    if (dirty[file.id]) {
+      nextDrafts[file.id] = drafts[file.id] ?? saved;
+      nextDirty[file.id] = true;
+    } else {
+      nextDrafts[file.id] = saved;
+    }
+  });
+  $onboardingFiles.update({
+    list: files,
+    documentTypeOptions: documentTypes,
+    loadedRunId: runId,
+  });
+  $onboardingFileDrafts.reset();
+  $onboardingFileDrafts.update(nextDrafts);
+  $onboardingFileView.update({
+    dirtyFileIds: nextDirty,
+    isTableLoading: false,
+    hasLoaded: true,
+  });
+};
+
+const isActiveOnboardingRun = (runId) => $onboardingDiff.value.activeRunId === runId;
+
+export const fetchRunFiles = async (runId) => {
+  const filesRes = await onboardingApi.getRunFiles(runId);
+  if (!isActiveOnboardingRun(runId)) return;
+  applyOnboardingRunFiles(filesRes, runId);
+};
+
 export const fetchRunDetail = async (runId, { silent = false } = {}) => {
   if (!$onboardingSelectedTenant.value.orgDb) {
     restoreOnboardingTenantFromStorage();
   }
-  if (!silent) $onboardingRunDetail.update({ isLoading: true });
+  if (!silent) {
+    $onboardingRunDetail.update({ isLoading: true });
+    $onboardingFileView.update({ isTableLoading: true });
+  }
   try {
-    const [runRes, itemsRes] = await Promise.all([
+    const [runRes, itemsRes, filesRes] = await Promise.all([
       onboardingApi.getRun(runId),
       onboardingApi.getRunItems(runId),
+      onboardingApi.getRunFiles(runId),
     ]);
     const run = runRes?.data ?? runRes;
     if (run?.orgDb) {
@@ -112,8 +168,12 @@ export const fetchRunDetail = async (runId, { silent = false } = {}) => {
       items: itemsRes?.data ?? [],
       isLoading: false,
     });
+    applyOnboardingRunFiles(filesRes, runId);
   } catch (err) {
-    if (!silent) $onboardingRunDetail.update({ isLoading: false });
+    if (!silent) {
+      $onboardingRunDetail.update({ isLoading: false });
+      $onboardingFileView.update({ isTableLoading: false });
+    }
     if (silent) throw err;
   }
 };
