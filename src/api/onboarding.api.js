@@ -41,6 +41,8 @@ export const onboardingApi = {
 
   getRunItems: (runId) => apiClient.get(`/onboarding/runs/${runId}/items`, withOrgDbHeader()),
 
+  getRunFolders: (runId) => apiClient.get(`/onboarding/runs/${runId}/folders`, withOrgDbHeader()),
+
   createRun: (formData) => apiClient.post('/onboarding/runs', formData, withOrgDbHeader()),
 
   getSignedUploadUrls: (runId, relativePaths) => apiClient.post(

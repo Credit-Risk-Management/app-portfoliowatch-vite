@@ -35,10 +35,24 @@ export const $onboardingUploadState = Signal({
   isUploading: false,
 });
 
+export const ONBOARDING_DIFF_POLL_MS = 3000;
+export const ONBOARDING_DIFF_POLL_TIMEOUT_MS = 180000;
+
+export const $onboardingDiff = Signal({
+  isInFlight: false,
+  intervalId: null,
+  generation: 0,
+  activeRunId: null,
+  resultClaimed: false,
+});
+
 export const $onboardingMatchForm = Signal({
   borrowerId: null,
   loanId: null,
+  folders: [],
+  selectedFolderPath: '',
   candidates: [],
+  selectedBorrowerName: null,
 });
 
 export const RUN_TABLE_HEADERS = [

@@ -1,4 +1,5 @@
 import { onboardingApi } from '@src/api/onboarding.api';
+import { handleNotification } from '@src/components/global/Alert/_helpers/alert.events';
 import {
   $onboardingCreateForm,
   $onboardingUploadState,
@@ -7,8 +8,11 @@ import {
   $onboardingTenantPick,
   $onboardingTenants,
   $onboardingSelectedTenant,
+  $onboardingDiff,
+  $onboardingRunDetail,
+  ONBOARDING_DIFF_POLL_MS,
+  ONBOARDING_DIFF_POLL_TIMEOUT_MS,
 } from './onboarding.consts';
-import { handleNotification } from '@src/components/global/Alert/_helpers/alert.events';
 import {
   applySelectedTenant,
   fetchRunDetail,
@@ -18,6 +22,12 @@ import {
 } from './onboarding.resolvers';
 
 const UPLOAD_CONCURRENCY = 5;
+
+const notificationMessage = (err, fallback) => {
+  if (typeof err === 'string' && err) return err;
+  if (err?.message) return err.message;
+  return fallback;
+};
 
 export const handleSelectTenant = (tenant) => {
   applySelectedTenant(tenant);
@@ -49,8 +59,24 @@ export const closeUploadModal = () => {
 };
 
 export const openMatchModal = async (itemId) => {
+  const item = ($onboardingRunDetail.value.items || []).find((row) => row.id === itemId);
+  $onboardingMatchForm.update({
+    candidates: [],
+    folders: [],
+    selectedFolderPath: item?.folderPath || '',
+    selectedBorrowerName: null,
+    borrowerId: null,
+    loanId: null,
+  });
   $onboardingView.update({ showMatchModal: true, selectedItemId: itemId });
-  await loadMatchCandidates(itemId);
+  try {
+    await loadMatchCandidates(itemId);
+  } catch (err) {
+    handleNotification({
+      variant: 'danger',
+      message: notificationMessage(err, 'Could not load match options.'),
+    });
+  }
 };
 
 export const closeMatchModal = () => {
@@ -180,22 +206,168 @@ export const uploadFolderFiles = async (runId, fileList) => {
   }
 };
 
+const isDiffRunStatus = (status) => status === 'DIFFING' || status === 'CLASSIFYING';
+
+const isDiffBusy = () => (
+  $onboardingDiff.value.isInFlight
+  || isDiffRunStatus($onboardingRunDetail.value.run?.status)
+);
+
+export const clearOnboardingDiffPoll = () => {
+  const { intervalId } = $onboardingDiff.value;
+  if (intervalId != null) clearInterval(intervalId);
+  $onboardingDiff.update({
+    intervalId: null,
+    isInFlight: false,
+    generation: ($onboardingDiff.value.generation || 0) + 1,
+  });
+};
+
+const notifyDiffSettled = (status, sawInProgress, statusAtStart) => {
+  const failed = status === 'FAILED';
+  const becameReady = status === 'READY_FOR_REVIEW'
+    && (sawInProgress || statusAtStart !== 'READY_FOR_REVIEW');
+  const leftInProgress = sawInProgress && !isDiffRunStatus(status);
+  if (!failed && !becameReady && !leftInProgress) return false;
+  if ($onboardingDiff.value.resultClaimed) return true;
+  $onboardingDiff.update({ resultClaimed: true });
+  clearOnboardingDiffPoll();
+  handleNotification({
+    variant: failed ? 'danger' : 'success',
+    message: failed
+      ? 'Diff and classification failed.'
+      : 'Diff and classification finished. The table is up to date.',
+  });
+  return true;
+};
+
+const startOnboardingDiffPoll = (runId, statusAtStart) => {
+  const existing = $onboardingDiff.value.intervalId;
+  if (existing != null) clearInterval(existing);
+
+  const generation = ($onboardingDiff.value.generation || 0) + 1;
+  const startedAt = Date.now();
+  let sawInProgress = isDiffRunStatus($onboardingRunDetail.value.run?.status);
+  let ticking = false;
+
+  const intervalId = setInterval(() => {
+    if (ticking) return;
+    ticking = true;
+    const tick = async () => {
+      if ($onboardingDiff.value.generation !== generation) return;
+      if ($onboardingDiff.value.activeRunId !== runId) return;
+
+      if (Date.now() - startedAt >= ONBOARDING_DIFF_POLL_TIMEOUT_MS) {
+        if ($onboardingDiff.value.resultClaimed) return;
+        $onboardingDiff.update({ resultClaimed: true });
+        clearOnboardingDiffPoll();
+        handleNotification({
+          variant: 'warning',
+          message: 'Diff and classification is still running. Refresh the page to check status.',
+        });
+        return;
+      }
+
+      try {
+        await fetchRunDetail(runId, { silent: true });
+      } catch {
+        return;
+      }
+      if ($onboardingDiff.value.generation !== generation) return;
+      if ($onboardingDiff.value.activeRunId !== runId) return;
+      if ($onboardingRunDetail.value.run?.id && $onboardingRunDetail.value.run.id !== runId) return;
+
+      const status = $onboardingRunDetail.value.run?.status;
+      if (isDiffRunStatus(status)) {
+        sawInProgress = true;
+        return;
+      }
+      notifyDiffSettled(status, sawInProgress, statusAtStart);
+    };
+    tick().finally(() => {
+      ticking = false;
+    });
+  }, ONBOARDING_DIFF_POLL_MS);
+
+  $onboardingDiff.update({
+    intervalId,
+    isInFlight: true,
+    generation,
+    activeRunId: runId,
+  });
+};
+
+export const resumeDiffPollingIfNeeded = (runId) => {
+  if ($onboardingDiff.value.activeRunId !== runId) return;
+  const status = $onboardingRunDetail.value.run?.status;
+  if (!isDiffRunStatus(status)) return;
+  $onboardingDiff.update({ resultClaimed: false, isInFlight: true, activeRunId: runId });
+  startOnboardingDiffPoll(runId, status);
+};
+
 export const handleStartDiff = async (runId) => {
-  await onboardingApi.startDiff(runId);
-  await fetchRunDetail(runId);
+  if (isDiffBusy()) return;
+
+  const statusAtStart = $onboardingRunDetail.value.run?.status;
+  const startedAtMs = Date.now();
+  $onboardingDiff.update({
+    isInFlight: true,
+    activeRunId: runId,
+    resultClaimed: false,
+  });
+  startOnboardingDiffPoll(runId, statusAtStart);
+  try {
+    await onboardingApi.startDiff(runId);
+    const requestMs = Date.now() - startedAtMs;
+    if ($onboardingDiff.value.activeRunId !== runId) return;
+    if ($onboardingDiff.value.resultClaimed) return;
+    await fetchRunDetail(runId);
+    if ($onboardingDiff.value.activeRunId !== runId) return;
+    if ($onboardingDiff.value.resultClaimed) return;
+    const nextStatus = $onboardingRunDetail.value.run?.status;
+    const inlineFinished = requestMs >= 1500 && nextStatus === 'READY_FOR_REVIEW';
+    notifyDiffSettled(
+      nextStatus,
+      isDiffRunStatus(nextStatus) || inlineFinished,
+      statusAtStart,
+    );
+  } catch (err) {
+    if ($onboardingDiff.value.activeRunId !== runId) return;
+    if ($onboardingDiff.value.resultClaimed) {
+      clearOnboardingDiffPoll();
+      return;
+    }
+    $onboardingDiff.update({ resultClaimed: true });
+    clearOnboardingDiffPoll();
+    try {
+      await fetchRunDetail(runId);
+    } catch {
+      /* keep the last loaded run */
+    }
+    const failed = $onboardingRunDetail.value.run?.status === 'FAILED';
+    handleNotification({
+      variant: 'danger',
+      message: failed
+        ? 'Diff and classification failed.'
+        : notificationMessage(err, 'Could not start diff and classification.'),
+    });
+  }
 };
 
 export const handleStartImport = async (runId) => {
+  if (isDiffBusy()) return;
   await onboardingApi.startImport(runId);
   await fetchRunDetail(runId);
 };
 
 export const handleConfirmMatch = async (itemId, runId) => {
   const form = $onboardingMatchForm.value;
+  const folderPath = (form.selectedFolderPath || '').trim();
   await onboardingApi.confirmItemMatch(itemId, {
     borrowerId: form.borrowerId,
     loanId: form.loanId,
     borrowerName: form.selectedBorrowerName,
+    ...(folderPath ? { folderPath } : {}),
   });
   closeMatchModal();
   await fetchRunDetail(runId);

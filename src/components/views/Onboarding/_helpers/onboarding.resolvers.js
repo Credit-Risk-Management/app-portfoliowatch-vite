@@ -87,11 +87,16 @@ export const fetchRuns = async () => {
   }
 };
 
-export const fetchRunDetail = async (runId) => {
+const asList = (payload) => {
+  const value = payload?.data ?? payload ?? [];
+  return Array.isArray(value) ? value : [];
+};
+
+export const fetchRunDetail = async (runId, { silent = false } = {}) => {
   if (!$onboardingSelectedTenant.value.orgDb) {
     restoreOnboardingTenantFromStorage();
   }
-  $onboardingRunDetail.update({ isLoading: true });
+  if (!silent) $onboardingRunDetail.update({ isLoading: true });
   try {
     const [runRes, itemsRes] = await Promise.all([
       onboardingApi.getRun(runId),
@@ -107,15 +112,24 @@ export const fetchRunDetail = async (runId) => {
       items: itemsRes?.data ?? [],
       isLoading: false,
     });
-  } catch {
-    $onboardingRunDetail.update({ isLoading: false });
+  } catch (err) {
+    if (!silent) $onboardingRunDetail.update({ isLoading: false });
+    if (silent) throw err;
   }
 };
 
 export const loadMatchCandidates = async (itemId) => {
-  const res = await onboardingApi.getItemCandidates(itemId);
+  const runId = $onboardingRunDetail.value.run?.id;
+  const item = ($onboardingRunDetail.value.items || []).find((row) => row.id === itemId);
+  const [candRes, folderRes] = await Promise.all([
+    onboardingApi.getItemCandidates(itemId),
+    runId ? onboardingApi.getRunFolders(runId) : Promise.resolve({ data: [] }),
+  ]);
   $onboardingMatchForm.update({
-    candidates: res?.data || res || [],
+    candidates: asList(candRes),
+    folders: asList(folderRes),
+    selectedFolderPath: item?.folderPath || '',
+    selectedBorrowerName: null,
     borrowerId: null,
     loanId: null,
   });

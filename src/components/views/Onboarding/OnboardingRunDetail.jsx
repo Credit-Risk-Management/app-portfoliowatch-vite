@@ -1,9 +1,11 @@
+import { useEffect } from 'react';
 import { Badge, Button, Container } from 'react-bootstrap';
 import { useParams } from 'react-router-dom';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import PageHeader from '@src/components/global/PageHeader';
 import SignalTable from '@src/components/global/SignalTable';
 import {
+  $onboardingDiff,
   $onboardingRunDetail,
   $onboardingView,
   ITEM_TABLE_HEADERS,
@@ -11,37 +13,67 @@ import {
 } from './_helpers/onboarding.consts';
 import { fetchRunDetail, fetchTenants } from './_helpers/onboarding.resolvers';
 import {
+  clearOnboardingDiffPoll,
   handleStartDiff,
   handleStartImport,
   openMatchModal,
   openUploadModal,
+  resumeDiffPollingIfNeeded,
 } from './_helpers/onboarding.events';
+import {
+  onboardingDiffButtonLabel,
+  onboardingDiffStatusMessage,
+} from './_helpers/onboarding.helpers';
 import UploadFolderModal from './_components/UploadFolderModal';
 import MatchRelationshipModal from './_components/MatchRelationshipModal';
 
 const OnboardingRunDetail = () => {
   const { runId } = useParams();
 
+  useEffect(() => {
+    $onboardingDiff.update({ activeRunId: runId || null });
+    return () => {
+      clearOnboardingDiffPoll();
+      $onboardingDiff.update({ activeRunId: null });
+    };
+  }, [runId]);
+
+  useEffectAsync(async () => {
+    await fetchTenants();
+    if (runId) {
+      await fetchRunDetail(runId);
+      resumeDiffPollingIfNeeded(runId);
+    }
+  }, [runId]);
+
+  const { run } = $onboardingRunDetail.value;
+  const diffBusy = $onboardingDiff.value.isInFlight
+    || run?.status === 'DIFFING'
+    || run?.status === 'CLASSIFYING';
+
   const RunDetailActions = () => (
     <div className="d-flex flex-wrap gap-8">
       <Button variant="outline-primary-100" size="sm" onClick={() => openUploadModal(runId)}>
         Upload folders
       </Button>
-      <Button variant="outline-primary-100" size="sm" onClick={() => handleStartDiff(runId)}>
-        Diff & classify
+      <Button
+        variant="outline-primary-100"
+        size="sm"
+        disabled={diffBusy}
+        onClick={() => handleStartDiff(runId)}
+      >
+        {onboardingDiffButtonLabel(run?.status, diffBusy)}
       </Button>
-      <Button variant="outline-primary-100" size="sm" onClick={() => handleStartImport(runId)}>
+      <Button
+        variant="outline-primary-100"
+        size="sm"
+        disabled={diffBusy}
+        onClick={() => handleStartImport(runId)}
+      >
         Import
       </Button>
     </div>
   );
-
-  useEffectAsync(async () => {
-    await fetchTenants();
-    if (runId) await fetchRunDetail(runId);
-  }, [runId]);
-
-  const { run } = $onboardingRunDetail.value;
   const items = $onboardingRunDetail.value.items || [];
 
   const rows = items.map(item => ({
@@ -80,6 +112,9 @@ const OnboardingRunDetail = () => {
       />
       <div className="d-flex flex-wrap align-items-center gap-8 mb-16">
         <Badge bg="secondary">{run?.status}</Badge>
+        {diffBusy && (
+          <span className="text-info-200 small">{onboardingDiffStatusMessage(run?.status)}</span>
+        )}
         {run?.dropboxFolderName && (
           <span className="text-info-200 small">
             Dropbox ref:
