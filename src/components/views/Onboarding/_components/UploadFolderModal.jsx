@@ -1,22 +1,32 @@
-import { ProgressBar } from 'react-bootstrap';
+import { ProgressBar, Spinner } from 'react-bootstrap';
 import UniversalModal from '@src/components/global/UniversalModal';
 import FileUploader from '@src/components/global/FileUploader';
 import { $onboardingUploadState, $onboardingView } from '../_helpers/onboarding.consts';
-import { closeUploadModal, uploadFolderFiles } from '../_helpers/onboarding.events';
+import { requestCloseUploadModal, uploadFolderFiles } from '../_helpers/onboarding.events';
 
 const UploadFolderModal = () => {
   const runId = $onboardingView.value.selectedRunId;
+  const { isUploading } = $onboardingUploadState.value;
 
   return (
     <UniversalModal
       show={$onboardingView.value.showUploadModal && Boolean(runId)}
-      onHide={closeUploadModal}
+      onHide={requestCloseUploadModal}
       closeButton
       headerText="Upload borrower folders"
       leftBtnText="Cancel"
-      rightBtnText="Upload to storage"
+      leftBtnOnClick={requestCloseUploadModal}
+      leftButtonDisabled={isUploading}
+      keyboard={!isUploading}
+      backdrop={isUploading ? 'static' : true}
+      rightBtnText={isUploading ? (
+        <>
+          <Spinner animation="border" size="sm" className="me-8 align-middle" role="status" aria-hidden />
+          Uploading…
+        </>
+      ) : 'Upload to storage'}
       rightButtonDisabled={
-        $onboardingUploadState.value.isUploading
+        isUploading
         || !($onboardingUploadState.value.files?.length)
       }
       rightBtnOnClick={() => uploadFolderFiles(runId, $onboardingUploadState.value.files)}
@@ -41,7 +51,7 @@ const UploadFolderModal = () => {
             file(s) ready to upload
           </p>
         )}
-        {$onboardingUploadState.value.isUploading && (
+        {isUploading && (
           <ProgressBar now={$onboardingUploadState.value.progress} className="mt-16" />
         )}
       </div>

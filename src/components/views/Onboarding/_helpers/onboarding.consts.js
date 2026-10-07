@@ -3,7 +3,12 @@ import { Signal } from '@fyclabs/tools-fyc-react/signals';
 export const ONBOARDING_ORG_DB_STORAGE_KEY = 'onboardingSelectedOrgDb';
 
 export const $onboardingView = Signal({
-  isTableLoading: false,
+  isTableLoading: true,
+  isCreating: false,
+  isImporting: false,
+  isLoadingMatch: false,
+  isSavingMatch: false,
+  matchSaveAction: null,
   selectedRunId: null,
   showCreateModal: false,
   showUploadModal: false,
@@ -23,7 +28,7 @@ export const $onboardingRuns = Signal({ list: [] });
 export const $onboardingRunDetail = Signal({
   run: null,
   items: [],
-  isLoading: false,
+  isLoading: true,
 });
 
 export const $onboardingCreateForm = Signal({

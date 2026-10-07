@@ -15,7 +15,7 @@ import {
   RUN_STATUS_BADGE,
   RUN_TABLE_HEADERS,
 } from './_helpers/onboarding.consts';
-import { fetchRuns, fetchTenants } from './_helpers/onboarding.resolvers';
+import { loadOnboardingRunsPage } from './_helpers/onboarding.resolvers';
 import { handleOnboardingRunListAction, handleTenantChange, openCreateModal, openOnboardingRun } from './_helpers/onboarding.events';
 import CreateOnboardingRunModal from './_components/CreateOnboardingRunModal';
 import OnboardingStatusBadge from './_components/OnboardingStatusBadge';
@@ -24,10 +24,7 @@ const Onboarding = () => {
   const navigate = useNavigate();
 
   useEffectAsync(async () => {
-    await fetchTenants();
-    if ($onboardingSelectedTenant.value.orgDb) {
-      await fetchRuns();
-    }
+    await loadOnboardingRunsPage();
   }, []);
 
   const tenantOptions = [

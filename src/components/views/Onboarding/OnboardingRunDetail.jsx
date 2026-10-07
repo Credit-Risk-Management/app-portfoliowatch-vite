@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Button, Col, Container, Row } from 'react-bootstrap';
+import { Button, Col, Container, Row, Spinner } from 'react-bootstrap';
 import { faFolderOpen, faLink } from '@fortawesome/free-solid-svg-icons';
 import SelectInput from '@src/components/global/Inputs/SelectInput';
 import ContextMenu from '@src/components/global/ContextMenu';
@@ -19,15 +19,15 @@ import {
   MATCH_STATUS_BADGE,
   RUN_STATUS_BADGE,
 } from './_helpers/onboarding.consts';
-import { fetchRunDetail, fetchTenants } from './_helpers/onboarding.resolvers';
+import { loadOnboardingRunPage } from './_helpers/onboarding.resolvers';
 import {
+  beginOnboardingRunLoad,
   clearOnboardingDiffPoll,
   clearOnboardingScanPoll,
   handleStartDiff,
   handleStartImport,
   handleOnboardingItemAction,
   openUploadModal,
-  resetOnboardingFileReview,
   resumeDiffPollingIfNeeded,
   resumeScanPollingIfNeeded,
 } from './_helpers/onboarding.events';
@@ -46,8 +46,7 @@ const OnboardingRunDetail = () => {
   const { runId } = useParams();
 
   useEffect(() => {
-    resetOnboardingFileReview();
-    $onboardingDiff.update({ activeRunId: runId || null });
+    beginOnboardingRunLoad(runId);
     return () => {
       clearOnboardingDiffPoll();
       clearOnboardingScanPoll();
@@ -57,18 +56,27 @@ const OnboardingRunDetail = () => {
   }, [runId]);
 
   useEffectAsync(async () => {
-    await fetchTenants();
+    await loadOnboardingRunPage(runId);
     if (runId) {
-      await fetchRunDetail(runId);
       resumeDiffPollingIfNeeded(runId);
       resumeScanPollingIfNeeded(runId);
     }
   }, [runId]);
 
-  const { run } = $onboardingRunDetail.value;
+  const { run, isLoading } = $onboardingRunDetail.value;
+  if (isLoading && !run) {
+    return (
+      <Container className="py-16 py-md-24">
+        <PageHeader title="Loading..." />
+      </Container>
+    );
+  }
+
   const diffBusy = $onboardingDiff.value.isInFlight
     || run?.status === 'DIFFING'
     || run?.status === 'CLASSIFYING';
+  const { isImporting } = $onboardingView.value;
+  const actionsBusy = diffBusy || isImporting;
 
   const RunDetailActions = () => (
     <div className="d-flex flex-wrap gap-8">
@@ -78,18 +86,24 @@ const OnboardingRunDetail = () => {
       <Button
         variant="outline-primary-100"
         size="sm"
-        disabled={diffBusy}
+        disabled={actionsBusy}
         onClick={() => handleStartDiff(runId)}
       >
+        {diffBusy && (
+          <Spinner animation="border" size="sm" className="me-8" role="status" aria-hidden />
+        )}
         {onboardingDiffButtonLabel(run?.status, diffBusy)}
       </Button>
       <Button
         variant="outline-primary-100"
         size="sm"
-        disabled={diffBusy}
+        disabled={actionsBusy}
         onClick={() => handleStartImport(runId)}
       >
-        Import
+        {isImporting && (
+          <Spinner animation="border" size="sm" className="me-8" role="status" aria-hidden />
+        )}
+        {isImporting ? 'Importing…' : 'Import'}
       </Button>
     </div>
   );

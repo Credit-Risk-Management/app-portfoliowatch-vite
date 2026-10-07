@@ -1,4 +1,4 @@
-import { Button, Col, Row } from 'react-bootstrap';
+import { Button, Col, Row, Spinner } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 import SelectInput from '@src/components/global/Inputs/SelectInput';
 import SignalTable from '@src/components/global/SignalTable';
@@ -90,6 +90,9 @@ const OnboardingFileClassificationsTable = ({
               handleSaveFileDocumentType(file.id, runId);
             }}
           >
+            {isSaving && (
+              <Spinner animation="border" size="sm" className="me-8" role="status" aria-hidden />
+            )}
             {isSaving ? 'Saving…' : 'Save'}
           </button>
         </div>
@@ -160,6 +163,12 @@ const OnboardingFileClassificationsTable = ({
             >
               Scan selected
             </Button>
+            {scanBusy && (
+              <span className="text-info-200 small align-self-center d-inline-flex align-items-center">
+                <Spinner animation="border" size="sm" className="me-8" role="status" aria-hidden />
+                Scanning…
+              </span>
+            )}
           </Col>
           <Col xs="auto" className="d-flex align-items-center gap-2">
             <span className="text-info-100 text-nowrap small me-4">Rows per page</span>

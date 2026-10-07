@@ -79,6 +79,7 @@ export const fetchRuns = async () => {
   }
   if (!$onboardingSelectedTenant.value.orgDb) {
     $onboardingRuns.update({ list: [] });
+    $onboardingView.update({ isTableLoading: false });
     return;
   }
   $onboardingView.update({ isTableLoading: true });
@@ -88,6 +89,25 @@ export const fetchRuns = async () => {
     $onboardingRuns.update({ list });
   } finally {
     $onboardingView.update({ isTableLoading: false });
+  }
+};
+
+export const loadOnboardingRunsPage = async () => {
+  $onboardingView.update({ isTableLoading: true });
+  try {
+    await fetchTenants();
+    if ($onboardingSelectedTenant.value.orgDb) {
+      await fetchRuns();
+      return;
+    }
+    $onboardingRuns.update({ list: [] });
+  } catch (err) {
+    $onboardingView.update({ isTableLoading: false });
+    throw err;
+  } finally {
+    if (!$onboardingSelectedTenant.value.orgDb) {
+      $onboardingView.update({ isTableLoading: false });
+    }
   }
 };
 
@@ -148,7 +168,8 @@ export const fetchRunDetail = async (runId, { silent = false } = {}) => {
   if (!$onboardingSelectedTenant.value.orgDb) {
     restoreOnboardingTenantFromStorage();
   }
-  if (!silent) {
+  const showInitialLoading = !silent && !$onboardingRunDetail.value.run?.id;
+  if (showInitialLoading) {
     $onboardingRunDetail.update({ isLoading: true });
     $onboardingFileView.update({ isTableLoading: true });
   }
@@ -163,6 +184,7 @@ export const fetchRunDetail = async (runId, { silent = false } = {}) => {
       const tenant = ($onboardingTenants.value || []).find(t => t.orgDb === run.orgDb);
       applySelectedTenant(tenant || { orgDb: run.orgDb, displayName: run.orgDb });
     }
+    if ($onboardingDiff.value.activeRunId !== runId) return;
     $onboardingRunDetail.update({
       run,
       items: itemsRes?.data ?? [],
@@ -170,11 +192,26 @@ export const fetchRunDetail = async (runId, { silent = false } = {}) => {
     });
     applyOnboardingRunFiles(filesRes, runId);
   } catch (err) {
-    if (!silent) {
+    if (showInitialLoading) {
       $onboardingRunDetail.update({ isLoading: false });
       $onboardingFileView.update({ isTableLoading: false });
     }
     if (silent) throw err;
+  }
+};
+
+export const loadOnboardingRunPage = async (runId) => {
+  try {
+    await fetchTenants();
+    if (!runId) {
+      $onboardingRunDetail.update({ isLoading: false });
+      return;
+    }
+    await fetchRunDetail(runId);
+  } catch (err) {
+    $onboardingRunDetail.update({ isLoading: false });
+    $onboardingFileView.update({ isTableLoading: false, hasLoaded: true });
+    throw err;
   }
 };
 

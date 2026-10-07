@@ -61,6 +61,11 @@ export const closeCreateModal = () => {
   }
 };
 
+export const requestCloseCreateModal = () => {
+  if ($onboardingView.value.isCreating) return;
+  closeCreateModal();
+};
+
 export const openUploadModal = (runId) => {
   $onboardingView.update({ showUploadModal: true, selectedRunId: runId });
   $onboardingUploadState.reset();
@@ -70,10 +75,16 @@ export const closeUploadModal = () => {
   $onboardingView.update({ showUploadModal: false });
 };
 
+export const requestCloseUploadModal = () => {
+  if ($onboardingUploadState.value.isUploading) return;
+  closeUploadModal();
+};
+
 export const openOnboardingRun = (navigate, runId) => {
-  if (typeof navigate === 'function' && runId) {
-    navigate(`/onboarding/${runId}`);
-  }
+  if (typeof navigate !== 'function' || !runId) return;
+  $onboardingRunDetail.update({ run: null, items: [], isLoading: true });
+  $onboardingView.update({ isTableLoading: false });
+  navigate(`/onboarding/${runId}`);
 };
 
 export const handleOnboardingRunListAction = (navigate, run, action) => {
@@ -92,7 +103,13 @@ export const openMatchModal = async (itemId) => {
     borrowerId: null,
     loanId: null,
   });
-  $onboardingView.update({ showMatchModal: true, selectedItemId: itemId });
+  $onboardingView.update({
+    showMatchModal: true,
+    selectedItemId: itemId,
+    isLoadingMatch: true,
+    isSavingMatch: false,
+    matchSaveAction: null,
+  });
   try {
     await loadMatchCandidates(itemId);
   } catch (err) {
@@ -100,14 +117,28 @@ export const openMatchModal = async (itemId) => {
       variant: 'danger',
       message: notificationMessage(err, 'Could not load match options.'),
     });
+  } finally {
+    $onboardingView.update({ isLoadingMatch: false });
   }
 };
 
 export const closeMatchModal = () => {
-  $onboardingView.update({ showMatchModal: false, selectedItemId: null });
+  $onboardingView.update({
+    showMatchModal: false,
+    selectedItemId: null,
+    isLoadingMatch: false,
+    isSavingMatch: false,
+    matchSaveAction: null,
+  });
+};
+
+export const requestCloseMatchModal = () => {
+  if ($onboardingView.value.isSavingMatch) return;
+  closeMatchModal();
 };
 
 export const handleCreateRun = async (navigate) => {
+  if ($onboardingView.value.isCreating) return;
   if (!syncTenantFromPickSignal()) {
     handleNotification({
       variant: 'danger',
@@ -130,24 +161,24 @@ export const handleCreateRun = async (navigate) => {
   if (form.dropboxFolderName) fd.append('dropboxFolderName', form.dropboxFolderName);
   if (form.masterListFile) fd.append('masterList', form.masterListFile);
 
-  let run;
+  $onboardingView.update({ isCreating: true });
   try {
     const res = await onboardingApi.createRun(fd);
-    run = res?.data ?? res;
+    const run = res?.data ?? res;
+    if (run?.orgDb) {
+      const tenant = ($onboardingTenants.value || []).find(t => t.orgDb === run.orgDb);
+      applySelectedTenant(tenant || { orgDb: run.orgDb, displayName: run.orgDb });
+    }
+    successAlert('Onboarding run created.');
+    closeCreateModal();
+    await fetchRuns();
+    if (run?.id && typeof navigate === 'function') {
+      openOnboardingRun(navigate, run.id);
+    }
   } catch (err) {
     dangerAlert(notificationMessage(err, 'Could not create the onboarding run.'));
-    return;
-  }
-
-  if (run?.orgDb) {
-    const tenant = ($onboardingTenants.value || []).find(t => t.orgDb === run.orgDb);
-    applySelectedTenant(tenant || { orgDb: run.orgDb, displayName: run.orgDb });
-  }
-  successAlert('Onboarding run created.');
-  closeCreateModal();
-  await fetchRuns();
-  if (run?.id && typeof navigate === 'function') {
-    navigate(`/onboarding/${run.id}`);
+  } finally {
+    $onboardingView.update({ isCreating: false });
   }
 };
 
@@ -330,7 +361,7 @@ export const resumeDiffPollingIfNeeded = (runId) => {
 };
 
 export const handleStartDiff = async (runId) => {
-  if (isDiffBusy()) return;
+  if (isDiffBusy() || $onboardingView.value.isImporting) return;
 
   const statusAtStart = $onboardingRunDetail.value.run?.status;
   const startedAtMs = Date.now();
@@ -382,12 +413,13 @@ export const handleStartDiff = async (runId) => {
 };
 
 export const handleStartImport = async (runId) => {
-  if (isDiffBusy()) return;
+  if (isDiffBusy() || $onboardingView.value.isImporting) return;
+  $onboardingView.update({ isImporting: true });
   try {
     const response = await onboardingApi.startImport(runId);
     const result = response?.data ?? response ?? {};
     const enqueued = Number(result.enqueued ?? 0);
-    await fetchRunDetail(runId);
+    await fetchRunDetail(runId, { silent: true });
     if (enqueued > 0) {
       successAlert(`Import queued for ${enqueued} borrower${enqueued === 1 ? '' : 's'}.`);
     } else {
@@ -398,10 +430,23 @@ export const handleStartImport = async (runId) => {
     }
   } catch (err) {
     dangerAlert(notificationMessage(err, 'Could not start import.'));
+  } finally {
+    $onboardingView.update({ isImporting: false });
   }
 };
 
+const beginMatchSave = (action) => {
+  if ($onboardingView.value.isSavingMatch || $onboardingView.value.isLoadingMatch) return false;
+  $onboardingView.update({ isSavingMatch: true, matchSaveAction: action });
+  return true;
+};
+
+const endMatchSave = () => {
+  $onboardingView.update({ isSavingMatch: false, matchSaveAction: null });
+};
+
 export const handleConfirmMatch = async (itemId, runId) => {
+  if (!beginMatchSave('confirm')) return;
   const form = $onboardingMatchForm.value;
   const folderPath = (form.selectedFolderPath || '').trim();
   try {
@@ -411,22 +456,27 @@ export const handleConfirmMatch = async (itemId, runId) => {
       borrowerName: form.selectedBorrowerName,
       ...(folderPath ? { folderPath } : {}),
     });
+    await fetchRunDetail(runId, { silent: true });
     closeMatchModal();
-    await fetchRunDetail(runId);
     successAlert('Match saved.');
   } catch (err) {
     dangerAlert(notificationMessage(err, 'Could not save the match.'));
+  } finally {
+    endMatchSave();
   }
 };
 
 export const handleIgnoreItem = async (itemId, runId) => {
+  if (!beginMatchSave('ignore')) return;
   try {
     await onboardingApi.confirmItemMatch(itemId, { ignored: true });
+    await fetchRunDetail(runId, { silent: true });
     closeMatchModal();
-    await fetchRunDetail(runId);
     successAlert('Borrower ignored.');
   } catch (err) {
     dangerAlert(notificationMessage(err, 'Could not ignore this borrower.'));
+  } finally {
+    endMatchSave();
   }
 };
 
@@ -452,6 +502,17 @@ export const resetOnboardingFileReview = () => {
     generation: 0,
     activeRunId: null,
   });
+};
+
+export const beginOnboardingRunLoad = (runId) => {
+  resetOnboardingFileReview();
+  $onboardingRunDetail.update({
+    run: null,
+    items: [],
+    isLoading: Boolean(runId),
+  });
+  $onboardingView.update({ isTableLoading: false, isImporting: false });
+  $onboardingDiff.update({ activeRunId: runId || null });
 };
 
 export const openFolderFilesModal = (itemId, folderPath) => {

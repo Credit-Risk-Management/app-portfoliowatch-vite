@@ -1,4 +1,4 @@
-import { Form, Row, Col } from 'react-bootstrap';
+import { Form, Row, Col, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import UniversalModal from '@src/components/global/UniversalModal';
 import UniversalInput from '@src/components/global/Inputs/UniversalInput';
@@ -9,10 +9,11 @@ import {
   $onboardingTenantPick,
   $onboardingView,
 } from '../_helpers/onboarding.consts';
-import { closeCreateModal, handleCreateRun, handleTenantChange } from '../_helpers/onboarding.events';
+import { handleCreateRun, handleTenantChange, requestCloseCreateModal } from '../_helpers/onboarding.events';
 
 const CreateOnboardingRunModal = () => {
   const navigate = useNavigate();
+  const { isCreating } = $onboardingView.value;
 
   const tenantOptions = [
     { value: '', label: 'Select tenant…' },
@@ -25,11 +26,21 @@ const CreateOnboardingRunModal = () => {
   return (
     <UniversalModal
       show={$onboardingView.value.showCreateModal}
-      onHide={closeCreateModal}
+      onHide={requestCloseCreateModal}
       closeButton
       headerText="New onboarding run"
       leftBtnText="Cancel"
-      rightBtnText="Create run"
+      leftBtnOnClick={requestCloseCreateModal}
+      leftButtonDisabled={isCreating}
+      keyboard={!isCreating}
+      backdrop={isCreating ? 'static' : true}
+      rightBtnText={isCreating ? (
+        <>
+          <Spinner animation="border" size="sm" className="me-8 align-middle" role="status" aria-hidden />
+          Creating…
+        </>
+      ) : 'Create run'}
+      rightButtonDisabled={isCreating}
       rightBtnOnClick={() => handleCreateRun(navigate)}
       size="lg"
     >
