@@ -16,8 +16,10 @@ const ContextMenu = ({ items = [], onItemClick = () => { } }) => (
       {items.map((item, index) => (
         <Dropdown.Item
           key={index}
+          disabled={item.disabled}
           onClick={(e) => {
             e.stopPropagation();
+            if (item.disabled) return;
             onItemClick(item);
           }}
           className="py-8"

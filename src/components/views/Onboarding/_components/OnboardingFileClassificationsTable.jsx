@@ -1,4 +1,5 @@
 import { Button, Col, Row } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 import SelectInput from '@src/components/global/Inputs/SelectInput';
 import SignalTable from '@src/components/global/SignalTable';
 import { PAGE_LIMIT_OPTIONS } from '@src/consts/consts';
@@ -104,6 +105,19 @@ const OnboardingFileClassificationsTable = ({
           </OnboardingStatusBadge>
           {file.geminiScanError && (
             <div className="small text-danger mt-8">{file.geminiScanError}</div>
+          )}
+          {(file.geminiScanWarnings || []).includes('MISSING_COVENANTS') && (
+            <div className="small text-warning mt-8">
+              Loan covenants are not set.
+              {file.scanLoanId && (
+                <>
+                  {' '}
+                  <Link to={`/loans/${file.scanLoanId}`} className="link-warning">
+                    Set on loan
+                  </Link>
+                </>
+              )}
+            </div>
           )}
         </div>
       ),

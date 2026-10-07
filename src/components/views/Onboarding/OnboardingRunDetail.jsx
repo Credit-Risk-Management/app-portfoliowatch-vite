@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { Button, Col, Container, Row } from 'react-bootstrap';
+import { faFolderOpen, faLink } from '@fortawesome/free-solid-svg-icons';
 import SelectInput from '@src/components/global/Inputs/SelectInput';
+import ContextMenu from '@src/components/global/ContextMenu';
 import { PAGE_LIMIT_OPTIONS } from '@src/consts/consts';
 import { useParams } from 'react-router-dom';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
@@ -23,8 +25,7 @@ import {
   clearOnboardingScanPoll,
   handleStartDiff,
   handleStartImport,
-  openFolderFilesModal,
-  openMatchModal,
+  handleOnboardingItemAction,
   openUploadModal,
   resetOnboardingFileReview,
   resumeDiffPollingIfNeeded,
@@ -111,29 +112,18 @@ const OnboardingRunDetail = () => {
       <OnboardingStatusBadge badgeMap={IMPORT_STATUS_BADGE} statusKey={item.importStatus} />
     ),
     actions: () => (
-      <div className="d-flex flex-wrap gap-8">
-        <button
-          type="button"
-          className="btn btn-sm btn-outline-primary-100"
-          onClick={e => {
-            e.stopPropagation();
-            openMatchModal(item.id);
-          }}
-        >
-          Match
-        </button>
-        <button
-          type="button"
-          className="btn btn-sm btn-outline-primary-100"
-          disabled={!item.folderPath}
-          onClick={e => {
-            e.stopPropagation();
-            openFolderFilesModal(item.id, item.folderPath);
-          }}
-        >
-          Classifications
-        </button>
-      </div>
+      <ContextMenu
+        items={[
+          { label: 'Match', icon: faLink, action: 'match' },
+          {
+            label: 'Classifications',
+            icon: faFolderOpen,
+            action: 'classifications',
+            disabled: !item.folderPath,
+          },
+        ]}
+        onItemClick={menuItem => handleOnboardingItemAction(item, menuItem.action)}
+      />
     ),
   }));
 

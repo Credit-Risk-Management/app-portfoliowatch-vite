@@ -1,9 +1,10 @@
 import { Col, Container, Form, Row } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faFolderOpen, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
 import PageHeader from '@src/components/global/PageHeader';
 import SignalTable from '@src/components/global/SignalTable';
+import ContextMenu from '@src/components/global/ContextMenu';
 import SelectInput from '@src/components/global/Inputs/SelectInput';
 import {
   $onboardingRuns,
@@ -15,7 +16,7 @@ import {
   RUN_TABLE_HEADERS,
 } from './_helpers/onboarding.consts';
 import { fetchRuns, fetchTenants } from './_helpers/onboarding.resolvers';
-import { handleTenantChange, openCreateModal } from './_helpers/onboarding.events';
+import { handleOnboardingRunListAction, handleTenantChange, openCreateModal, openOnboardingRun } from './_helpers/onboarding.events';
 import CreateOnboardingRunModal from './_components/CreateOnboardingRunModal';
 import OnboardingStatusBadge from './_components/OnboardingStatusBadge';
 
@@ -46,16 +47,12 @@ const Onboarding = () => {
     matchedItems: run.matchedItems,
     importedItems: run.importedItems,
     actions: () => (
-      <button
-        type="button"
-        className="btn btn-sm btn-outline-primary-100"
-        onClick={e => {
-          e.stopPropagation();
-          navigate(`/onboarding/${run.id}`);
-        }}
-      >
-        Open
-      </button>
+      <ContextMenu
+        items={[
+          { label: 'Open', icon: faFolderOpen, action: 'open' },
+        ]}
+        onItemClick={item => handleOnboardingRunListAction(navigate, run, item.action)}
+      />
     ),
   }));
 
@@ -93,7 +90,7 @@ const Onboarding = () => {
         hasPagination={false}
         onRowClick={row => {
           const run = ($onboardingRuns.value.list || []).find(r => r.name === row.name);
-          if (run) navigate(`/onboarding/${run.id}`);
+          if (run) openOnboardingRun(navigate, run.id);
         }}
       />
       <CreateOnboardingRunModal />

@@ -1,5 +1,5 @@
 import { onboardingApi } from '@src/api/onboarding.api';
-import { handleNotification } from '@src/components/global/Alert/_helpers/alert.events';
+import { dangerAlert, handleNotification, successAlert } from '@src/components/global/Alert/_helpers/alert.events';
 import {
   $onboardingCreateForm,
   $onboardingUploadState,
@@ -70,6 +70,18 @@ export const closeUploadModal = () => {
   $onboardingView.update({ showUploadModal: false });
 };
 
+export const openOnboardingRun = (navigate, runId) => {
+  if (typeof navigate === 'function' && runId) {
+    navigate(`/onboarding/${runId}`);
+  }
+};
+
+export const handleOnboardingRunListAction = (navigate, run, action) => {
+  if (action === 'open') {
+    openOnboardingRun(navigate, run?.id);
+  }
+};
+
 export const openMatchModal = async (itemId) => {
   const item = ($onboardingRunDetail.value.items || []).find((row) => row.id === itemId);
   $onboardingMatchForm.update({
@@ -117,12 +129,21 @@ export const handleCreateRun = async (navigate) => {
   fd.append('name', form.name.trim());
   if (form.dropboxFolderName) fd.append('dropboxFolderName', form.dropboxFolderName);
   if (form.masterListFile) fd.append('masterList', form.masterListFile);
-  const res = await onboardingApi.createRun(fd);
-  const run = res?.data ?? res;
+
+  let run;
+  try {
+    const res = await onboardingApi.createRun(fd);
+    run = res?.data ?? res;
+  } catch (err) {
+    dangerAlert(notificationMessage(err, 'Could not create the onboarding run.'));
+    return;
+  }
+
   if (run?.orgDb) {
     const tenant = ($onboardingTenants.value || []).find(t => t.orgDb === run.orgDb);
     applySelectedTenant(tenant || { orgDb: run.orgDb, displayName: run.orgDb });
   }
+  successAlert('Onboarding run created.');
   closeCreateModal();
   await fetchRuns();
   if (run?.id && typeof navigate === 'function') {
@@ -185,10 +206,7 @@ export const uploadFolderFiles = async (runId, fileList) => {
     );
 
     if (failedPaths.length) {
-      handleNotification({
-        type: 'error',
-        message: `Upload failed for ${failedPaths.length} file(s). Nothing was saved — check the network tab and try again.`,
-      });
+      dangerAlert(`Upload failed for ${failedPaths.length} file(s). Nothing was saved — check the network tab and try again.`);
       return;
     }
 
@@ -201,18 +219,12 @@ export const uploadFolderFiles = async (runId, fileList) => {
       })),
     );
 
-    handleNotification({
-      type: 'success',
-      message: `${urlEntries.length} file(s) uploaded to storage.`,
-    });
+    successAlert(`${urlEntries.length} file(s) uploaded to storage.`);
     $onboardingUploadState.update({ isUploading: false, progress: 100 });
     closeUploadModal();
     await fetchRunDetail(runId);
   } catch (err) {
-    handleNotification({
-      type: 'error',
-      message: err?.message || 'Folder upload failed.',
-    });
+    dangerAlert(notificationMessage(err, 'Folder upload failed.'));
   } finally {
     $onboardingUploadState.update({ isUploading: false });
   }
@@ -338,11 +350,14 @@ export const handleStartDiff = async (runId) => {
     if ($onboardingDiff.value.resultClaimed) return;
     const nextStatus = $onboardingRunDetail.value.run?.status;
     const inlineFinished = requestMs >= 1500 && nextStatus === 'READY_FOR_REVIEW';
-    notifyDiffSettled(
+    const settled = notifyDiffSettled(
       nextStatus,
       isDiffRunStatus(nextStatus) || inlineFinished,
       statusAtStart,
     );
+    if (!settled && !$onboardingDiff.value.resultClaimed) {
+      successAlert('Diff and classification started.');
+    }
   } catch (err) {
     if ($onboardingDiff.value.activeRunId !== runId) return;
     if ($onboardingDiff.value.resultClaimed) {
@@ -368,27 +383,51 @@ export const handleStartDiff = async (runId) => {
 
 export const handleStartImport = async (runId) => {
   if (isDiffBusy()) return;
-  await onboardingApi.startImport(runId);
-  await fetchRunDetail(runId);
+  try {
+    const response = await onboardingApi.startImport(runId);
+    const result = response?.data ?? response ?? {};
+    const enqueued = Number(result.enqueued ?? 0);
+    await fetchRunDetail(runId);
+    if (enqueued > 0) {
+      successAlert(`Import queued for ${enqueued} borrower${enqueued === 1 ? '' : 's'}.`);
+    } else {
+      handleNotification({
+        variant: 'warning',
+        message: 'No borrowers were queued for import. Confirm a match first.',
+      });
+    }
+  } catch (err) {
+    dangerAlert(notificationMessage(err, 'Could not start import.'));
+  }
 };
 
 export const handleConfirmMatch = async (itemId, runId) => {
   const form = $onboardingMatchForm.value;
   const folderPath = (form.selectedFolderPath || '').trim();
-  await onboardingApi.confirmItemMatch(itemId, {
-    borrowerId: form.borrowerId,
-    loanId: form.loanId,
-    borrowerName: form.selectedBorrowerName,
-    ...(folderPath ? { folderPath } : {}),
-  });
-  closeMatchModal();
-  await fetchRunDetail(runId);
+  try {
+    await onboardingApi.confirmItemMatch(itemId, {
+      borrowerId: form.borrowerId,
+      loanId: form.loanId,
+      borrowerName: form.selectedBorrowerName,
+      ...(folderPath ? { folderPath } : {}),
+    });
+    closeMatchModal();
+    await fetchRunDetail(runId);
+    successAlert('Match saved.');
+  } catch (err) {
+    dangerAlert(notificationMessage(err, 'Could not save the match.'));
+  }
 };
 
 export const handleIgnoreItem = async (itemId, runId) => {
-  await onboardingApi.confirmItemMatch(itemId, { ignored: true });
-  closeMatchModal();
-  await fetchRunDetail(runId);
+  try {
+    await onboardingApi.confirmItemMatch(itemId, { ignored: true });
+    closeMatchModal();
+    await fetchRunDetail(runId);
+    successAlert('Borrower ignored.');
+  } catch (err) {
+    dangerAlert(notificationMessage(err, 'Could not ignore this borrower.'));
+  }
 };
 
 export const resetOnboardingFileReview = () => {
@@ -423,6 +462,16 @@ export const openFolderFilesModal = (itemId, folderPath) => {
     folderFilesItemId: itemId,
     folderFilesPath: folderPath,
   });
+};
+
+export const handleOnboardingItemAction = (item, action) => {
+  if (action === 'match') {
+    openMatchModal(item?.id);
+    return;
+  }
+  if (action === 'classifications' && item?.folderPath) {
+    openFolderFilesModal(item.id, item.folderPath);
+  }
 };
 
 export const closeFolderFilesModal = () => {
@@ -496,7 +545,11 @@ export const handleStartFileScan = async (runId, fileIds) => {
     const response = await onboardingApi.startFileScan(runId, fileIds);
     const result = response?.data ?? response ?? {};
     const enqueued = result.enqueuedFileIds?.length ?? result.enqueuedTasks ?? 0;
-    const skipped = result.skipped?.length ?? 0;
+    const skippedList = result.skipped || [];
+    const skipped = skippedList.length;
+    const importRequiredCount = skippedList.filter(
+      (row) => row.reason === 'IMPORT_REQUIRED_FOR_CREDIT_MEMO',
+    ).length;
     await fetchRunFiles(runId);
     if (enqueued > 0) {
       startOnboardingScanPoll(runId);
@@ -504,12 +557,21 @@ export const handleStartFileScan = async (runId, fileIds) => {
         variant: 'success',
         message: `Queued scan for ${enqueued} file${enqueued === 1 ? '' : 's'}.`,
       });
+      if (importRequiredCount > 0) {
+        handleNotification({
+          variant: 'warning',
+          message: `${importRequiredCount} credit memo file${importRequiredCount === 1 ? '' : 's'} skipped — import the run before scanning credit memos.`,
+        });
+      }
     } else {
+      const importOnlySkip = skipped > 0 && importRequiredCount === skipped;
       handleNotification({
         variant: 'warning',
-        message: skipped
-          ? 'No files were queued. Confirm folder match or wait for in-flight scans to finish.'
-          : 'No files available to scan.',
+        message: importOnlySkip
+          ? 'Import the run before scanning credit memos.'
+          : skipped
+            ? 'No files were queued. Confirm folder match or wait for in-flight scans to finish.'
+            : 'No files available to scan.',
       });
     }
   } catch (err) {
