@@ -14,6 +14,7 @@ const Pagination = ({
   disabled = false,
   /** Optional: e.g. borrowers list includes facet params in URL + localStorage */
   filterToUrlParams,
+  syncUrl = true,
 }) => {
   const pagesCount = Math.ceil(totalItemsCount / itemsPerPageAmount);
   const showPagination = pagesCount > 1;
@@ -27,6 +28,7 @@ const Pagination = ({
     if (direction === 'forward' && !value) $filter.update({ page: currentPage + 1 });
     if (direction === 'backward' && !value) $filter.update({ page: currentPage - 1 });
     if (value) $filter.update({ page: value });
+    if (!syncUrl) return;
     const params = filterToUrlParams
       ? filterToUrlParams($filter.value)
       : filterValueToUrlSearchParams($filter.value);

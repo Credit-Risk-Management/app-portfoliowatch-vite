@@ -1,4 +1,4 @@
-import { Badge, Col, Container, Form, Row } from 'react-bootstrap';
+import { Col, Container, Form, Row } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { useEffectAsync } from '@fyclabs/tools-fyc-react/utils';
@@ -11,11 +11,13 @@ import {
   $onboardingTenants,
   $onboardingTenantPick,
   $onboardingView,
+  RUN_STATUS_BADGE,
   RUN_TABLE_HEADERS,
 } from './_helpers/onboarding.consts';
 import { fetchRuns, fetchTenants } from './_helpers/onboarding.resolvers';
 import { handleTenantChange, openCreateModal } from './_helpers/onboarding.events';
 import CreateOnboardingRunModal from './_components/CreateOnboardingRunModal';
+import OnboardingStatusBadge from './_components/OnboardingStatusBadge';
 
 const Onboarding = () => {
   const navigate = useNavigate();
@@ -37,7 +39,9 @@ const Onboarding = () => {
 
   const rows = ($onboardingRuns.value.list || []).map(run => ({
     name: run.name,
-    status: () => <Badge bg="secondary">{run.status}</Badge>,
+    status: () => (
+      <OnboardingStatusBadge badgeMap={RUN_STATUS_BADGE} statusKey={run.status} />
+    ),
     totalItems: run.totalItems,
     matchedItems: run.matchedItems,
     importedItems: run.importedItems,

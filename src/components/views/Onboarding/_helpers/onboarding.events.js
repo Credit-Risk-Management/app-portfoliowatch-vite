@@ -13,9 +13,17 @@ import {
   $onboardingFiles,
   $onboardingFileDrafts,
   $onboardingFileView,
+  $onboardingFolderFileFilter,
+  $onboardingFolderFileView,
+  $onboardingItemFilter,
+  $onboardingFileFilter,
+  $onboardingScan,
   ONBOARDING_DIFF_POLL_MS,
   ONBOARDING_DIFF_POLL_TIMEOUT_MS,
+  ONBOARDING_SCAN_POLL_MS,
+  ONBOARDING_SCAN_POLL_TIMEOUT_MS,
 } from './onboarding.consts';
+import { runHasActiveFileScan } from './onboarding.helpers';
 import {
   applySelectedTenant,
   fetchRunDetail,
@@ -384,14 +392,134 @@ export const handleIgnoreItem = async (itemId, runId) => {
 };
 
 export const resetOnboardingFileReview = () => {
+  clearOnboardingScanPoll();
   $onboardingFiles.update({ list: [], documentTypeOptions: [], loadedRunId: null });
   $onboardingFileDrafts.reset();
+  $onboardingItemFilter.update({ page: 1, limit: 10 });
+  $onboardingFileFilter.update({ page: 1, limit: 10 });
+  $onboardingFolderFileFilter.update({ page: 1, limit: 10 });
   $onboardingFileView.update({
     isTableLoading: true,
     hasLoaded: false,
     savingFileId: null,
     dirtyFileIds: {},
+    selectedItems: [],
+    isSelectAllChecked: false,
   });
+  $onboardingFolderFileView.update({ selectedItems: [], isSelectAllChecked: false });
+  $onboardingScan.update({
+    isInFlight: false,
+    intervalId: null,
+    generation: 0,
+    activeRunId: null,
+  });
+};
+
+export const openFolderFilesModal = (itemId, folderPath) => {
+  $onboardingFolderFileView.update({ selectedItems: [], isSelectAllChecked: false });
+  $onboardingFolderFileFilter.update({ page: 1 });
+  $onboardingView.update({
+    showFolderFilesModal: true,
+    folderFilesItemId: itemId,
+    folderFilesPath: folderPath,
+  });
+};
+
+export const closeFolderFilesModal = () => {
+  $onboardingView.update({
+    showFolderFilesModal: false,
+    folderFilesItemId: null,
+    folderFilesPath: null,
+  });
+};
+
+export const clearOnboardingScanPoll = () => {
+  const { intervalId } = $onboardingScan.value;
+  if (intervalId != null) clearInterval(intervalId);
+  $onboardingScan.update({ intervalId: null, isInFlight: false });
+};
+
+export const startOnboardingScanPoll = (runId) => {
+  clearOnboardingScanPoll();
+  const generation = ($onboardingScan.value.generation || 0) + 1;
+  const startedAt = Date.now();
+  let ticking = false;
+
+  const intervalId = setInterval(() => {
+    if (ticking) return;
+    ticking = true;
+    const tick = async () => {
+      if ($onboardingScan.value.generation !== generation) return;
+      if ($onboardingScan.value.activeRunId !== runId) return;
+
+      if (Date.now() - startedAt >= ONBOARDING_SCAN_POLL_TIMEOUT_MS) {
+        clearOnboardingScanPoll();
+        handleNotification({
+          variant: 'warning',
+          message: 'File scan is still running. Refresh the page to check status.',
+        });
+        return;
+      }
+
+      try {
+        await fetchRunFiles(runId);
+      } catch {
+        return;
+      }
+      if ($onboardingScan.value.generation !== generation) return;
+      if (!runHasActiveFileScan($onboardingFiles.value.list)) {
+        clearOnboardingScanPoll();
+      }
+    };
+    tick().finally(() => {
+      ticking = false;
+    });
+  }, ONBOARDING_SCAN_POLL_MS);
+
+  $onboardingScan.update({
+    intervalId,
+    generation,
+    activeRunId: runId,
+  });
+};
+
+export const resumeScanPollingIfNeeded = (runId) => {
+  if ($onboardingScan.value.activeRunId && $onboardingScan.value.activeRunId !== runId) return;
+  if (!runHasActiveFileScan($onboardingFiles.value.list)) return;
+  startOnboardingScanPoll(runId);
+};
+
+export const handleStartFileScan = async (runId, fileIds) => {
+  if ($onboardingScan.value.isInFlight) return;
+  $onboardingScan.update({ isInFlight: true, activeRunId: runId });
+  try {
+    const response = await onboardingApi.startFileScan(runId, fileIds);
+    const result = response?.data ?? response ?? {};
+    const enqueued = result.enqueuedFileIds?.length ?? result.enqueuedTasks ?? 0;
+    const skipped = result.skipped?.length ?? 0;
+    await fetchRunFiles(runId);
+    if (enqueued > 0) {
+      startOnboardingScanPoll(runId);
+      handleNotification({
+        variant: 'success',
+        message: `Queued scan for ${enqueued} file${enqueued === 1 ? '' : 's'}.`,
+      });
+    } else {
+      handleNotification({
+        variant: 'warning',
+        message: skipped
+          ? 'No files were queued. Confirm folder match or wait for in-flight scans to finish.'
+          : 'No files available to scan.',
+      });
+    }
+  } catch (err) {
+    handleNotification({
+      variant: 'danger',
+      message: notificationMessage(err, 'Could not start file scan.'),
+    });
+  } finally {
+    $onboardingScan.update({ isInFlight: false });
+  }
 };
 
 export const markFileDocumentTypeDirty = (fileId) => {

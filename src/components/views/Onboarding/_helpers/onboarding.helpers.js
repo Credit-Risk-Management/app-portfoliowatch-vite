@@ -1,3 +1,30 @@
+import { resolvePageLimit } from '@src/consts/consts';
+
+export function paginateList(list, page, limit) {
+  const pageLimit = resolvePageLimit(limit);
+  const totalCount = (list || []).length;
+  const pagesCount = Math.max(1, Math.ceil(totalCount / pageLimit));
+  const safePage = Math.min(Math.max(1, Number(page) || 1), pagesCount);
+  const start = (safePage - 1) * pageLimit;
+  return {
+    items: (list || []).slice(start, start + pageLimit),
+    totalCount,
+    currentPage: safePage,
+    pageLimit,
+  };
+}
+
+export function filesForFolderPath(files, folderPath) {
+  if (!folderPath) return [];
+  return (files || []).filter((file) => file.folder === folderPath);
+}
+
+export function runHasActiveFileScan(files) {
+  return (files || []).some(
+    (file) => file.geminiScanStatus === 'queued' || file.geminiScanStatus === 'running',
+  );
+}
+
 export function buildMatchFolderOptions(folders, item) {
   const borrower = (item?.borrowerName || '').trim().toLowerCase();
   const loan = (item?.loanNumber || '').trim().toLowerCase();

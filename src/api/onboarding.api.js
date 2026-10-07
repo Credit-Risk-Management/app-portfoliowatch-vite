@@ -72,4 +72,10 @@ export const onboardingApi = {
   ),
 
   startImport: (runId) => apiClient.post(`/onboarding/runs/${runId}/import`, {}, withOrgDbHeader()),
+
+  startFileScan: (runId, fileIds) => apiClient.post(
+    `/onboarding/runs/${runId}/scan`,
+    fileIds?.length ? { fileIds } : {},
+    withOrgDbHeader(),
+  ),
 };

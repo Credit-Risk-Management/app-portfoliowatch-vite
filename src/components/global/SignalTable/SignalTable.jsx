@@ -29,6 +29,7 @@ const SignalTable = ({
   /** Table row `cursor` (inline). Use `'default'` when rows are not clickable. */
   rowCursor = 'pointer',
   filterToUrlParams,
+  syncUrl = true,
 }) => {
   const handleToggleColumn = (header) => {
     if (typeof onColumnToggle === 'function') {
@@ -62,7 +63,7 @@ const SignalTable = ({
   );
 
   useEffect(() => {
-    if (!$filter) return;
+    if (!$filter || !syncUrl) return;
 
     const urlParams = new URLSearchParams(window.location.search);
     const urlSortKey = urlParams.get('sortKey');
@@ -76,7 +77,7 @@ const SignalTable = ({
       sortKey: urlSortKey || $filter.value?.sortKey,
       sortDirection: urlSortDirection || $filter.value?.sortDirection,
     });
-  }, [$filter]);
+  }, [$filter, syncUrl]);
 
   return (
     <div className="p-0 overflow-hidden bg-info-800 border border-info-500" style={{ borderRadius: 12 }}>
@@ -114,11 +115,13 @@ const SignalTable = ({
                     sortKey: isAscending ? undefined : sortKey,
                     sortDirection: isAscending ? undefined : isDescending ? 'asc' : 'desc',
                   });
-                  const params = filterToUrlParams
-                    ? filterToUrlParams($filter.value)
-                    : filterValueToUrlSearchParams($filter.value);
-                  window.history.pushState(null, '', `?${params.toString()}`);
-                  window.localStorage.setItem('filterQueryString', params.toString());
+                  if (syncUrl) {
+                    const params = filterToUrlParams
+                      ? filterToUrlParams($filter.value)
+                      : filterValueToUrlSearchParams($filter.value);
+                    window.history.pushState(null, '', `?${params.toString()}`);
+                    window.localStorage.setItem('filterQueryString', params.toString());
+                  }
                   onHeaderClick({ key, value, sortKey }, idx);
                 }}
               >
@@ -219,6 +222,7 @@ const SignalTable = ({
           currentPageItemsCount={currentPageItemsCount || 0}
           currentPage={currentPage}
           filterToUrlParams={filterToUrlParams}
+          syncUrl={syncUrl}
         />
       )}
     </div>

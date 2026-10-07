@@ -77,7 +77,10 @@ const MatchRelationshipModal = () => {
             className="bg-info-900 text-light border-info d-flex justify-content-between align-items-center"
           >
             <span>{c.name}</span>
-            <Badge bg="info">{(c.probability * 100).toFixed(0)}%</Badge>
+            <Badge className="bg-info-400 text-info-900">
+              {(c.probability * 100).toFixed(0)}
+              %
+            </Badge>
           </ListGroup.Item>
         ))}
       </ListGroup>
