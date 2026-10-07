@@ -81,7 +81,7 @@ const SignalTable = ({
 
   return (
     <div className="p-0 overflow-hidden bg-info-800 border border-info-500" style={{ borderRadius: 12 }}>
-      <Table striped responsive style={{ fontSize: 16 }} hover className="primary-table">
+      <Table striped responsive style={{ fontSize: 16 }} hover className="primary-table align-middle">
         <thead>
           <tr>
             {hasCheckboxes && (
@@ -178,7 +178,7 @@ const SignalTable = ({
               className={rowClassName}
             >
               {hasCheckboxes && (
-                <td className="border-0 py-16">
+                <td className="border-0">
                   <Form.Check
                     checked={$view?.value?.selectedItems?.some(({ id }) => id === row.id)}
                     onClick={(e) => {
