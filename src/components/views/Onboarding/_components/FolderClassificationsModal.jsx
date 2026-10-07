@@ -7,14 +7,16 @@ import {
   $onboardingView,
 } from '../_helpers/onboarding.consts';
 import { closeFolderFilesModal } from '../_helpers/onboarding.events';
-import { filesForFolderPath } from '../_helpers/onboarding.helpers';
+import { filesForFolderPath, filesForTaskScan } from '../_helpers/onboarding.helpers';
 import OnboardingFileClassificationsTable from './OnboardingFileClassificationsTable';
 
 const FolderClassificationsModal = () => {
   const itemId = $onboardingView.value.folderFilesItemId;
   const folderPath = $onboardingView.value.folderFilesPath;
   const item = ($onboardingRunDetail.value.items || []).find((row) => row.id === itemId);
-  const folderFiles = filesForFolderPath($onboardingFiles.value.list || [], folderPath);
+  const folderFiles = filesForTaskScan(
+    filesForFolderPath($onboardingFiles.value.list || [], folderPath),
+  );
 
   const headerParts = [
     item?.borrowerName || 'Borrower',

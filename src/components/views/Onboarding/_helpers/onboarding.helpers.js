@@ -19,6 +19,15 @@ export function filesForFolderPath(files, folderPath) {
   return (files || []).filter((file) => file.folder === folderPath);
 }
 
+export function isApplicationDocumentType(documentType) {
+  return documentType === 'application';
+}
+
+/** Application documents are not part of task scan and cannot be selected. */
+export function filesForTaskScan(files) {
+  return (files || []).filter((file) => !isApplicationDocumentType(file?.documentType));
+}
+
 export function runHasActiveFileScan(files) {
   return (files || []).some(
     (file) => file.geminiScanStatus === 'queued' || file.geminiScanStatus === 'running',

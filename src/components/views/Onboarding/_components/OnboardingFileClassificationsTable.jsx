@@ -22,6 +22,7 @@ import OnboardingStatusBadge from './OnboardingStatusBadge';
 import {
   canSaveFileDocumentType,
   documentTypeOptionsForFile,
+  filesForTaskScan,
   formatDocumentTypeConfidence,
   geminiScanStatusLabel,
   paginateList,
@@ -41,7 +42,7 @@ const OnboardingFileClassificationsTable = ({
   const drafts = $onboardingFileDrafts.value || {};
   const { isTableLoading, hasLoaded, savingFileId } = $onboardingFileView.value;
   const scanBusy = $onboardingScan.value.isInFlight;
-  const fileList = files || [];
+  const fileList = showScanControls ? filesForTaskScan(files) : (files || []);
   const showEmpty = hasLoaded && !isTableLoading && fileList.length === 0;
 
   const { items: pageFiles, totalCount, currentPage, pageLimit } = paginateList(
@@ -54,7 +55,10 @@ const OnboardingFileClassificationsTable = ({
     ? FILE_TABLE_HEADERS
     : FILE_TABLE_HEADERS.filter((header) => header.key !== 'folder');
 
-  const selectedIds = ($selectionView.value.selectedItems || []).map((row) => row.id);
+  const visibleIds = new Set(fileList.map((file) => file.id));
+  const selectedIds = ($selectionView.value.selectedItems || [])
+    .map((row) => row.id)
+    .filter((id) => visibleIds.has(id));
   const allScopeIds = fileList.map((file) => file.id);
 
   const rows = pageFiles.map((file) => {
@@ -67,34 +71,39 @@ const OnboardingFileClassificationsTable = ({
       folder: file.folder || '—',
       borrowerName: file.borrowerName || '—',
       documentType: () => (
-        <div className="d-flex align-items-center gap-8">
-          <div className="flex-grow-1">
-            <SelectInput
-              name={file.id}
-              signal={$onboardingFileDrafts}
-              options={documentTypeOptionsForFile(documentTypeOptions, file.documentType)}
-              value={draft}
-              notClearable
-              isPortal
-              placeholder="Select type"
-              isDisabled={isSaving}
-              onChange={() => markFileDocumentTypeDirty(file.id)}
-            />
+        <div>
+          <div className="d-flex align-items-center gap-8">
+            <div className="flex-grow-1">
+              <SelectInput
+                name={file.id}
+                signal={$onboardingFileDrafts}
+                options={documentTypeOptionsForFile(documentTypeOptions, file.documentType)}
+                value={draft}
+                notClearable
+                isPortal
+                placeholder="Select type"
+                isDisabled={isSaving}
+                onChange={() => markFileDocumentTypeDirty(file.id)}
+              />
+            </div>
+            <button
+              type="button"
+              className="btn btn-sm btn-outline-primary-100 text-nowrap"
+              disabled={!canSave}
+              onClick={(event) => {
+                event.stopPropagation();
+                handleSaveFileDocumentType(file.id, runId);
+              }}
+            >
+              {isSaving && (
+                <Spinner animation="border" size="sm" className="me-8" role="status" aria-hidden />
+              )}
+              {isSaving ? 'Saving…' : 'Save'}
+            </button>
           </div>
-          <button
-            type="button"
-            className="btn btn-sm btn-outline-primary-100 text-nowrap"
-            disabled={!canSave}
-            onClick={(event) => {
-              event.stopPropagation();
-              handleSaveFileDocumentType(file.id, runId);
-            }}
-          >
-            {isSaving && (
-              <Spinner animation="border" size="sm" className="me-8" role="status" aria-hidden />
-            )}
-            {isSaving ? 'Saving…' : 'Save'}
-          </button>
+          {file.financialTarget === 'guarantor' && (
+            <div className="small text-info-200 mt-8">Guarantor financials</div>
+          )}
         </div>
       ),
       confidence: formatDocumentTypeConfidence(file.documentTypeConfidence),
