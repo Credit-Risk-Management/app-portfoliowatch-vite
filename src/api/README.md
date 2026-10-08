@@ -1,5 +1,7 @@
 # API Layer - Debouncing Pattern
 
+> **Docs index:** [docs/api-layer.md](../../docs/api-layer.md) in the repo root.
+
 ## Overview
 
 This API layer implements automatic debouncing for read operations that might be called repeatedly (like search, filters, and detail views). This ensures a responsive UI while preventing excessive API calls.
