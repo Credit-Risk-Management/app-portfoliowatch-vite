@@ -139,12 +139,12 @@ const OnboardingFileClassificationsTable = ({
   const onScanAll = () => {
     if (!runId) return;
     const fileIds = scanAllOmitsFileIds ? undefined : allScopeIds;
-    handleStartFileScan(runId, fileIds);
+    handleStartFileScan(runId, fileIds, { followPfsPackageCompanions: false });
   };
 
   const onScanSelected = () => {
     if (!runId || !selectedIds.length) return;
-    handleStartFileScan(runId, selectedIds);
+    handleStartFileScan(runId, selectedIds, { followPfsPackageCompanions: true });
   };
 
   if (showEmpty) {

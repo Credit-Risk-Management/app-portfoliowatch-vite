@@ -81,9 +81,20 @@ export const onboardingApi = {
 
   startImport: (runId) => apiClient.post(`/onboarding/runs/${runId}/import`, {}, withOrgDbHeader()),
 
-  startFileScan: (runId, fileIds) => apiClient.post(
-    `/onboarding/runs/${runId}/scan`,
-    fileIds?.length ? { fileIds } : {},
-    withOrgDbHeader(),
-  ),
+  startFileScan: (runId, { fileIds, followPfsPackageCompanions } = {}) => {
+    const body = {};
+    if (fileIds?.length) {
+      body.fileIds = fileIds;
+    }
+    if (followPfsPackageCompanions === true) {
+      body.followPfsPackageCompanions = true;
+    } else if (followPfsPackageCompanions === false) {
+      body.followPfsPackageCompanions = false;
+    }
+    return apiClient.post(
+      `/onboarding/runs/${runId}/scan`,
+      body,
+      withOrgDbHeader(),
+    );
+  },
 };

@@ -30,8 +30,7 @@ const FolderClassificationsModal = () => {
       onHide={closeFolderFilesModal}
       closeButton
       headerText="Folder classifications"
-      leftBtnText="Close"
-      leftBtnOnClick={closeFolderFilesModal}
+      hideFooter
       size="fullscreen"
     >
       <p className="text-info-200 small mb-16">{headerParts.join(' · ')}</p>

@@ -810,11 +810,18 @@ export const resumeScanPollingIfNeeded = (runId) => {
   startOnboardingScanPoll(runId);
 };
 
-export const handleStartFileScan = async (runId, fileIds, { suppressSuccessNotification = false } = {}) => {
+export const handleStartFileScan = async (
+  runId,
+  fileIds,
+  { followPfsPackageCompanions, suppressSuccessNotification = false } = {},
+) => {
   if ($onboardingScan.value.isInFlight) return { enqueued: 0 };
   $onboardingScan.update({ isInFlight: true, activeRunId: runId });
   try {
-    const response = await onboardingApi.startFileScan(runId, fileIds);
+    const response = await onboardingApi.startFileScan(runId, {
+      fileIds,
+      followPfsPackageCompanions,
+    });
     const result = response?.data ?? response ?? {};
     const enqueued = result.enqueuedFileIds?.length ?? result.enqueuedTasks ?? 0;
     const skippedList = result.skipped || [];

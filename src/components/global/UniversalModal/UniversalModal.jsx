@@ -20,6 +20,7 @@ const UniversalModal = ({
   children = null,
   backdrop = true,
   keyboard = true,
+  hideFooter = false,
 }) => {
   const isFullscreen = size === 'fullscreen';
 
@@ -53,26 +54,28 @@ const UniversalModal = ({
           children
         )}
       </Modal.Body>
-      <Modal.Footer className={`border-info border-top bg-info-900 shadow-sm border-0 ${isFullscreen ? 'modal-fullscreen-footer border-info border-top bg-info-900 shadow-sm border-0' : ''} ${footerClass}`}>
-        <Button
-          type="button"
-          className={leftBtnClass}
-          onClick={leftBtnOnClick}
-          disabled={leftButtonDisabled}
-        >
-          {leftBtnText}
-        </Button>
-        {rightBtnText !== null && (
+      {!hideFooter && (
+        <Modal.Footer className={`border-info border-top bg-info-900 shadow-sm border-0 ${isFullscreen ? 'modal-fullscreen-footer border-info border-top bg-info-900 shadow-sm border-0' : ''} ${footerClass}`}>
           <Button
             type="button"
-            className={rightBtnClass}
-            onClick={rightBtnOnClick}
-            disabled={rightButtonDisabled}
+            className={leftBtnClass}
+            onClick={leftBtnOnClick}
+            disabled={leftButtonDisabled}
           >
-            {rightBtnText}
+            {leftBtnText}
           </Button>
-        )}
-      </Modal.Footer>
+          {rightBtnText !== null && (
+            <Button
+              type="button"
+              className={rightBtnClass}
+              onClick={rightBtnOnClick}
+              disabled={rightButtonDisabled}
+            >
+              {rightBtnText}
+            </Button>
+          )}
+        </Modal.Footer>
+      )}
     </Modal>
   );
 };
