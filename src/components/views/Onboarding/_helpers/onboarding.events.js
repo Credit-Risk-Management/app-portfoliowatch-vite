@@ -18,8 +18,11 @@ import {
   $onboardingItemFilter,
   $onboardingFileFilter,
   $onboardingScan,
+  $onboardingImport,
   ONBOARDING_DIFF_POLL_MS,
   ONBOARDING_DIFF_POLL_TIMEOUT_MS,
+  ONBOARDING_IMPORT_POLL_MS,
+  ONBOARDING_IMPORT_POLL_TIMEOUT_MS,
   ONBOARDING_SCAN_POLL_MS,
   ONBOARDING_SCAN_POLL_TIMEOUT_MS,
 } from './onboarding.consts';
@@ -193,6 +196,13 @@ export const handleTenantChange = (selectedOption) => {
   handleSelectTenant(tenant || { orgDb, displayName: selectedOption?.label || orgDb });
 };
 
+const isDiffRunStatus = (status) => status === 'DIFFING' || status === 'CLASSIFYING';
+
+const isDiffBusy = () => (
+  $onboardingDiff.value.isInFlight
+  || isDiffRunStatus($onboardingRunDetail.value.run?.status)
+);
+
 export const uploadFolderFiles = async (runId, fileList) => {
   const files = Array.from(fileList || []);
   if (!files.length) return;
@@ -250,23 +260,24 @@ export const uploadFolderFiles = async (runId, fileList) => {
       })),
     );
 
-    successAlert(`${urlEntries.length} file(s) uploaded to storage.`);
-    $onboardingUploadState.update({ isUploading: false, progress: 100 });
+    const willAutoDiff = !isDiffBusy() && !$onboardingView.value.isImporting;
+    successAlert(
+      willAutoDiff
+        ? `${urlEntries.length} file(s) uploaded. Diff and classification will start.`
+        : `${urlEntries.length} file(s) uploaded to storage.`,
+    );
+    $onboardingUploadState.reset();
     closeUploadModal();
     await fetchRunDetail(runId);
+    if (willAutoDiff) {
+      await handleStartDiff(runId);
+    }
   } catch (err) {
     dangerAlert(notificationMessage(err, 'Folder upload failed.'));
   } finally {
     $onboardingUploadState.update({ isUploading: false });
   }
 };
-
-const isDiffRunStatus = (status) => status === 'DIFFING' || status === 'CLASSIFYING';
-
-const isDiffBusy = () => (
-  $onboardingDiff.value.isInFlight
-  || isDiffRunStatus($onboardingRunDetail.value.run?.status)
-);
 
 export const clearOnboardingDiffPoll = () => {
   const { intervalId } = $onboardingDiff.value;
@@ -412,6 +423,121 @@ export const handleStartDiff = async (runId) => {
   }
 };
 
+const isImportRunInProgress = (status) => status === 'IMPORTING';
+
+export const clearOnboardingImportPoll = () => {
+  const { intervalId } = $onboardingImport.value;
+  if (intervalId != null) clearInterval(intervalId);
+  $onboardingImport.update({
+    intervalId: null,
+    isPolling: false,
+    generation: ($onboardingImport.value.generation || 0) + 1,
+  });
+};
+
+const triggerAutoScanAfterImport = async (runId) => {
+  if ($onboardingImport.value.autoScanClaimed) return;
+  $onboardingImport.update({ autoScanClaimed: true });
+  try {
+    await fetchRunFiles(runId);
+    const { enqueued } = await handleStartFileScan(runId, undefined, {
+      suppressSuccessNotification: true,
+    });
+    if (enqueued > 0) {
+      handleNotification({
+        variant: 'success',
+        message: 'Import finished; file scan queued.',
+      });
+    }
+  } catch (err) {
+    handleNotification({
+      variant: 'danger',
+      message: notificationMessage(err, 'Import finished but file scan could not start.'),
+    });
+  }
+};
+
+const notifyImportSettled = (status) => {
+  if (status !== 'COMPLETED' && status !== 'FAILED') return false;
+  if ($onboardingImport.value.resultClaimed) return true;
+  $onboardingImport.update({ resultClaimed: true });
+  clearOnboardingImportPoll();
+  if (status === 'FAILED') {
+    handleNotification({
+      variant: 'danger',
+      message: 'Import failed.',
+    });
+    return true;
+  }
+  return true;
+};
+
+const startOnboardingImportPoll = (runId) => {
+  const existing = $onboardingImport.value.intervalId;
+  if (existing != null) clearInterval(existing);
+
+  const generation = ($onboardingImport.value.generation || 0) + 1;
+  const startedAt = Date.now();
+  let ticking = false;
+
+  const intervalId = setInterval(() => {
+    if (ticking) return;
+    ticking = true;
+    const tick = async () => {
+      if ($onboardingImport.value.generation !== generation) return;
+      if ($onboardingImport.value.activeRunId !== runId) return;
+
+      if (Date.now() - startedAt >= ONBOARDING_IMPORT_POLL_TIMEOUT_MS) {
+        if ($onboardingImport.value.resultClaimed) return;
+        $onboardingImport.update({ resultClaimed: true });
+        clearOnboardingImportPoll();
+        handleNotification({
+          variant: 'warning',
+          message: 'Import is still running. Refresh the page to check status.',
+        });
+        return;
+      }
+
+      try {
+        await fetchRunDetail(runId, { silent: true });
+      } catch {
+        return;
+      }
+      if ($onboardingImport.value.generation !== generation) return;
+      if ($onboardingImport.value.activeRunId !== runId) return;
+      if ($onboardingRunDetail.value.run?.id && $onboardingRunDetail.value.run.id !== runId) return;
+
+      const status = $onboardingRunDetail.value.run?.status;
+      if (isImportRunInProgress(status)) return;
+
+      const settled = notifyImportSettled(status);
+      if (settled && status === 'COMPLETED') {
+        await triggerAutoScanAfterImport(runId);
+      }
+    };
+    tick().finally(() => {
+      ticking = false;
+    });
+  }, ONBOARDING_IMPORT_POLL_MS);
+
+  $onboardingImport.update({
+    intervalId,
+    isPolling: true,
+    generation,
+    activeRunId: runId,
+    resultClaimed: false,
+    autoScanClaimed: false,
+  });
+};
+
+export const resumeImportPollingIfNeeded = (runId) => {
+  if ($onboardingImport.value.activeRunId !== runId) return;
+  const status = $onboardingRunDetail.value.run?.status;
+  if (!isImportRunInProgress(status)) return;
+  $onboardingImport.update({ resultClaimed: false, isPolling: true, activeRunId: runId });
+  startOnboardingImportPoll(runId);
+};
+
 export const handleStartImport = async (runId) => {
   if (isDiffBusy() || $onboardingView.value.isImporting) return;
   $onboardingView.update({ isImporting: true });
@@ -421,6 +547,16 @@ export const handleStartImport = async (runId) => {
     const enqueued = Number(result.enqueued ?? 0);
     await fetchRunDetail(runId, { silent: true });
     if (enqueued > 0) {
+      $onboardingImport.update({ activeRunId: runId, autoScanClaimed: false, resultClaimed: false });
+      const statusAfterQueue = $onboardingRunDetail.value.run?.status;
+      if (statusAfterQueue === 'COMPLETED') {
+        notifyImportSettled('COMPLETED');
+        await triggerAutoScanAfterImport(runId);
+      } else if (statusAfterQueue === 'FAILED') {
+        notifyImportSettled('FAILED');
+      } else {
+        startOnboardingImportPoll(runId);
+      }
       successAlert(`Import queued for ${enqueued} borrower${enqueued === 1 ? '' : 's'}.`);
     } else {
       handleNotification({
@@ -481,6 +617,7 @@ export const handleIgnoreItem = async (itemId, runId) => {
 };
 
 export const resetOnboardingFileReview = () => {
+  clearOnboardingImportPoll();
   clearOnboardingScanPoll();
   $onboardingFiles.update({ list: [], documentTypeOptions: [], loadedRunId: null });
   $onboardingFileDrafts.reset();
@@ -513,6 +650,11 @@ export const beginOnboardingRunLoad = (runId) => {
   });
   $onboardingView.update({ isTableLoading: false, isImporting: false });
   $onboardingDiff.update({ activeRunId: runId || null });
+  $onboardingImport.update({
+    activeRunId: runId || null,
+    autoScanClaimed: false,
+    resultClaimed: false,
+  });
 };
 
 export const openFolderFilesModal = (itemId, folderPath) => {
@@ -599,8 +741,8 @@ export const resumeScanPollingIfNeeded = (runId) => {
   startOnboardingScanPoll(runId);
 };
 
-export const handleStartFileScan = async (runId, fileIds) => {
-  if ($onboardingScan.value.isInFlight) return;
+export const handleStartFileScan = async (runId, fileIds, { suppressSuccessNotification = false } = {}) => {
+  if ($onboardingScan.value.isInFlight) return { enqueued: 0 };
   $onboardingScan.update({ isInFlight: true, activeRunId: runId });
   try {
     const response = await onboardingApi.startFileScan(runId, fileIds);
@@ -614,10 +756,12 @@ export const handleStartFileScan = async (runId, fileIds) => {
     await fetchRunFiles(runId);
     if (enqueued > 0) {
       startOnboardingScanPoll(runId);
-      handleNotification({
-        variant: 'success',
-        message: `Queued scan for ${enqueued} file${enqueued === 1 ? '' : 's'}.`,
-      });
+      if (!suppressSuccessNotification) {
+        handleNotification({
+          variant: 'success',
+          message: `Queued scan for ${enqueued} file${enqueued === 1 ? '' : 's'}.`,
+        });
+      }
       if (importRequiredCount > 0) {
         handleNotification({
           variant: 'warning',
@@ -635,11 +779,13 @@ export const handleStartFileScan = async (runId, fileIds) => {
             : 'No files available to scan.',
       });
     }
+    return { enqueued };
   } catch (err) {
     handleNotification({
       variant: 'danger',
       message: notificationMessage(err, 'Could not start file scan.'),
     });
+    return { enqueued: 0 };
   } finally {
     $onboardingScan.update({ isInFlight: false });
   }

@@ -10,6 +10,7 @@ import PageHeader from '@src/components/global/PageHeader';
 import SignalTable from '@src/components/global/SignalTable';
 import {
   $onboardingDiff,
+  $onboardingImport,
   $onboardingItemFilter,
   $onboardingRunDetail,
   $onboardingScan,
@@ -23,17 +24,20 @@ import { loadOnboardingRunPage } from './_helpers/onboarding.resolvers';
 import {
   beginOnboardingRunLoad,
   clearOnboardingDiffPoll,
+  clearOnboardingImportPoll,
   clearOnboardingScanPoll,
   handleStartDiff,
   handleStartImport,
   handleOnboardingItemAction,
   openUploadModal,
   resumeDiffPollingIfNeeded,
+  resumeImportPollingIfNeeded,
   resumeScanPollingIfNeeded,
 } from './_helpers/onboarding.events';
 import {
   onboardingDiffButtonLabel,
   onboardingDiffStatusMessage,
+  onboardingImportStatusMessage,
   paginateList,
 } from './_helpers/onboarding.helpers';
 import UploadFolderModal from './_components/UploadFolderModal';
@@ -49,8 +53,10 @@ const OnboardingRunDetail = () => {
     beginOnboardingRunLoad(runId);
     return () => {
       clearOnboardingDiffPoll();
+      clearOnboardingImportPoll();
       clearOnboardingScanPoll();
       $onboardingDiff.update({ activeRunId: null });
+      $onboardingImport.update({ activeRunId: null });
       $onboardingScan.update({ activeRunId: null });
     };
   }, [runId]);
@@ -59,6 +65,7 @@ const OnboardingRunDetail = () => {
     await loadOnboardingRunPage(runId);
     if (runId) {
       resumeDiffPollingIfNeeded(runId);
+      resumeImportPollingIfNeeded(runId);
       resumeScanPollingIfNeeded(runId);
     }
   }, [runId]);
@@ -75,8 +82,9 @@ const OnboardingRunDetail = () => {
   const diffBusy = $onboardingDiff.value.isInFlight
     || run?.status === 'DIFFING'
     || run?.status === 'CLASSIFYING';
+  const importPollBusy = $onboardingImport.value.isPolling || run?.status === 'IMPORTING';
   const { isImporting } = $onboardingView.value;
-  const actionsBusy = diffBusy || isImporting;
+  const actionsBusy = diffBusy || isImporting || importPollBusy;
 
   const RunDetailActions = () => (
     <div className="d-flex flex-wrap gap-8">
@@ -155,6 +163,9 @@ const OnboardingRunDetail = () => {
         <OnboardingStatusBadge badgeMap={RUN_STATUS_BADGE} statusKey={run?.status} />
         {diffBusy && (
           <span className="text-info-200 small">{onboardingDiffStatusMessage(run?.status)}</span>
+        )}
+        {importPollBusy && !diffBusy && (
+          <span className="text-info-200 small">{onboardingImportStatusMessage()}</span>
         )}
         {run?.dropboxFolderName && (
           <span className="text-info-200 small">

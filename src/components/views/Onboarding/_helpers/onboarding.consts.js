@@ -86,6 +86,18 @@ export const $onboardingFolderFileFilter = Signal({
   limit: 10,
 });
 
+export const ONBOARDING_IMPORT_POLL_MS = 3000;
+export const ONBOARDING_IMPORT_POLL_TIMEOUT_MS = 600000;
+
+export const $onboardingImport = Signal({
+  isPolling: false,
+  intervalId: null,
+  generation: 0,
+  activeRunId: null,
+  autoScanClaimed: false,
+  resultClaimed: false,
+});
+
 export const ONBOARDING_SCAN_POLL_MS = 3000;
 export const ONBOARDING_SCAN_POLL_TIMEOUT_MS = 600000;
 

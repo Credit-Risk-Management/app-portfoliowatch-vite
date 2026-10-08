@@ -79,6 +79,10 @@ export function onboardingDiffStatusMessage(runStatus) {
   return 'Diffing files. The table will update when this finishes.';
 }
 
+export function onboardingImportStatusMessage() {
+  return 'Importing borrowers. File scan will start when import finishes.';
+}
+
 export function formatDocumentTypeConfidence(value) {
   if (value == null || Number.isNaN(Number(value))) return '—';
   return `${Math.round(Number(value) * 100)}%`;
