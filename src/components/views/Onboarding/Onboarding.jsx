@@ -43,6 +43,7 @@ const Onboarding = () => {
     totalItems: run.totalItems,
     matchedItems: run.matchedItems,
     importedItems: run.importedItems,
+    exceptionsCount: run.exceptionsCount ?? 0,
     actions: () => (
       <ContextMenu
         items={[

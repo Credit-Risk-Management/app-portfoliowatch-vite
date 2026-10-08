@@ -57,6 +57,14 @@ export const onboardingApi = {
     withOrgDbHeader(),
   ),
 
+  completeUpload: (runId) => apiClient.post(
+    `/onboarding/runs/${runId}/files/complete`,
+    {},
+    withOrgDbHeader(),
+  ),
+
+  getRunSummary: (runId) => apiClient.get(`/onboarding/runs/${runId}/summary`, withOrgDbHeader()),
+
   startDiff: (runId) => apiClient.post(`/onboarding/runs/${runId}/diff`, {}, withOrgDbHeader()),
 
   getItemCandidates: (itemId) => apiClient.get(`/onboarding/items/${itemId}/candidates`, withOrgDbHeader()),

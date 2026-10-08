@@ -11,7 +11,9 @@ import {
   $onboardingFileDrafts,
   $onboardingFileView,
   $onboardingDiff,
+  $onboardingRunSummary,
   ONBOARDING_ORG_DB_STORAGE_KEY,
+  ONBOARDING_SUMMARY_POLL_MS,
 } from './onboarding.consts';
 
 const mergeTenantIntoList = (orgDb, displayName) => {
@@ -208,6 +210,10 @@ export const loadOnboardingRunPage = async (runId) => {
       return;
     }
     await fetchRunDetail(runId);
+    const summary = await fetchRunSummary(runId);
+    if (summary?.pipelineActive) {
+      startOnboardingSummaryPoll(runId);
+    }
   } catch (err) {
     $onboardingRunDetail.update({ isLoading: false });
     $onboardingFileView.update({ isTableLoading: false, hasLoaded: true });
@@ -230,6 +236,43 @@ export const loadMatchCandidates = async (itemId) => {
     borrowerId: null,
     loanId: null,
   });
+};
+
+let summaryPollIntervalId = null;
+
+export const clearOnboardingSummaryPoll = () => {
+  if (summaryPollIntervalId != null) {
+    clearInterval(summaryPollIntervalId);
+    summaryPollIntervalId = null;
+  }
+};
+
+export const fetchRunSummary = async (runId) => {
+  if (!runId) return null;
+  $onboardingRunSummary.update({ isLoading: true });
+  try {
+    const res = await onboardingApi.getRunSummary(runId);
+    const data = res?.data ?? res;
+    $onboardingRunSummary.update({ data, isLoading: false });
+    return data;
+  } catch (err) {
+    $onboardingRunSummary.update({ isLoading: false });
+    throw err;
+  }
+};
+
+export const startOnboardingSummaryPoll = (runId) => {
+  clearOnboardingSummaryPoll();
+  summaryPollIntervalId = setInterval(async () => {
+    try {
+      const summary = await fetchRunSummary(runId);
+      if (!summary?.pipelineActive) {
+        clearOnboardingSummaryPoll();
+      }
+    } catch {
+      /* keep polling until timeout or manual refresh */
+    }
+  }, ONBOARDING_SUMMARY_POLL_MS);
 };
 
 export const syncTenantFromPickSignal = () => {

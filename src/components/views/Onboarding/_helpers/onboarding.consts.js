@@ -9,6 +9,7 @@ export const $onboardingView = Signal({
   isLoadingMatch: false,
   isSavingMatch: false,
   matchSaveAction: null,
+  confirmingMatchItemId: null,
   selectedRunId: null,
   showCreateModal: false,
   showUploadModal: false,
@@ -35,7 +36,16 @@ export const $onboardingCreateForm = Signal({
   name: '',
   dropboxFolderName: '',
   masterListFile: null,
+  autoContinue: false,
+  autoScanAfterImport: false,
 });
+
+export const $onboardingRunSummary = Signal({
+  data: null,
+  isLoading: false,
+});
+
+export const ONBOARDING_SUMMARY_POLL_MS = 3000;
 
 export const $onboardingUploadState = Signal({
   files: [],
@@ -74,7 +84,29 @@ export const $onboardingFileDrafts = Signal({});
 export const $onboardingItemFilter = Signal({
   page: 1,
   limit: 10,
+  searchTerm: '',
+  matchStatus: '',
+  importStatus: '',
+  needsAttentionOnly: true,
 });
+
+export const ONBOARDING_MATCH_STATUS_FILTER_OPTIONS = [
+  { value: '', label: 'All match statuses' },
+  { value: 'UNMATCHED', label: 'Unmatched' },
+  { value: 'NEEDS_REVIEW', label: 'Needs review' },
+  { value: 'AUTO_MATCHED', label: 'Auto matched' },
+  { value: 'CONFIRMED', label: 'Confirmed' },
+  { value: 'IGNORED', label: 'Ignored' },
+];
+
+export const ONBOARDING_IMPORT_STATUS_FILTER_OPTIONS = [
+  { value: '', label: 'All import statuses' },
+  { value: 'PENDING', label: 'Pending' },
+  { value: 'RUNNING', label: 'Running' },
+  { value: 'COMPLETED', label: 'Completed' },
+  { value: 'FAILED', label: 'Failed' },
+  { value: 'SKIPPED', label: 'Skipped' },
+];
 
 export const $onboardingFileFilter = Signal({
   page: 1,
@@ -128,6 +160,7 @@ export const RUN_TABLE_HEADERS = [
   { key: 'totalItems', value: 'CSV rows' },
   { key: 'matchedItems', value: 'Matched' },
   { key: 'importedItems', value: 'Imported' },
+  { key: 'exceptionsCount', value: 'Exceptions' },
   { key: 'actions', value: 'Actions' },
 ];
 

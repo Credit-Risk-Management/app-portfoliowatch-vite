@@ -26,7 +26,7 @@ import {
   ONBOARDING_SCAN_POLL_MS,
   ONBOARDING_SCAN_POLL_TIMEOUT_MS,
 } from './onboarding.consts';
-import { runHasActiveFileScan } from './onboarding.helpers';
+import { canQuickConfirmMatch, runHasActiveFileScan } from './onboarding.helpers';
 import {
   applySelectedTenant,
   fetchRunDetail,
@@ -163,6 +163,8 @@ export const handleCreateRun = async (navigate) => {
   fd.append('name', form.name.trim());
   if (form.dropboxFolderName) fd.append('dropboxFolderName', form.dropboxFolderName);
   if (form.masterListFile) fd.append('masterList', form.masterListFile);
+  if (form.autoContinue) fd.append('autoContinue', 'true');
+  if (form.autoScanAfterImport) fd.append('autoScanAfterImport', 'true');
 
   $onboardingView.update({ isCreating: true });
   try {
@@ -260,17 +262,25 @@ export const uploadFolderFiles = async (runId, fileList) => {
       })),
     );
 
-    const willAutoDiff = !isDiffBusy() && !$onboardingView.value.isImporting;
-    successAlert(
-      willAutoDiff
-        ? `${urlEntries.length} file(s) uploaded. Diff and classification will start.`
-        : `${urlEntries.length} file(s) uploaded to storage.`,
-    );
+    const autoContinue = $onboardingRunDetail.value.run?.autoContinue === true;
+    if (autoContinue) {
+      await onboardingApi.completeUpload(runId);
+      successAlert(
+        `${urlEntries.length} file(s) uploaded. Diff, match, and import will continue automatically.`,
+      );
+    } else {
+      successAlert(`${urlEntries.length} file(s) uploaded to storage.`);
+    }
     $onboardingUploadState.reset();
     closeUploadModal();
     await fetchRunDetail(runId);
-    if (willAutoDiff) {
-      await handleStartDiff(runId);
+    if (autoContinue && !isDiffBusy()) {
+      $onboardingDiff.update({
+        activeRunId: runId,
+        resultClaimed: false,
+        isInFlight: true,
+      });
+      startOnboardingDiffPoll(runId, $onboardingRunDetail.value.run?.status);
     }
   } catch (err) {
     dangerAlert(notificationMessage(err, 'Folder upload failed.'));
@@ -289,15 +299,29 @@ export const clearOnboardingDiffPoll = () => {
   });
 };
 
-const notifyDiffSettled = (status, sawInProgress, statusAtStart) => {
+const notifyDiffSettled = (status, sawInProgress, statusAtStart, runId) => {
   const failed = status === 'FAILED';
   const becameReady = status === 'READY_FOR_REVIEW'
     && (sawInProgress || statusAtStart !== 'READY_FOR_REVIEW');
   const leftInProgress = sawInProgress && !isDiffRunStatus(status);
-  if (!failed && !becameReady && !leftInProgress) return false;
+  const autoImportStarted = status === 'IMPORTING';
+  if (!failed && !becameReady && !leftInProgress && !autoImportStarted) return false;
   if ($onboardingDiff.value.resultClaimed) return true;
   $onboardingDiff.update({ resultClaimed: true });
   clearOnboardingDiffPoll();
+  if (autoImportStarted && runId) {
+    $onboardingImport.update({
+      activeRunId: runId,
+      autoScanClaimed: false,
+      resultClaimed: false,
+    });
+    startOnboardingImportPoll(runId);
+    handleNotification({
+      variant: 'success',
+      message: 'Classification finished; import is running.',
+    });
+    return true;
+  }
   handleNotification({
     variant: failed ? 'danger' : 'success',
     message: failed
@@ -348,7 +372,7 @@ const startOnboardingDiffPoll = (runId, statusAtStart) => {
         sawInProgress = true;
         return;
       }
-      notifyDiffSettled(status, sawInProgress, statusAtStart);
+      notifyDiffSettled(status, sawInProgress, statusAtStart, runId);
     };
     tick().finally(() => {
       ticking = false;
@@ -396,6 +420,7 @@ export const handleStartDiff = async (runId) => {
       nextStatus,
       isDiffRunStatus(nextStatus) || inlineFinished,
       statusAtStart,
+      runId,
     );
     if (!settled && !$onboardingDiff.value.resultClaimed) {
       successAlert('Diff and classification started.');
@@ -436,6 +461,7 @@ export const clearOnboardingImportPoll = () => {
 };
 
 const triggerAutoScanAfterImport = async (runId) => {
+  if ($onboardingRunDetail.value.run?.autoScanAfterImport) return;
   if ($onboardingImport.value.autoScanClaimed) return;
   $onboardingImport.update({ autoScanClaimed: true });
   try {
@@ -581,6 +607,43 @@ const endMatchSave = () => {
   $onboardingView.update({ isSavingMatch: false, matchSaveAction: null });
 };
 
+export const handleQuickConfirmMatch = async (itemId, runId) => {
+  if (!beginMatchSave('confirm')) return;
+  const item = ($onboardingRunDetail.value.items || []).find((row) => row.id === itemId);
+  const folderPath = (item?.folderPath || '').trim();
+  if (!item || !folderPath) {
+    endMatchSave();
+    return;
+  }
+  $onboardingView.update({ confirmingMatchItemId: itemId });
+  try {
+    await onboardingApi.confirmItemMatch(itemId, {
+      borrowerId: item.matchedBorrowerId,
+      loanId: item.matchedLoanId,
+      borrowerName: item.borrowerName,
+      folderPath,
+    });
+    await fetchRunDetail(runId, { silent: true });
+    successAlert('Match confirmed.');
+  } catch (err) {
+    dangerAlert(notificationMessage(err, 'Could not confirm the match.'));
+  } finally {
+    $onboardingView.update({ confirmingMatchItemId: null });
+    endMatchSave();
+  }
+};
+
+export const handleOnboardingMatchStatusClick = (item) => {
+  const runId = $onboardingRunDetail.value.run?.id;
+  if (!runId || !item?.id || $onboardingView.value.isSavingMatch) return;
+  if (item.matchStatus === 'CONFIRMED') return;
+  if (canQuickConfirmMatch(item)) {
+    handleQuickConfirmMatch(item.id, runId);
+    return;
+  }
+  openMatchModal(item.id);
+};
+
 export const handleConfirmMatch = async (itemId, runId) => {
   if (!beginMatchSave('confirm')) return;
   const form = $onboardingMatchForm.value;
@@ -621,7 +684,13 @@ export const resetOnboardingFileReview = () => {
   clearOnboardingScanPoll();
   $onboardingFiles.update({ list: [], documentTypeOptions: [], loadedRunId: null });
   $onboardingFileDrafts.reset();
-  $onboardingItemFilter.update({ page: 1, limit: 10 });
+  $onboardingItemFilter.update({
+    page: 1,
+    limit: 10,
+    searchTerm: '',
+    matchStatus: '',
+    importStatus: '',
+  });
   $onboardingFileFilter.update({ page: 1, limit: 10 });
   $onboardingFolderFileFilter.update({ page: 1, limit: 10 });
   $onboardingFileView.update({

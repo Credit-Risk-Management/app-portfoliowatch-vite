@@ -79,6 +79,26 @@ const CreateOnboardingRunModal = () => {
           </Col>
         </Row>
         <Row>
+          <Col md={12} className="mb-8">
+            <UniversalInput
+              type="checkbox"
+              label="Auto-continue after upload (diff, classify, import matched rows)"
+              signal={$onboardingCreateForm}
+              name="autoContinue"
+            />
+          </Col>
+        </Row>
+        <Row>
+          <Col md={12} className="mb-16">
+            <UniversalInput
+              type="checkbox"
+              label="Auto-scan documents after import (uses Gemini extraction)"
+              signal={$onboardingCreateForm}
+              name="autoScanAfterImport"
+            />
+          </Col>
+        </Row>
+        <Row>
           <Col md={12} className="mb-16">
             <Form.Label className="text-light">Master list CSV</Form.Label>
             <Form.Control

@@ -1,5 +1,37 @@
 import { resolvePageLimit } from '@src/consts/consts';
 
+export function canQuickConfirmMatch(item) {
+  const status = item?.matchStatus;
+  if (status === 'CONFIRMED' || status === 'IGNORED' || status === 'UNMATCHED') return false;
+  return Boolean((item?.folderPath || '').trim());
+}
+
+export function itemNeedsAttention(item) {
+  return item.matchStatus === 'NEEDS_REVIEW'
+    || item.matchStatus === 'UNMATCHED'
+    || item.importStatus === 'FAILED';
+}
+
+export function filterOnboardingItems(items, filter) {
+  const search = (filter?.searchTerm || '').trim().toLowerCase();
+  const matchStatus = filter?.matchStatus || '';
+  const importStatus = filter?.importStatus || '';
+  const needsAttentionOnly = filter?.needsAttentionOnly === true;
+
+  return (items || []).filter((item) => {
+    if (needsAttentionOnly && !itemNeedsAttention(item)) return false;
+    if (matchStatus && item.matchStatus !== matchStatus) return false;
+    if (importStatus && item.importStatus !== importStatus) return false;
+    if (!search) return true;
+    const haystack = [
+      item.borrowerName,
+      item.loanNumber,
+      item.folderPath,
+    ].filter(Boolean).join(' ').toLowerCase();
+    return haystack.includes(search);
+  });
+}
+
 export function paginateList(list, page, limit) {
   const pageLimit = resolvePageLimit(limit);
   const totalCount = (list || []).length;
