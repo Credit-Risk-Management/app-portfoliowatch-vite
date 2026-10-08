@@ -87,7 +87,7 @@ export const $onboardingItemFilter = Signal({
   searchTerm: '',
   matchStatus: '',
   importStatus: '',
-  needsAttentionOnly: true,
+  needsAttentionOnly: false,
 });
 
 export const ONBOARDING_MATCH_STATUS_FILTER_OPTIONS = [

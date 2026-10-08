@@ -16,7 +16,8 @@ export function filterOnboardingItems(items, filter) {
   const search = (filter?.searchTerm || '').trim().toLowerCase();
   const matchStatus = filter?.matchStatus || '';
   const importStatus = filter?.importStatus || '';
-  const needsAttentionOnly = filter?.needsAttentionOnly === true;
+  const hasStatusFilter = Boolean(matchStatus || importStatus);
+  const needsAttentionOnly = filter?.needsAttentionOnly === true && !hasStatusFilter;
 
   return (items || []).filter((item) => {
     if (needsAttentionOnly && !itemNeedsAttention(item)) return false;
