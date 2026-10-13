@@ -1,12 +1,7 @@
 import { Nav, Navbar, Container, NavDropdown } from 'react-bootstrap';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faHome,
-  faUsers,
-  faMoneyBillWave,
-  faUserTie,
-} from '@fortawesome/free-solid-svg-icons';
+import { faHome, faUsers, faMoneyBillWave, faUserTie } from '@fortawesome/free-solid-svg-icons';
 import { $global, $user, $organization, $borrowersFilter, $loansFilter } from '@src/signals';
 import { logoutUser } from '@src/utils/auth.utils';
 import NotificationBell from '@src/components/global/NotificationBell';
@@ -33,7 +28,7 @@ const Navigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const isActive = (path) => location.pathname === path;
+  const isActive = path => location.pathname === path;
   const activeClass = 'fw-700 text-dark';
 
   // Don't show navigation if not signed in
@@ -56,12 +51,7 @@ const Navigation = () => {
     >
       <Container fluid>
         <Navbar.Brand as={Link} to="/dashboard" className="me-2 me-md-64">
-          <img
-            src="/logo_dark.svg"
-            alt="Logo"
-            height="30"
-            className="d-inline-block align-top"
-          />
+          <img src="/logo_dark.svg" alt="Logo" height="30" className="d-inline-block align-top" />
         </Navbar.Brand>
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
@@ -113,14 +103,20 @@ const Navigation = () => {
               <FontAwesomeIcon icon={faUserTie} className="me-16 d-none" />
               Managers
             </Nav.Link>
+            {$user.value.isSuperAdmin && (
+              <Nav.Link
+                as={Link}
+                to="/onboarding"
+                active={isActive('/onboarding') || location.pathname.startsWith('/onboarding/')}
+                className={`px-2 px-md-16 text-info-50 ${isActive('/onboarding') || location.pathname.startsWith('/onboarding/') ? activeClass : 'text-dark'}`}
+              >
+                Onboarding
+              </Nav.Link>
+            )}
           </Nav>
           <Nav className="align-items-center">
             <NavDropdown
-              title={(
-                <span className="text-dark">
-                  {$user.value.name || 'User'}
-                </span>
-              )}
+              title={<span className="text-dark">{$user.value.name || 'User'}</span>}
               id="user-dropdown"
               align="end"
               className="text-dark"
@@ -129,9 +125,7 @@ const Navigation = () => {
                 <div className="fw-bold">{$user.value.name}</div>
                 <div className="text-muted small">{$user.value.email}</div>
                 {$organization.value.name && (
-                  <div className="text-muted small mt-1">
-                    {$organization.value.name}
-                  </div>
+                  <div className="text-muted small mt-1">{$organization.value.name}</div>
                 )}
               </NavDropdown.Header>
               <NavDropdown.Divider />
@@ -149,9 +143,7 @@ const Navigation = () => {
                 </>
               )}
               <NavDropdown.Divider />
-              <NavDropdown.Item onClick={handleLogout}>
-                Logout
-              </NavDropdown.Item>
+              <NavDropdown.Item onClick={handleLogout}>Logout</NavDropdown.Item>
             </NavDropdown>
             <NotificationBell />
           </Nav>

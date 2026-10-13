@@ -23,6 +23,9 @@ import PublicGuarantorFinancialUpload from '@src/components/views/PublicGuaranto
 import PublicImpactQuestionnaire from '@src/components/views/PublicImpactQuestionnaire/PublicImpactQuestionnaire';
 import PublicRoutes from '@src/components/global/PublicRoutes';
 import PrivateRoutes from '@src/components/global/PrivateRoutes';
+import SuperAdminRoute from '@src/components/global/SuperAdminRoute/SuperAdminRoute';
+import Onboarding from '@src/components/views/Onboarding';
+import OnboardingRunDetail from '@src/components/views/Onboarding/OnboardingRunDetail';
 import { initAuthListener } from '@src/utils/auth.utils';
 import AppWrapper from './components/global/AppWrapper';
 import Alert from './components/global/Alert';
@@ -76,6 +79,10 @@ function App() {
               <Route path="/settings" element={<Settings />} />
               <Route path="/organization-settings" element={<OrganizationSettings />} />
               <Route path="/users-settings" element={<UsersSettings />} />
+              <Route element={<SuperAdminRoute />}>
+                <Route path="/onboarding" element={<Onboarding />} />
+                <Route path="/onboarding/:runId" element={<OnboardingRunDetail />} />
+              </Route>
             </Route>
 
             {/* 404 catch-all */}
